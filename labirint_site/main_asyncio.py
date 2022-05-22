@@ -1,33 +1,17 @@
-import requests
+import asyncio
+import aiohttp
 from bs4 import BeautifulSoup
 import datetime
-import os
 import csv
 import json
 import time
 
 start_time = time.time()
-def get_data():
-    cur_time = datetime.datetime.now().strftime('%d-%m-%Y-%H-%M')
+books_data = []
 
-    if not os.path.exists('data'):
-        os.mkdir('data')
 
-    with open(f'data/labirint_{cur_time}.csv', 'w', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(
-            (
-                'Название книги',
-                'Автор',
-                'Издательство',
-                'Цена со скидкой',
-                'Цена без скидки',
-                'Процент скидки',
-                'Наличие на складе'
-            )
-        )
-
-    url = "https://www.labirint.ru/genres/2308/?available=1&paperbooks=1&display=table"
+async def get_page_data(session, page):
+    url = f"https://www.labirint.ru/genres/2308/?available=1&paperbooks=1&display=table&page={page}"
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,'
                   '*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -35,18 +19,11 @@ def get_data():
                       'Chrome/101.0.4951.67 Safari/537.36'
     }
 
-    response = requests.get(url=url, headers=headers)
+    async with session.get(url=url, headers=headers) as response:
+        response_text = await response.text()
 
-    soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response_text, 'lxml')
 
-    pages_count = int(soup.find('div', class_='pagination-number').find_all('a')[-1].text)
-
-    books_data = []
-    for page in range(1, pages_count + 1):
-        url = f"https://www.labirint.ru/genres/2308/?available=1&paperbooks=1&display=table&page={page}"
-        response = requests.get(url=url, headers=headers)
-
-        soup = BeautifulSoup(response.text, 'lxml')
         books_items = soup.find('tbody', class_='products-table__body').find_all('tr')
 
         for item in books_items:
@@ -89,15 +66,6 @@ def get_data():
             except Exception:
                 book_status = 'Нет статуса'
 
-            # print(book_title)
-            # print(book_author)
-            # print(book_publishing)
-            # print(book_new_price)
-            # print(book_old_price)
-            # print(book_sale)
-            # print(book_status)
-            # print('*' * 10)
-
             books_data.append(
                 {
                     'book_title': book_title,
@@ -109,30 +77,67 @@ def get_data():
                     'book_status': book_status
                 }
             )
-
-            with open(f'data/labirint_{cur_time}.csv', 'a', encoding='utf-8') as file:
-                writer = csv.writer(file)
-                writer.writerow(
-                    (
-                        book_title,
-                        book_author,
-                        book_publishing,
-                        book_new_price,
-                        book_old_price,
-                        book_sale,
-                        book_status
-                    )
-                )
+        print(f'Обработано {page}')
 
 
-        print(f'Обработано {page}/{pages_count}')
-        time.sleep(1)
+async def gather_data():
+    url = "https://www.labirint.ru/genres/2308/?available=1&paperbooks=1&display=table"
+    headers = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,'
+                  '*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/101.0.4951.67 Safari/537.36'
+    }
 
-    with open(f'data/data_{cur_time}.json', 'a', encoding='utf-8') as file:
-        json.dump(books_data, file, indent=4, ensure_ascii=False)
+    async with aiohttp.ClientSession() as session:
+        response = await session.get(url=url, headers=headers)
+        soup = BeautifulSoup(await response.text(), 'lxml')
+        pages_count = int(soup.find('div', class_='pagination-number').find_all('a')[-1].text)
+
+        tasks = []
+
+        for page in range(1, pages_count + 1):
+            task = asyncio.create_task(get_page_data(session, page))
+            tasks.append(task)
+
+        await asyncio.gather(*tasks)
+
 
 def main():
-    get_data()
+    asyncio.get_event_loop().run_until_complete(gather_data())
+    cur_time = datetime.datetime.now().strftime('%d-%m-%Y-%H-%M')
+
+    with open(f'data/data_{cur_time}_async.json', 'a', encoding='utf-8') as file:
+        json.dump(books_data, file, indent=4, ensure_ascii=False)
+
+    with open(f'data/labirint_{cur_time}_async.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            (
+                'Название книги',
+                'Автор',
+                'Издательство',
+                'Цена со скидкой',
+                'Цена без скидки',
+                'Процент скидки',
+                'Наличие на складе'
+            )
+        )
+    for book in books_data:
+        with open(f'data/labirint_{cur_time}_async.csv', 'a', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                (
+                    book['book_title'],
+                    book['book_author'],
+                    book['book_publishing'],
+                    book['book_new_price'],
+                    book['book_old_price'],
+                    book['book_sale'],
+                    book['book_status']
+                )
+            )
+
     finish_time = time.time() - start_time
     print(f'Время работы программы: {finish_time}')
 
