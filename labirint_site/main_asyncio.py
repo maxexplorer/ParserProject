@@ -5,6 +5,8 @@ import datetime
 import csv
 import json
 import time
+import aiofiles
+from aiocsv import AsyncWriter
 
 start_time = time.time()
 books_data = []
@@ -103,16 +105,16 @@ async def gather_data():
         await asyncio.gather(*tasks)
 
 
-def main():
-    asyncio.get_event_loop().run_until_complete(gather_data())
+async def main():
+    await gather_data()
     cur_time = datetime.datetime.now().strftime('%d-%m-%Y-%H-%M')
 
     with open(f'data/data_{cur_time}_async.json', 'a', encoding='utf-8') as file:
         json.dump(books_data, file, indent=4, ensure_ascii=False)
 
-    with open(f'data/labirint_{cur_time}_async.csv', 'w', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(
+    async with aiofiles.open(f'data/labirint_{cur_time}_async.csv', 'w', encoding='utf-8') as file:
+        writer = AsyncWriter(file)
+        await writer.writerow(
             (
                 'Название книги',
                 'Автор',
@@ -124,9 +126,9 @@ def main():
             )
         )
     for book in books_data:
-        with open(f'data/labirint_{cur_time}_async.csv', 'a', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow(
+        async with aiofiles.open(f'data/labirint_{cur_time}_async.csv', 'a', encoding='utf-8') as file:
+            writer = AsyncWriter(file)
+            await writer.writerow(
                 (
                     book['book_title'],
                     book['book_author'],
@@ -143,4 +145,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.get_event_loop().run_until_complete(main())
