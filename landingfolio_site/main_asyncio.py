@@ -25,39 +25,36 @@ async def get_data_file(headers):
     img_count = 0
     result_list = []
     async with aiohttp.ClientSession() as session:
-        flag = True
-        while flag:
-            url = f"https://s1.landingfolio.com/api/v1/inspiration/?offset={offset}&color=%23undefined"
-            response = await session.get(url=url, headers=headers)
-            data = await response.json(content_type=None)
-
-            for item in data:
-                if "description" in item:
-
-                    images = item.get("images")
-                    img_count += len(images)
-
-                    for img in images:
-                        img.update({"url": f"https://landingfoliocom.imgix.net/{img.get('url')}"})
-
-                    result_list.append(
-                        {
-                            "title": item.get("title"),
-                            "description": item.get("description"),
-                            "url": item.get("url"),
-                            "images": images
-                        }
-                    )
-                else:
-                    with open("result_list_asyncio.json", "a", encoding='utf-8') as file:
-                        json.dump(result_list, file, indent=4, ensure_ascii=False)
-
-                    print(f"[INFO] Work finished. Images count is: {img_count}\n{'=' * 20}")
-                    flag = False
-                    break
-
-            print(f"[+] Processed {offset}")
-            offset += 1
+        # while True:
+        #     url = f"https://s1.landingfolio.com/api/v1/inspiration/?offset={offset}&color=%23undefined
+        #     response = await session.get(url=url, headers=headers)
+        #     data = await response.json(content_type=None)
+        #
+        #     for item in data:
+        #         if "description" in item:
+        #
+        #             images = item.get("images")
+        #             img_count += len(images)
+        #
+        #             for img in images:
+        #                 img.update({"url": f"https://landingfoliocom.imgix.net/{img.get('url')}"})
+        #
+        #             result_list.append(
+        #                 {
+        #                     "title": item.get("title"),
+        #                     "description": item.get("description"),
+        #                     "url": item.get("url"),
+        #                     "images": images
+        #                 }
+        #             )
+        #         else:
+        #             with open("result_list_asyncio.json", "a", encoding='utf-8') as file:
+        #                 json.dump(result_list, file, indent=4, ensure_ascii=False)
+        #
+        #             return f"[INFO] Work finished. Images count is: {img_count}\n{'=' * 20}"
+        #
+        #     print(f"[+] Processed {offset}")
+        #     offset += 1
 
         try:
             with open("result_list_asyncio.json") as file:
