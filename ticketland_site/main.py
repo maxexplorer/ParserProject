@@ -1,7 +1,10 @@
+import csv
+
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import time
+import datetime
 import os
 import json
 from random import randrange
@@ -57,11 +60,25 @@ def get_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         urls_list = [line.strip() for line in file.readlines()]
 
+    with open('data/result.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            (
+                'Название спектакля',
+                'Место представления',
+                'Дата и время',
+                'Цена',
+                'Ссылка на изображение',
+                'Актеры',
+                'Описание'
+            )
+        )
+
     urls_count = len(urls_list)
     result_data = []
 
     with requests.Session() as session:
-        for i, url in enumerate(urls_list[:3], 1):
+        for i, url in enumerate(urls_list[:100], 1):
             response = session.get(url=url, headers=headers)
             soup = BeautifulSoup(response.text, 'lxml')
 
@@ -76,7 +93,7 @@ def get_data(file_path):
                 images = ['https:' + item.get('data-src') for item in
                           soup.find('ul', class_='slides').find_all('img', class_='lazy-show')]
                 actors = [actor.text.strip() for actor in soup.find_all('a', class_='person__modal-box')]
-                description = ''.join([item.text.strip().replace('\n', '') for item in
+                description = ''.join([item.text.strip().replace(' ', '') for item in
                                        soup.find('div', itemprop='description').find_all('p')])
 
                 result_data.append(
@@ -95,8 +112,22 @@ def get_data(file_path):
 
             print(f'Обработано {i}/{urls_count}')
 
-    with open('data/result.json', 'w', encoding='utf-8') as file:
-        json.dump(result_data, file, indent=4, ensure_ascii=False)
+            with open('data/result.csv', 'a', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(
+                    (
+                        title,
+                        place,
+                        date,
+                        price,
+                        images,
+                        actors,
+                        description
+                    )
+                )
+
+    # with open('data/result.json', 'w', encoding='utf-8') as file:
+    #     json.dump(result_data, file, indent=4, ensure_ascii=False)
 
 
 def main():
