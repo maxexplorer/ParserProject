@@ -1,12 +1,10 @@
-import csv
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import time
-import datetime
 import os
 import json
+import csv
 from random import randrange
 
 useragent = UserAgent()
@@ -126,12 +124,12 @@ def get_data(file_path):
                     )
                 )
 
-    # with open('data/result.json', 'w', encoding='utf-8') as file:
-    #     json.dump(result_data, file, indent=4, ensure_ascii=False)
+    with open('data/result.json', 'w', encoding='utf-8') as file:
+        json.dump(result_data, file, indent=4, ensure_ascii=False)
 
 
 def main():
-    # get_urls('https://www.ticketland.ru/spectacle/')
+    get_urls('https://www.ticketland.ru/spectacle/')
     get_data('data/url_list.txt')
     finish_time = time.time() - start_time
     print(f'Время работы программы: {finish_time}')
