@@ -16,14 +16,14 @@ def get_all_pages(url):
         'user-agent': useragent.random
     }
 
-    req = requests.get(url=url, headers=headers)
-    print(req.headers['Content-Type'])
-
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/page_1.html', 'w', encoding='utf-8') as file:
-        file.write(req.text)
+    # req = requests.get(url=url, headers=headers)
+    # print(req.headers['Content-Type'])
+    #
+    # if not os.path.exists('data'):
+    #     os.mkdir('data')
+    #
+    # with open('data/page_1.html', 'w', encoding='utf-8') as file:
+    #     file.write(req.text)
 
     with open('data/page_1.html', 'r', encoding='utf-8') as file:
         src = file.read()

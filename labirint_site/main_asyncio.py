@@ -92,15 +92,16 @@ async def gather_data():
     }
 
     async with aiohttp.ClientSession() as session:
-        response = await session.get(url=url, headers=headers)
-        soup = BeautifulSoup(await response.text(), 'lxml')
-        pages_count = int(soup.find('div', class_='pagination-number').find_all('a')[-1].text)
+        # response = await session.get(url=url, headers=headers)
+        async with session.get(url=url, headers=headers) as response:
+            soup = BeautifulSoup(await response.text(), 'lxml')
+            pages_count = int(soup.find('div', class_='pagination-number').find_all('a')[-1].text)
 
-        tasks = []
+            tasks = []
 
-        for page in range(1, pages_count + 1):
-            task = asyncio.create_task(get_page_data(session, page))
-            tasks.append(task)
+            for page in range(1, pages_count + 1):
+                task = asyncio.create_task(get_page_data(session, page))
+                tasks.append(task)
 
         await asyncio.gather(*tasks)
 

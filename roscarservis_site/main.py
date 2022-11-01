@@ -2,7 +2,6 @@ import datetime
 import json
 import requests
 
-
 headers = {
     'Accept': 'application/json, text/javascript, */*; q=0.01',
     'X-Is-Ajax-Request': 'X-Is-Ajax-Request',
@@ -87,6 +86,7 @@ def get_data():
 
     diff_time = datetime.datetime.now() - start_time
     print(diff_time)
+
 
 def main():
     get_data()

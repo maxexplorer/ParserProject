@@ -93,8 +93,6 @@ async def gather_data():
         pages_count = response_json['pageCount']
         print(pages_count)
 
-
-
         tasks = []
 
         for page in range(1, pages_count + 1):

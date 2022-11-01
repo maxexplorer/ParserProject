@@ -4,6 +4,7 @@ import os
 import time
 import json
 
+
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
               'application/signed-exchange;v=b3;q=0.9',
@@ -40,7 +41,7 @@ def get_articles_urls():
             page += 1
 
             if 'active' in str(pagination[-1]):
-                with open('data/articles_urls.text', 'w', encoding='utf-8') as file:
+                with open('data/articles_urls.txt', 'w', encoding='utf-8') as file:
                     print(*article_url_list, file=file, sep='\n')
 
                 return f'Обработано {page - 1} страниц!'
@@ -79,13 +80,13 @@ def get_data(file_path):
 
             print(f'Обработано {i}/{urls_count}')
 
-        with open('data/result.json', 'w', encoding='utf-8') as file:
-            json.dump(result_data, file, indent=4, ensure_ascii=False)
+    with open('data/result.json', 'w', encoding='utf-8') as file:
+        json.dump(result_data, file, indent=4, ensure_ascii=False)
 
 
 def main():
-    print(get_articles_urls())
-    get_data('data/articles_urls.text')
+    # print(get_articles_urls())
+    get_data('data/articles_urls.txt')
     finish_time = time.time() - start_time
     print(f'Время работы программы: {finish_time}')
 
