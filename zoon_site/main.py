@@ -1,14 +1,16 @@
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-import time
 import os
+import time
 
-url = "https://zoon.ru/msk/hotels/"
-
+# url = "https://zoon.ru/msk/hotels/"
+url = "https://rostov.zoon.ru/hotels/"
 
 # options
 options = webdriver.ChromeOptions()
@@ -19,51 +21,38 @@ options.add_argument(f'user-agent={useragent.random}')
 
 
 def get_search_html(url):
-    driver = webdriver.Chrome(
+    browser = webdriver.Chrome(
         executable_path="C:/Users/Макс/PycharmProjects/ParserProject/chromedriver/chromedriver.exe",
         options=options,
     )
-    driver.maximize_window()
+    browser.maximize_window()
 
     try:
-        driver.get(url=url)
-        time.sleep(3)
+        browser.get(url=url)
+        time.sleep(5)
 
         while True:
-            find_more_element = driver.find_element(By.CLASS_NAME, 'catalog-button-showMore')
-            if driver.find_elements(By.CLASS_NAME, 'hasmore-text'):
+            element = WebDriverWait(browser, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, 'catalog-button-showMore'))
+            )
+
+            if not browser.find_elements(By.CLASS_NAME, 'js-next-page'):
+                if not os.path.exists('data'):
+                    os.mkdir('data')
                 with open('data/page_source.html', 'w', encoding='utf-8') as file:
-                    file.write(driver.page_source)
+                    file.write(browser.page_source)
                 break
             else:
-                actions = ActionChains(driver)
-                actions.move_to_element(find_more_element).perform()
-                time.sleep(3)
+                actions = ActionChains(browser)
+                actions.move_to_element(element).click().perform()
+                time.sleep(5)
 
-        # SCROLL_PAUSE_TIME = 3
-        #
-        # # Get scroll height
-        # last_height = driver.execute_script("return document.body.scrollHeight")
-        #
-        # while True:
-        #     # Scroll down to bottom
-        #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #
-        #     # Wait to load page
-        #     time.sleep(SCROLL_PAUSE_TIME)
-        #
-        #     # Calculate new scroll height and compare with last scroll height
-        #     new_height = driver.execute_script("return document.body.scrollHeight")
-        #     if new_height == last_height:
-        #         with open('data/page_source.html', 'w', encoding='utf-8') as file:
-        #             file.write(driver.page_source)
-        #         break
-        #     last_height = new_height
+
     except Exception as ex:
         print(ex)
     finally:
-        driver.close()
-        driver.quit()
+        browser.close()
+        browser.quit()
 
 
 def main():
