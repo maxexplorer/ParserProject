@@ -33,7 +33,7 @@ def get_search_html(url):
 
         while True:
             element = WebDriverWait(browser, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, 'catalog-button-showMore'))
+                EC.element_to_be_clickable((By.CLASS_NAME, 'catalog-button-showMore'))
             )
 
             if not browser.find_elements(By.CLASS_NAME, 'js-next-page'):
@@ -55,8 +55,27 @@ def get_search_html(url):
         browser.quit()
 
 
+def get_items_urls(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        src = file.read()
+
+    soup = BeautifulSoup(src, 'lxml')
+    items_divs = soup.find_all('div', class_='minicard-item__info')
+
+    urls = []
+    for item in items_divs:
+        item_url = item.find('h2', class_='minicard-item__title').find('a').get('href')
+        urls.append(item_url)
+
+    with open('data/items_urls.txt', 'w', encoding='utf-8') as file:
+        print(*urls, file=file, sep='\n')
+
+    return '[INFO] Urls collected successfully!'
+
+
 def main():
     get_search_html(url=url)
+    print(get_items_urls(file_path='data/page_source.html'))
 
 
 if __name__ == '__main__':
