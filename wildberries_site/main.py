@@ -12,6 +12,17 @@ headers = {
                   ' Chrome/108.0.0.0 Safari/537.36'
 }
 
-response = requests.get(url=url, headers=headers)
+def get_data(url, headers):
+    response = requests.get(url=url, headers=headers)
 
-print(response.json())
+    data = response.json()
+
+
+
+
+def main():
+    get_data(url=url, headers=headers)
+
+if __name__ == '__main__':
+    main()
+
