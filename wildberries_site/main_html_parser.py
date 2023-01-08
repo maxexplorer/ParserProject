@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import os
 import json
+from pprint import pprint
 
 headers = {
     'Accept': '*/*',
@@ -31,23 +32,14 @@ def get_html(url):
 
     try:
         browser.get(url=url)
-
         time.sleep(5)
-
-        # if not os.path.exists('data'):
-        #     os.mkdir('data')
-        #
-        # with open('data/page_source.html', 'w', encoding='utf-8') as file:
-        #     file.write(browser.page_source)
+        html = browser.page_source
+        return html
     except Exception as ex:
         print(ex)
     finally:
         browser.close()
         browser.quit()
-
-    html = browser.page_source
-    return html
-
 
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
@@ -58,14 +50,44 @@ def get_pages(html):
         pages = 1
     return pages
 
+
 def get_content(html):
-    pass
+    cards = []
+    soup = BeautifulSoup(html, 'lxml')
+    items = soup.find_all('div', class_="product-card")
+    for item in items:
+        try:
+            title = item.find('span', class_='goods-name').text
+        except Exception:
+            title = 'Нет названия'
+        try:
+            lower_price = int(item.find(class_='price__lower-price').text.strip().replace('\xa0', '').replace('₽', ''))
+        except Exception:
+            lower_price = 'Нет цены'
+        try:
+            price = int(
+                item.find('span', class_='price__wrap').find('del').text.strip().replace('\xa0', '').replace('₽', ''))
+        except Exception:
+            price = 'Нет цены'
+        try:
+            card_sale = item.find('span', class_='product-card__sale').text.strip()
+            sale = int(''.join((c for c in card_sale if c.isdigit())))
+        except Exception:
+            sale = 'Нет скидки'
+
+        cards.append(
+            {
+                'title': title,
+                'lower_price': lower_price,
+                'price': price,
+                'sale': sale
+            }
+        )
+    return cards
 
 
-def parse():
-    # html = get_html(url=url)
-    with open('data/page_source.html', 'r', encoding='utf-8') as file:
-        html = file.read()
+def parse(url):
+    html = get_html(url=url)
     pages = get_pages(html)
     print(f'Количество страниц: {pages}')
     cards = []
@@ -76,11 +98,12 @@ def parse():
         html = get_html(url)
         cards.extend(get_content(html))
 
+    if not os.path.exists('data'):
+        os.mkdir('data')
 
-
-
-
+    with open('data/cards.json', 'w', encoding='utf-8') as file:
+        json.dump(cards, file, indent=4, ensure_ascii=False)
 
 
 if __name__ == '__main__':
-    parse()
+    parse(url=url)
