@@ -5,6 +5,10 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import os
 import json
+import pandas
+from pandas import ExcelWriter
+import openpyxl
+
 from pprint import pprint
 
 headers = {
@@ -41,6 +45,7 @@ def get_html(url):
         browser.close()
         browser.quit()
 
+
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     try:
@@ -70,24 +75,40 @@ def get_content(html):
         except Exception:
             price = 'Нет цены'
         try:
-            card_sale = item.find('span', class_='product-card__sale').text.strip()
-            sale = int(''.join((c for c in card_sale if c.isdigit())))
+            card_discount = item.find('span', class_='product-card__sale').text.strip()
+            discount = int(''.join((c for c in card_discount if c.isdigit())))
         except Exception:
-            sale = 'Нет скидки'
+            discount = 'Нет скидки'
 
         cards.append(
             {
+                'brand': brand.title(),
                 'title': title,
                 'lower_price': lower_price,
                 'price': price,
-                'sale': sale
+                'discount': discount
             }
         )
     return cards
 
 
+def save_excel(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    dataframe = pandas.DataFrame(data)
+    newdataframe = dataframe.rename(columns={'brand': 'Брэнд', 'title': 'Наименование',
+                                             'lower_price': 'Цена со скидкой', 'price': 'Цена без скидки',
+                                             'discount': 'Скидка',
+                                             })
+    writer = ExcelWriter('data/data.xlsx')
+    newdataframe.to_excel(writer, 'data')
+    writer.save()
+    print(f'Данные сохранены в файл "data.xlsx"')
+
+
 def parse(url):
-    html = get_html(url=url)
+    html = get_html(url)
     pages = get_pages(html)
     print(f'Количество страниц: {pages}')
     cards = []
@@ -97,6 +118,7 @@ def parse(url):
         url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
         html = get_html(url)
         cards.extend(get_content(html))
+    save_excel(cards)
 
     if not os.path.exists('data'):
         os.mkdir('data')
