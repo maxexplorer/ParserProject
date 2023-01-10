@@ -49,11 +49,11 @@ def get_html(url):
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     try:
-        brand_count = soup.find('span', class_='brand-custom-header__count').text
+        brand_count = soup.find('span', class_='goods-count').text
         pages = int(''.join((c for c in brand_count if c.isdigit()))) // 100 + 1
-    except Exception:
-        pages = 1
-    return pages
+        return pages
+    except Exception as ex:
+        print(ex)
 
 
 def get_content(html):
@@ -75,7 +75,7 @@ def get_content(html):
         except Exception:
             price = 'Нет цены'
         try:
-            card_discount = item.find('span', class_='product-card__sale').text.strip()
+            card_discount = item.find('span', class_='product-card__tip').text.strip()
             discount = int(''.join((c for c in card_discount if c.isdigit())))
         except Exception:
             discount = 'Нет скидки'
