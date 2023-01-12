@@ -91,6 +91,15 @@ def get_content(html):
         )
     return cards
 
+def save_json(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/cards.json', 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+
+def save_csv(data):
+    pass
 
 def save_excel(data):
     if not os.path.exists('data'):
