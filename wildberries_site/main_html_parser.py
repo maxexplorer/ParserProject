@@ -1,3 +1,4 @@
+
 import time
 import requests
 from selenium import webdriver
@@ -5,6 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import os
 import json
+import csv
 import pandas
 from pandas import ExcelWriter
 import openpyxl
@@ -95,11 +97,22 @@ def save_json(data):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/cards.json', 'w', encoding='utf-8') as file:
+    with open('data/data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
 def save_csv(data):
-    pass
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/data.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+          ('Брэнд',
+            'Наименование',
+            'Цена со скидкой',
+            'Цена без скидки',
+            'Скидка')
+        )
 
 def save_excel(data):
     if not os.path.exists('data'):
@@ -127,13 +140,8 @@ def parse(url):
         url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
         html = get_html(url)
         cards.extend(get_content(html))
-    save_excel(cards)
-
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/cards.json', 'w', encoding='utf-8') as file:
-        json.dump(cards, file, indent=4, ensure_ascii=False)
+    # save_excel(cards)
+    save_csv(cards)
 
 
 if __name__ == '__main__':
