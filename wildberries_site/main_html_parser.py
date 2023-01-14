@@ -64,7 +64,7 @@ def get_content(html):
     items = soup.find_all('div', class_="product-card")
     for item in items:
         try:
-            title = item.find('span', class_='goods-name').text
+            title = item.find('span', class_='goods-name').text.strip(' / ')
         except Exception:
             title = 'Нет названия'
         try:
@@ -113,6 +113,11 @@ def save_csv(data):
             'Цена без скидки',
             'Скидка')
         )
+    with open('data/data.csv', 'a', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerows(
+            [*(v.values() for v in data)]
+        )
 
 def save_excel(data):
     if not os.path.exists('data'):
@@ -130,18 +135,23 @@ def save_excel(data):
 
 
 def parse(url):
-    html = get_html(url)
-    pages = get_pages(html)
-    print(f'Количество страниц: {pages}')
-    cards = []
-    pages = int(input('Введите количество страниц: '))
-    for page in range(1, pages + 1):
-        print(f'Парсинг страницы: {page}')
-        url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
-        html = get_html(url)
-        cards.extend(get_content(html))
-    # save_excel(cards)
+    with open('data/index.html', 'r', encoding='utf-8') as file:
+        html = file.read()
+    cards = get_content(html)
     save_csv(cards)
+    # html = get_html(url)
+    # pages = get_pages(html)
+    # print(f'Количество страниц: {pages}')
+    # cards = []
+    # pages = int(input('Введите количество страниц: '))
+    # for page in range(1, pages + 1):
+    #     print(f'Парсинг страницы: {page}')
+    #     url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
+    #     html = get_html(url)
+    #     cards.extend(get_content(html))
+    # save_excel(cards)
+    # save_csv(cards)
+    # save_json(cards)
 
 
 if __name__ == '__main__':
