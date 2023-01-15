@@ -112,8 +112,9 @@ def save_csv(data):
              'Цена без скидки',
              'Скидка')
         )
-    for item in data:
-        with open('data/data.csv', 'a', encoding='utf-8') as file:
+
+    with open('data/data.csv', 'a', encoding='utf-8') as file:
+        for item in data:
             writer = csv.writer(file)
             writer.writerow(
                 (item['brand'],
