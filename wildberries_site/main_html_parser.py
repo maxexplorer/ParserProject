@@ -1,4 +1,3 @@
-
 import time
 import requests
 from selenium import webdriver
@@ -10,8 +9,6 @@ import csv
 import pandas
 from pandas import ExcelWriter
 import openpyxl
-
-from pprint import pprint
 
 headers = {
     'Accept': '*/*',
@@ -93,12 +90,14 @@ def get_content(html):
         )
     return cards
 
+
 def save_json(data):
     if not os.path.exists('data'):
         os.mkdir('data')
 
     with open('data/data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
+
 
 def save_csv(data):
     if not os.path.exists('data'):
@@ -107,17 +106,23 @@ def save_csv(data):
     with open('data/data.csv', 'w', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(
-          ('Брэнд',
-            'Наименование',
-            'Цена со скидкой',
-            'Цена без скидки',
-            'Скидка')
+            ('Брэнд',
+             'Наименование',
+             'Цена со скидкой',
+             'Цена без скидки',
+             'Скидка')
         )
-    with open('data/data.csv', 'a', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerows(
-            [*(v.values() for v in data)]
-        )
+    for item in data:
+        with open('data/data.csv', 'a', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                (item['brand'],
+                 item['title'],
+                 item['lower_price'],
+                 item['price'],
+                 item['discount'])
+            )
+
 
 def save_excel(data):
     if not os.path.exists('data'):
