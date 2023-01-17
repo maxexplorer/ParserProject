@@ -78,6 +78,11 @@ def get_content(html):
             discount = int(''.join((c for c in card_discount if c.isdigit())))
         except Exception:
             discount = 'Нет скидки'
+        try:
+            rating = int(item.find('span', class_='product-card__rating').get('class')[-1][-1])
+            print(rating)
+        except:
+            rating = 'Нет рейтинга'
 
         cards.append(
             {
@@ -85,7 +90,8 @@ def get_content(html):
                 'title': title,
                 'lower_price': lower_price,
                 'price': price,
-                'discount': discount
+                'discount': discount,
+                'rating': rating
             }
         )
     return cards
@@ -123,6 +129,7 @@ def save_csv(data):
                  item['price'],
                  item['discount'])
             )
+            # [*(v.values() for v in data)]
 
 
 def save_excel(data):
@@ -141,10 +148,14 @@ def save_excel(data):
 
 
 def parse(url):
+    # html = get_html(url)
+    # with open('data/index.html', 'w', encoding='utf-8') as file:
+    #     file.write(html)
     with open('data/index.html', 'r', encoding='utf-8') as file:
         html = file.read()
     cards = get_content(html)
-    save_csv(cards)
+    save_json(cards)
+    # save_csv(cards)
     # html = get_html(url)
     # pages = get_pages(html)
     # print(f'Количество страниц: {pages}')
