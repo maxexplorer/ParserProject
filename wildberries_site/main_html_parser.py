@@ -80,9 +80,12 @@ def get_content(html):
             discount = 'Нет скидки'
         try:
             rating = int(item.find('span', class_='product-card__rating').get('class')[-1][-1])
-            print(rating)
         except:
             rating = 'Нет рейтинга'
+        try:
+            url_product = item.find('a', class_='product-card__main j-card-link').get('href')
+        except:
+            url_product = 'Нет ссылки на тоавар'
 
         cards.append(
             {
@@ -91,7 +94,8 @@ def get_content(html):
                 'lower_price': lower_price,
                 'price': price,
                 'discount': discount,
-                'rating': rating
+                'rating': rating,
+                'url_product': url_product
             }
         )
     return cards
@@ -116,7 +120,9 @@ def save_csv(data):
              'Наименование',
              'Цена со скидкой',
              'Цена без скидки',
-             'Скидка')
+             'Скидка',
+             'Рейтинг',
+             'Ссылка на карточку товара')
         )
 
     with open('data/data.csv', 'a', encoding='utf-8') as file:
@@ -127,7 +133,9 @@ def save_csv(data):
                  item['title'],
                  item['lower_price'],
                  item['price'],
-                 item['discount'])
+                 item['discount'],
+                 item['rating'],
+                 item['url_product'])
             )
             # [*(v.values() for v in data)]
 
@@ -154,8 +162,9 @@ def parse(url):
     with open('data/index.html', 'r', encoding='utf-8') as file:
         html = file.read()
     cards = get_content(html)
-    save_json(cards)
+    # save_json(cards)
     # save_csv(cards)
+    # save_excel(cards)
     # html = get_html(url)
     # pages = get_pages(html)
     # print(f'Количество страниц: {pages}')
