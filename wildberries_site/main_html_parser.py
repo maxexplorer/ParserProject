@@ -1,5 +1,4 @@
 import time
-import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
@@ -36,6 +35,17 @@ def get_html(url):
     try:
         browser.get(url=url)
         time.sleep(5)
+
+        last_height = browser.execute_script("return document.body.scrollHeight")
+
+        while True:
+            browser.execute_script("window.scrollTo(0, document.body.scrollHeight-1000);")
+            time.sleep(5)
+            new_height = browser.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+
         html = browser.page_source
         return html
     except Exception as ex:
@@ -83,9 +93,9 @@ def get_content(html):
         except:
             rating = 'Нет рейтинга'
         try:
-            url_product = item.find('a', class_='product-card__main j-card-link').get('href')
+            url = item.find('a', class_='product-card__main j-card-link').get('href')
         except:
-            url_product = 'Нет ссылки на тоавар'
+            url = 'Нет ссылки на товар'
 
         cards.append(
             {
@@ -95,7 +105,7 @@ def get_content(html):
                 'price': price,
                 'discount': discount,
                 'rating': rating,
-                'url_product': url_product
+                'url': url
             }
         )
     return cards
@@ -135,7 +145,7 @@ def save_csv(data):
                  item['price'],
                  item['discount'],
                  item['rating'],
-                 item['url_product'])
+                 item['url'])
             )
             # [*(v.values() for v in data)]
 
@@ -147,7 +157,8 @@ def save_excel(data):
     dataframe = pandas.DataFrame(data)
     newdataframe = dataframe.rename(columns={'brand': 'Брэнд', 'title': 'Наименование',
                                              'lower_price': 'Цена со скидкой', 'price': 'Цена без скидки',
-                                             'discount': 'Скидка',
+                                             'discount': 'Скидка', 'rating': 'Рейтинг',
+                                             'url': 'Ссылка на карточку товара'
                                              })
     writer = ExcelWriter('data/data.xlsx')
     newdataframe.to_excel(writer, 'data')
@@ -156,28 +167,19 @@ def save_excel(data):
 
 
 def parse(url):
-    # html = get_html(url)
-    # with open('data/index.html', 'w', encoding='utf-8') as file:
-    #     file.write(html)
-    with open('data/index.html', 'r', encoding='utf-8') as file:
-        html = file.read()
-    cards = get_content(html)
-    # save_json(cards)
-    # save_csv(cards)
-    # save_excel(cards)
-    # html = get_html(url)
-    # pages = get_pages(html)
-    # print(f'Количество страниц: {pages}')
-    # cards = []
-    # pages = int(input('Введите количество страниц: '))
-    # for page in range(1, pages + 1):
-    #     print(f'Парсинг страницы: {page}')
-    #     url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
-    #     html = get_html(url)
-    #     cards.extend(get_content(html))
-    # save_excel(cards)
-    # save_csv(cards)
-    # save_json(cards)
+    html = get_html(url)
+    pages = get_pages(html)
+    print(f'Количество страниц: {pages}')
+    cards = []
+    pages = int(input('Введите количество страниц: '))
+    for page in range(1, pages + 1):
+        print(f'Парсинг страницы: {page}')
+        url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
+        html = get_html(url)
+        cards.extend(get_content(html))
+    save_excel(cards)
+    save_csv(cards)
+    save_json(cards)
 
 
 if __name__ == '__main__':
