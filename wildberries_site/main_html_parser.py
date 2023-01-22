@@ -1,6 +1,9 @@
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import os
 import json
@@ -40,7 +43,10 @@ def get_html(url):
 
         while True:
             browser.execute_script("window.scrollTo(0, document.body.scrollHeight-1000);")
-            time.sleep(5)
+            # time.sleep(5)
+            WebDriverWait(browser, 5).until(
+                EC.presence_of_element_located((By.CLASS_NAME, 'product-card-list'))
+            )
             new_height = browser.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
                 break
@@ -176,10 +182,12 @@ def parse(url):
         print(f'Парсинг страницы: {page}')
         url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
         html = get_html(url)
-        cards.extend(get_content(html))
-    save_excel(cards)
-    save_csv(cards)
-    save_json(cards)
+        cards = get_content(html)
+        print(len(cards))
+    #     cards.extend(get_content(html))
+    # save_excel(cards)
+    # save_csv(cards)
+    # save_json(cards)
 
 
 if __name__ == '__main__':
