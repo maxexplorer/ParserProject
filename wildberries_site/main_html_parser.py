@@ -28,12 +28,13 @@ def get_html(url):
     options = Options()
     options.add_argument('User-Agent = Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
                          ' Chrome/108.0.0.0 Safari/537.36')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--headless")
 
     browser = webdriver.Chrome(
         executable_path="C:/Users/Макс/PycharmProjects/ParserProject/chromedriver/chromedriver.exe",
         options=options
     )
-    browser.maximize_window()
 
     try:
         browser.get(url=url)
@@ -44,9 +45,10 @@ def get_html(url):
         while True:
             browser.execute_script("window.scrollTo(0, document.body.scrollHeight-1000);")
             # time.sleep(5)
-            WebDriverWait(browser, 5).until(
-                EC.presence_of_element_located((By.CLASS_NAME, 'product-card-list'))
-            )
+            browser.implicitly_wait(10)
+            # WebDriverWait(browser, 5).until(
+            #     EC.presence_of_element_located((By.CLASS_NAME, 'product-card-list'))
+            # )
             new_height = browser.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
                 break
@@ -173,10 +175,10 @@ def save_excel(data):
 
 
 def parse(url):
-    html = get_html(url)
-    pages = get_pages(html)
-    print(f'Количество страниц: {pages}')
-    cards = []
+    # html = get_html(url)
+    # pages = get_pages(html)
+    # print(f'Количество страниц: {pages}')
+    # cards = []
     pages = int(input('Введите количество страниц: '))
     for page in range(1, pages + 1):
         print(f'Парсинг страницы: {page}')
