@@ -1,5 +1,6 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import os
@@ -22,10 +23,22 @@ def get_html(url):
 
     try:
         browser.get(url=url)
-        time.sleep(5)
+        print(browser.window_handles)
+        print(browser.current_url)
+        # time.sleep(5)
+        browser.implicitly_wait(5)
 
-        html = browser.page_source
-        return html
+        items = browser.find_elements(By.CSS_SELECTOR, '[data-marker=item]')
+        items[0].click()
+        # time.sleep(5)
+
+        browser.switch_to.window(browser.window_handles[1])
+        print(browser.current_url)
+
+
+
+        # html = browser.page_source
+        # return html
     except Exception as ex:
         print(ex)
     finally:
@@ -37,22 +50,22 @@ def get_html(url):
 def get_content(html):
     soup = BeautifulSoup(html, 'lxml')
 
-    cards = soup.find_all('div', {'data-marker': 'item'})
+    items = soup.find_all('div', {'data-marker': 'item'})
 
-    for i in cards:
-        title = i.find('h3', itemprop='name')
+    for item in items:
+        title = item.find('h3', itemprop='name')
         print(title.text)
 
 
 def main():
-    # html = get_html(url=url)
+    html = get_html(url=url)
     # if not os.path.exists('data'):
     #     os.mkdir('data')
     # with open('data/index.html',  'w', encoding='utf-8') as file:
     #     file.write(html)
-    with open('data/index.html', 'r', encoding='utf-8') as file:
-        html = file.read()
-    print(get_content(html))
+    # with open('data/index.html', 'r', encoding='utf-8') as file:
+    #     html = file.read()
+    # print(get_content(html))
 
 
 if __name__ == '__main__':
