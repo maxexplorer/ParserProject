@@ -33,6 +33,7 @@ def get_html(url):
         browser.close()
         browser.quit()
 
+
 def get_content(html):
     soup = BeautifulSoup(html, 'lxml')
 
@@ -40,7 +41,10 @@ def get_content(html):
 
     for item in items:
         title = item.find('h3', itemprop='name')
-        print(title.text)
+        price = int(item.find('span', itemprop='offers').text.strip().replace('\xa0', '').replace('₽', ''))
+        params = item.find('div', {'data-marker': 'item-specific-params'}).text.strip()
+        description = item.find('div', class_='iva-item-descriptionStep-C0ty1').text.strip()
+        print(title.text, price, params, description)
     return items
 
 

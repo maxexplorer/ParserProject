@@ -87,8 +87,7 @@ def get_content(html):
         except Exception:
             lower_price = 'Нет цены'
         try:
-            price = int(
-                item.find('span', class_='price__wrap').find('del').text.strip().replace('\xa0', '').replace('₽', ''))
+            price = int(item.find('span', class_='price__wrap').find('del').text.strip().replace('\xa0', '').replace('₽', ''))
         except Exception:
             price = 'Нет цены'
         try:
