@@ -35,16 +35,37 @@ def get_html(url):
 
 
 def get_content(html):
+    cards = []
     soup = BeautifulSoup(html, 'lxml')
 
     items = soup.find_all('div', {'data-marker': 'item'})
 
     for item in items:
-        title = item.find('h3', itemprop='name')
-        price = int(item.find('span', itemprop='offers').text.strip().replace('\xa0', '').replace('₽', ''))
-        params = item.find('div', {'data-marker': 'item-specific-params'}).text.strip()
-        description = item.find('div', class_='iva-item-descriptionStep-C0ty1').text.strip()
-        print(title.text, price, params, description)
+        try:
+            title = item.find('h3', itemprop='name').text.strip()
+        except Exception:
+            title = 'Нет названия'
+        try:
+            price = int(item.find('span', itemprop='offers').text.strip().replace('\xa0', '').replace('₽', ''))
+        except Exception:
+            price = ''
+        try:
+            params = item.find('div', {'data-marker': 'item-specific-params'}).text.strip()
+        except Exception:
+            params = ''
+        try:
+            description = item.find('div', class_='iva-item-descriptionStep-C0ty1').text.strip()
+        except Exception:
+            description = ''
+        try:
+            address = item.find('div', class_='geo-address-fhHd0 text-text-LurtD text-size-s-BxGpL').text.strip()
+        except Exception:
+            address = ''
+        try:
+            url = 'https://www.avito.ru/' + item.find('a').get('href')
+        except Exception:
+            url = ''
+        print(title, price, params, description, address, url)
     return items
 
 
