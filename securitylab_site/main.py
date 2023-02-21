@@ -36,7 +36,6 @@ def get_first_news():
                 'article_desc': article_desc
             }
 
-
     except Exception as ex:
         print(ex)
 
@@ -45,6 +44,8 @@ def get_first_news():
 
     with open('data/news_dict.json', 'w', encoding='utf-8') as file:
         json.dump(news_dict, file, indent=4, ensure_ascii=False)
+
+    return news_dict
 
 
 def check_news_update():
