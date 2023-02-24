@@ -2,7 +2,6 @@ import requests
 import json
 
 
-
 def get_catalogs_wb():
     url = 'https://www.wildberries.ru/webapi/menu/main-menu-ru-ru.json'
     headers = {
@@ -47,8 +46,25 @@ def get_catalogs_wb():
     return data_list
 
 
+def search_category_in_catalog(url, catalog_list):
+    try:
+        for catalog in catalog_list:
+            if catalog['category_url'] == url.split('https://www.wildberries.ru')[-1]:
+                print(f'найдено совпадение: {catalog["category_name"]}')
+                name_category = catalog['category_name']
+                shard = catalog['shard']
+                query = catalog['query']
+                return name_category, shard, query
+            else:
+                # print('нет совпадения')
+                pass
+    except:
+        print('Данный раздел не найден!')
+
+
 def main():
     get_catalogs_wb()
+
 
 if __name__ == '__main__':
     main()
