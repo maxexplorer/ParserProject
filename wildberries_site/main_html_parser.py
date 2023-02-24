@@ -8,8 +8,7 @@ from bs4 import BeautifulSoup
 import os
 import json
 import csv
-import pandas
-from pandas import ExcelWriter
+from pandas import DataFrame, ExcelWriter
 import openpyxl
 
 headers = {
@@ -162,7 +161,7 @@ def save_excel(data):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    dataframe = pandas.DataFrame(data)
+    dataframe = DataFrame(data)
     newdataframe = dataframe.rename(columns={'brand': 'Брэнд', 'title': 'Наименование',
                                              'lower_price': 'Цена со скидкой', 'price': 'Цена без скидки',
                                              'discount': 'Скидка', 'rating': 'Рейтинг',
