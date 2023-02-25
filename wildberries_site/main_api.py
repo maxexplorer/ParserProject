@@ -86,14 +86,19 @@ def get_data_from_json(json_file):
 
 
 def get_content(shard, query, low_price=None, top_price=None):
-    headers = {'Accept': "*/*", 'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    headers = {
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                      ' Chrome/108.0.0.0 Safari/537.36'
+    }
     data_list = []
     for page in range(1, 101):
         print(f'Сбор позиций со страницы {page} из 100')
         url = f'https://catalog.wb.ru/catalog/{shard}/catalog?appType=1&curr=rub&dest=-1075831,-77677,-398551,12358499' \
               f'&locale=ru&page={page}&priceU={low_price * 100};{top_price * 100}' \
               f'®=0®ions=64,83,4,38,80,33,70,82,86,30,69,1,48,22,66,31,40&sort=popular&spp=0&{query}'
-        r = requests.get(url, headers=headers)
+
+        r = requests.get(url=url, headers=headers)
         data = r.json()
         print(f'Добавлено позиций: {len(get_data_from_json(data))}')
         if len(get_data_from_json(data)) > 0:
