@@ -1,0 +1,10 @@
+selenium==4.1.5
+requests==2.27.1
+beautifulsoup4==4.11.1
+asyncio==3.4.3
+aiohttp==3.8.1
+aiofiles==0.8.0
+aiocsv==1.2.2
+aiogram==2.25.1
+pandas==1.5.2
+openpyxl==3.0.10

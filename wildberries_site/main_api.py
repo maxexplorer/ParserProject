@@ -1,6 +1,7 @@
 import requests
 import json
 import pandas as pd
+import os
 
 """
 Парсер wildberries по ссылке на каталог (указывать без фильтров)
@@ -20,7 +21,7 @@ def get_catalogs_wb():
     headers = {'Accept': "*/*", 'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     response = requests.get(url, headers=headers)
     data = response.json()
-    with open('wb_catalogs_data.json', 'w', encoding='UTF-8') as file:
+    with open('data/wb_catalogs_data.json', 'w', encoding='UTF-8') as file:
         json.dump(data, file, indent=2, ensure_ascii=False)
         print(f'Данные сохранены в wb_catalogs_data_sample.json')
     data_list = []
@@ -105,10 +106,6 @@ def get_content(shard, query, low_price=None, top_price=None):
     data_list = []
     for page in range(1, 101):
         print(f'Сбор позиций со страницы {page} из 100')
-        # url = f'https://wbxcatalog-ru.wildberries.ru/{shard}' \
-        #       f'/catalog?appType=1&curr=rub&dest=-1029256,-102269,-1278703,-1255563' \
-        #       f'&{query}&lang=ru&locale=ru&sort=sale&page={page}' \
-        #       f'&priceU={low_price * 100};{top_price * 100}'
         url = f'https://catalog.wb.ru/catalog/{shard}/catalog?appType=1&curr=rub&dest=-1075831,-77677,-398551,12358499' \
               f'&locale=ru&page={page}&priceU={low_price * 100};{top_price * 100}' \
               f'&reg=0&regions=64,83,4,38,80,33,70,82,86,30,69,1,48,22,66,31,40&sort=popular&spp=0&{query}'
@@ -123,10 +120,49 @@ def get_content(shard, query, low_price=None, top_price=None):
     return data_list
 
 
+def save_json(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/data.json', 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+
+
+def save_csv(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/data.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            ('Брэнд',
+             'Наименование',
+             'Цена со скидкой',
+             'Цена без скидки',
+             'Скидка',
+             'Рейтинг',
+             'Ссылка на карточку товара')
+        )
+
+    with open('data/data.csv', 'a', encoding='utf-8') as file:
+        for item in data:
+            writer = csv.writer(file)
+            writer.writerow(
+                (item['brand'],
+                 item['title'],
+                 item['lower_price'],
+                 item['price'],
+                 item['discount'],
+                 item['rating'],
+                 item['url'])
+            )
+            # [*(v.values() for v in data)]
+
+
 def save_excel(data, filename):
     """сохранение результата в excel файл"""
     df = pd.DataFrame(data)
-    writer = pd.ExcelWriter(f'{filename}.xlsx')
+    writer = pd.ExcelWriter(f'data/{filename}.xlsx')
     df.to_excel(writer, 'data')
     writer.save()
     print(f'Все сохранено в {filename}.xlsx')
