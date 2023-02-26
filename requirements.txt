@@ -6,5 +6,3 @@ aiohttp==3.8.1
 aiofiles==0.8.0
 aiocsv==1.2.2
 aiogram==2.25.1
-pandas==1.5.2
-openpyxl==3.0.10
