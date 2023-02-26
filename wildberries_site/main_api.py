@@ -1,6 +1,7 @@
 import requests
-import json
 import pandas as pd
+import json
+import csv
 import os
 
 """
@@ -101,7 +102,7 @@ def get_data_from_json(json_file):
 
 
 def get_content(shard, query, low_price=None, top_price=None):
-    # вставляем ценовые рамки для уменьшения выдачи, вилбериес отдает только 100 страниц
+    # вставляем ценовые рамки для уменьшения выдачи, Wildberries отдает только 100 страниц
     headers = {'Accept': "*/*", 'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     data_list = []
     for page in range(1, 101):
@@ -120,47 +121,57 @@ def get_content(shard, query, low_price=None, top_price=None):
     return data_list
 
 
-def save_json(data):
+def save_json(data, name_category, low_price, top_price):
+    """сохранение результата в json файл"""
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/data.json', 'w', encoding='utf-8') as file:
+    with open(f'data/{name_category}_from_{low_price}_to_{top_price}.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
 
-def save_csv(data):
+def save_csv(data, name_category, low_price, top_price):
+    """сохранение результата в csv файл"""
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/data.csv', 'w', encoding='utf-8') as file:
+    with open(f'data/{name_category}_from_{low_price}_to_{top_price}.csv', 'w', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(
-            ('Брэнд',
-             'Наименование',
-             'Цена со скидкой',
-             'Цена без скидки',
+            ('Наименование',
+             'id',
              'Скидка',
-             'Рейтинг',
-             'Ссылка на карточку товара')
+             'Цена',
+             'Цена со скидкой',
+             'Бренд',
+             'id бренда',
+             'feedbacks',
+             'rating',
+             'Ссылка')
         )
 
-    with open('data/data.csv', 'a', encoding='utf-8') as file:
+    with open(f'data/{name_category}_from_{low_price}_to_{top_price}.csv', 'a', encoding='utf-8') as file:
         for item in data:
             writer = csv.writer(file)
             writer.writerow(
-                (item['brand'],
-                 item['title'],
-                 item['lower_price'],
-                 item['price'],
-                 item['discount'],
+                (item['Наименование'],
+                 item['id'],
+                 item['Скидка'],
+                 item['Цена'],
+                 item['Цена со скидкой'],
+                 item['Бренд'],
+                 item['id бренда'],
+                 item['feedbacks'],
                  item['rating'],
-                 item['url'])
+                 item['Ссылка'],)
             )
-            # [*(v.values() for v in data)]
 
 
 def save_excel(data, filename):
     """сохранение результата в excel файл"""
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
     df = pd.DataFrame(data)
     writer = pd.ExcelWriter(f'data/{filename}.xlsx')
     df.to_excel(writer, 'data')
@@ -177,7 +188,9 @@ def parser(url, low_price, top_price):
         # сбор данных в найденном каталоге
         data_list = get_content(shard=shard, query=query, low_price=low_price, top_price=top_price)
         # сохранение найденных данных
-        save_excel(data_list, f'{name_category}_from_{low_price}_to_{top_price}')
+        # save_json(data_list, name_category, low_price, top_price)
+        save_csv(data_list, name_category, low_price, top_price)
+        # save_excel(data_list, f'{name_category}_from_{low_price}_to_{top_price}')
     except TypeError:
         print('Ошибка! Возможно не верно указан раздел. Удалите все доп фильтры с ссылки')
     except PermissionError:
