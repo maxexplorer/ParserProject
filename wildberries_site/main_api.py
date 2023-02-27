@@ -4,20 +4,9 @@ import json
 import csv
 import os
 
-"""
-Парсер wildberries по ссылке на каталог (указывать без фильтров)
-Парсер не идеален, есть множество вариантов реализации, со своими идеями 
-и предложениями обязательно пишите мне, либо в группу, ссылка ниже.
-Подробное описание парсера Вайлдберриз можно почитать на сайте:
-https://happypython.ru/2022/07/21/парсер-wildberries/
-Ссылка на статью ВКонтакте: https://vk.com/@happython-parser-wildberries
-По всем возникшим вопросам, можете писать в группу https://vk.com/happython
-парсер wildberries по каталогам 2022, обновлен 19.10.2022 - на данное число работает исправно
-"""
-
 
 def get_catalogs_wb():
-    """получение каталога вб"""
+    """получение каталога wildberries"""
     url = 'https://www.wildberries.ru/webapi/menu/main-menu-ru-ru.json'
     headers = {'Accept': "*/*", 'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     response = requests.get(url, headers=headers)
@@ -53,10 +42,8 @@ def get_catalogs_wb():
                             'shard': shard,
                             'query': query})
                 except:
-                    # print(f'не имеет дочерних каталогов *{i["name"]}*')
                     continue
         except:
-            # print(f'не имеет дочерних каталогов *{d["name"]}*')
             continue
     return data_list
 
@@ -72,7 +59,6 @@ def search_category_in_catalog(url, catalog_list):
                 query = catalog['query']
                 return name_category, shard, query
             else:
-                # print('нет совпадения')
                 pass
     except:
         print('Данный раздел не найден!')
@@ -102,7 +88,7 @@ def get_data_from_json(json_file):
 
 
 def get_content(shard, query, low_price=None, top_price=None):
-    # вставляем ценовые рамки для уменьшения выдачи, Wildberries отдает только 100 страниц
+    # вставляем ценовые рамки для уменьшения выдачи, wildberries отдает только 100 страниц
     headers = {'Accept': "*/*", 'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     data_list = []
     for page in range(1, 101):
@@ -188,9 +174,9 @@ def parser(url, low_price, top_price):
         # сбор данных в найденном каталоге
         data_list = get_content(shard=shard, query=query, low_price=low_price, top_price=top_price)
         # сохранение найденных данных
-        # save_json(data_list, name_category, low_price, top_price)
+        save_json(data_list, name_category, low_price, top_price)
         save_csv(data_list, name_category, low_price, top_price)
-        # save_excel(data_list, f'{name_category}_from_{low_price}_to_{top_price}')
+        save_excel(data_list, f'{name_category}_from_{low_price}_to_{top_price}')
     except TypeError:
         print('Ошибка! Возможно не верно указан раздел. Удалите все доп фильтры с ссылки')
     except PermissionError:
