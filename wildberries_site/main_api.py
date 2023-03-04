@@ -98,9 +98,10 @@ def get_content(shard, query, low_price=None, top_price=None):
               f'&reg=0&regions=64,83,4,38,80,33,70,82,86,30,69,1,48,22,66,31,40&sort=popular&spp=0&{query}'
         r = requests.get(url, headers=headers)
         data = r.json()
-        print(f'Добавлено позиций: {len(get_data_from_json(data))}')
-        if len(get_data_from_json(data)) > 0:
-            data_list.extend(get_data_from_json(data))
+        data_cards = get_data_from_json(data)
+        print(f'Добавлено позиций: {len(data_cards)}')
+        if len(data_cards) > 0:
+            data_list.extend(data_cards)
         else:
             print(f'Сбор данных завершен.')
             break
