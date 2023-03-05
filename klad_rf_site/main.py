@@ -32,30 +32,61 @@ def get_data(html):
 
     soup = BeautifulSoup(html, 'lxml')
 
-    items = soup.find(class_='pb-2 fs-5 fw-bold border-bottom', text='Города').find_next().find_all('li')
+    items = soup.find('div', class_='pb-2 fs-5 fw-bold border-bottom', text='Города').find_next().find_all('li')
+
     for item in items:
         try:
             url = "https://kladr-rf.ru" + item.find('a').get('href')
             city = item.text.strip().split()[0]
-            print(url, city)
-            for i in
+            print(city)
+            html = get_html(url=url, headers=headers)
+            soup = BeautifulSoup(html, 'lxml')
+            streets = soup.find(class_='pb-2 fs-5 fw-bold border-bottom', text='Улицы').find_next().find_all('li')
+            for street in streets:
+                city_streets.append(
+                    {
+
+                        'Город': city,
+                        'Улица': street.text
+                    }
+                )
         except Exception:
             continue
-
-
-
     return city_streets
 
 
+def save_json(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/data.json', 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+
+
+def save_excel(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    dataframe = DataFrame(data)
+
+    writer = ExcelWriter('data/data.xlsx')
+    dataframe.to_excel(writer, 'data')
+    writer.save()
+    print(f'Данные сохранены в файл "data.xlsx"')
+
+
 def main():
-    with open('data/index.html', 'r', encoding='utf-8') as file:
-        html = file.read()
-    get_data(html)
-    # result_list = []
-    # for i in range(1, 2):
-    #     url = f"https://kladr-rf.ru/{str(i).zfill(2)}/"
-    #     html = get_html(url=url, headers=headers)
-    # result_list.extend(get_data(html))
+    result_list = []
+    for i in range(1, 90):
+        if i in (80, 81, 82, 84, 85, 88):
+            continue
+        url = f"https://kladr-rf.ru/{str(i).zfill(2)}/"
+        html = get_html(url=url, headers=headers)
+        result_list.extend(get_data(html))
+        print(f'Обработано {i} страниц!!!')
+
+    save_json(result_list)
+    save_excel(result_list)
 
 
 if __name__ == '__main__':
