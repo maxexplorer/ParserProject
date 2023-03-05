@@ -16,15 +16,9 @@ headers = {
 def get_json(url, headers):
     response = requests.get(url=url, headers=headers)
 
-    json_data = response.json()
+    data = response.json()
 
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/json_data.json', 'w', encoding='utf-8') as file:
-        json.dump(json_data, file, indent=4, ensure_ascii=False)
-
-    return json_data
+    return data
 
 
 def collect_data(data):
@@ -51,6 +45,7 @@ def collect_data(data):
         )
     return result_lst
 
+
 def save_json(data):
     if not os.path.exists('data'):
         os.mkdir('data')
@@ -60,11 +55,15 @@ def save_json(data):
 
 
 def main():
-    # json_data = get_json(url=url, headers=headers)
-    with open('data/json_data.json', 'r', encoding='utf-8') as file:
-        data_json = json.load(file)
-    result_lst = collect_data(data_json)
-    save_json(result_lst)
+    cards = []
+    type = 5
+    pages = int(input('Введите количество страниц: '))
+    for page in range(0, pages * 60, 60):
+        print(f'Парсинг страницы: {page // 60 + 1}')
+        url = f"https://cs.money/1.0/market/sell-orders?limit=60&offset={page}&type={type}"
+        data = get_json(url=url, headers=headers)
+        cards.extend(collect_data(data))
+    save_json(cards)
 
 
 if __name__ == '__main__':

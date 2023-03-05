@@ -174,21 +174,19 @@ def save_excel(data):
 
 
 def parse(url):
-    # html = get_html(url)
-    # pages = get_pages(html)
-    # print(f'Количество страниц: {pages}')
-    # cards = []
+    html = get_html(url)
+    pages = get_pages(html)
+    print(f'Количество страниц: {pages}')
+    cards = []
     pages = int(input('Введите количество страниц: '))
     for page in range(1, pages + 1):
         print(f'Парсинг страницы: {page}')
         url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
         html = get_html(url)
-        cards = get_content(html)
-        print(len(cards))
-    #     cards.extend(get_content(html))
-    # save_excel(cards)
-    # save_csv(cards)
-    # save_json(cards)
+        cards.extend(get_content(html))
+    save_json(cards)
+    save_csv(cards)
+    save_excel(cards)
 
 
 if __name__ == '__main__':
