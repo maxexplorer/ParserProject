@@ -35,14 +35,18 @@ def get_data(html):
     items = soup.find('div', class_='pb-2 fs-5 fw-bold border-bottom', text='Города').find_next().find_all('li')
 
     for item in items:
+        if 'class="old"' in str(item):
+            continue
         try:
             url = "https://kladr-rf.ru" + item.find('a').get('href')
-            city = item.text.strip().split()[0]
+            city = item.text.strip().strip('Город')
             print(city)
             html = get_html(url=url, headers=headers)
             soup = BeautifulSoup(html, 'lxml')
             streets = soup.find(class_='pb-2 fs-5 fw-bold border-bottom', text='Улицы').find_next().find_all('li')
             for street in streets:
+                if 'class="old"' in str(street):
+                    continue
                 city_streets.append(
                     {
 
@@ -77,7 +81,7 @@ def save_excel(data):
 
 def main():
     result_list = []
-    for i in range(1, 90):
+    for i in range(1, 89):
         if i in (80, 81, 82, 84, 85, 88):
             continue
         url = f"https://kladr-rf.ru/{str(i).zfill(2)}/"
