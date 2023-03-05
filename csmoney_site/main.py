@@ -5,9 +5,6 @@ import os
 
 useragent = UserAgent()
 
-# url = "https://cs.money/ru/market/buy/"
-url = "https://cs.money/1.0/market/sell-orders?limit=60&offset=0&type=5"
-
 headers = {
     'User-Agent': useragent.random
 }
