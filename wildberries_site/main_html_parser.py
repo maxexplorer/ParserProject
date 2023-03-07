@@ -124,6 +124,7 @@ def save_json(data):
 
     with open('data/data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
+    print('Данные сохранены в файл "data.json"')
 
 
 def save_csv(data):
@@ -155,6 +156,7 @@ def save_csv(data):
                  item['url'])
             )
             # [*(v.values() for v in data)]
+    print('Данные сохранены в файл "data.csv"')
 
 
 def save_excel(data):
@@ -170,7 +172,7 @@ def save_excel(data):
     writer = ExcelWriter('data/data.xlsx')
     newdataframe.to_excel(writer, 'data')
     writer.save()
-    print(f'Данные сохранены в файл "data.xlsx"')
+    print('Данные сохранены в файл "data.xlsx')
 
 
 def parse(url):

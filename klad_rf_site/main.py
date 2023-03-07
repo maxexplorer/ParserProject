@@ -99,7 +99,7 @@ def save_json(data):
     with open('data/data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
-    print()
+    print('Данные сохранены в файл "data.json"')
 
 
 def save_excel(data):
