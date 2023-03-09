@@ -39,18 +39,43 @@ def get_pages(html):
     return pages
 
 
-def get_data(html):
+def get_data():
+    cards = []
+    # with requests.Session() as session:
+    #     for page in range(1, pages + 1):
+    #         print(f'Парсинг страницы: {page}')
+    #         url = f"https://uzorg.info/companies-page-{page}"
+    #         response = session.get(url=url, headers=headers)
+    with open('data/index.html', 'r', encoding='utf-8') as file:
+        html = file.read()
     soup = BeautifulSoup(html, 'lxml')
-    cards = soup.find_all(class_='list-group-item')
-    for card in cards:
-        title = card.find('h5', class_='mb-1').text.strip()
-        tin = int(re.search(r'\d{8}', card.find('p', class_='mb-1').text.strip()).group())
-        # activity = re.search(r'.*', card.find('p', class_='mb-1').text.strip())
-        string = card.find('p', class_='mb-1').text.strip()
+    items = soup.find_all(class_='list-group-item')
+    for item in items:
+        title = item.find('h5', class_='mb-1').text.strip().replace('"', '')
+        # tin = int(re.compile(r'\d{8}').search(item.find('p', class_='mb-1').text.strip()).group())
+        # is equivalent to
+        tin = int(re.search(r'\d{8}', item.find('p', class_='mb-1').text.strip()).group())
+        string = item.find('p', class_='mb-1').text.strip()
         index = string.find(str(tin)) + 9
-        string = string[index:]
+        activity = string[index:]
+        date = item.find('small', class_='text-muted').text.strip()
+        director = ' '.join(item.find(text=re.compile('Руководитель')).text.split()[-3:])
+        address = ' '.join(item.find(text=re.compile('Адрес')).text.split()[2:])
+        status = item.find('font').text.strip()
 
-        print(f"{title} ||| {tin} ||| {(string)}")
+        cards.append(
+            {
+                'Название': title,
+                'ИНН': tin,
+                'Деятельность': activity,
+                'Дата основания': date,
+                'Руководитель': director,
+                'Адрес': address,
+                'Статус': status
+            }
+        )
+    return cards
+
 
 def save_json(data):
     if not os.path.exists('data'):
@@ -60,20 +85,14 @@ def save_json(data):
         json.dump(data, file, indent=4, ensure_ascii=False)
     print('Данные сохранены в файл "data.json"')
 
+
 def main():
     # html = get_html(url=url, headers=headers)
-    with open('data/index.html', 'r', encoding='utf-8') as file:
-        html = file.read()
     # pages = get_pages(html)
-    get_data(html)
     # print(f'Количество страниц: {pages}')
-    # cards = []
     # pages = int(input('Введите количество страниц: '))
-    # for page in range(1, pages + 1):
-    #     print(f'Парсинг страницы: {page}')
-    #     url = f"https://uzorg.info/companies-page-{page}"
-    #     html = get_html(url=url, headers=headers)
-    #     cards.extend(get_data(html))
+    data = get_data()
+    save_json(data)
 
 
 if __name__ == '__main__':
