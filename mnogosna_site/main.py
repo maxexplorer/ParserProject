@@ -8,6 +8,7 @@ from config import cookies, headers
 # cookies = {'your': 'cookies'}
 # headers = {'your': 'headers'}
 size_id = '13573'  # "80x190"
+# url = "https://mnogosna.ru/po-razmeram/140x200/"
 
 
 def get_pages():
@@ -30,29 +31,46 @@ def get_pages():
     return pages
 
 
-def get_data(pages):
+def get_data(html):
     cards = []
 
-    data = {
-        'act': 'getListSizes',
-        'size_id': size_id,
-        'list': '[1373,1438691,329,1096476,9622,1096685,11290,330,5189,11294,1309,9624,387,327,1438686,5187,11293,1438764,9620,1096670,855,11295,5186,13191,1096689,11298,349,5184,6603]',
-    }
+    # with requests.Session() as session:
+    #     for page in range(1, pages + 1):
+    #         print(f'Парсинг страницы: {page}')
+    #         url = f"https://mnogosna.ru/tipy-matrasov/matrasy/?filter=P_2%3A13499&p={page}"
+    #         response = session.get(url=url, headers=headers)
+    #         soup = BeautifulSoup(response.text, 'lxml')
+    #     with open('data/index.html', 'w', encoding='utf-8') as file:
+    #         file.write(response.text)
 
-    with requests.Session() as session:
-        for page in range(1, pages + 1):
-            print(f'Парсинг страницы: {page}')
-            response = session.post('https://mnogosna.ru/local/ajax/product.php', cookies=cookies, headers=headers, data=data)
+    soup = BeautifulSoup(html, 'lxml')
 
-    with open('data/data1.json', 'w', encoding='utf-8') as file:
-        json.dump(response.json(), file, indent=4, ensure_ascii=False)
+    items = soup.find_all('div', class_='col-sm-6 col-md-4 col-lg-3')
+
+    for item in items:
+        title = item.find('div', class_='p-card__name').text.strip()
+        rating = item.find('span', class_='pc-rating__value').text.strip()
+        status = item.find('div', class_='status status--grid status--available').text.strip()
+        dimensions = item.find('div', class_='select select--xs').text.strip()
+        # price = ''.join(i for i in item.find('div', class_='pc-price__value js-price').text.strip() if i.isdigit())
+        # is equivalent to
+        price = ''.join(filter(lambda x: x.isdigit(), item.find('div', class_='pc-price__value js-price').text.strip()))
+
+
+        print(f"{title}|||{rating} ||| {status} ||| {dimensions} ||| {price}")
+
+
 
 
 def main():
-    pages = get_pages()
-    print(f'Количество страниц: {pages}')
-    pages = int(input('Введите количество страниц: '))
-    data = get_data(pages)
+    # pages = get_pages()
+    # print(f'Количество страниц: {pages}')
+    # pages = int(input('Введите количество страниц: '))
+    # data = get_data(pages)
+
+    with open('data/index.html', 'r', encoding='utf-8') as file:
+        html = file.read()
+    get_data(html)
 
 
 if __name__ == '__main__':
