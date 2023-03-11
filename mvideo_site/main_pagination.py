@@ -1,8 +1,12 @@
 import requests
 import json
-from config import headers, cookies
+from config import cookies, headers
 import os
 import math
+
+
+# cookies = {'your': 'cookies'}
+# headers = {'your': 'headers'}
 
 
 def get_data():
@@ -32,6 +36,7 @@ def get_data():
     pages_count = math.ceil(total_items / 24)
 
     print(f'{total_items}/{pages_count}')
+
 
 #     products_ids = response.get('body').get('products')
 #
