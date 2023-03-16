@@ -18,8 +18,8 @@ headers = {
 
 def get_data(cities):
     count = 1
-    exceptions_url = []
-    exceptions_find_element = []
+    exceptions = []
+
 
     # headers = {
     #     'accept': '*/*',
@@ -35,11 +35,7 @@ def get_data(cities):
             try:
                 url = f"https://www.avtodispetcher.ru/distance/?from={city1}&to={city2}"
                 response = session.get(url=url, headers=headers)
-            except Exception as ex:
-                print(ex)
-                exceptions_url.append((ex, url))
-                continue
-            try:
+
                 soup = BeautifulSoup(response.text, 'lxml')
                 distance = soup.find('span', id='totalDistance').text.strip()
                 regions = [region.get('title').split(', ')[-2] for region in
@@ -57,10 +53,10 @@ def get_data(cities):
                     )
             except Exception as ex:
                 print(ex)
-                exceptions_find_element.append((ex, url))
+                exceptions.append((ex, url.replace('&to', '').split('=')[-2:]))
                 continue
-    print(exceptions_url)
-    print(exceptions_find_element)
+    print(exceptions)
+
 
 
 def main():
@@ -68,8 +64,8 @@ def main():
         reader = csv.reader(file, delimiter=';')
         cities = list(reader)[:10000]
     get_data(cities)
-    finish_time = time.time() - start_time
-    print(f'Время работы программы: {finish_time}')
+    execution_time = round(time.time() - start_time / 3600, 3)
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
