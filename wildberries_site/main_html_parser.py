@@ -16,7 +16,6 @@ page = 1
 
 url = f"https://www.wildberries.ru/brands/{brand}?sort=popular&page={page}"
 
-
 def get_html(url):
     options = Options()
     options.add_argument('User-Agent = Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'

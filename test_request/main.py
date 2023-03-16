@@ -12,7 +12,7 @@ def test_request(url, retry=5):
     try:
         response = requests.get(url=url, headers=headers)
         print(f"[+] {url} {response.status_code}")
-    except Exception as ex:
+    except Exception:
         time.sleep(3)
         if retry:
             print(f"[INFO] retry={retry} => {url}")
