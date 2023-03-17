@@ -69,7 +69,7 @@ async def main():
             data
         )
     print(exceptions)
-    execution_time = round(time.time() - start_time / 3600, 3)
+    execution_time = time.time() - start_time
     print(f'Время работы программы: {execution_time}')
 
 

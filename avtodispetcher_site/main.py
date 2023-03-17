@@ -20,13 +20,6 @@ def get_data(cities):
     count = 1
     exceptions = []
 
-
-    # headers = {
-    #     'accept': '*/*',
-    #     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 '
-    #                   'Safari/537.36'
-    # }
-
     with requests.Session() as session:
         for city1, city2 in cities:
             city1, city2 = city1.strip(), city2.strip()
@@ -58,13 +51,12 @@ def get_data(cities):
     print(exceptions)
 
 
-
 def main():
     with open('data/города а-к.csv') as file:
         reader = csv.reader(file, delimiter=';')
         cities = list(reader)[:10000]
     get_data(cities)
-    execution_time = round(time.time() - start_time / 3600, 3)
+    execution_time = time.time() - start_time
     print(f'Время работы программы: {execution_time}')
 
 
