@@ -3,7 +3,6 @@ from aiogram.utils.markdown import hbold, hunderline, hcode, hlink
 from aiogram.dispatcher.filters import Text
 from config import token
 from main import get_first_news, check_news_update
-import json
 
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot=bot)
@@ -20,10 +19,7 @@ async def start(message: types.Message):
 
 @dp.message_handler(Text(equals='Все новости'))
 async def get_all_news(message: types.Message):
-    with open('data/news_dict.json', 'r', encoding='utf-8') as file:
-        news_dict = json.load(file)
-
-    # news_dict = get_first_news()
+    news_dict = get_first_news()
 
     for k, v in sorted(news_dict.items()):
         news = f"{hbold(v['article_date_time'])}\n" \
