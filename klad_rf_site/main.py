@@ -35,7 +35,7 @@ def get_data(html):
     items = soup.find('div', class_='pb-2 fs-5 fw-bold border-bottom', text='Города').find_next().find_all('li')
 
     for item in items:
-        if 'class="old"' in str(item):
+        if 'class="old"' in str(item) or 'class="del"' in str(item):
             continue
         try:
             url = "https://kladr-rf.ru" + item.find('a').get('href')

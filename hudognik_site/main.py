@@ -15,7 +15,7 @@ headers = {
 }
 
 
-def get_url(session, url, headers):
+def get_urls(session, url, headers):
     try:
         response = session.get(url=url, headers=headers)
         soup = BeautifulSoup(response.text, 'lxml')
@@ -40,7 +40,6 @@ def get_url(session, url, headers):
             for item in page_urls:
                 url = "https://hudognik.net" + item.get('href')
                 url_list.append(url)
-            print(url_list)
         except Exception as ex:
             print(ex)
             continue
@@ -48,9 +47,47 @@ def get_url(session, url, headers):
         print(*url_list, file=file, sep='\n')
 
 
+def get_data_artists(session, headers):
+    # with open(file_paths, 'r', encoding='utf-8') as file:
+    #     list_urls = [line.strip() for line in file.readlines()]
+
+    # urls_count = len(list_urls)
+    result_data = []
+
+    # for i, url in enumerate(list_urls):
+    for i, url in enumerate(['https://hudognik.net/artist13147/']):
+        try:
+            response = session.get(url=url, headers=headers)
+            soup = BeautifulSoup(response.text, 'lxml')
+        except Exception as ex:
+            print(ex)
+            continue
+        try:
+            artist_name = soup.find('h1', itemprop='name').text.strip()
+        except Exception:
+            artist_name = None
+        try:
+            phone = soup.find('div', class_='hudognik_menu')
+        except:
+            phone = None
+        try:
+            country_city = ','.join(
+                soup.find('ul', class_='hudognik_about').text.replace('Страна', '').replace('Город', '').split(':')
+                [-2:])
+        except Exception:
+            country_city = None
+        try:
+            rating = int(soup.find('span', class_='cgray').next_sibling.text)
+        except Exception:
+            rating = None
+
+        print(artist_name, country_city, rating, phone)
+
+
 def main():
     with requests.Session() as session:
-        get_url(session=session, url=url, headers=headers)
+        # get_urls(session=session, url=url, headers=headers)
+        get_data_artists(session=session, headers=headers)
 
 
 if __name__ == '__main__':
