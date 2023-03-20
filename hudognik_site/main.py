@@ -48,7 +48,7 @@ def get_urls(session, url, headers):
 
 
 def get_data_artists(session, headers):
-    # with open(file_paths, 'r', encoding='utf-8') as file:
+    # with open(file_path, 'r', encoding='utf-8') as file:
     #     list_urls = [line.strip() for line in file.readlines()]
 
     # urls_count = len(list_urls)
