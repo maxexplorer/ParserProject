@@ -1,3 +1,5 @@
+import json
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.markdown import hbold, hunderline, hcode, hlink
 from aiogram.dispatcher.filters import Text
@@ -19,7 +21,8 @@ async def start(message: types.Message):
 
 @dp.message_handler(Text(equals='Все новости'))
 async def get_all_news(message: types.Message):
-    news_dict = get_first_news()
+    with open('data/news_dict.json', 'r', encoding='utf-8') as file:
+        news_dict = json.load(file)
 
     for k, v in sorted(news_dict.items()):
         news = f"{hbold(v['article_date_time'])}\n" \
