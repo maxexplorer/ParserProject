@@ -8,6 +8,8 @@ import openpyxl
 
 start_time = datetime.now()
 
+exceptions_list = []
+
 
 def get_id(cookies, headers):
     json_data = {
@@ -63,13 +65,13 @@ def get_data(file_path, cookies, headers):
     result_list = []
 
     with requests.Session() as session:
-        for i, item in enumerate(id_list[:1000], 1):
+        for i, item in enumerate(id_list[:15000], 1):
             try:
                 response = session.post(f"https://reestr.nopriz.ru/api/member/{item}/info", cookies=cookies,
                                         headers=headers, json=json_data)
                 data = response.json()
-            except Exception as ex:
-                print(ex)
+            except Exception:
+                exceptions_list.append(item)
                 continue
 
             try:
@@ -118,15 +120,11 @@ def get_data(file_path, cookies, headers):
     return result_list
 
 
-def update_data():
-    pass
-
-
 def save_json(data):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/data.json', 'w', encoding='utf-8') as file:
+    with open('data/data.json', 'a', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('Данные сохранены в файл "data.json"')
@@ -143,7 +141,7 @@ def save_excel(data):
     # writer.save()
     # is equivalent to
 
-    with ExcelWriter('data/data.xlsx', mode='w') as writer:
+    with ExcelWriter('data/data.xlsx', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='data')
 
     print(f'Данные сохранены в файл "data.xlsx"')
@@ -152,10 +150,14 @@ def save_excel(data):
 def main():
     # get_id(cookies=cookies, headers=headers)
     data = get_data(file_path='data/id_list.txt', cookies=cookies, headers=headers)
-    # save_json(data)
+    save_json(data)
     save_excel(data)
+    if len(exceptions_list) > 0:
+        with open('data/exceptions_list.txt', 'a', encoding='utf-8') as file:
+            print(*exceptions_list, file=file, sep='\n')
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
+
 
 
 if __name__ == '__main__':
