@@ -81,10 +81,10 @@ def get_id(file_path, cookies, headers):
                 continue
             print(f'{page}/{page_count}')
 
-        if not os.path.exists('../nopriz_parser_app/data'):
-            os.mkdir('../nopriz_parser_app/data')
+        if not os.path.exists('data'):
+            os.mkdir('data')
 
-        with open('../nopriz_parser_app/data/id_list.txt', 'a', encoding='utf-8') as file:
+        with open('data/id_list.txt', 'a', encoding='utf-8') as file:
             print(*new_id_list, file=file, sep='\n')
 
         return new_id_list
@@ -152,8 +152,8 @@ def get_data(new_id_list, cookies, headers):
 
 
 def save_excel(data):
-    if not os.path.exists('../nopriz_parser_app/data'):
-        os.mkdir('../nopriz_parser_app/data')
+    if not os.path.exists('data'):
+        os.mkdir('data')
 
     dataframe = DataFrame(data)
 
@@ -162,7 +162,7 @@ def save_excel(data):
 
 
 def main():
-    new_id_list = get_id(file_path='../nopriz_parser_app/data/id_list.txt', cookies=cookies, headers=headers)
+    new_id_list = get_id(file_path='data/id_list.txt', cookies=cookies, headers=headers)
     len_id_list = len(new_id_list)
     print(f'Новых id {len_id_list}')
 
