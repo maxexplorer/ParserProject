@@ -1,17 +1,45 @@
 import requests
 import os
 from datetime import datetime
-from config import cookies, headers
 import json
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
 start_time = datetime.now()
 
+cookies = {
+    '_ym_uid': '1679307059271880629',
+    '_ym_d': '1679307059',
+    '_ym_isad': '2',
+    'PHPSESSID': 'A96iAA06Iy4yJTJv0DMj85iespuIeF68',
+    '_ym_visorc': 'w',
+}
+
+headers = {
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Connection': 'keep-alive',
+    # Already added when you pass json=
+    # 'Content-Type': 'application/json',
+    # 'Cookie': '_ym_uid=1679307059271880629; _ym_d=1679307059; _ym_isad=2; PHPSESSID=A96iAA06Iy4yJTJv0DMj85iespuIeF68; _ym_visorc=w',
+    'Origin': 'https://reestr.nopriz.ru',
+    'Referer': 'https://reestr.nopriz.ru/member/19483698',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
+    'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+}
+
 exceptions_list = []
 
 
-def get_id(cookies, headers):
+def get_id(file_path, cookies, headers):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        id_list = [line.strip() for line in file.readlines()]
+
     json_data = {
         'filters': {},
         'page': 1,
@@ -25,9 +53,9 @@ def get_id(cookies, headers):
                             json=json_data)
     data = response.json()
     page_count = int(data['data']['countPages'])
-    print(page_count)
+    print(f'Для сбора новых id будет обработано {page_count} страниц!')
 
-    id_list = []
+    new_id_list = []
 
     with requests.Session() as session:
         for page in range(1, page_count + 1):
@@ -45,27 +73,30 @@ def get_id(cookies, headers):
                                         json=json_data)
                 data = response.json()
                 for item in data['data']['data']:
-                    if item['member_status']['code'] == '1':
+                    if item['member_status']['code'] == '1' or str(item['id']) in id_list:
                         continue
-                    id_list.append(item['id'])
+                    new_id_list.append(str(item['id']).strip())
             except Exception as ex:
                 print(ex)
                 continue
-            print(page)
-        with open('data/id_list.txt', 'w', encoding='utf-8') as file:
-            print(*id_list, file=file, sep='\n')
+            print(f'{page}/{page_count}')
+
+        if not os.path.exists('../nopriz_parser_app/data'):
+            os.mkdir('../nopriz_parser_app/data')
+
+        with open('../nopriz_parser_app/data/id_list.txt', 'a', encoding='utf-8') as file:
+            print(*new_id_list, file=file, sep='\n')
+
+        return new_id_list
 
 
-def get_data(file_path, cookies, headers):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        id_list = [line.strip() for line in file.readlines()]
-
+def get_data(new_id_list, cookies, headers):
     json_data = {}
 
     result_list = []
 
     with requests.Session() as session:
-        for i, item in enumerate(id_list, 1):
+        for i, item in enumerate(new_id_list, 1):
             try:
                 response = session.post(f"https://reestr.nopriz.ru/api/member/{item}/info", cookies=cookies,
                                         headers=headers, json=json_data)
@@ -115,47 +146,36 @@ def get_data(file_path, cookies, headers):
                 }
             )
 
-            print(i)
+            print(f'Обработано: {i}/{len(new_id_list)}')
 
     return result_list
 
 
-def save_json(data):
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/data.json', 'a', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-    print('Данные сохранены в файл "data.json"')
-
-
 def save_excel(data):
-    if not os.path.exists('data'):
-        os.mkdir('data')
+    if not os.path.exists('../nopriz_parser_app/data'):
+        os.mkdir('../nopriz_parser_app/data')
 
     dataframe = DataFrame(data)
 
-    # writer = ExcelWriter('data/data.xlsx', mode='w')
-    # dataframe.to_excel(writer, sheet_name='data')
-    # writer.save()
-    # is equivalent to
-
-    with ExcelWriter('data/data1.xlsx', mode='w') as writer:
+    with ExcelWriter('data/data.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data')
-
-    print(f'Данные сохранены в файл "data.xlsx"')
 
 
 def main():
-    # get_id(cookies=cookies, headers=headers)
-    data = get_data(file_path='data/exceptions_list.txt', cookies=cookies, headers=headers)
-    save_json(data)
-    save_excel(data)
+    new_id_list = get_id(file_path='../nopriz_parser_app/data/id_list.txt', cookies=cookies, headers=headers)
+    len_id_list = len(new_id_list)
+    print(f'Новых id {len_id_list}')
+
+    if len_id_list > 0:
+        data = get_data(new_id_list, cookies=cookies, headers=headers)
+        save_excel(data)
+
     if len(exceptions_list) > 0:
         with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
             print(*exceptions_list, file=file, sep='\n')
+
     execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
 
 
