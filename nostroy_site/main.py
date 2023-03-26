@@ -26,13 +26,14 @@ start_time = datetime.now()
 exceptions_list = []
 
 
-def get_id(headers):
+def get_id(headers, region):
     json_data = {
-        'filters': {},
+        'filters': {'member_status': 2, 'region_number': region},
         'page': 1,
         'pageCount': '100',
         'sortBy': {},
     }
+
     session = requests.Session()
     response = session.post('https://api-open-nostroy.anonamis.ru/api/sro/all/member/list', headers=headers,
                             json=json_data)
@@ -45,10 +46,9 @@ def get_id(headers):
     id_list = []
 
     with requests.Session() as session:
-        # for page in range(1, page_count + 1):
-        for page in range(1, 10):
+        for page in range(1, page_count + 1):
             json_data = {
-                'filters': {},
+                'filters': {'member_status': 2, 'region_number': region},
                 'page': page,
                 'pageCount': '100',
                 'sortBy': {},
@@ -60,28 +60,22 @@ def get_id(headers):
 
                 data = response.json()
 
-                with open('data/data.json', 'a', encoding='utf-8') as file:
-                    json.dump(data, file, indent=4, ensure_ascii=False)
-                print(page)
             except Exception as ex:
                 print(ex)
                 continue
-        #
-        #     try:
-        #         for item in data['data']['data']:
-        #             if item['member_status']['code'] == '1' or item['region_number']['title'] not in (
-        #                     'Москва', 'Московская область'):
-        #                 continue
-        #             id_list.append(item['id'])
-        #     except Exception as ex:
-        #         print(ex)
-        #         continue
-        #
-        #     print(page)
-        #
-        # with open('data/id_list.txt', 'w', encoding='utf-8') as file:
-        #     print(*id_list, file=file, sep='\n')
-        #
+
+            try:
+                for item in data['data']['data']:
+                    id_list.append(item['id'])
+            except Exception as ex:
+                print(ex)
+                continue
+
+            print(page)
+
+        with open('data/id_list.txt', 'a', encoding='utf-8') as file:
+            print(*id_list, file=file, sep='\n')
+
 
 def get_data(file_path, headers):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -175,7 +169,8 @@ def save_excel(data):
 
 
 def main():
-    get_id(headers=headers)
+    region = int(input("Введите регион: 77 - Москва, 52 - Московская область"))
+    get_id(headers=headers, region=region)
     # data = get_data(file_path='data/id_list.txt', headers=headers)
     # save_json(data)
     # save_excel(data)
