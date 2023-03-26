@@ -63,7 +63,6 @@ def get_data(url_list):
                 photo = browser.find_element(By.ID, "sechenie_img")
                 photo.click()
                 browser.implicitly_wait(3)
-                browser.find_element(By.ID, "sechenie_img_big")
                 time.sleep(1)
                 browser.save_screenshot(f'data_img/{i}.png')
             except Exception:
@@ -77,7 +76,7 @@ def get_data(url_list):
                     'Материал': material,
                     'Ссылка': url,
                     'Ссылка аналога': url_analogue,
-                    'Номер фото': i
+                    'Номер фото': f"{i}.png"
                 }
             )
 
