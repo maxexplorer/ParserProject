@@ -86,7 +86,7 @@ def get_data(file_path, headers):
     result_list = []
 
     with requests.Session() as session:
-        for i, item in enumerate(id_list, 1):
+        for i, item in enumerate(id_list[:1000], 1):
             try:
                 response = session.post(f"https://api-open-nostroy.anonamis.ru/api/member/{item}/info",
                                         headers=headers, json=json_data)
@@ -169,16 +169,16 @@ def save_excel(data):
 
 
 def main():
-    region = int(input("Введите регион: 77 - Москва, 52 - Московская область"))
-    get_id(headers=headers, region=region)
-    # data = get_data(file_path='data/id_list.txt', headers=headers)
-    # save_json(data)
-    # save_excel(data)
-    # if len(exceptions_list) > 0:
-    #     with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
-    #         print(*exceptions_list, file=file, sep='\n')
-    # execution_time = datetime.now() - start_time
-    # print(f'Время работы программы: {execution_time}')
+    # region = int(input("Введите регион: 77 - Москва, 52 - Московская область"))
+    # get_id(headers=headers, region=region)
+    data = get_data(file_path='data/id_list.txt', headers=headers)
+    save_json(data)
+    save_excel(data)
+    if len(exceptions_list) > 0:
+        with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
+            print(*exceptions_list, file=file, sep='\n')
+    execution_time = datetime.now() - start_time
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
