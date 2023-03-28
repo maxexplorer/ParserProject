@@ -1,7 +1,6 @@
 import requests
 import os
 from datetime import datetime
-import json
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
@@ -26,7 +25,10 @@ start_time = datetime.now()
 exceptions_list = []
 
 
-def get_id(headers, region):
+def get_id(file_path, headers, region):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        id_list = [line.strip() for line in file.readlines()]
+
     json_data = {
         'filters': {'member_status': 2, 'region_number': region},
         'page': 1,
@@ -43,7 +45,7 @@ def get_id(headers, region):
     page_count = int(data['data']['countPages'])
     print(page_count)
 
-    id_list = []
+    new_id_list = []
 
     with requests.Session() as session:
         for page in range(1, page_count + 1):
@@ -66,27 +68,31 @@ def get_id(headers, region):
 
             try:
                 for item in data['data']['data']:
-                    id_list.append(item['id'])
+                    if str(item['id']) in id_list:
+                        continue
+                    new_id_list.append(str(item['id']).strip())
             except Exception as ex:
                 print(ex)
                 continue
 
             print(page)
 
-        with open('data/id_list.txt', 'a', encoding='utf-8') as file:
-            print(*id_list, file=file, sep='\n')
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/id_list.txt', 'a', encoding='utf-8') as file:
+        print(*new_id_list, file=file, sep='\n')
+
+    return new_id_list
 
 
-def get_data(file_path, headers):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        id_list = [line.strip() for line in file.readlines()]
-
+def get_data(new_id_list, headers):
     json_data = {}
 
     result_list = []
 
     with requests.Session() as session:
-        for i, item in enumerate(id_list[10000:20000], 1):
+        for i, item in enumerate(new_id_list, 1):
             try:
                 response = session.post(f"https://api-open-nostroy.anonamis.ru/api/member/{item}/info",
                                         headers=headers, json=json_data)
@@ -136,20 +142,9 @@ def get_data(file_path, headers):
                 }
             )
 
-            # print(f'{i}/{len(id_list)}')
-            print(i)
+            print(f'{i}/{len(new_id_list)}')
 
     return result_list
-
-
-def save_json(data):
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/data.json', 'a', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-    print('Данные сохранены в файл "data.json"')
 
 
 def save_excel(data):
@@ -158,27 +153,28 @@ def save_excel(data):
 
     dataframe = DataFrame(data)
 
-    # writer = ExcelWriter('data/data.xlsx', mode='w')
-    # dataframe.to_excel(writer, sheet_name='data')
-    # writer.save()
-    # is equivalent to
-
-    with ExcelWriter('data/data.xlsx', mode='a') as writer:
-        dataframe.to_excel(writer, sheet_name='data3')
+    with ExcelWriter('data/data.xlsx', mode='w') as writer:
+        dataframe.to_excel(writer, sheet_name='data')
 
     print(f'Данные сохранены в файл "data.xlsx"')
 
 
 def main():
-    # region = int(input("Введите регион: 77 - Москва, 52 - Московская область"))
-    # get_id(headers=headers, region=region)
-    data = get_data(file_path='data/id_list.txt', headers=headers)
-    save_json(data)
-    save_excel(data)
+    region = int(input("Введите регион: 77 - Москва, 52 - Московская область"))
+    new_id_list = get_id(file_path='data/id_list.txt', headers=headers, region=region)
+    len_id_list = len(new_id_list)
+    print(f'Новых id {len_id_list}')
+
+    if len_id_list > 0:
+        data = get_data(new_id_list, headers=headers)
+        save_excel(data)
+
     if len(exceptions_list) > 0:
-        with open('data/exceptions_list.txt', 'a', encoding='utf-8') as file:
+        with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
             print(*exceptions_list, file=file, sep='\n')
+
     execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
 
 

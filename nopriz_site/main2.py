@@ -81,13 +81,13 @@ def get_id(file_path, cookies, headers):
                 continue
             print(f'{page}/{page_count}')
 
-        if not os.path.exists('data'):
-            os.mkdir('data')
+    if not os.path.exists('data'):
+        os.mkdir('data')
 
-        with open('data/id_list.txt', 'a', encoding='utf-8') as file:
-            print(*new_id_list, file=file, sep='\n')
+    with open('data/id_list.txt', 'a', encoding='utf-8') as file:
+        print(*new_id_list, file=file, sep='\n')
 
-        return new_id_list
+    return new_id_list
 
 
 def get_data(new_id_list, cookies, headers):
