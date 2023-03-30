@@ -60,7 +60,18 @@ def get_data(url_list):
             except Exception:
                 url_analogue = None
             try:
+                if not browser.find_element(By.ID, "sechenie_img") and \
+                        not browser.find_element(By.CLASS_NAME, "param-section-block"):
+                    continue
                 photo = browser.find_element(By.ID, "sechenie_img")
+                photo.click()
+                browser.implicitly_wait(3)
+                time.sleep(1)
+                browser.save_screenshot(f'data_img/{i}.png')
+            except Exception:
+                pass
+            try:
+                photo = browser.find_element(By.CLASS_NAME, "param-section-block")
                 photo.click()
                 browser.implicitly_wait(3)
                 time.sleep(1)
@@ -118,15 +129,15 @@ def save_excel(data):
 
 
 def main():
-    # with open('data/url_list.csv', 'r', encoding='utf-8') as file:
-    #     reader = csv.reader(file)
-    #     lst_urls = list(reader)
-    # url_list = []
-    # for url in lst_urls:
-    #     url_list.extend(url)
-    # url_list = [url.strip('; ') for url in url_list]
-    # with open('data/url_list.txt', 'w', encoding='utf-8') as file:
-    #     print(*url_list, file=file, sep='\n')
+    with open('data/url_list.csv', 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        lst_urls = list(reader)
+    url_list = []
+    for url in lst_urls:
+        url_list.extend(url)
+    url_list = [url.strip('; ') for url in url_list]
+    with open('data/url_list.txt', 'w', encoding='utf-8') as file:
+        print(*url_list, file=file, sep='\n')
     with open('data/url_list.txt', 'r', encoding='utf-8') as file:
         url_list = [line.strip() for line in file.readlines()]
     data = get_data(url_list=url_list)
@@ -137,6 +148,7 @@ def main():
             print(*exceptions_list, file=file, sep='\n')
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
+
 
 if __name__ == '__main__':
     main()
