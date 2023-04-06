@@ -49,13 +49,13 @@ def get_articles_urls():
 
 def get_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
-        urls_list = [line.strip() for line in file.readlines()]
+        url_list = [line.strip() for line in file.readlines()]
 
-    urls_count = len(urls_list)
+    urls_count = len(url_list)
     result_data = []
 
     with requests.Session() as session:
-        for i, url in enumerate(urls_list, 1):
+        for i, url in enumerate(url_list, 1):
             response = session.get(url=url, headers=headers)
             soup = BeautifulSoup(response.text, 'lxml')
             try:
