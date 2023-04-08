@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import json
-import csv
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
