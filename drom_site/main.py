@@ -107,7 +107,7 @@ def get_data(file_path):
             except Exception:
                 title = None
             try:
-                price = soup.find(class_='css-eazmxc e162wx9x0').text.strip()
+                price = soup.find(class_='css-eazmxc e162wx9x0').text.replace('\u20bd', ' ').strip()
             except Exception:
                 price = None
             try:
@@ -119,18 +119,22 @@ def get_data(file_path):
             except Exception:
                 dealer_name = None
             try:
-                description = ' '.join(soup.find(class_='css-1j8ksy7 eotelyr0').text.strip().split())
+                description = ' '.join(
+                    soup.find(class_='css-1j8ksy7 eotelyr0').text.replace('\U0001f4a1', ' ').replace('\u2757',
+                                                                                                     ' ').replace(
+                        '\U0001f525', ' ').replace('\U0001f381', ' ').replace('\u2714', ' ').strip().split())
             except Exception:
                 description = None
             try:
                 city = description.split()[-1]
+
             except Exception:
                 city = None
 
             if not os.path.exists('data'):
                 os.mkdir('data')
 
-            with open(f'data/data_{region}.csv', 'a', encoding='utf-8', newline='') as file:
+            with open(f'data/data_{region}.csv', 'a', encoding='cp1251', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
 
                 writer.writerow(
@@ -154,16 +158,6 @@ def get_data(file_path):
     finally:
         browser.close()
         browser.quit()
-
-
-def save_csv(data):
-    with open(f'data/data_{region}.csv', 'w', encoding='cp1251') as file:
-        writer = csv.writer(file)
-        writer.writerows(
-            data
-        )
-        # [*(v.values() for v in data)]
-    print('Данные сохранены в файл "data.csv"')
 
 
 def main():
