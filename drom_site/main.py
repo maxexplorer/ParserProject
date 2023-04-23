@@ -161,7 +161,7 @@ def get_data(file_path):
 
 
 def main():
-    # get_urls(headers=headers)
+    get_urls(headers=headers)
     get_data(f'data/url_list_{region}.txt')
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')

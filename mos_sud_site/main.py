@@ -14,19 +14,33 @@ headers = {
     'accept': '*/*',
     'user-agent': useragent.random
 }
-name = 'Иванов'
 
-url = f"https://mos-sud.ru/search?participant={name}"
 
-def get_data():
+def get_urls(headers, name):
+    url = f"https://mos-sud.ru/search?participant={name}"
+
     response = requests.get(url=url, headers=headers, verify=False)
 
-    with open('data/index.html', 'w', encoding='utf-8') as file:
-        file.write(response.text)
+    print(response)
 
+    # soup = BeautifulSoup(response.text, 'lxml')
+    #
+    # pages = soup.find('div', class_='paginationContainer').find('li', class_='active').text.strip()
+    #
+    # print(pages)
+
+    # with requests.Session() as session:
+    #     for url in range()
+
+
+
+def get_data():
+    pass
 
 def main():
-    get_data()
+    # name = input('Введите фамилию или организацию: \n')
+    get_urls(headers=headers, name='Иванов')
+    # get_data()
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
 
