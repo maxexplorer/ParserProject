@@ -76,8 +76,9 @@ def main():
     data = get_data(data_list=data_list)
     save_excel(data)
     if len(exceptions_list) > 0:
-        with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
-            print(*exceptions_list, file=file, sep='\n')
+        with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
+            writer = csv.writer(file, delimiter=';')
+            writer.writerows(exceptions_list)
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
