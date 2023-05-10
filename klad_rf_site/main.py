@@ -15,13 +15,6 @@ headers = {
 
 def get_html(url, headers):
     response = requests.get(url=url, headers=headers)
-
-    # if not os.path.exists('data'):
-    #     os.mkdir('data')
-    #
-    # with open('data/index.html', 'w', encoding='utf-8') as file:
-    #     file.write(response.text)
-
     html = response.text
     return html
 
