@@ -31,23 +31,19 @@ def get_data(html, session):
     result_list = []
 
     soup = BeautifulSoup(html, 'lxml')
-    items = soup.find('div', class_='ps-items-index-container').find_all('a')
-    print(f'Districts count: {len(items)}')
-    for i, item in enumerate(items, 1):
+    district_items = soup.find('div', class_='ps-items-index-container').find_all('a')
+    for i in district_items:
         try:
-            url = item.get('href')
+            url = i.get('href')
             html = get_html(url=url, session=session)
             soup = BeautifulSoup(html, 'lxml')
-            items = soup.find(string=re.compile('completed buildings')).find_next().find_next().find_all(
-                class_='lg:px-2 py-1 h-full')
+            building_items = set(soup.find_all(class_='lg:px-2 py-1 h-full'))
         except Exception as ex:
             print(ex)
             continue
-        print(i)
-        print(f'Buildings count: {len(items)}')
-        for j, item in enumerate(items, 1):
+        for c in building_items:
             try:
-                url = item.find('a').get('href')
+                url = c.find('a').get('href')
                 html = get_html(url=url, session=session)
                 soup = BeautifulSoup(html, 'lxml')
             except Exception as ex:
@@ -56,10 +52,10 @@ def get_data(html, session):
             try:
                 building_name = soup.find('h1', class_='ps-h1').text.strip()
             except Exception as ex:
-                building_name = None
                 exceptions_list.append(
                     (url, ex)
                 )
+                continue
             try:
                 building_overview = ' '.join(
                     soup.find('div', class_='lg:text-xl mx-auto max-w-160').text.strip().split())
@@ -105,6 +101,10 @@ def get_data(html, session):
                 units = soup.find('div', string=re.compile('Units')).find_next().text.strip()
             except Exception:
                 units = None
+            try:
+                unit_layouts = soup.find('div', string=re.compile('Unit layouts')).find_next().text.strip()
+            except Exception:
+                unit_layouts = None
             try:
                 architect = soup.find('div', string=re.compile('The architect')).find_next().text.strip()
             except Exception:
@@ -185,7 +185,6 @@ def get_data(html, session):
                     shops_and_outlets += ' '.join(i)
             except Exception:
                 shops_and_outlets = None
-
             try:
                 supermarkets_and_mini_marts = ''
                 for i in [item.text.strip().split() for item in
@@ -193,7 +192,6 @@ def get_data(html, session):
                     supermarkets_and_mini_marts += ' '.join(i)
             except Exception:
                 supermarkets_and_mini_marts = None
-
             try:
                 restaurants_and_bars = ''
                 for i in [item.text.strip().split() for item in
@@ -244,6 +242,7 @@ def get_data(html, session):
                     timeline,
                     plot,
                     units,
+                    unit_layouts,
                     architect,
                     contractor,
                     structure,
@@ -269,17 +268,16 @@ def get_data(html, session):
                 )
             )
 
-            print(j)
+            print(f'District: {area}, Building: {building_name}')
+
     return result_list
 
 
 def save_csv(data):
-    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
-
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open(f'data/data_{cur_time}.csv', 'w', encoding='utf-8', newline='') as file:
+    with open(f'data/data_new.csv', 'w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(
             (
@@ -294,6 +292,7 @@ def save_csv(data):
                 'Timeline',
                 'Plot',
                 'Units',
+                'Unit layouts',
                 'Architect',
                 'Contractor',
                 'Structure',
@@ -319,7 +318,7 @@ def save_csv(data):
             )
         )
 
-    with open('data/data.csv', 'a', encoding='utf-8', newline='') as file:
+    with open('data/data_new.csv', 'a', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(
             data
