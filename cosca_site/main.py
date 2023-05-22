@@ -1,5 +1,6 @@
+import time
+
 import requests
-from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 import csv
 import os
@@ -13,31 +14,30 @@ exceptions_list = []
 
 
 def get_data(data_list):
-    useragent = UserAgent()
-
     headers = {
         'accept': '*/*',
-        'user-agent': useragent.random
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
     }
 
     count = 1
     result_list = []
 
     with requests.Session() as session:
-        for id, _, url in data_list:
+        for id, title, url in data_list:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
 
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception:
                 exceptions_list.append(
-                    [id, url]
+                    [id, title, url]
                 )
                 continue
             try:
-                title = soup.find(class_='site-main__inner').find_next().text.strip()
+                title_site = soup.find(class_='site-main__inner').find_next().text.strip()
             except Exception:
-                title = None
+                title_site = None
             try:
                 price = ''.join(i for i in soup.find(class_='price-current').text if i.isdigit())
             except Exception:
@@ -48,6 +48,7 @@ def get_data(data_list):
                     id,
                     title,
                     url,
+                    title_site,
                     price
                 )
             )
