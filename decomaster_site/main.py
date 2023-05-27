@@ -1,5 +1,4 @@
 import requests
-from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 import csv
 import os
@@ -13,31 +12,30 @@ exceptions_list = []
 
 
 def get_data(data_list):
-    useragent = UserAgent()
-
     headers = {
-        'accept': '*/*',
-        'user-agent': useragent.random
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
     }
 
     count = 1
     result_list = []
 
     with requests.Session() as session:
-        for id, _, url in data_list[:10]:
+        for id, title, url in data_list:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
 
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception:
                 exceptions_list.append(
-                    [id, url]
+                    [id, title, url]
                 )
                 continue
             try:
-                title = soup.find(id='pagetitle').text.strip()
+                title_site = soup.find(id='pagetitle').text.strip()
             except Exception:
-                title = None
+                title_site = None
             try:
                 price = soup.find(class_='price_value').text.strip()
             except Exception:
@@ -48,6 +46,7 @@ def get_data(data_list):
                     id,
                     title,
                     url,
+                    title_site,
                     price
                 )
             )
@@ -74,7 +73,7 @@ def main():
         data_list = list(reader)
     print(f'Количество ссылок: {len(data_list)}')
     data = get_data(data_list=data_list)
-    # save_excel(data)
+    save_excel(data)
     if len(exceptions_list) > 0:
         with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
             writer = csv.writer(file, delimiter=';')
