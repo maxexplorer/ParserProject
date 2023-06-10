@@ -7,6 +7,8 @@ import json
 import time
 
 start_time = time.time()
+
+
 def get_data():
     cur_time = datetime.datetime.now().strftime('%d-%m-%Y-%H-%M')
 
@@ -89,15 +91,6 @@ def get_data():
             except Exception:
                 book_status = 'Нет статуса'
 
-            # print(book_title)
-            # print(book_author)
-            # print(book_publishing)
-            # print(book_new_price)
-            # print(book_old_price)
-            # print(book_sale)
-            # print(book_status)
-            # print('*' * 10)
-
             books_data.append(
                 {
                     'book_title': book_title,
@@ -124,12 +117,12 @@ def get_data():
                     )
                 )
 
-
         print(f'Обработано {page}/{pages_count}')
         time.sleep(1)
 
     with open(f'data/data_{cur_time}.json', 'a', encoding='utf-8') as file:
         json.dump(books_data, file, indent=4, ensure_ascii=False)
+
 
 def main():
     get_data()
