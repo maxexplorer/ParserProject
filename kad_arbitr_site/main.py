@@ -7,35 +7,50 @@ from random import randrange
 import requests
 from bs4 import BeautifulSoup
 import re
-from pandas import DataFrame, ExcelWriter
-import xlsxwriter
 
 start_time = datetime.now()
+cur_date = datetime.now().strftime('%d-%m-%Y')
 
 
 def get_data(data_list):
-    cur_date = datetime.now().strftime('%d-%m-%Y')
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open(f'data/data_{cur_date}.csv', 'w', encoding='cp1251', newline='') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(
+            (
+                'ИНН',
+                'ИНН1',
+                'ФИО',
+                'Адрес',
+                'Дата',
+                '№ дела'
+            )
+        )
 
     cookies = {
-        '__ddg1_': 'MFMXvDe9vnfJ6yyzwrhA',
-        'ASP.NET_SessionId': '2tbhmmracsoxnyzj0hv3nqij',
-        'CUID': '0e4e384b-57f0-429d-ab85-d3725a50463b:lXvk7RX5VuP9bMqQEgNZaQ==',
-        '_ga': 'GA1.2.1343078113.1686207225',
-        '_gid': 'GA1.2.6857850.1686207225',
-        '_ym_uid': '1686207227142264491',
-        '_ym_d': '1686207227',
+        '__ddg1_': 'hJ2gus2Uk92lVa8Ah0I1',
+        'ASP.NET_SessionId': 'd0afrxkozgstybxowcc305pw',
+        'CUID': '612d9663-2b2e-4e58-b738-e4d1375b6f03:xQO0mrvJC121L36Lxa2Eew==',
+        '_ga': 'GA1.2.514976819.1686401335',
         'pr_fp': 'b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650',
-        'tmr_lvid': 'f106a92d04e109ac6cd53242d170122c',
-        'tmr_lvidTS': '1686207226755',
-        'rcid': 'fb3c3667-e7ec-41a8-9243-0b501e80bff3',
-        'KadLVCards': '%d0%9051-15519%2f2022~%d0%9045-35689%2f2022~%d0%9035-2799%2f2023',
-        'Notification_All': '30df2e13dfef4d2c8ba032b052f13d53_1686603540000_shown',
-        '_ym_isad': '2',
+        'tmr_lvid': '9e02cdea92d0e9183c217e306b5a8a19',
+        'tmr_lvidTS': '1686401337221',
+        '_ym_uid': '1686401338199628375',
+        '_ym_d': '1686401338',
+        'rcid': '05df19e5-f8a9-499b-909d-dbc2f2d16af4',
+        'Notification_All': 'c39d51b8a1ec4d009f00910dc65bf624_1688317200000_shown',
+        '__ddgid_': 'gEZsaD1SqQ2cWrLj',
+        '__ddg2_': 'ieddKCUsnIp2Eavn',
+        '_gid': 'GA1.2.1566152723.1688470817',
         '_gat': '1',
         '_gat_FrontEndTracker': '1',
         '_dc_gtm_UA-157906562-1': '1',
-        'wasm': '294142008510ba99f194ab99dd881dd8',
-        'tmr_detect': '0%7C1686399676556',
+        '_ym_isad': '2',
+        'wasm': 'f21406d648e4976e7e8f7092722da1b0',
+        '_ga_Q2V7P901XE': 'GS1.2.1688470817.2.1.1688470849.0.0.0',
+        'tmr_detect': '0%7C1688470851849',
     }
 
     headers = {
@@ -43,7 +58,7 @@ def get_data(data_list):
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'content-type': 'application/json',
-        # 'cookie': '__ddg1_=MFMXvDe9vnfJ6yyzwrhA; ASP.NET_SessionId=2tbhmmracsoxnyzj0hv3nqij; CUID=0e4e384b-57f0-429d-ab85-d3725a50463b:lXvk7RX5VuP9bMqQEgNZaQ==; _ga=GA1.2.1343078113.1686207225; _gid=GA1.2.6857850.1686207225; _ym_uid=1686207227142264491; _ym_d=1686207227; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; tmr_lvid=f106a92d04e109ac6cd53242d170122c; tmr_lvidTS=1686207226755; rcid=fb3c3667-e7ec-41a8-9243-0b501e80bff3; KadLVCards=%d0%9051-15519%2f2022~%d0%9045-35689%2f2022~%d0%9035-2799%2f2023; Notification_All=30df2e13dfef4d2c8ba032b052f13d53_1686603540000_shown; _ym_isad=2; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; wasm=294142008510ba99f194ab99dd881dd8; tmr_detect=0%7C1686399676556',
+        # 'cookie': '__ddg1_=hJ2gus2Uk92lVa8Ah0I1; ASP.NET_SessionId=d0afrxkozgstybxowcc305pw; CUID=612d9663-2b2e-4e58-b738-e4d1375b6f03:xQO0mrvJC121L36Lxa2Eew==; _ga=GA1.2.514976819.1686401335; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; tmr_lvid=9e02cdea92d0e9183c217e306b5a8a19; tmr_lvidTS=1686401337221; _ym_uid=1686401338199628375; _ym_d=1686401338; rcid=05df19e5-f8a9-499b-909d-dbc2f2d16af4; Notification_All=c39d51b8a1ec4d009f00910dc65bf624_1688317200000_shown; __ddgid_=gEZsaD1SqQ2cWrLj; __ddg2_=ieddKCUsnIp2Eavn; _gid=GA1.2.1566152723.1688470817; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ym_isad=2; wasm=f21406d648e4976e7e8f7092722da1b0; _ga_Q2V7P901XE=GS1.2.1688470817.2.1.1688470849.0.0.0; tmr_detect=0%7C1688470851849',
         'origin': 'https://kad.arbitr.ru',
         'referer': 'https://kad.arbitr.ru/',
         'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
@@ -57,11 +72,10 @@ def get_data(data_list):
         'x-requested-with': 'XMLHttpRequest',
     }
     with requests.Session() as session:
-
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address, _, _ in data_list[1:100]:
+        for i, tin, full_name, address in data_list[1:]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
@@ -87,14 +101,11 @@ def get_data(data_list):
                 'WithVKSInstances': False,
             }
 
-            session.headers.update(headers)
-            session.cookies.update(cookies)
-
-            time.sleep(randrange(5, 15))
+            time.sleep(randrange(3, 5))
 
             try:
-                response = session.post('https://kad.arbitr.ru/Kad/SearchInstances', cookies=cookies, headers=headers,
-                                        json=json_data, timeout=30)
+                response = requests.post('https://kad.arbitr.ru/Kad/SearchInstances', cookies=cookies, headers=headers,
+                                         json=json_data, timeout=30)
 
                 if response.status_code == 451:
                     print(f'{i}: {response}')
@@ -103,7 +114,6 @@ def get_data(data_list):
             except Exception as ex:
                 print(ex)
                 continue
-            print(f'Обрабатывается: {i}/{len(data_list)}')
 
             items = soup.find_all('tr')
             for item in items:
@@ -121,7 +131,6 @@ def get_data(data_list):
                 except Exception:
                     tin1 = None
 
-
                 with open(f'data/data_{cur_date}.csv', 'a', encoding='cp1251', newline='') as file:
                     writer = csv.writer(file, delimiter=';')
                     writer.writerow(
@@ -134,13 +143,12 @@ def get_data(data_list):
                             num_case
                         )
                     )
-            print(f'Выполнено: {i}/{len(data_list)}')
 
-    print(f'Данные сохранены в файл "data.csv"')
+            print(f'Выполнено: {i}/{len(data_list)}')
 
 
 def main():
-    with open('data/input_data.csv', 'r', encoding='cp1251') as file:
+    with open('data/input_data.csv', 'r', encoding='utf-8') as file:
         reader = csv.reader(file, delimiter=';')
         data_list = list(reader)
     print(f'Всего: {len(data_list)}')
