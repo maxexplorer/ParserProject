@@ -7,10 +7,12 @@ from random import randrange
 import requests
 from bs4 import BeautifulSoup
 import re
+from fake_useragent import UserAgent
 
 start_time = datetime.now()
 cur_date = datetime.now().strftime('%d-%m-%Y')
 
+useragent = UserAgent()
 
 def get_data(data_list):
     if not os.path.exists('data'):
@@ -44,13 +46,13 @@ def get_data(data_list):
         '__ddgid_': 'gEZsaD1SqQ2cWrLj',
         '__ddg2_': 'ieddKCUsnIp2Eavn',
         '_gid': 'GA1.2.1566152723.1688470817',
+        '_ym_isad': '2',
+        'wasm': '6bd4cbe0827915f47734a95a102c4cd3',
         '_gat': '1',
         '_gat_FrontEndTracker': '1',
         '_dc_gtm_UA-157906562-1': '1',
-        '_ym_isad': '2',
-        'wasm': 'f21406d648e4976e7e8f7092722da1b0',
-        '_ga_Q2V7P901XE': 'GS1.2.1688470817.2.1.1688470849.0.0.0',
-        'tmr_detect': '0%7C1688470851849',
+        '_ga_Q2V7P901XE': 'GS1.2.1688472858.3.0.1688472858.0.0.0',
+        'tmr_detect': '0%7C1688472860717',
     }
 
     headers = {
@@ -58,7 +60,7 @@ def get_data(data_list):
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'content-type': 'application/json',
-        # 'cookie': '__ddg1_=hJ2gus2Uk92lVa8Ah0I1; ASP.NET_SessionId=d0afrxkozgstybxowcc305pw; CUID=612d9663-2b2e-4e58-b738-e4d1375b6f03:xQO0mrvJC121L36Lxa2Eew==; _ga=GA1.2.514976819.1686401335; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; tmr_lvid=9e02cdea92d0e9183c217e306b5a8a19; tmr_lvidTS=1686401337221; _ym_uid=1686401338199628375; _ym_d=1686401338; rcid=05df19e5-f8a9-499b-909d-dbc2f2d16af4; Notification_All=c39d51b8a1ec4d009f00910dc65bf624_1688317200000_shown; __ddgid_=gEZsaD1SqQ2cWrLj; __ddg2_=ieddKCUsnIp2Eavn; _gid=GA1.2.1566152723.1688470817; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ym_isad=2; wasm=f21406d648e4976e7e8f7092722da1b0; _ga_Q2V7P901XE=GS1.2.1688470817.2.1.1688470849.0.0.0; tmr_detect=0%7C1688470851849',
+        # 'cookie': '__ddg1_=hJ2gus2Uk92lVa8Ah0I1; ASP.NET_SessionId=d0afrxkozgstybxowcc305pw; CUID=612d9663-2b2e-4e58-b738-e4d1375b6f03:xQO0mrvJC121L36Lxa2Eew==; _ga=GA1.2.514976819.1686401335; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; tmr_lvid=9e02cdea92d0e9183c217e306b5a8a19; tmr_lvidTS=1686401337221; _ym_uid=1686401338199628375; _ym_d=1686401338; rcid=05df19e5-f8a9-499b-909d-dbc2f2d16af4; Notification_All=c39d51b8a1ec4d009f00910dc65bf624_1688317200000_shown; __ddgid_=gEZsaD1SqQ2cWrLj; __ddg2_=ieddKCUsnIp2Eavn; _gid=GA1.2.1566152723.1688470817; _ym_isad=2; wasm=6bd4cbe0827915f47734a95a102c4cd3; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ga_Q2V7P901XE=GS1.2.1688472858.3.0.1688472858.0.0.0; tmr_detect=0%7C1688472860717',
         'origin': 'https://kad.arbitr.ru',
         'referer': 'https://kad.arbitr.ru/',
         'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
@@ -67,7 +69,7 @@ def get_data(data_list):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        'user-agent': useragent.random,
         'x-date-format': 'iso',
         'x-requested-with': 'XMLHttpRequest',
     }
@@ -75,7 +77,7 @@ def get_data(data_list):
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address in data_list[1:]:
+        for i, tin, full_name, address in data_list[373:500]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
