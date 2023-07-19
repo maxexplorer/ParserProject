@@ -77,7 +77,7 @@ def get_data(data_list):
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address in data_list[1300:1600]:
+        for i, tin, full_name, address in data_list[1550:2000]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
@@ -109,7 +109,7 @@ def get_data(data_list):
                 response = session.post('https://kad.arbitr.ru/Kad/SearchInstances', cookies=cookies, headers=headers,
                                          json=json_data, timeout=30)
 
-                if response.status_code == 451:
+                if response.status_code == 451 or response.status_code == 429:
                     print(f'{i}: {response}')
                     break
                 soup = BeautifulSoup(response.text, 'lxml')
