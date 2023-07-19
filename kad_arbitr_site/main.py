@@ -79,7 +79,7 @@ def get_data(data_list):
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address in data_list[824:1100]:
+        for i, tin, full_name, address in data_list[1300:1500]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
@@ -105,10 +105,10 @@ def get_data(data_list):
                 'WithVKSInstances': False,
             }
 
-            time.sleep(randrange(5, 10))
+            # time.sleep(randrange(5, 10))
 
             try:
-                response = requests.post('https://kad.arbitr.ru/Kad/SearchInstances', cookies=cookies, headers=headers,
+                response = session.post('https://kad.arbitr.ru/Kad/SearchInstances', cookies=cookies, headers=headers,
                                          json=json_data, timeout=30)
 
                 if response.status_code == 451:
