@@ -36,22 +36,23 @@ def get_data(data_list):
         'ASP.NET_SessionId': 'm1oawir2iwf3xtm42g20q35m',
         'CUID': '5e8f322f-2d41-40a1-8120-8669c24a2111:Bs0y4YX3cCi0g2L7ntnspw==',
         '_ga': 'GA1.2.376067459.1689767391',
-        '_gid': 'GA1.2.1923009333.1689767391',
-        '_gat': '1',
-        '_gat_FrontEndTracker': '1',
-        '_dc_gtm_UA-157906562-1': '1',
-        '_ga_9582CL89Y6': 'GS1.2.1689767392.1.0.1689767392.60.0.0',
-        '_ga_Q2V7P901XE': 'GS1.2.1689767392.1.0.1689767392.0.0.0',
-        '_ga_EYS41HMRV3': 'GS1.2.1689767392.1.0.1689767392.60.0.0',
         'tmr_lvid': 'e391023cf200b2d5c80af9ed79b5eaa7',
         'tmr_lvidTS': '1689767392506',
         '_ym_uid': '1689767394313614059',
         '_ym_d': '1689767394',
         'pr_fp': 'b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650',
-        '_ym_isad': '2',
-        'tmr_detect': '0%7C1689767395130',
-        'wasm': 'd7bbeb65ecb794a0f95f85e2eab4d1f2',
         'rcid': '56e06736-a0c5-4d7a-9156-c9159ebc7fde',
+        '__ddgid_': 'g2doOe3xp1Fq9SwH',
+        '_gid': 'GA1.2.2064726191.1689930892',
+        '_gat': '1',
+        '_gat_FrontEndTracker': '1',
+        '_dc_gtm_UA-157906562-1': '1',
+        '_ga_9582CL89Y6': 'GS1.2.1689930894.2.0.1689930894.60.0.0',
+        '_ga_Q2V7P901XE': 'GS1.2.1689930894.2.0.1689930894.0.0.0',
+        '_ga_EYS41HMRV3': 'GS1.2.1689930895.2.0.1689930895.60.0.0',
+        '_ym_isad': '2',
+        'tmr_detect': '0%7C1689930904687',
+        'wasm': '6a74f8e066063ac6aabeb84d18b15193',
     }
 
     headers = {
@@ -59,7 +60,7 @@ def get_data(data_list):
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'content-type': 'application/json',
-        # 'cookie': '__ddg1_=eoPAnvE1F1u2yBAV78El; ASP.NET_SessionId=m1oawir2iwf3xtm42g20q35m; CUID=5e8f322f-2d41-40a1-8120-8669c24a2111:Bs0y4YX3cCi0g2L7ntnspw==; _ga=GA1.2.376067459.1689767391; _gid=GA1.2.1923009333.1689767391; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ga_9582CL89Y6=GS1.2.1689767392.1.0.1689767392.60.0.0; _ga_Q2V7P901XE=GS1.2.1689767392.1.0.1689767392.0.0.0; _ga_EYS41HMRV3=GS1.2.1689767392.1.0.1689767392.60.0.0; tmr_lvid=e391023cf200b2d5c80af9ed79b5eaa7; tmr_lvidTS=1689767392506; _ym_uid=1689767394313614059; _ym_d=1689767394; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; _ym_isad=2; tmr_detect=0%7C1689767395130; wasm=d7bbeb65ecb794a0f95f85e2eab4d1f2; rcid=56e06736-a0c5-4d7a-9156-c9159ebc7fde',
+        # 'cookie': '__ddg1_=eoPAnvE1F1u2yBAV78El; ASP.NET_SessionId=m1oawir2iwf3xtm42g20q35m; CUID=5e8f322f-2d41-40a1-8120-8669c24a2111:Bs0y4YX3cCi0g2L7ntnspw==; _ga=GA1.2.376067459.1689767391; tmr_lvid=e391023cf200b2d5c80af9ed79b5eaa7; tmr_lvidTS=1689767392506; _ym_uid=1689767394313614059; _ym_d=1689767394; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; rcid=56e06736-a0c5-4d7a-9156-c9159ebc7fde; __ddgid_=g2doOe3xp1Fq9SwH; _gid=GA1.2.2064726191.1689930892; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ga_9582CL89Y6=GS1.2.1689930894.2.0.1689930894.60.0.0; _ga_Q2V7P901XE=GS1.2.1689930894.2.0.1689930894.0.0.0; _ga_EYS41HMRV3=GS1.2.1689930895.2.0.1689930895.60.0.0; _ym_isad=2; tmr_detect=0%7C1689930904687; wasm=6a74f8e066063ac6aabeb84d18b15193',
         'origin': 'https://kad.arbitr.ru',
         'referer': 'https://kad.arbitr.ru/',
         'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
@@ -72,7 +73,6 @@ def get_data(data_list):
         'x-date-format': 'iso',
         'x-requested-with': 'XMLHttpRequest',
     }
-
     with requests.Session() as session:
         if not os.path.exists('data'):
             os.mkdir('data')
