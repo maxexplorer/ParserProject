@@ -36,20 +36,22 @@ def get_data(data_list):
         'ASP.NET_SessionId': 'cjfutevowfqxpac4hjhlfbjq',
         'CUID': '2911935a-8bdf-41a8-80b4-4cab66cfb8bd:/PBC4cszH/0sn9+kiSvCYA==',
         '_ga': 'GA1.2.1950699312.1690206769',
-        '_gid': 'GA1.2.1533721924.1690206769',
-        'Notification_All': '317e6bf217294d3f8a29f72c5fd30a1e_1690232400000_shown',
         'tmr_lvid': '2617d02c6757bc3c4584daab844ac08d',
         'tmr_lvidTS': '1690206770102',
         '_ym_uid': '1690206770760299697',
         '_ym_d': '1690206770',
-        'pr_fp': 'b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650',
-        '_ga_Q2V7P901XE': 'GS1.2.1690206770.1.0.1690206770.0.0.0',
-        '_ga_EYS41HMRV3': 'GS1.2.1690206770.1.0.1690206770.60.0.0',
-        '_ym_isad': '2',
-        'tmr_detect': '0%7C1690206780189',
-        'wasm': 'f0d217213411fbaea94ad2cb023a82f9',
         'rcid': '6d5e016c-c826-4142-955a-af1f8d8f68ac',
-        '_ga_9582CL89Y6': 'GS1.2.1690206770.1.1.1690206802.28.0.0',
+        '_gid': 'GA1.2.1735990291.1690394649',
+        '_gat': '1',
+        '_gat_FrontEndTracker': '1',
+        '_dc_gtm_UA-157906562-1': '1',
+        '_ga_Q2V7P901XE': 'GS1.2.1690394649.2.0.1690394649.0.0.0',
+        '_ga_9582CL89Y6': 'GS1.2.1690394649.2.0.1690394649.60.0.0',
+        '_ga_EYS41HMRV3': 'GS1.2.1690394649.2.0.1690394649.60.0.0',
+        'pr_fp': '5aba577ffd016e32a6c7b5f49857d9a089b6fceb34a890d01ac55a8686bd0698',
+        '_ym_isad': '2',
+        'tmr_detect': '0%7C1690394652037',
+        'wasm': '23a5da0d6e2ca73fd949f87d1f688e95',
     }
 
     headers = {
@@ -57,16 +59,16 @@ def get_data(data_list):
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'content-type': 'application/json',
-        # 'cookie': '__ddg1_=jw0uUdVEBaSxdSkuwZFZ; ASP.NET_SessionId=cjfutevowfqxpac4hjhlfbjq; CUID=2911935a-8bdf-41a8-80b4-4cab66cfb8bd:/PBC4cszH/0sn9+kiSvCYA==; _ga=GA1.2.1950699312.1690206769; _gid=GA1.2.1533721924.1690206769; Notification_All=317e6bf217294d3f8a29f72c5fd30a1e_1690232400000_shown; tmr_lvid=2617d02c6757bc3c4584daab844ac08d; tmr_lvidTS=1690206770102; _ym_uid=1690206770760299697; _ym_d=1690206770; pr_fp=b8b6c4acd80151855d63363388cf302ae16a2b028cc87c7de3b2f8c6239c4650; _ga_Q2V7P901XE=GS1.2.1690206770.1.0.1690206770.0.0.0; _ga_EYS41HMRV3=GS1.2.1690206770.1.0.1690206770.60.0.0; _ym_isad=2; tmr_detect=0%7C1690206780189; wasm=f0d217213411fbaea94ad2cb023a82f9; rcid=6d5e016c-c826-4142-955a-af1f8d8f68ac; _ga_9582CL89Y6=GS1.2.1690206770.1.1.1690206802.28.0.0',
+        # 'cookie': '__ddg1_=jw0uUdVEBaSxdSkuwZFZ; ASP.NET_SessionId=cjfutevowfqxpac4hjhlfbjq; CUID=2911935a-8bdf-41a8-80b4-4cab66cfb8bd:/PBC4cszH/0sn9+kiSvCYA==; _ga=GA1.2.1950699312.1690206769; tmr_lvid=2617d02c6757bc3c4584daab844ac08d; tmr_lvidTS=1690206770102; _ym_uid=1690206770760299697; _ym_d=1690206770; rcid=6d5e016c-c826-4142-955a-af1f8d8f68ac; _gid=GA1.2.1735990291.1690394649; _gat=1; _gat_FrontEndTracker=1; _dc_gtm_UA-157906562-1=1; _ga_Q2V7P901XE=GS1.2.1690394649.2.0.1690394649.0.0.0; _ga_9582CL89Y6=GS1.2.1690394649.2.0.1690394649.60.0.0; _ga_EYS41HMRV3=GS1.2.1690394649.2.0.1690394649.60.0.0; pr_fp=5aba577ffd016e32a6c7b5f49857d9a089b6fceb34a890d01ac55a8686bd0698; _ym_isad=2; tmr_detect=0%7C1690394652037; wasm=23a5da0d6e2ca73fd949f87d1f688e95',
         'origin': 'https://kad.arbitr.ru',
         'referer': 'https://kad.arbitr.ru/',
-        'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
+        'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': useragent.random,
+        'user-agent':  useragent.random,
         'x-date-format': 'iso',
         'x-requested-with': 'XMLHttpRequest',
     }
@@ -75,7 +77,7 @@ def get_data(data_list):
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address in data_list[2030:2400]:
+        for i, tin, full_name, address in data_list[2377:2700]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
