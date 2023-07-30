@@ -77,7 +77,7 @@ def get_data(data_list):
         if not os.path.exists('data'):
             os.mkdir('data')
 
-        for i, tin, full_name, address in data_list[2659:3000]:
+        for i, tin, full_name, address in data_list[2884:3500]:
             tin = tin.strip()
             full_name = full_name.strip()
             if tin:
