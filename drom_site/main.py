@@ -73,9 +73,7 @@ def get_data(file_path):
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless")
 
-    browser = webdriver.Chrome(service=service,
-                               executable_path="C:/Users/Макс/PycharmProjects/ParserProject/chromedriver/chromedriver.exe",
-                               options=options)
+    browser = webdriver.Chrome(service=service, options=options)
     browser.maximize_window()
 
     try:
