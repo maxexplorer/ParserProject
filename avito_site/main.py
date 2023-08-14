@@ -96,15 +96,15 @@ def main():
         html = get_html(url=url)
         cards = get_content(html)
         save_json(cards)
-    #     if not os.path.exists('data'):
-    #         os.mkdir('data')
-    #     with open('data/index.html', 'w', encoding='utf-8') as file:
-    #         file.write(html)
-    # with open('data/index.html', 'r', encoding='utf-8') as file:
-    #     html = file.read()
-    # cards = get_content(html)
-    # print(len(cards))
-    # # print(get_content(html))
+        if not os.path.exists('data'):
+            os.mkdir('data')
+        with open('data/index.html', 'w', encoding='utf-8') as file:
+            file.write(html)
+    with open('data/index.html', 'r', encoding='utf-8') as file:
+        html = file.read()
+    cards = get_content(html)
+    print(len(cards))
+    print(get_content(html))
 
 
 if __name__ == '__main__':
