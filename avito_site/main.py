@@ -97,5 +97,6 @@ def main():
         cards = get_content(html)
         save_json(cards)
 
+
 if __name__ == '__main__':
     main()
