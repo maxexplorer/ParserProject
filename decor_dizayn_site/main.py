@@ -10,7 +10,7 @@ start_time = datetime.now()
 
 exceptions_list = []
 
-catalog_list = [
+category_url_list = [
     "https://decor-dizayn.ru/catalog/belaya-lepnina/karnizy-belye/",
     "https://decor-dizayn.ru/catalog/belaya-lepnina/moldingi_belye/",
     "https://decor-dizayn.ru/catalog/belaya-lepnina/plintusy_belye/",
@@ -40,32 +40,41 @@ headers = {
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
 
-
 def get_html(url, headers):
-    response = requests.get(url=url, headers=headers)
+    response = requests.get(url=url, headers=headers, timeout=60)
     html = response.text
     return html
 
 
+def get_quantity_pages(urls_list):
+    pass
+
+def get_urls(category_url_list, headers):
+    with requests.Session() as session:
+        for url in category_url_list:
+            try:
+                html = get_html(url=url, headers=headers)
+
+                soup = BeautifulSoup(html, 'lxml')
+            except Exception as ex:
+                print(f"{url} - {ex}")
+                continue
+
+
 def get_data(data_list):
-    headers = {
-        'Accept': '*/*',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
-    }
 
     count = 1
     result_list = []
 
     with requests.Session() as session:
-        for id, title, url in data_list:
+        for url in data_list:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
 
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception:
                 exceptions_list.append(
-                    [id, title, url]
+                    url
                 )
                 continue
             try:
@@ -104,16 +113,16 @@ def save_excel(data):
 
 
 def main():
-    html = get_html(url=url, headers=headers)
+    get_urls(category_url_list=category_url_list, headers=headers)
 
-    with open('data/index.html', 'w', encoding='utf-8') as file:
-        file.write(html)
+    # with open('data/index.html', 'w', encoding='utf-8') as file:
+    #     file.write(html)
 
     # with open('data/decomaster.csv', 'r', encoding='cp1251') as file:
     #     reader = csv.reader(file, delimiter=';')
     #     data_list = list(reader)
     # print(f'Количество ссылок: {len(data_list)}')
-    # data = get_data(data_list=data_list)
+    data = get_data(data_list=category_url_list)
     # save_excel(data)
     # if len(exceptions_list) > 0:
     #     with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
