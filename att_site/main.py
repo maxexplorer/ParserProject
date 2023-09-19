@@ -36,7 +36,7 @@ try:
     except Exception as ex:
         print(ex)
     try:
-        imei_number = browser.find_element(By.CSS_SELECTOR, 'input#imeino')
+        imei_number = browser.find_element(By.CSS_SELECTOR, '#imeino')
         imei_number.send_keys('Hello')
     except Exception as ex:
         print(ex)
