@@ -40,25 +40,41 @@ headers = {
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
 
-def get_html(url, headers):
-    response = requests.get(url=url, headers=headers, timeout=60)
-    html = response.text
-    return html
+def get_html(url, headers, session):
+    try:
+        response = session.get(url=url, headers=headers)
+        html = response.text
+        return html
+    except Exception as ex:
+        print(ex)
 
 
-def get_quantity_pages(urls_list):
-    pass
+def get_pages(html):
+    soup = BeautifulSoup(html, 'lxml')
+    try:
+        pages = int(soup.find('div', class_='pages').find_all('a')[-2].text)
+    except Exception:
+        pages = None
+    return pages
+
 
 def get_urls(category_url_list, headers):
     with requests.Session() as session:
         for url in category_url_list:
             try:
-                html = get_html(url=url, headers=headers)
-
+                html = get_html(url=url, headers=headers, session=session)
                 soup = BeautifulSoup(html, 'lxml')
             except Exception as ex:
                 print(f"{url} - {ex}")
                 continue
+            pages = get_pages(html=html)
+
+            for page in range(1, pages+1):
+                url = f"{url}?PAGEN_1={page}"
+                html = get_html(url=url, headers=headers, session=session)
+
+
+
 
 
 def get_data(data_list):
