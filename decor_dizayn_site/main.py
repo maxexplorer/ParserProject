@@ -32,13 +32,14 @@ category_url_list = [
 ]
 
 # url = "https://decor-dizayn.ru/"
-url = "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/tsvetniye_plintusy/?PAGEN_1=5"
+# url = "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/tsvetniye_plintusy/?PAGEN_1=5"
 
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
+
 
 def get_html(url, headers, session):
     try:
@@ -54,31 +55,48 @@ def get_pages(html):
     try:
         pages = int(soup.find('div', class_='pages').find_all('a')[-2].text)
     except Exception:
-        pages = None
+        pages = 1
     return pages
 
 
 def get_urls(category_url_list, headers):
+
+    url_list = []
+
     with requests.Session() as session:
-        for url in category_url_list:
+        for category_url in category_url_list[:10]:
             try:
-                html = get_html(url=url, headers=headers, session=session)
-                soup = BeautifulSoup(html, 'lxml')
+                html = get_html(url=category_url, headers=headers, session=session)
             except Exception as ex:
-                print(f"{url} - {ex}")
+                print(f"{category_url} - {ex}")
                 continue
             pages = get_pages(html=html)
 
             for page in range(1, pages+1):
-                url = f"{url}?PAGEN_1={page}"
-                html = get_html(url=url, headers=headers, session=session)
+                product_url = f"{category_url}?PAGEN_1={page}"
+                print(product_url)
+                try:
+                    html = get_html(url=product_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{url} - {ex}")
+                    continue
+                soup = BeautifulSoup(html, 'lxml')
 
-
-
+                try:
+                    data = soup.find('div', class_='types').find_next().find_next().find_next().find_all(class_='item')
+                    for item in data:
+                        try:
+                            url = "https://decor-dizayn.ru/" + item.find(class_='image').get('href')
+                        except Exception as ex:
+                            print(ex)
+                            continue
+                        url_list.append(url)
+                except Exception as ex:
+                    print(ex)
+    return url_list
 
 
 def get_data(data_list):
-
     count = 1
     result_list = []
 
@@ -105,7 +123,6 @@ def get_data(data_list):
             result_list.append(
                 (
                     id,
-                    title,
                     url,
                     title_site,
                     price
@@ -131,14 +148,11 @@ def save_excel(data):
 def main():
     get_urls(category_url_list=category_url_list, headers=headers)
 
-    # with open('data/index.html', 'w', encoding='utf-8') as file:
-    #     file.write(html)
-
     # with open('data/decomaster.csv', 'r', encoding='cp1251') as file:
     #     reader = csv.reader(file, delimiter=';')
     #     data_list = list(reader)
     # print(f'Количество ссылок: {len(data_list)}')
-    data = get_data(data_list=category_url_list)
+    # data = get_data(data_list=category_url_list)
     # save_excel(data)
     # if len(exceptions_list) > 0:
     #     with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
