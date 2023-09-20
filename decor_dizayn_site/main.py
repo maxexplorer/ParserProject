@@ -1,16 +1,14 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import os
+import json
 from datetime import datetime
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
 start_time = datetime.now()
 
-exceptions_list = []
-
-category_url_list = [
+category_urls_list = [
     "https://decor-dizayn.ru/catalog/belaya-lepnina/karnizy-belye/",
     "https://decor-dizayn.ru/catalog/belaya-lepnina/moldingi_belye/",
     "https://decor-dizayn.ru/catalog/belaya-lepnina/plintusy_belye/",
@@ -30,9 +28,6 @@ category_url_list = [
     "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-2/",
     "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-vostoka/"
 ]
-
-# url = "https://decor-dizayn.ru/"
-# url = "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/tsvetniye_plintusy/?PAGEN_1=5"
 
 headers = {
     'Accept': '*/*',
@@ -59,12 +54,13 @@ def get_pages(html):
     return pages
 
 
-def get_urls(category_url_list, headers):
+def get_urls(category_urls_list, headers):
+    count_urls = len(category_urls_list)
 
-    url_list = []
+    product_urls_list = []
 
     with requests.Session() as session:
-        for category_url in category_url_list[:10]:
+        for i, category_url in enumerate(category_urls_list, 1):
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
             except Exception as ex:
@@ -72,9 +68,8 @@ def get_urls(category_url_list, headers):
                 continue
             pages = get_pages(html=html)
 
-            for page in range(1, pages+1):
+            for page in range(1, pages + 1):
                 product_url = f"{category_url}?PAGEN_1={page}"
-                print(product_url)
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -90,10 +85,17 @@ def get_urls(category_url_list, headers):
                         except Exception as ex:
                             print(ex)
                             continue
-                        url_list.append(url)
+                        product_urls_list.append(url)
                 except Exception as ex:
                     print(ex)
-    return url_list
+
+            print(f'Обработано: {i}/{count_urls}')
+
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/product_url_list.txt', 'w', encoding='utf-8') as file:
+        print(*product_urls_list, file=file, sep='\n')
 
 
 def get_data(data_list):
@@ -133,6 +135,15 @@ def get_data(data_list):
     return result_list
 
 
+def save_json(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/url_list.json', 'w', encoding='utf-8') as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+    print('Данные сохранены в файл "data.json"')
+
+
 def save_excel(data):
     if not os.path.exists('data'):
         os.mkdir('data')
@@ -146,7 +157,8 @@ def save_excel(data):
 
 
 def main():
-    get_urls(category_url_list=category_url_list, headers=headers)
+    url_list = get_urls(category_url_list=category_urls_list, headers=headers)
+    save_json(data=url_list)
 
     # with open('data/decomaster.csv', 'r', encoding='cp1251') as file:
     #     reader = csv.reader(file, delimiter=';')
@@ -158,9 +170,9 @@ def main():
     #     with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
     #         writer = csv.writer(file, delimiter=';')
     #         writer.writerows(exceptions_list)
-    # execution_time = datetime.now() - start_time
-    # print('Сбор данных завершен!')
-    # print(f'Время работы программы: {execution_time}')
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
