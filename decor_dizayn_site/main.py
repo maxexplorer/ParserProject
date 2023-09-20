@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import os
-import json
 from datetime import datetime
 from pandas import DataFrame, ExcelWriter
 import openpyxl
@@ -38,7 +37,7 @@ headers = {
 
 def get_html(url, headers, session):
     try:
-        response = session.get(url=url, headers=headers)
+        response = session.get(url=url, headers=headers, timeout=60)
         html = response.text
         return html
     except Exception as ex:
@@ -48,7 +47,7 @@ def get_html(url, headers, session):
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     try:
-        pages = int(soup.find('div', class_='pages').find_all('a')[-2].text)
+        pages = int(soup.find('div', class_='pages').find_all('a')[-1].get('href').split('=')[-1])
     except Exception:
         pages = 1
     return pages
@@ -81,7 +80,7 @@ def get_urls(category_urls_list, headers):
                     data = soup.find('div', class_='types').find_next().find_next().find_next().find_all(class_='item')
                     for item in data:
                         try:
-                            url = "https://decor-dizayn.ru/" + item.find(class_='image').get('href')
+                            url = "https://decor-dizayn.ru" + item.find(class_='image').get('href')
                         except Exception as ex:
                             print(ex)
                             continue
@@ -94,54 +93,90 @@ def get_urls(category_urls_list, headers):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/product_url_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
         print(*product_urls_list, file=file, sep='\n')
 
 
-def get_data(data_list):
-    count = 1
+def get_data(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
     result_list = []
+    image_urls_list = []
 
     with requests.Session() as session:
-        for url in data_list:
+        for j, product_url in enumerate(product_urls_list[:1]):
             try:
-                response = session.get(url=url, headers=headers, timeout=60)
-
-                soup = BeautifulSoup(response.text, 'lxml')
-            except Exception:
-                exceptions_list.append(
-                    url
-                )
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
                 continue
+            # with open("data/index.html", "w") as file:
+            #     file.write(html)
+
+            soup = BeautifulSoup(html, 'lxml')
+
             try:
-                title_site = soup.find(id='pagetitle').text.strip()
+                title = soup.find('h2', class_='product_name').text.strip()
             except Exception:
-                title_site = None
+                title = None
             try:
-                price = soup.find(class_='price_value').text.strip()
+                image_data = soup.find('div', class_='newGall').find_all('li', class_='newGall__thumbItem')
+                for img_url in image_data:
+                    image_urls_list.append("https://decor-dizayn.ru" + img_url.find('img').get('src'))
+            except Exception:
+                images = None
+            print(image_urls_list)
+
+            try:
+                description = soup.find('div', id='t1').text.strip().splitlines()[-1]
+            except Exception:
+                description = None
+            try:
+                models = ' ,'.join(["https://decor-dizayn.ru" + model.get('href') for model in
+                                   soup.find('div', id='t4').find_all('a')])
+            except Exception:
+                models = None
+                pass
+            try:
+                price = soup.find('div', class_='price').text.strip().split()[0]
             except Exception:
                 price = None
 
-            result_list.append(
-                (
-                    id,
-                    url,
-                    title_site,
-                    price
-                )
-            )
-            print(count)
-            count += 1
+
+            try:
+                data = soup.find('div', class_='data').find_all('div', class_='item')
+            except Exception:
+                data = None
+
+
+            result_dict = {
+                'Название товара': title,
+                'Ссылка': product_url,
+                'Изображения': images,
+                'Цена': price,
+                '3D модели': models,
+
+
+            }
+
+            info_list = []
+
+            for item in data:
+                info_list.append(item.text.strip().splitlines())
+            info_dict = dict(info_list)
+
+            result_dict.update(info_dict)
+
+        result_list.append(result_dict)
+
+        if not os.path.exists('data'):
+            os.mkdir('data')
+
+        with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
+            print(*image_urls_list, file=file, sep='\n')
+
     return result_list
-
-
-def save_json(data):
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open('data/url_list.json', 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-    print('Данные сохранены в файл "data.json"')
 
 
 def save_excel(data):
@@ -157,8 +192,8 @@ def save_excel(data):
 
 
 def main():
-    url_list = get_urls(category_url_list=category_urls_list, headers=headers)
-    save_json(data=url_list)
+    # get_urls(category_urls_list=category_urls_list, headers=headers)
+    data = get_data(file_path="data/product_urls_list.txt")
 
     # with open('data/decomaster.csv', 'r', encoding='cp1251') as file:
     #     reader = csv.reader(file, delimiter=';')
