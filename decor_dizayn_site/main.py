@@ -1,3 +1,5 @@
+import re
+
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -108,7 +110,7 @@ def get_data(file_path):
     image_urls_list = []
 
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[:10], 1):
+        for j, product_url in enumerate(product_urls_list[:5], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -122,13 +124,13 @@ def get_data(file_path):
             except Exception:
                 title = None
             try:
-                image_title = ' ,'.join(img_url.find('img').get('src').split('/')[-1] for img_url in image_data)
+                image_title = ' ,'.join(img_url.find('img').get('full').split('/')[-1] for img_url in image_data)
             except Exception:
                 image_title = None
             try:
                 image_data = soup.find('div', class_='newGall').find_all('li', class_='newGall__thumbItem')
                 for img_url in image_data:
-                    image_urls_list.append("https://decor-dizayn.ru" + img_url.find('img').get('src'))
+                    image_urls_list.append("https://decor-dizayn.ru" + img_url.find('img').get('full'))
             except Exception:
                 image_data = None
             try:
@@ -217,8 +219,8 @@ def save_excel(data):
 def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
     result_list = get_data(file_path="data/product_urls_list.txt")
-    save_excel(data=result_list)
-    download_imgs(file_path="data/image_urls_list.txt")
+    # save_excel(data=result_list)
+    # download_imgs(file_path="data/image_urls_list.txt")
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
