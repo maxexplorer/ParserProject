@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 from datetime import datetime
+import json
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
@@ -101,18 +102,18 @@ def get_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
+        count_urls = len(product_urls_list)
+
     result_list = []
     image_urls_list = []
 
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[:1]):
+        for j, product_url in enumerate(product_urls_list[:10], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
-            # with open("data/index.html", "w") as file:
-            #     file.write(html)
 
             soup = BeautifulSoup(html, 'lxml')
 
@@ -121,20 +122,22 @@ def get_data(file_path):
             except Exception:
                 title = None
             try:
+                image_title = ' ,'.join(img_url.find('img').get('src').split('/')[-1] for img_url in image_data)
+            except Exception:
+                image_title = None
+            try:
                 image_data = soup.find('div', class_='newGall').find_all('li', class_='newGall__thumbItem')
                 for img_url in image_data:
                     image_urls_list.append("https://decor-dizayn.ru" + img_url.find('img').get('src'))
             except Exception:
-                images = None
-            print(image_urls_list)
-
+                image_data = None
             try:
                 description = soup.find('div', id='t1').text.strip().splitlines()[-1]
             except Exception:
                 description = None
             try:
                 models = ' ,'.join(["https://decor-dizayn.ru" + model.get('href') for model in
-                                   soup.find('div', id='t4').find_all('a')])
+                                    soup.find('div', id='t4').find_all('a')])
             except Exception:
                 models = None
                 pass
@@ -143,20 +146,18 @@ def get_data(file_path):
             except Exception:
                 price = None
 
-
             try:
                 data = soup.find('div', class_='data').find_all('div', class_='item')
             except Exception:
                 data = None
 
-
             result_dict = {
                 'Название товара': title,
                 'Ссылка': product_url,
-                'Изображения': images,
-                'Цена': price,
+                'Изображения': image_title,
+                'Описание': description,
                 '3D модели': models,
-
+                'Цена': price,
 
             }
 
@@ -168,15 +169,37 @@ def get_data(file_path):
 
             result_dict.update(info_dict)
 
-        result_list.append(result_dict)
+            result_list.append(result_dict)
 
-        if not os.path.exists('data'):
-            os.mkdir('data')
+            print(f'Обработано: {j}/{count_urls}')
 
-        with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
-            print(*image_urls_list, file=file, sep='\n')
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
+        print(*image_urls_list, file=file, sep='\n')
 
     return result_list
+
+def download_imgs(file_path):
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        image_urls_list = [line.strip() for line in file.readlines()]
+
+    count_urls = len(image_urls_list)
+
+    for k, img_url in enumerate(image_urls_list, 1):
+        image_title = img_url.split('/')[-1]
+
+        response = requests.get(url=img_url)
+
+        if not os.path.exists('images'):
+            os.mkdir('images')
+
+        with open(f"images/{image_title}.jpg", "wb") as file:
+            file.write(response.content)
+
+        print(f'Обработано: {k}/{count_urls}')
 
 
 def save_excel(data):
@@ -185,7 +208,7 @@ def save_excel(data):
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/data.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data')
 
     print(f'Данные сохранены в файл "data.xlsx"')
@@ -193,18 +216,9 @@ def save_excel(data):
 
 def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
-    data = get_data(file_path="data/product_urls_list.txt")
-
-    # with open('data/decomaster.csv', 'r', encoding='cp1251') as file:
-    #     reader = csv.reader(file, delimiter=';')
-    #     data_list = list(reader)
-    # print(f'Количество ссылок: {len(data_list)}')
-    # data = get_data(data_list=category_url_list)
-    # save_excel(data)
-    # if len(exceptions_list) > 0:
-    #     with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
-    #         writer = csv.writer(file, delimiter=';')
-    #         writer.writerows(exceptions_list)
+    result_list = get_data(file_path="data/product_urls_list.txt")
+    save_excel(data=result_list)
+    download_imgs(file_path="data/image_urls_list.txt")
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
