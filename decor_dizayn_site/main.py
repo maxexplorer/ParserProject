@@ -110,7 +110,7 @@ def get_data(file_path):
     image_urls_list = []
 
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[:10], 1):
+        for j, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -145,7 +145,7 @@ def get_data(file_path):
                 models = None
                 pass
             try:
-                price = soup.find('div', class_='price').text.strip().split()[0]
+                price = soup.find('div', class_='price').text.strip()
             except Exception:
                 price = None
 
@@ -185,7 +185,6 @@ def get_data(file_path):
     return result_list
 
 def download_imgs(file_path):
-
     with open(file_path, 'r', encoding='utf-8') as file:
         image_urls_list = [line.strip() for line in file.readlines()]
 
