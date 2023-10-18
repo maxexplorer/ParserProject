@@ -35,6 +35,15 @@ def check_mail(mail=''):
         id_list = [v for k, v in response.items() if k == 'id']
         print(f'у Вас {length} новых писем!')
 
+        current_dir = os.getcwd()
+        final_dir = os.path.join(current_dir, 'all_mails')
+
+        if not os.path.exists(final_dir):
+            os.makedirs(final_dir)
+
+        for i in id_list:
+            read_msg = f'{API}?action=readMessage&login={mail.split("@")[0]}&domain={mail.split("@")[-1]}&id={i}'
+            response = requests.get(read_msg).json()
 
 
 
