@@ -14,14 +14,29 @@ domain_list = [
     "xojxe.com",
     "yoggm.com"
 ]
+domain = random.choice(domain_list)
 
 
 def generate_username():
-    pass
+    name = string.ascii_lowercase + string.digits
+    username = ''.join(random.choice(name) for i in range(10))
+
+    return username
 
 
-def check_mail():
-    pass
+def check_mail(mail=''):
+    req_link = f'{API}?action=getMessages&login={mail.split("@")[0]}&domain={mail.split("@")[-1]}'
+    response = requests.get(req_link).json()
+    length = len(response)
+
+    if length == 0:
+        print('Новых писем нет!')
+    else:
+        id_list = [v for k, v in response.items() if k == 'id']
+        print(f'у Вас {length} новых писем!')
+
+
+
 
 
 def delete_mail():
@@ -29,7 +44,16 @@ def delete_mail():
 
 
 def main():
-    pass
+    try:
+        username = generate_username()
+        mail = f'{username}@{domain}'
+        print(mail)
+
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print('Программа прервана!')
 
 
 if __name__ == '__main__':
