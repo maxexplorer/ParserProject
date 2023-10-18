@@ -25,14 +25,19 @@ def generate_username():
 
 
 def check_mail(mail=''):
-    req_link = f'{API}?action=getMessages&login={mail.split("@")[0]}&domain={mail.split("@")[-1]}'
+    req_link = f'{API}?action=getMessages&login={mail.split("@")[0]}&domain={mail.split("@")[1]}'
     response = requests.get(req_link).json()
     length = len(response)
 
     if length == 0:
         print('Новых писем нет!')
     else:
-        id_list = [v for k, v in response.items() if k == 'id']
+        id_list = []
+        for d in response:
+            for k, v in d.items():
+                if k == 'id':
+                    id_list.append(v)
+
         print(f'у Вас {length} новых писем!')
 
         current_dir = os.getcwd()
@@ -42,14 +47,32 @@ def check_mail(mail=''):
             os.makedirs(final_dir)
 
         for i in id_list:
-            read_msg = f'{API}?action=readMessage&login={mail.split("@")[0]}&domain={mail.split("@")[-1]}&id={i}'
+            read_msg = f'{API}?action=readMessage&login={mail.split("@")[0]}&domain={mail.split("@")[1]}&id={i}'
             response = requests.get(read_msg).json()
 
+            sender = response.get('from')
+            subject = response.get('subject')
+            date = response.get('date')
+            content = response.get('textBody')
+
+            mail_file_path = os.path.join(final_dir, f'{i}.txt')
+
+            with open(mail_file_path, 'w', encoding='utf-8') as file:
+                file.write(f'Sender: {sender}\nTo: {mail}\nSubject: {subject}\nDate: {date}\nContent: {content}')
 
 
+def delete_mail(mail=''):
+    url = 'https://www.1secmail.com/mailbox'
 
-def delete_mail():
-    pass
+    data = {
+        'action': 'deleteMailbox',
+        'login': mail.split('@'[0]),
+        'domain': mail.split('@')[-1]
+    }
+
+    response = requests.post(url=url, data=data)
+
+    print(f'Почтовый адрес {mail} - удалён!')
 
 
 def main():
@@ -58,10 +81,14 @@ def main():
         mail = f'{username}@{domain}'
         print(mail)
 
+        mail_req = requests.get(f'{API}?login={mail.split("@")[0]}&domain={mail.split("@")[1]}')
+
         while True:
-            time.sleep(1)
+            check_mail(mail=mail)
+            time.sleep(5)
 
     except KeyboardInterrupt:
+        delete_mail(mail=mail)
         print('Программа прервана!')
 
 
