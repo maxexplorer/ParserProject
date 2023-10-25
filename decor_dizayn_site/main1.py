@@ -8,53 +8,16 @@ import openpyxl
 
 start_time = datetime.now()
 
-category_urls_list = [
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/karnizy-belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/moldingi_belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/plintusy_belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/ugolki_belie/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/pilyastry/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/dekorativnye-elementi/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/paneli/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/skrytoe-osveshchenie/",
-    "https://decor-dizayn.ru/catalog/rashodnye-materiali/kley/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/tsvetniye_plintusy/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dekorativnye-reyki/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/neo-klassika/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/afrodita/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/mramor/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/sultan/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/khay-tek/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-2/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-vostoka/"
-]
 
-headers = {
-    'Accept': '*/*',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                  ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
-}
-
-
-def get_html(url, headers, session):
-    try:
-        response = session.get(url=url, headers=headers, timeout=60)
-        html = response.text
-        return html
-    except Exception as ex:
-        print(ex)
-
-
-def get_pages(html):
-    soup = BeautifulSoup(html, 'lxml')
-    try:
-        pages = int(soup.find('div', class_='pages').find_all('a')[-1].get('href').split('=')[-1])
-    except Exception:
-        pages = 1
-    return pages
 
 
 def get_data(data_list):
+    headers = {
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
+    }
+
     count_urls = len(data_list)
     count = 1
     result_list = []
@@ -72,7 +35,7 @@ def get_data(data_list):
             except Exception:
                 title_site = None
             try:
-                price = soup.find('div', class_='price').text.strip().split()[0]
+                price = soup.find('div', class_='price').text.strip()
             except Exception:
                 price = None
 
