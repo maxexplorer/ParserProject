@@ -5,6 +5,8 @@ from datetime import datetime
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
+start_time = datetime.now()
+
 url = "https://krisha.kz/prodazha/kvartiry/?das[house.year][to]=2023&das[price][from]=90000000&das[who]=1"
 
 headers = {
@@ -88,6 +90,8 @@ def get_data(session, pages):
             #         phones
             #     )
             # )
+
+        print(f'Processed: {i} pages')
     return result_list
 
 
@@ -109,6 +113,10 @@ def main():
         pages = get_pages(html)
         print(f'Total: {pages} pages')
         data = get_data(session=session, pages=pages)
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
