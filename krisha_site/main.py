@@ -45,21 +45,30 @@ def get_data(session, pages):
 
         try:
             data = soup.find_all('div', class_='a-card__descr')
-            print(len(data))
         except Exception as ex:
             data = []
         for item in data:
             try:
-                url = f"https://krisha.kz{item.find('div', class_='a-card__header-left').find('a').get('href')}"
+                url = f"https://krisha.kz{item.find('a', class_='a-card__title').get('href')}"
             except Exception as ex:
-                print(ex)
-                continue
+                url = None
             try:
                 city = item.find_next('div', class_='a-card__stats-item').text.strip()
             except Exception:
                 city = None
 
-            print(f'url-{url}|||city-{city}|||description-{description}')
+            try:
+                title = ', '.join((item.find('a', class_='a-card__title').text.strip(),
+                                   item.find('div', class_='a-card__subtitle').text.strip()))
+            except Exception:
+                title = None
+
+            try:
+                price = item.find('div', class_='a-card__price').text.strip()
+            except Exception:
+                price = None
+
+            print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}')
 
             # result_list.append(
             #     (
@@ -70,8 +79,6 @@ def get_data(session, pages):
             #         phones
             #     )
             # )
-
-
 
 
 def main():
