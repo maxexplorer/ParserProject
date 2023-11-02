@@ -72,7 +72,6 @@ def get_phone():
         'ssaid': '1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8',
         '_ym_uid': '1698864885305000808',
         '_ym_d': '1698864885',
-        '_ym_isad': '2',
         '_gcl_au': '1.1.628254214.1698864887',
         '_tt_enable_cookie': '1',
         '_ttp': 'z6CqOsq7az43qG0d1Q6z7yqkUep',
@@ -81,14 +80,15 @@ def get_phone():
         'tutorial': '%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D',
         'hist_region': '2',
         'krssid': '1hmnc1jtddkmadcg645sodsvo8',
-        '_ga_6YZLS7YDS7': 'GS1.1.1698936664.6.1.1698936664.60.0.0',
-        '_ga': 'GA1.2.1691651900.1698864884',
-        '_ym_visorc': 'b',
-        'kr_cdn_host': '//alakt-kz.kcdn.online',
-        '_gat': '1',
+        '_ym_isad': '2',
+        '_ga_6YZLS7YDS7': 'GS1.1.1698940550.7.0.1698940550.60.0.0',
         '__tld__': 'null',
-        '__gads': 'ID=fe861d45f5db215a:T=1698864883:RT=1698936666:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg',
-        '__gpi': 'UID=00000cb0f49e709a:T=1698864883:RT=1698936666:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA',
+        '_ym_visorc': 'b',
+        '_gat': '1',
+        '__gads': 'ID=fe861d45f5db215a:T=1698864883:RT=1698940549:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg',
+        '__gpi': 'UID=00000cb0f49e709a:T=1698864883:RT=1698940549:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA',
+        'kr_cdn_host': '//alakt-kz.kcdn.online',
+        '_ga': 'GA1.2.1691651900.1698864884',
         '_gat_UA-20095530-1': '1',
     }
 
@@ -96,8 +96,8 @@ def get_phone():
         'authority': 'krisha.kz',
         'accept': 'application/json, text/plain, */*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        # 'cookie': 'krishauid=27a90cf7866809318956bbaf46bf1bee0566a1c3; _gid=GA1.2.1622783382.1698864884; ssaid=1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8; _ym_uid=1698864885305000808; _ym_d=1698864885; _ym_isad=2; _gcl_au=1.1.628254214.1698864887; _tt_enable_cookie=1; _ttp=z6CqOsq7az43qG0d1Q6z7yqkUep; _fbp=fb.1.1698864889126.1219622591; __gsas=ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A; tutorial=%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D; hist_region=2; krssid=1hmnc1jtddkmadcg645sodsvo8; _ga_6YZLS7YDS7=GS1.1.1698936664.6.1.1698936664.60.0.0; _ga=GA1.2.1691651900.1698864884; _ym_visorc=b; kr_cdn_host=//alakt-kz.kcdn.online; _gat=1; __tld__=null; __gads=ID=fe861d45f5db215a:T=1698864883:RT=1698936666:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg; __gpi=UID=00000cb0f49e709a:T=1698864883:RT=1698936666:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA; _gat_UA-20095530-1=1',
-        'referer': 'https://krisha.kz/a/show/667124453',
+        # 'cookie': 'krishauid=27a90cf7866809318956bbaf46bf1bee0566a1c3; _gid=GA1.2.1622783382.1698864884; ssaid=1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8; _ym_uid=1698864885305000808; _ym_d=1698864885; _gcl_au=1.1.628254214.1698864887; _tt_enable_cookie=1; _ttp=z6CqOsq7az43qG0d1Q6z7yqkUep; _fbp=fb.1.1698864889126.1219622591; __gsas=ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A; tutorial=%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D; hist_region=2; krssid=1hmnc1jtddkmadcg645sodsvo8; _ym_isad=2; _ga_6YZLS7YDS7=GS1.1.1698940550.7.0.1698940550.60.0.0; __tld__=null; _ym_visorc=b; _gat=1; __gads=ID=fe861d45f5db215a:T=1698864883:RT=1698940549:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg; __gpi=UID=00000cb0f49e709a:T=1698864883:RT=1698940549:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA; kr_cdn_host=//alakt-kz.kcdn.online; _ga=GA1.2.1691651900.1698864884; _gat_UA-20095530-1=1',
+        'referer': 'https://krisha.kz/a/show/672075648',
         'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
@@ -109,59 +109,7 @@ def get_phone():
     }
 
     params = {
-        'alias': 'almaty/sevenhills',
-    }
-
-    response = requests.get('https://krisha.kz/complex/ajaxPhones', params=params, cookies=cookies, headers=headers)
-
-    print(response.json())
-
-    import requests
-
-    cookies = {
-        'krishauid': '27a90cf7866809318956bbaf46bf1bee0566a1c3',
-        '_gid': 'GA1.2.1622783382.1698864884',
-        'ssaid': '1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8',
-        '_ym_uid': '1698864885305000808',
-        '_ym_d': '1698864885',
-        '_gcl_au': '1.1.628254214.1698864887',
-        '_tt_enable_cookie': '1',
-        '_ttp': 'z6CqOsq7az43qG0d1Q6z7yqkUep',
-        '_fbp': 'fb.1.1698864889126.1219622591',
-        '__gsas': 'ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A',
-        'tutorial': '%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D',
-        'hist_region': '2',
-        'krssid': '1hmnc1jtddkmadcg645sodsvo8',
-        '_ym_visorc': 'b',
-        'kr_cdn_host': '//alakt-kz.kcdn.online',
-        '_ym_isad': '2',
-        '__gads': 'ID=fe861d45f5db215a:T=1698864883:RT=1698937120:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg',
-        '__gpi': 'UID=00000cb0f49e709a:T=1698864883:RT=1698937120:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA',
-        '_ga_6YZLS7YDS7': 'GS1.1.1698936664.6.1.1698937188.59.0.0',
-        '__tld__': 'null',
-        '_gat': '1',
-        '_ga': 'GA1.2.1691651900.1698864884',
-        '_gat_UA-20095530-1': '1',
-    }
-
-    headers = {
-        'authority': 'krisha.kz',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        # 'cookie': 'krishauid=27a90cf7866809318956bbaf46bf1bee0566a1c3; _gid=GA1.2.1622783382.1698864884; ssaid=1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8; _ym_uid=1698864885305000808; _ym_d=1698864885; _gcl_au=1.1.628254214.1698864887; _tt_enable_cookie=1; _ttp=z6CqOsq7az43qG0d1Q6z7yqkUep; _fbp=fb.1.1698864889126.1219622591; __gsas=ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A; tutorial=%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D; hist_region=2; krssid=1hmnc1jtddkmadcg645sodsvo8; _ym_visorc=b; kr_cdn_host=//alakt-kz.kcdn.online; _ym_isad=2; __gads=ID=fe861d45f5db215a:T=1698864883:RT=1698937120:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg; __gpi=UID=00000cb0f49e709a:T=1698864883:RT=1698937120:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA; _ga_6YZLS7YDS7=GS1.1.1698936664.6.1.1698937188.59.0.0; __tld__=null; _gat=1; _ga=GA1.2.1691651900.1698864884; _gat_UA-20095530-1=1',
-        'referer': 'https://krisha.kz/a/show/667124453',
-        'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-    }
-
-    params = {
-        'alias': 'almaty/koktobe-siti',
+        'alias': 'nur-sultan/monaco',
     }
 
     response = requests.get('https://krisha.kz/complex/ajaxPhones', params=params, cookies=cookies, headers=headers)
@@ -171,10 +119,11 @@ def get_phone():
 def get_data(session, pages):
     result_list = []
 
-    options = Options()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless")
-    browser = webdriver.Chrome(options=options)
+    # options = Options()
+    # options.add_argument("--disable-blink-features=AutomationControlled")
+    # options.add_argument("--headless")
+    browser = webdriver.Chrome()
+    browser.maximize_window()
 
     # browser.maximize_window()
 
@@ -226,7 +175,7 @@ def get_data(session, pages):
             except Exception as ex:
                 print(ex)
 
-            print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}|||phones-{phones}')
+            # print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}|||phones-{phones}')
 
             # result_list.append(
             #     (
@@ -252,7 +201,6 @@ def save_excel(data):
         dataframe.to_excel(writer, sheet_name='data')
 
     print(f'Данные сохранены в файл "data.xlsx"')
-
 
 def main():
     # with requests.Session() as session:
