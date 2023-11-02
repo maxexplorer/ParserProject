@@ -33,6 +33,8 @@ def get_pages(html):
 
 
 def get_data(session, pages):
+    result_list = []
+
     for i in range(1, pages + 1)[:1]:
         url = f"https://krisha.kz/prodazha/kvartiry/?das[house.year][to]=2023&das[price][from]=90000000&das[who]=" \
               f"1&page={i}"
@@ -42,10 +44,32 @@ def get_data(session, pages):
         soup = BeautifulSoup(html, 'lxml')
 
         try:
-            data = soup.select('div[data-list-id=main]')
-            print(data)
+            data = soup.find_all('div', class_='a-card__descr')
+            print(len(data))
         except Exception as ex:
-            print(ex)
+            data = []
+        for item in data:
+            try:
+                url = f"https://krisha.kz{item.find('div', class_='a-card__header-left').find('a').get('href')}"
+            except Exception as ex:
+                print(ex)
+                continue
+            try:
+                city = item.find_next('div', class_='a-card__stats-item').text.strip()
+            except Exception:
+                city = None
+
+            print(f'url-{url}|||city-{city}|||description-{description}')
+
+            # result_list.append(
+            #     (
+            #         url,
+            #         city,
+            #         description,
+            #         price,
+            #         phones
+            #     )
+            # )
 
 
 
