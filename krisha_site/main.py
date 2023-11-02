@@ -32,6 +32,10 @@ def get_pages(html):
         print(ex)
 
 
+def get_phones(id):
+    pass
+
+
 def get_data(session, pages):
     result_list = []
 
@@ -52,6 +56,7 @@ def get_data(session, pages):
                 url = f"https://krisha.kz{item.find('a', class_='a-card__title').get('href')}"
             except Exception as ex:
                 url = None
+
             try:
                 city = item.find_next('div', class_='a-card__stats-item').text.strip()
             except Exception:
@@ -68,7 +73,11 @@ def get_data(session, pages):
             except Exception:
                 price = None
 
-            print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}')
+            id = url.split('/')[-1]
+
+            phones = get_phones(id)
+
+            print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}|||phones-{phones}')
 
             # result_list.append(
             #     (
