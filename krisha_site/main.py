@@ -81,23 +81,23 @@ def get_phone():
         'hist_region': '2',
         'krssid': '1hmnc1jtddkmadcg645sodsvo8',
         '_ym_isad': '2',
-        '_ga_6YZLS7YDS7': 'GS1.1.1698940550.7.0.1698940550.60.0.0',
-        '__tld__': 'null',
         '_ym_visorc': 'b',
-        '_gat': '1',
-        '__gads': 'ID=fe861d45f5db215a:T=1698864883:RT=1698940549:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg',
-        '__gpi': 'UID=00000cb0f49e709a:T=1698864883:RT=1698940549:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA',
+        '__gads': 'ID=fe861d45f5db215a:T=1698864883:RT=1698945467:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg',
+        '__gpi': 'UID=00000cb0f49e709a:T=1698864883:RT=1698945467:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA',
         'kr_cdn_host': '//alakt-kz.kcdn.online',
+        '_ga_6YZLS7YDS7': 'GS1.1.1698945469.8.1.1698945541.60.0.0',
+        '_gat': '1',
         '_ga': 'GA1.2.1691651900.1698864884',
         '_gat_UA-20095530-1': '1',
+        '__tld__': 'null',
     }
 
     headers = {
         'authority': 'krisha.kz',
         'accept': 'application/json, text/plain, */*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        # 'cookie': 'krishauid=27a90cf7866809318956bbaf46bf1bee0566a1c3; _gid=GA1.2.1622783382.1698864884; ssaid=1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8; _ym_uid=1698864885305000808; _ym_d=1698864885; _gcl_au=1.1.628254214.1698864887; _tt_enable_cookie=1; _ttp=z6CqOsq7az43qG0d1Q6z7yqkUep; _fbp=fb.1.1698864889126.1219622591; __gsas=ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A; tutorial=%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D; hist_region=2; krssid=1hmnc1jtddkmadcg645sodsvo8; _ym_isad=2; _ga_6YZLS7YDS7=GS1.1.1698940550.7.0.1698940550.60.0.0; __tld__=null; _ym_visorc=b; _gat=1; __gads=ID=fe861d45f5db215a:T=1698864883:RT=1698940549:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg; __gpi=UID=00000cb0f49e709a:T=1698864883:RT=1698940549:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA; kr_cdn_host=//alakt-kz.kcdn.online; _ga=GA1.2.1691651900.1698864884; _gat_UA-20095530-1=1',
-        'referer': 'https://krisha.kz/a/show/672075648',
+        # 'cookie': 'krishauid=27a90cf7866809318956bbaf46bf1bee0566a1c3; _gid=GA1.2.1622783382.1698864884; ssaid=1eb3cdf0-78e8-11ee-a9d4-ad9ab41bfaa8; _ym_uid=1698864885305000808; _ym_d=1698864885; _gcl_au=1.1.628254214.1698864887; _tt_enable_cookie=1; _ttp=z6CqOsq7az43qG0d1Q6z7yqkUep; _fbp=fb.1.1698864889126.1219622591; __gsas=ID=387fb42e7e2c73ba:T=1698864889:RT=1698864889:S=ALNI_MZYaWC_3MrfrarwirA-hbO66maZ9A; tutorial=%7B%22add-note%22%3A%22viewed%22%2C%22advPage%22%3A%22viewed%22%2C%22layoutPageContacts%22%3A%22viewed%22%7D; hist_region=2; krssid=1hmnc1jtddkmadcg645sodsvo8; _ym_isad=2; _ym_visorc=b; __gads=ID=fe861d45f5db215a:T=1698864883:RT=1698945467:S=ALNI_Ma1y5TB3FKovqAIamaVsuTfA8UUHg; __gpi=UID=00000cb0f49e709a:T=1698864883:RT=1698945467:S=ALNI_MZgBXydABa2ts2fS-GFzf3L00abkA; kr_cdn_host=//alakt-kz.kcdn.online; _ga_6YZLS7YDS7=GS1.1.1698945469.8.1.1698945541.60.0.0; _gat=1; _ga=GA1.2.1691651900.1698864884; _gat_UA-20095530-1=1; __tld__=null',
+        'referer': 'https://krisha.kz/a/show/688593604',
         'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
@@ -109,10 +109,11 @@ def get_phone():
     }
 
     params = {
-        'alias': 'nur-sultan/monaco',
+        'id': '688593604',
+        'gRecaptchaResponse': '03AFcWeA63iHyKgVR6nATnBt5MZ2R5m5LUjFXfaGUXJ8CIa_L39thrNlJSL0a9uSPiEQGMDiGR-4QvavpMBpYR1wTA2FxNnoOEAGPYW_CmEWSTfxmtO-570dtci2H50XLr9b_6MFNHK4gzdMfEwYpB-5FX1xrBepNtIZ1-LMifvExXZj8tJaE-hIMQXygoo1wLihbLe7z2pA9b6Id_21of7K3ujGbphULiA0LcszNmdL2o-UHp-V5G_h8_LCcEL3bjokwCl88KUcRz7mDxDL6rdzSgWPYbhJWEzl9WwLJr0n3bDFUQstI22TWWyxwoabzIVvsc6F93SSoedMIus8upkOB5liPKPthf8qiyHfm3MX5kzMoFssulrpcP0vcgYw-ux8p2ZSpVbMk-GMiBKGPo9PoTElnv_Ipa5MJLV-zZl5WIXxjModxx1nEcprDZsWjxCO-tq2D4D-5Q988N_KlIftXGyo8LNB8lthDEz-KUpnNDXZWUGuQYyxDBjIVfBhRhZWFsKDiEWlvFrTkwf3XwT7OJckYqc3FZpUEGRuV7lFyKZ92iX0Ecscg',
     }
 
-    response = requests.get('https://krisha.kz/complex/ajaxPhones', params=params, cookies=cookies, headers=headers)
+    response = requests.get('https://krisha.kz/a/ajaxPhones', params=params, cookies=cookies, headers=headers)
 
     print(response.json())
 
