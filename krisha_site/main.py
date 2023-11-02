@@ -88,6 +88,19 @@ def get_data(session, pages):
             #         phones
             #     )
             # )
+    return result_list
+
+
+def save_excel(data):
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    dataframe = DataFrame(data)
+
+    with ExcelWriter('data/data.xlsx', mode='w') as writer:
+        dataframe.to_excel(writer, sheet_name='data')
+
+    print(f'Данные сохранены в файл "data.xlsx"')
 
 
 def main():
