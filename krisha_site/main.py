@@ -45,7 +45,7 @@ def get_pages(html):
         print(ex)
 
 
-def get_phones(url):
+def get_phones_selenium(url):
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless")
@@ -57,13 +57,18 @@ def get_phones(url):
     except Exception as ex:
         print(ex)
     try:
-        button = WebDriverWait(browser, 5).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, 'show-phones')))
-        button.click()
+        link = browser.find_element(By.CLASS_NAME, 'a-card__header-left').get_attribute('href')
+        print(link)
     except Exception as ex:
         print(ex)
+    # try:
+    #     button = WebDriverWait(browser, 5).until(
+    #         EC.element_to_be_clickable((By.CLASS_NAME, 'show-phones')))
+    #     button.click()
+    # except Exception as ex:
+    #     print(ex)
 
-def get_phone():
+def get_phones_api():
     import requests
 
     cookies = {
@@ -120,15 +125,6 @@ def get_phone():
 def get_data(session, pages):
     result_list = []
 
-    # options = Options()
-    # options.add_argument("--disable-blink-features=AutomationControlled")
-    # options.add_argument("--headless")
-    browser = webdriver.Chrome()
-    browser.maximize_window()
-
-    # browser.maximize_window()
-
-
     for i in range(1, pages + 1)[:1]:
         url = f"https://krisha.kz/prodazha/kvartiry/?das[house.year][to]=2023&das[price][from]=90000000&das[who]=" \
               f"1&page={i}"
@@ -161,32 +157,17 @@ def get_data(session, pages):
                 price = item.find('div', class_='a-card__price').text.strip()
             except Exception:
                 price = None
-            try:
-                # browser.implicitly_wait(5)
-                time.sleep(15)
-                browser.get(url=url)
-            except Exception as ex:
-                print(ex)
-            try:
 
-                # button = WebDriverWait(browser, 5).until(
-                #     EC.element_to_be_clickable((By.CLASS_NAME, 'show-phones')))
-                button = browser.find_element((By.CLASS_NAME, 'show-phones'))
-                button.click()
-            except Exception as ex:
-                print(ex)
+            print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}')
 
-            # print(f'url-{url}|||city-{city}|||title-{title}|||price-{price}|||phones-{phones}')
-
-            # result_list.append(
-            #     (
-            #         url,
-            #         city,
-            #         description,
-            #         price,
-            #         phones
-            #     )
-            # )
+            result_list.append(
+                (
+                    url,
+                    city,
+                    title,
+                    price,
+                )
+            )
 
         print(f'Processed: {i} pages')
     return result_list
@@ -209,7 +190,7 @@ def main():
     #     pages = get_pages(html)
     #     print(f'Total: {pages} pages')
     #     data = get_data(session=session, pages=pages)
-    get_phone()
+    get_phones_selenium(url=url)
     # execution_time = datetime.now() - start_time
     # print('Сбор данных завершен!')
     # print(f'Время работы программы: {execution_time}')
