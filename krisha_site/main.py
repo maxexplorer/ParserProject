@@ -25,8 +25,6 @@ headers = {
 }
 
 
-
-
 def get_html(url, headers, session):
     try:
         response = session.get(url=url, headers=headers, timeout=60)
@@ -48,17 +46,24 @@ def get_pages(html):
 def get_phones_selenium(url):
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     browser = webdriver.Chrome(options=options)
+    browser.maximize_window()
 
     try:
         browser.implicitly_wait(5)
         browser.get(url=url)
+        # time.sleep(15)
+
+        # browser.switch_to.alert.accept()
+
+
     except Exception as ex:
         print(ex)
     try:
-        link = browser.find_element(By.CLASS_NAME, 'a-card__header-left').get_attribute('href')
-        print(link)
+        element = browser.find_element(By.CSS_SELECTOR, 'button.tutorial__close notes-tutorial__close')
+        element.click()
+        print(element)
     except Exception as ex:
         print(ex)
     # try:
@@ -67,6 +72,7 @@ def get_phones_selenium(url):
     #     button.click()
     # except Exception as ex:
     #     print(ex)
+
 
 def get_phones_api():
     import requests
@@ -121,6 +127,7 @@ def get_phones_api():
     response = requests.get('https://krisha.kz/a/ajaxPhones', params=params, cookies=cookies, headers=headers)
 
     print(response.json())
+
 
 def get_data(session, pages):
     result_list = []
@@ -184,13 +191,14 @@ def save_excel(data):
 
     print(f'Данные сохранены в файл "data.xlsx"')
 
+
 def main():
     # with requests.Session() as session:
     #     html = get_html(url=url, headers=headers, session=session)
     #     pages = get_pages(html)
     #     print(f'Total: {pages} pages')
     #     data = get_data(session=session, pages=pages)
-    get_phones_selenium(url=url)
+    get_phones_selenium(url="https://krisha.kz/a/show/677557844")
     # execution_time = datetime.now() - start_time
     # print('Сбор данных завершен!')
     # print(f'Время работы программы: {execution_time}')
