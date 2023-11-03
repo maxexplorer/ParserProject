@@ -9,15 +9,12 @@ import json
 
 def get_html(url):
     options = Options()
-    options.add_argument('User-Agent = Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                         ' Chrome/108.0.0.0 Safari/537.36')
+    options.add_argument('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931')
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless")
 
-    browser = webdriver.Chrome(
-        executable_path="C:/Users/Макс/PycharmProjects/ParserProject/chromedriver/chromedriver.exe",
-        options=options
-    )
+    browser = webdriver.Chrome(options=options)
     browser.maximize_window()
 
     try:
