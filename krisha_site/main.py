@@ -53,25 +53,22 @@ def get_phones_selenium(url):
     try:
         browser.implicitly_wait(5)
         browser.get(url=url)
-        # time.sleep(15)
 
-        # browser.switch_to.alert.accept()
-
+        browser.switch_to.alert.accept()
 
     except Exception as ex:
         print(ex)
     try:
-        element = browser.find_element(By.CSS_SELECTOR, 'button.tutorial__close notes-tutorial__close')
+        element = browser.find_element(By.CSS_SELECTOR, 'button.show-phones')
         element.click()
-        print(element)
     except Exception as ex:
         print(ex)
-    # try:
-    #     button = WebDriverWait(browser, 5).until(
-    #         EC.element_to_be_clickable((By.CLASS_NAME, 'show-phones')))
-    #     button.click()
-    # except Exception as ex:
-    #     print(ex)
+    try:
+        button = WebDriverWait(browser, 5).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, 'show-phones')))
+        button.click()
+    except Exception as ex:
+        print(ex)
 
 
 def get_phones_api():
