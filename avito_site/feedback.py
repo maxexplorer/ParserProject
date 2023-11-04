@@ -19,6 +19,7 @@ url_list = [
     'https://www.avito.ru/all/noutbuki'
 ]
 
+
 def browser(url):
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -54,14 +55,20 @@ def browser(url):
     with open('data/html_data.txt', 'w', encoding='utf-8') as file:
         file.write(html)
 
-
     # return html
 
 
+def get_pages(html):
+    soup = BeautifulSoup(html, 'lxml')
+    try:
+        pages = int(soup.find_all('span', class_='styles-module-text-InivV')[-1].text)
+    except Exception:
+        pages = 1
+    return pages
+
+
 def get_data(html):
-
     result_list = []
-
 
     soup = BeautifulSoup(html, 'lxml')
 
@@ -70,20 +77,18 @@ def get_data(html):
 
     for item in dict_data:
         if 'textSections' in item['value']:
-
             print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
                   f"{item.get('value').get('textSections')[0].get('text')}")
 
 
-
-
-
-
 def main():
-    for url in url_list[:1]:
-        browser(url=url)
-    # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
-    #     html = file.read()
+    # for url in url_list[:1]:
+    #     browser(url=url)
+
+    with open('data/html_data.txt', 'r', encoding='utf-8') as file:
+        html = file.read()
+    pages = get_pages(html=html)
+    print(pages)
     # data = get_data(html=html)
 
 
