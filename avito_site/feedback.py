@@ -5,9 +5,7 @@ useragent = UserAgent()
 
 print(useragent.random)
 
-
-
-import requests
+session = requests.Session()
 
 cookies = {
     'srv_id': '2dVlr7UyN1nDJYyd.fJy_kzHU6kEuyG4AxawEI-tWEYmAi3Xf-fOpb7Luao3bkXtb0ls5fX4_0iBC_Lc=.EpJJEowwMbGYEj6EtsW-f-1FqrQuKYEFiVM080FHSuY=.web',
@@ -73,14 +71,16 @@ headers = {
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
-    'user-agent': useragent.random
-}
+    'user-agent': useragent.random}
 
 params = {
+    'limit': '25',
+    'offset': '25',
+    'sortRating': 'date_desc',
     'summary_redesign': '1',
 }
 
-response = requests.get(
+response = session.get(
     'https://www.avito.ru/web/5/user/aea431590bda05adb724a8a071d0e0c9/ratings',
     params=params,
     cookies=cookies,
