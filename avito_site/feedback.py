@@ -39,7 +39,7 @@ def browser(url):
 
     try:
         browser.get(url=url)
-        time.sleep(5)
+        time.sleep(15)
         html = browser.page_source
 
     except Exception as ex:
@@ -52,10 +52,10 @@ def browser(url):
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/html_data.txt', 'w', encoding='utf-8') as file:
-        file.write(html)
+    # with open('data/html_data.txt', 'w', encoding='utf-8') as file:
+    #     file.write(html)
 
-    # return html
+    return html
 
 
 def get_pages(html):
@@ -67,29 +67,62 @@ def get_pages(html):
     return pages
 
 
-def get_data(html):
-    result_list = []
+def get_data(url_list):
 
-    soup = BeautifulSoup(html, 'lxml')
+    seller_url_list = []
 
-    json_data = soup.find('pre').text
-    dict_data = json.loads(json_data)['entries']
+    for url in url_list[:1]:
+        html = browser(url=url)
+        pages = get_pages(html=html)
+        print(pages)
 
-    for item in dict_data:
-        if 'textSections' in item['value']:
-            print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
-                  f"{item.get('value').get('textSections')[0].get('text')}")
+        # for page in range(1, pages + 1):
+        for page in range(1, 2):
+            url = f"{url}?p={page}"
+            html = browser(url=url)
+            soup = BeautifulSoup(html, 'lxml')
 
+            try:
+                seller_info = soup.find_all('div', class_='style-root-uufhX')
+            except Exception:
+                seller_info = []
+
+            for item in seller_info:
+                try:
+                    title = item.find('p').text
+                except Exception:
+                    title = None
+                try:
+                    url = item.find('a', target='_blank').get('href').split('/')[-2]
+                except Exception:
+                    url = None
+
+
+                print(url, title)
+
+
+
+
+        # soup = BeautifulSoup(html, 'lxml')
+        #
+        # json_data = soup.find('pre').text
+        # dict_data = json.loads(json_data)['entries']
+        #
+        # for item in dict_data:
+        #     if 'textSections' in item['value']:
+        #         print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
+        #               f"{item.get('value').get('textSections')[0].get('text')}")
+        #
 
 def main():
     # for url in url_list[:1]:
     #     browser(url=url)
 
-    with open('data/html_data.txt', 'r', encoding='utf-8') as file:
-        html = file.read()
-    pages = get_pages(html=html)
-    print(pages)
-    # data = get_data(html=html)
+    get_data(url_list=url_list)
+
+    # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
+    #     html = file.read()
+
 
 
 if __name__ == '__main__':
