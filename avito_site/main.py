@@ -15,7 +15,7 @@ def get_html(url):
     options.add_argument("--headless")
 
     browser = webdriver.Chrome(options=options)
-    browser.maximize_window()
+    # browser.maximize_window()
 
     try:
         browser.get(url=url)
