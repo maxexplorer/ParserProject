@@ -13,6 +13,12 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 url = "https://www.avito.ru/web/5/user/3cca7b3710e1a0028e5a63044c141d56/ratings?limit=65&offset=65&sortRating=date_desc&summary_redesign=1"
 
+url_list = [
+    'https://www.avito.ru/all/telefony',
+    'https://www.avito.ru/all/bytovaya_tehnika',
+    'https://www.avito.ru/all/noutbuki'
+]
+
 def browser(url):
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -27,6 +33,7 @@ def browser(url):
             delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
       '''
     })
+    # browser.implicitly_wait(10)
     browser.maximize_window()
 
     try:
@@ -73,7 +80,8 @@ def get_data(html):
 
 
 def main():
-    browser(url=url)
+    for url in url_list[:1]:
+        browser(url=url)
     # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
     #     html = file.read()
     # data = get_data(html=html)
