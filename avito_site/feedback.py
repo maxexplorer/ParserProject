@@ -11,46 +11,73 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 
-useragent = UserAgent()
+url = "https://www.avito.ru/web/5/user/3cca7b3710e1a0028e5a63044c141d56/ratings?limit=65&offset=65&sortRating=date_desc&summary_redesign=1"
 
-# url = "https://www.avito.ru/web/5/user/aea431590bda05adb724a8a071d0e0c9/ratings"
-url = "https://www.avito.ru/web/5/user/14f1abec03bee090ac28e8fbc09f2ab8/ratings?limit=25&offset=25&sortRating=date_desc&summary_redesign=1"
+def browser(url):
+    options = Options()
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    # options.add_argument("--headless")
 
-options = Options()
-options.add_argument("--disable-blink-features=AutomationControlled")
+    browser = webdriver.Chrome(options=options)
 
-browser = webdriver.Chrome(options=options)
+    browser.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        'source': '''
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+      '''
+    })
+    browser.maximize_window()
 
-# browser.add_cookie(cookie_dict=cookies)
+    try:
+        browser.get(url=url)
+        time.sleep(5)
+        html = browser.page_source
 
-browser.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-    'source': '''
-        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-  '''
-})
-browser.maximize_window()
+    except Exception as ex:
+        print(ex)
 
+    finally:
+        browser.close()
+        browser.quit()
 
-try:
-    browser.get(url=url)
-    time.sleep(5)
-    src = browser.page_source
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
-except Exception as ex:
-    print(ex)
-
-finally:
-    browser.close()
-    browser.quit()
-
-# res_dict = json.loads(src.lstrip('<html><head><meta name="color-scheme" content="light dark"></head><body><pre style="word-wrap:'
-#                  ' break-word; white-space: pre-wrap;">').rstrip('</pre></body></html>'))
-
-soup = BeautifulSoup(src, 'lxml')
+    with open('data/html_data.txt', 'w', encoding='utf-8') as file:
+        file.write(html)
 
 
-json_data = soup.find('pre').text
-print(json.loads(json_data))
+    # return html
 
+
+def get_data(html):
+
+    result_list = []
+
+
+    soup = BeautifulSoup(html, 'lxml')
+
+    json_data = soup.find('pre').text
+    dict_data = json.loads(json_data)['entries']
+
+    for item in dict_data:
+        if 'textSections' in item['value']:
+
+            print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
+                  f"{item.get('value').get('textSections')[0].get('text')}")
+
+
+
+
+
+
+def main():
+    browser(url=url)
+    # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
+    #     html = file.read()
+    # data = get_data(html=html)
+
+
+if __name__ == '__main__':
+    main()
