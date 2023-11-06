@@ -102,8 +102,9 @@ def get_data(url_list):
                 )
             print(f'Processed: {page} page!!!')
 
-    with open('data/json_data.json', 'w', encoding='utf-8') as file:
+    with open('data/json_data.json', 'a', encoding='utf-8') as file:
         json.dump(seller_info_list, file, indent=4, ensure_ascii=False)
+
 
 def get_feedback(seller_info_list):
     feedback_list = []
@@ -141,8 +142,10 @@ def get_feedback(seller_info_list):
 def main():
     get_data(url_list=url_list)
 
-    # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
-    #     html = file.read()
+    with open('data/json_data.json', 'r', encoding='utf-8') as file:
+        seller_info_list = json.load(file)
+
+    get_feedback(seller_info_list=seller_info_list)
 
 
 if __name__ == '__main__':
