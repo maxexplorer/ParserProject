@@ -40,10 +40,10 @@ def browser(url):
     try:
         browser.get(url=url)
         time.sleep(5)
-
+        html = browser.page_source
 
     except Exception as ex:
-        print(ex)
+        raise UnboundLocalError("html not received")
 
     finally:
         browser.close()
@@ -52,7 +52,10 @@ def browser(url):
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    return browser
+    # with open('data/html_data.txt', 'w', encoding='utf-8') as file:
+    #     file.write(html)
+
+    return browser, html
 
 
 def get_pages(html):
@@ -72,8 +75,8 @@ def get_data_html(url_list):
     seller_url_list = []
 
     for url in url_list[:1]:
-        driver = browser(url=url)
-        pages = get_pages(html=driver.page_source)
+        _, html = browser(url=url)
+        pages = get_pages(html=html)
         print(pages)
 
         # for page in range(1, pages + 1):
