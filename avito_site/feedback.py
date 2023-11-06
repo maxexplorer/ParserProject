@@ -67,22 +67,15 @@ def get_pages(html):
     return pages
 
 
-def get_data_selenium():
-    pass
-
-
 def get_data_html(url_list):
     seller_url_list = []
 
-    for url in url_list[:1]:
-        html = browser(url=url)
+    for category_url in url_list[:1]:
+        html = browser(url=category_url)
         pages = get_pages(html=html)
-        print(pages)
-
-        # for page in range(1, pages + 1):
-        for page in range(1, 3):
-            url = f"{url}?p={page}"
-            html = browser(url=url)
+        for page in range(1, pages + 1):
+            product_url = f"{category_url}?p={page}"
+            html = browser(url=product_url)
 
             soup = BeautifulSoup(html, 'lxml')
 
@@ -97,11 +90,20 @@ def get_data_html(url_list):
                 except Exception:
                     title = None
                 try:
-                    url = item.find('a', target='_blank').get('href').split('/')[-2]
+                    id_seller = item.find('a', target='_blank').get('href').split('/')[-2]
                 except Exception:
-                    url = None
+                    id_seller = None
 
-                print(url, title)
+                seller_url_list.append(
+                    {
+                        'title': title,
+                        'id_seller': id_seller
+                    }
+                )
+            print(f'Processed: {page} page!!!')
+
+    with open('data/json_data.json', 'w', encoding='utf-8') as file:
+        json.dump(seller_url_list, file, indent=4, ensure_ascii=False)
 
         # soup = BeautifulSoup(html, 'lxml')
         #
