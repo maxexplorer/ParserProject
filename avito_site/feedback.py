@@ -4,12 +4,12 @@ import time
 import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from fake_useragent import UserAgent
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from fake_useragent import UserAgent
 
 url = "https://www.avito.ru/web/5/user/3cca7b3710e1a0028e5a63044c141d56/ratings?limit=65&offset=65&sortRating=date_desc&summary_redesign=1"
 
@@ -67,8 +67,11 @@ def get_pages(html):
     return pages
 
 
-def get_data(url_list):
+def get_data_selenium():
+    pass
 
+
+def get_data_html(url_list):
     seller_url_list = []
 
     for url in url_list[:1]:
@@ -79,7 +82,8 @@ def get_data(url_list):
         # for page in range(1, pages + 1):
         for page in range(1, 2):
             url = f"{url}?p={page}"
-            driver, html = browser(url=url)
+            _, html = browser(url=url)
+
             soup = BeautifulSoup(html, 'lxml')
 
             try:
@@ -99,9 +103,6 @@ def get_data(url_list):
 
                 print(url, title)
 
-
-
-
         # soup = BeautifulSoup(html, 'lxml')
         #
         # json_data = soup.find('pre').text
@@ -111,14 +112,13 @@ def get_data(url_list):
         #     if 'textSections' in item['value']:
         #         print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
         #               f"{item.get('value').get('textSections')[0].get('text')}")
-        #
+
 
 def main():
-    get_data(url_list=url_list)
+    get_data_html(url_list=url_list)
 
     # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
     #     html = file.read()
-
 
 
 if __name__ == '__main__':
