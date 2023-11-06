@@ -67,8 +67,8 @@ def get_pages(html):
     return pages
 
 
-def get_data_html(url_list):
-    seller_url_list = []
+def get_data(url_list):
+    seller_info_list = []
 
     for category_url in url_list[:1]:
         html = browser(url=category_url)
@@ -90,34 +90,56 @@ def get_data_html(url_list):
                 except Exception:
                     title = None
                 try:
-                    id_seller = item.find('a', target='_blank').get('href').split('/')[-2]
+                    seller_id = item.find('a', target='_blank').get('href').split('/')[-2]
                 except Exception:
-                    id_seller = None
+                    seller_id = None
 
-                seller_url_list.append(
+                seller_info_list.append(
                     {
                         'title': title,
-                        'id_seller': id_seller
+                        'id_seller': seller_id
                     }
                 )
             print(f'Processed: {page} page!!!')
 
     with open('data/json_data.json', 'w', encoding='utf-8') as file:
-        json.dump(seller_url_list, file, indent=4, ensure_ascii=False)
+        json.dump(seller_info_list, file, indent=4, ensure_ascii=False)
 
-        # soup = BeautifulSoup(html, 'lxml')
-        #
-        # json_data = soup.find('pre').text
-        # dict_data = json.loads(json_data)['entries']
-        #
-        # for item in dict_data:
-        #     if 'textSections' in item['value']:
-        #         print(f"{item.get('value').get('title')}|||{item.get('value').get('itemTitle')}|||"
-        #               f"{item.get('value').get('textSections')[0].get('text')}")
+def get_feedback(seller_info_list):
+    feedback_list = []
+
+    limit = 25
+    offset = 0
+
+    for id in seller_info_list:
+        seller_url = f"https://www.avito.ru/web/5/user/{id}/ratings?limit={limit}&offset={offset}&sortRating=date_desc&summary_redesign=1"
+
+        html = browser(url=seller_url)
+
+        soup = BeautifulSoup(html, 'lxml')
+
+        json_data = soup.find('pre').text
+        dict_data = json.loads(json_data)['entries']
+
+        for item in dict_data:
+            if 'textSections' in item['value']:
+                title = item.get('value').get('title')
+                itemTitle = item.get('value').get('itemTitle')
+                text = item.get('value').get('textSections')[0].get('text')
+
+                print(f"{title}|||{title}|||{text}")
+
+                feedback_list.append(
+                    {
+                        'title': title,
+                        'itemTitle': itemTitle,
+                        'text': text
+                    }
+                )
 
 
 def main():
-    get_data_html(url_list=url_list)
+    get_data(url_list=url_list)
 
     # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
     #     html = file.read()
