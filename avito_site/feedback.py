@@ -114,8 +114,6 @@ def get_data(url_list):
         #
 
 def main():
-    for url in url_list[:1]:
-        browser(url=url)
 
     get_data(url_list=url_list)
 
