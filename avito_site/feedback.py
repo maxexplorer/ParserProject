@@ -55,7 +55,7 @@ def browser(url):
     # with open('data/html_data.txt', 'w', encoding='utf-8') as file:
     #     file.write(html)
 
-    return html
+    return browser, html
 
 
 def get_pages(html):
@@ -72,14 +72,14 @@ def get_data(url_list):
     seller_url_list = []
 
     for url in url_list[:1]:
-        html = browser(url=url)
+        _, html = browser(url=url)
         pages = get_pages(html=html)
         print(pages)
 
         # for page in range(1, pages + 1):
         for page in range(1, 2):
             url = f"{url}?p={page}"
-            html = browser(url=url)
+            driver, html = browser(url=url)
             soup = BeautifulSoup(html, 'lxml')
 
             try:
@@ -114,7 +114,6 @@ def get_data(url_list):
         #
 
 def main():
-
     get_data(url_list=url_list)
 
     # with open('data/html_data.txt', 'r', encoding='utf-8') as file:
