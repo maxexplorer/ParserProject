@@ -30,7 +30,8 @@ def get_data():
 
     soup = BeautifulSoup(response.text, 'lxml')
 
-    soup.find(attrs={'key': 'value'})
+    elem = soup.find(attrs={'key': 'value'})
+
 
     print(response.status_code)
 
