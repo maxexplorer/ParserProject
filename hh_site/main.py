@@ -6,10 +6,6 @@ from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 
 
-def get_urls():
-    pass
-
-
 def get_data():
     useragent = UserAgent()
 
