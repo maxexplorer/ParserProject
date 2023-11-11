@@ -34,8 +34,8 @@ def get_data():
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    # with open('data/hh_data.json', 'w', encoding='utf-8') as file:
-    #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
+    with open('data/hh_data.json', 'w', encoding='utf-8') as file:
+        json.dump(response.json(), file, indent=4, ensure_ascii=False)
 
 
 def main():
