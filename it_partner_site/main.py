@@ -1,6 +1,10 @@
 import requests
 import os
 import json
+from datetime import datetime
+
+start_time = datetime.now()
+
 
 # Установка заголовков HTTP
 headers = {
@@ -35,16 +39,16 @@ def auth_requests():
     auth_json_data = json.dumps(auth_request)
 
     # Отправка POST запроса для аутентификации
-    auth_response = requests.post(api_url, data=auth_json_data, headers=headers)
+    response = requests.post(api_url, data=auth_json_data, headers=headers)
 
     # Проверка успешного статуса ответа аутентификации
-    if auth_response.status_code == 200 and auth_response.json().get("success"):
+    if response.status_code == 200 and response.json().get("success"):
         # Получение сессии из ответа
-        session_token = auth_response.json().get("session")
+        session_token = response.json().get("session")
         return session_token
     else:
         # Вывести сообщение об ошибке аутентификации
-        print(f"Ошибка аутентификации: {auth_response.status_code}, Текст ответа: {auth_response.text}")
+        print(f"Ошибка аутентификации: {response.status_code}, Текст ответа: {response.text}")
 
 
 def get_tree_catalog(headers, session_token):
@@ -60,12 +64,12 @@ def get_tree_catalog(headers, session_token):
     api_json_data_with_session = json.dumps(api_request_with_session)
 
     try:
-        # Отправка GET запроса с использованием сессии
-        api_response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers, timeout=60)
+        # Отправка GET запроса для получения дерева категорий
+        response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers, timeout=60)
 
         # Запись ответа в файл формата JSON
-        catalog_data = api_response.json()
-        return catalog_data
+        categories_data = response.json()
+        return categories_data
     except Exception as ex:
         print(ex)
 
@@ -83,31 +87,63 @@ def get_list_products(headers, session_token):
     api_json_data_with_session = json.dumps(api_request_with_session)
 
     try:
-        # Отправка GET запроса с использованием сессии
-        api_response = requests.get(product_url, data=api_json_data_with_session, headers=headers, timeout=60)
+        # Отправка GET запроса для получения каталога продукции
+        response = requests.get(product_url, data=api_json_data_with_session, headers=headers, timeout=60)
 
-        product_data = api_response.json()
-        return product_data
+        products_data = response.json()
+        return products_data
+    except Exception as ex:
+        print(ex)
+
+
+def get_active_products_and_prices(headers, session_token):
+    api_url = "https://b2b.i-t-p.pro/api/2"
+
+    # Составление JSON-RPC запроса для получения наличия товаров и цен
+    availability_request = {
+        "request": {
+            "method": "get_active_products",
+            "model": "client_api",
+            "module": "platform"
+        },
+        "session": session_token
+    }
+
+    # Преобразование запроса в формат JSON
+    availability_json_data = json.dumps(availability_request)
+
+    try:
+        # Отправка POST запроса для получения наличия товаров и цен
+        response = requests.post(api_url, data=availability_json_data, headers=headers, timeout=60)
+        active_products_data = response.json()
+        return active_products_data
     except Exception as ex:
         print(ex)
 
 
 def save_json(data):
+    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
+
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/product_data.json', 'w', encoding='utf-8') as file:
+    with open(f'data/data_{cur_time}.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('Данные сохранены в файл "data.json"')
 
 
 def main():
-    session_token = auth_requests()
-    print(session_token)
-    # catalog_data = get_tree_catalog(headers=headers, session_token=session_token)
-    product_data = get_list_products(headers=headers, session_token=session_token)
-    save_json(data=product_data)
+    # session_token = auth_requests()
+    # categories_data = get_tree_catalog(headers=headers, session_token=session_token)
+    # products_data = get_list_products(headers=headers, session_token=session_token)
+    # active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
+
+    save_json(data=None)
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
