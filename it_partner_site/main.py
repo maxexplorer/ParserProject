@@ -7,7 +7,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-session_token = '87B55ABD905374551FF06467D112EB5DA5FD70E14EA1E373E161B3CE10C0AE4E'
+session_token = 'CB8D65767A00CAFEE247A269090E27DADF900673E83C8D9291F3B03139BB4EE3'
 
 
 def auth_requests():
@@ -103,6 +103,8 @@ def save_json(data):
 
 
 def main():
+    session_token = auth_requests()
+    print(session_token)
     # catalog_data = get_tree_catalog(headers=headers, session_token=session_token)
     product_data = get_list_products(headers=headers, session_token=session_token)
     save_json(data=product_data)
