@@ -18,18 +18,9 @@ auth_data = {
 auth_headers = {
     'Content-Type': 'application/json'
 }
-#
-# auth_data = {
-#    "request": {"method": "get_active_products",
-#     "model": "client_api",
-#     "module": "platform"},
-#     "session": "F123123123AAD8776E1B20E87ED26BDD9DFFFFFFFAAAAEEEEE"
-# }
+
 
 response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
+res_auth = response.json()
 
-print(response)
-# response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
-# res_auth = response.json()
-#
-# print(res_auth)
+print(res_auth)
