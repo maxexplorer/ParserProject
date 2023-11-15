@@ -7,13 +7,14 @@ headers = {
     "Content-Type": "application/json"
 }
 
+session_token = '87B55ABD905374551FF06467D112EB5DA5FD70E14EA1E373E161B3CE10C0AE4E'
 
 def auth_requests():
-    # Замените эти значения на свои реальные логин и пароль
+    # Логин и пароль
     client_login = "100553"
     client_password = "BaUSEj"
 
-    # Замените на реальный домен вашего API
+    # Домен API
     api_url = "https://b2b.i-t-p.pro/api/2"
 
     # Составление JSON-RPC запроса для аутентификации
@@ -47,7 +48,7 @@ def auth_requests():
     session_token = '87B55ABD905374551FF06467D112EB5DA5FD70E14EA1E373E161B3CE10C0AE4E'
 
 
-def get_tree_cataloog(session_token):
+def get_tree_catalog(headers, session_token):
     # Составление JSON-RPC запроса с использованием сессии
     catalog_url = "https://b2b.i-t-p.pro/download/catalog/json/catalog_tree.json"
 
@@ -63,10 +64,12 @@ def get_tree_cataloog(session_token):
     api_response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers)
 
     # Запись ответа в файл формата JSON
-    save_json(api_response.json())
+    data = api_response.json()
+    return data
 
 
 def save_json(data):
+    print(data)
     if not os.path.exists('data'):
         os.mkdir('data')
 
@@ -77,7 +80,8 @@ def save_json(data):
 
 
 def main():
-    pass
+    data = get_tree_catalog(headers=headers, session_token=session_token)
+    save_json(data=data)
 
 
 if __name__ == '__main__':
