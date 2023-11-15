@@ -9,6 +9,7 @@ headers = {
 
 session_token = '87B55ABD905374551FF06467D112EB5DA5FD70E14EA1E373E161B3CE10C0AE4E'
 
+
 def auth_requests():
     # Логин и пароль
     client_login = "100553"
@@ -45,8 +46,6 @@ def auth_requests():
         # Вывести сообщение об ошибке аутентификации
         print(f"Ошибка аутентификации: {auth_response.status_code}, Текст ответа: {auth_response.text}")
 
-    session_token = '87B55ABD905374551FF06467D112EB5DA5FD70E14EA1E373E161B3CE10C0AE4E'
-
 
 def get_tree_catalog(headers, session_token):
     # Составление JSON-RPC запроса с использованием сессии
@@ -60,28 +59,53 @@ def get_tree_catalog(headers, session_token):
     # Преобразование запроса в формат JSON
     api_json_data_with_session = json.dumps(api_request_with_session)
 
-    # Отправка POST запроса с использованием сессии
-    api_response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers)
+    try:
+        # Отправка GET запроса с использованием сессии
+        api_response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers, timeout=60)
 
-    # Запись ответа в файл формата JSON
-    data = api_response.json()
-    return data
+        # Запись ответа в файл формата JSON
+        catalog_data = api_response.json()
+        return catalog_data
+    except Exception as ex:
+        print(ex)
+
+
+def get_list_products(headers, session_token):
+    # Составление JSON-RPC запроса с использованием сессии
+    product_url = "https://b2b.i-t-p.pro/download/catalog/json/products.json"
+
+    api_request_with_session = {
+        "data": {
+            "session": session_token}
+    }
+
+    # Преобразование запроса в формат JSON
+    api_json_data_with_session = json.dumps(api_request_with_session)
+
+    try:
+        # Отправка GET запроса с использованием сессии
+        api_response = requests.get(product_url, data=api_json_data_with_session, headers=headers, timeout=60)
+
+        product_data = api_response.json()
+        return product_data
+    except Exception as ex:
+        print(ex)
 
 
 def save_json(data):
-    print(data)
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/data.json', 'w', encoding='utf-8') as file:
+    with open('data/product_data.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('Данные сохранены в файл "data.json"')
 
 
 def main():
-    data = get_tree_catalog(headers=headers, session_token=session_token)
-    save_json(data=data)
+    # catalog_data = get_tree_catalog(headers=headers, session_token=session_token)
+    product_data = get_list_products(headers=headers, session_token=session_token)
+    save_json(data=product_data)
 
 
 if __name__ == '__main__':
