@@ -8,8 +8,8 @@ client_password = "BaUSEj"
 # Замените на реальный домен вашего API
 api_url = "https://b2b.i-t-p.pro/api/2"
 
-# Составление JSON-RPC запроса
-json_rpc_request = {
+# Составление JSON-RPC запроса для аутентификации
+auth_request = {
     "data": {
         "login": client_login,
         "password": client_password
@@ -22,18 +22,12 @@ json_rpc_request = {
 }
 
 # Преобразование запроса в формат JSON
-json_data = json.dumps(json_rpc_request)
+auth_json_data = json.dumps(auth_request)
 
 # Установка заголовков HTTP
 headers = {
     "Content-Type": "application/json"
 }
-
-# Отправка POST запроса
-response = requests.post(api_url, data=json_data, headers=headers)
-
-# Печать ответа
-print(response.json())
 
 # Отправка POST запроса для аутентификации
 auth_response = requests.post(api_url, data=auth_json_data, headers=headers)
