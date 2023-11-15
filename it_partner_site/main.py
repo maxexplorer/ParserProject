@@ -1,30 +1,3 @@
-# import requests
-# import json
-#
-# # Аутентификация
-# auth_url = "https://b2b.i-t-p.pro/api/2"
-# auth_data = {
-#     "request": {
-#         "method": "login",
-#         "model": "auth",
-#         "module": "quickfox"
-#     },
-#     "data": {
-#         "login": "100553",
-#         "password": "BaUSEj"
-#     },
-# }
-#
-# auth_headers = {
-#     'Content-Type': 'application/json'
-# }
-#
-# response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
-# res_auth = response.json()
-#
-# print(res_auth)
-
-
 import requests
 import json
 
@@ -62,3 +35,36 @@ response = requests.post(api_url, data=json_data, headers=headers)
 # Печать ответа
 print(response.json())
 
+# Отправка POST запроса для аутентификации
+auth_response = requests.post(api_url, data=auth_json_data, headers=headers)
+
+# Проверка успешного статуса ответа аутентификации
+if auth_response.status_code == 200 and auth_response.json().get("success"):
+    # Получение сессии из ответа
+    session_token = auth_response.json().get("session")
+
+    # Составление JSON-RPC запроса с использованием сессии
+    api_request_with_session = {
+        "data": {
+            # Добавляем сессию к данным запроса
+            "session": session_token,
+            # Другие данные запроса...
+        },
+        "request": {
+            "method": "your_method",
+            "model": "your_model",
+            "module": "your_module"
+        }
+    }
+
+    # Преобразование запроса в формат JSON
+    api_json_data_with_session = json.dumps(api_request_with_session)
+
+    # Отправка POST запроса с использованием сессии
+    api_response = requests.post(api_url, data=api_json_data_with_session, headers=headers)
+
+    # Печать ответа
+    print(api_response.json())
+else:
+    # Вывести сообщение об ошибке аутентификации
+    print(f"Ошибка аутентификации: {auth_response.status_code}, Текст ответа: {auth_response.text}")
