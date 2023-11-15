@@ -19,8 +19,17 @@ auth_headers = {
     'Content-Type': 'application/json'
 }
 
-response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
-res_auth = response.json()
+auth_data = {
+   "request": {"method": "get_active_products",
+    "model": "client_api",
+    "module": "platform"},
+    "session": "F123123123AAD8776E1B20E87ED26BDD9DFFFFFFFAAAAEEEEE"
+}
 
-print(res_auth)
+response = requests.post(auth_url, data=json.dumps(auth_data))
 
+print(response)
+# response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
+# res_auth = response.json()
+#
+# print(res_auth)
