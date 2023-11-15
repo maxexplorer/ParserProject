@@ -19,7 +19,6 @@ auth_headers = {
     'Content-Type': 'application/json'
 }
 
-
 response = requests.post(auth_url, data=json.dumps(auth_data), headers=auth_headers)
 res_auth = response.json()
 
