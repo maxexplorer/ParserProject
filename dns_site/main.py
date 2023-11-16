@@ -1,5 +1,8 @@
 import requests
 import os
+import json
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
 
 url = "https://www.dns-shop.ru"
 url_api = "https://restapi.dns-shop.ru/v1/get-menu-header?shortMenu=1"
@@ -28,11 +31,6 @@ def get_json(url: str, headers: dict, session: requests.sessions.Session) -> dic
 
 
 def get_products(search: str) -> list:
-    import json
-    from urllib.parse import urljoin
-
-    from bs4 import BeautifulSoup
-    import requests
     headers = {
         'X-Requested-With': 'XMLHttpRequest',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0'
