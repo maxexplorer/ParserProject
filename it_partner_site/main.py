@@ -22,7 +22,7 @@ def auth_requests():
     api_url = "https://b2b.i-t-p.pro/api/2"
 
     # Составление JSON-RPC запроса для аутентификации
-    auth_request = {
+    data = {
         "data": {
             "login": client_login,
             "password": client_password
@@ -35,10 +35,10 @@ def auth_requests():
     }
 
     # Преобразование запроса в формат JSON
-    auth_json_data = json.dumps(auth_request)
+    json_data = json.dumps(data)
 
     # Отправка POST запроса для аутентификации
-    response = requests.post(api_url, data=auth_json_data, headers=headers)
+    response = requests.post(api_url, data=json_data, headers=headers)
 
     # Проверка успешного статуса ответа аутентификации
     if response.status_code == 200 and response.json().get("success"):
@@ -50,25 +50,25 @@ def auth_requests():
         print(f"Ошибка аутентификации: {response.status_code}, Текст ответа: {response.text}")
 
 
-def get_tree_catalog(headers, session_token):
+def get_catalog(headers, session_token):
     # Составление JSON-RPC запроса с использованием сессии
     catalog_url = "https://b2b.i-t-p.pro/download/catalog/json/catalog_tree.json"
 
-    api_request_with_session = {
+    data = {
         "data": {
             "session": session_token}
     }
 
     # Преобразование запроса в формат JSON
-    api_json_data_with_session = json.dumps(api_request_with_session)
+    json_data = json.dumps(data)
 
     try:
         # Отправка GET запроса для получения дерева категорий
-        response = requests.get(catalog_url, data=api_json_data_with_session, headers=headers, timeout=60)
+        response = requests.get(catalog_url, data=json_data, headers=headers, timeout=60)
 
         # Запись ответа в файл формата JSON
-        categories_data = response.json()
-        return categories_data
+        catalog_data = response.json()
+        return catalog_data
     except Exception as ex:
         print(ex)
 
@@ -77,17 +77,17 @@ def get_list_products(headers, session_token):
     # Составление JSON-RPC запроса с использованием сессии
     product_url = "https://b2b.i-t-p.pro/download/catalog/json/products.json"
 
-    api_request_with_session = {
+    data = {
         "data": {
             "session": session_token}
     }
 
     # Преобразование запроса в формат JSON
-    api_json_data_with_session = json.dumps(api_request_with_session)
+    json_data = json.dumps(data)
 
     try:
         # Отправка GET запроса для получения каталога продукции
-        response = requests.get(product_url, data=api_json_data_with_session, headers=headers, timeout=60)
+        response = requests.get(product_url, data=json_data, headers=headers, timeout=60)
 
         products_data = response.json()
         return products_data
@@ -99,7 +99,7 @@ def get_active_products_and_prices(headers, session_token):
     api_url = "https://b2b.i-t-p.pro/api/2"
 
     # Составление JSON-RPC запроса для получения наличия товаров и цен
-    availability_request = {
+    data = {
         "request": {
             "method": "get_active_products",
             "model": "client_api",
@@ -109,16 +109,39 @@ def get_active_products_and_prices(headers, session_token):
     }
 
     # Преобразование запроса в формат JSON
-    availability_json_data = json.dumps(availability_request)
+    json_data = json.dumps(data)
 
     try:
         # Отправка POST запроса для получения наличия товаров и цен
-        response = requests.post(api_url, data=availability_json_data, headers=headers, timeout=60)
+        response = requests.post(api_url, data=json_data, headers=headers, timeout=60)
         active_products_data = response.json()
         return active_products_data
     except Exception as ex:
         print(ex)
 
+def get_adult_products_characteristics(headers, session_token):
+    api_url = "https://b2b.i-t-p.pro/api/2"
+
+    # Составление JSON-RPC запроса для получения наличия товаров и цен
+    data = {
+        "request": {
+            "method": "get_adult_products_characteristics",
+            "model": "client_api",
+            "module": "platform"
+        },
+        "session": session_token
+    }
+
+    # Преобразование запроса в формат JSON
+    json_data = json.dumps(data)
+
+    try:
+        # Отправка POST запроса для получения наличия товаров и цен
+        response = requests.post(api_url, data=json_data, headers=headers, timeout=60)
+        adult_products_data = response.json()
+        return adult_products_data
+    except Exception as ex:
+        print(ex)
 
 def save_json(data):
     cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
@@ -134,12 +157,14 @@ def save_json(data):
 
 def main():
     session_token = auth_requests()
-    categories_data = get_tree_catalog(headers=headers, session_token=session_token)
-    save_json(data=categories_data)
-    products_data = get_list_products(headers=headers, session_token=session_token)
-    save_json(data=products_data)
-    active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
-    save_json(data=active_products_data)
+    # catalog_data = get_catalog(headers=headers, session_token=session_token)
+    # save_json(data=catalog_data)
+    # products_data = get_list_products(headers=headers, session_token=session_token)
+    # save_json(data=products_data)
+    # active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
+    # save_json(data=active_products_data)
+    adult_products_data = get_adult_products_characteristics(headers=headers, session_token=session_token)
+    save_json(data=adult_products_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
