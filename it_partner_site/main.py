@@ -5,7 +5,6 @@ from datetime import datetime
 
 start_time = datetime.now()
 
-
 # Установка заголовков HTTP
 headers = {
     "Content-Type": "application/json"
@@ -135,11 +134,11 @@ def save_json(data):
 
 def main():
     session_token = auth_requests()
-    print(session_token)
-    # categories_data = get_tree_catalog(headers=headers, session_token=session_token)
-    # products_data = get_list_products(headers=headers, session_token=session_token)
+    categories_data = get_tree_catalog(headers=headers, session_token=session_token)
+    save_json(data=categories_data)
+    products_data = get_list_products(headers=headers, session_token=session_token)
+    save_json(data=products_data)
     active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
-
     save_json(data=active_products_data)
 
     execution_time = datetime.now() - start_time
