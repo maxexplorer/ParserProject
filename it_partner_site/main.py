@@ -134,12 +134,13 @@ def save_json(data):
 
 
 def main():
-    # session_token = auth_requests()
+    session_token = auth_requests()
+    print(session_token)
     # categories_data = get_tree_catalog(headers=headers, session_token=session_token)
     # products_data = get_list_products(headers=headers, session_token=session_token)
-    # active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
+    active_products_data = get_active_products_and_prices(headers=headers, session_token=session_token)
 
-    save_json(data=None)
+    save_json(data=active_products_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
