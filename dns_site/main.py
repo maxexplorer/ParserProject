@@ -16,6 +16,13 @@ def get_html(url, headers, session):
     except Exception as ex:
         print(ex)
 
+def get_data():
+    try:
+        with requests.Session() as session:
+            response = session.get(url=url, headers=headers, timeout=60)
+    except Exception as ex:
+        print(ex)
+
 
 def main():
     session = requests.Session()
