@@ -4,9 +4,7 @@ import requests
 import os
 from bs4 import BeautifulSoup
 from datetime import datetime
-import json
 import csv
-
 
 url = "http://teledom46.ru/"
 # url = "https://pcshop33.ru/"
@@ -29,6 +27,7 @@ headers = {
 
 start_time = datetime.now()
 
+
 def get_html(url, headers, session):
     try:
         response = session.get(url=url, headers=headers, timeout=60)
@@ -37,6 +36,7 @@ def get_html(url, headers, session):
     except Exception as ex:
         print(ex)
 
+
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     try:
@@ -44,6 +44,7 @@ def get_pages(html):
     except Exception:
         pages = 1
     return pages
+
 
 def get_urls(category_urls_list, headers):
     count_urls = len(category_urls_list)
@@ -93,7 +94,8 @@ def get_urls(category_urls_list, headers):
         with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
             print(*product_urls_list, file=file, sep='\n')
 
-def get_data(file_path):
+
+def get_data(file_path, headers):
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
@@ -101,9 +103,8 @@ def get_data(file_path):
 
     result_list = []
     image_urls_list = []
-
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list, 1):
+        for j, product_url in enumerate(product_urls_list[0:10], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -113,21 +114,41 @@ def get_data(file_path):
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                title = soup.find('h2', class_='product_name').text.strip()
+                article_number = soup.find('span', class_='article__value').text.strip()
+            except Exception:
+                article_number = None
+
+            try:
+                title = soup.find('div', class_='topic__heading').text.strip()
             except Exception:
                 title = None
 
+            try:
+                price = soup.find('span', class_='price_value').text.strip()
+            except Exception:
+                price = None
 
-def save_json(data):
-    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
+            try:
+                characteristic = ' '.join(soup.find('div', class_='char-side').text.strip().split())
+            except Exception:
+                characteristic = None
 
-    if not os.path.exists('data'):
-        os.mkdir('data')
+            try:
+                description = ' '.join(
+                    soup.find('div', {'class': 'content', 'itemprop': 'description'}).text.strip().split())
+            except Exception:
+                description = None
 
-    with open(f'data/data_{cur_time}.json', 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
+            print(description)
 
-    print('Данные сохранены в файл "data.json"')
+            result_list.append(
+                (
+                    article_number,
+                    title,
+                    price,
+                    characteristic
+                )
+            )
 
 
 def save_csv(data):
@@ -143,8 +164,11 @@ def save_csv(data):
         )
     print('Данные сохранены в файл "data.csv"')
 
+
 def main():
-    get_urls(category_urls_list=category_urls_list, headers=headers)
+    # get_urls(category_urls_list=category_urls_list, headers=headers)
+    result_list = get_data(file_path="data/product_urls_list.txt", headers=headers)
+    # save_csv(data=result_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
