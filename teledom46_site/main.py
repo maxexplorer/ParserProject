@@ -134,7 +134,7 @@ def get_data(file_path, headers):
                         img_url = None
                     image_list.append(
                         {
-                            article_number: "http://teledom46.ru" + img_url
+                            article_number: img_url
                         }
                     )
             except Exception as ex:
@@ -142,7 +142,7 @@ def get_data(file_path, headers):
                 continue
 
             try:
-                price = soup.find('span', class_='price_value').text.strip()
+                price = soup.find('span', class_='price_value').text.strip().replace(' ', ' ')
             except Exception:
                 price = None
 
@@ -168,6 +168,7 @@ def get_data(file_path, headers):
                 )
             )
 
+
     return result_list, image_list
 
 def download_imgs(file_path):
@@ -177,14 +178,16 @@ def download_imgs(file_path):
     count_urls = len(image_dict)
     count = 1
 
-    for art_num, img_url in image_dict.items():
-        response = requests.get(url=img_url)
+    for item in image_dict:
+        for art_num, img_url in item.items():
+            img_title = img_url.split('/')[-1].split('.')[0]
+            response = requests.get(url=img_url)
 
-        if not os.path.exists(f"images/{art_num}"):
-            os.mkdir(f"data/{art_num}")
+            if not os.path.exists(f"images/{art_num}"):
+                os.makedirs(f"images/{art_num}")
 
-        with open(f"images/{art_num}", "wb") as file:
-            file.write(response.content)
+            with open(f"images/{art_num}/{img_title}.png", "wb") as file:
+                file.write(response.content)
 
         print(f'Обработано изображений: {count}/{count_urls}')
 
@@ -198,6 +201,7 @@ def save_json(data):
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('Данные сохранены в файл "data.json"')
+
 
 def save_csv(data):
     cur_date = datetime.now().strftime('%d-%m-%Y')
@@ -217,7 +221,7 @@ def save_csv(data):
             )
         )
 
-    with open(f'data/data_{cur_date}.csv', 'w', encoding='utf-8', newline='') as file:
+    with open(f'data/data_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(
             data
@@ -227,9 +231,9 @@ def save_csv(data):
 
 def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
-    result_list, image_url_list = get_data(file_path="data/product_url_list.txt", headers=headers)
-    save_json(data=image_url_list)
-    save_csv(data=result_list)
+    # result_list, image_data = get_data(file_path="data/product_url_list.txt", headers=headers)
+    # save_json(data=image_data)
+    # save_csv(data=result_list)
     download_imgs(file_path="data/image_data.json")
 
     execution_time = datetime.now() - start_time
