@@ -9,12 +9,6 @@ import csv
 url = "http://teledom46.ru/"
 # url = "https://pcshop33.ru/"
 
-headers = {
-    'Accept': '*/*',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                  ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
-}
-
 category_urls_list = [
     "http://teledom46.ru/catalog/televizory_audio_video/",
     "http://teledom46.ru/catalog/tekhnika_dlya_kukhni/",
@@ -25,23 +19,74 @@ category_urls_list = [
     "http://teledom46.ru/catalog/sadovaya-tekhka/"
 ]
 
+headers = {
+    'Accept': '*/*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                  ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
+}
+
 start_time = datetime.now()
 
 def get_html(url, headers, session):
     try:
         response = session.get(url=url, headers=headers, timeout=60)
         html = response.text
-        return response, html
+        return html
     except Exception as ex:
         print(ex)
 
 def get_pages(html):
     soup = BeautifulSoup(html, 'lxml')
     try:
-        pages = int(soup.find('div', class_='pages').find_all('a')[-1].get('href').split('=')[-1])
+        pages = int(soup.find('div', class_='module-pagination').find_all('a')[-2].text)
     except Exception:
         pages = 1
     return pages
+
+def get_urls(category_urls_list, headers):
+    count_urls = len(category_urls_list)
+
+    product_urls_list = []
+
+    with requests.Session() as session:
+        for i, category_url in enumerate(category_urls_list[0:1], 1):
+            try:
+                html = get_html(url=category_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{category_url} - {ex}")
+                continue
+            pages = get_pages(html=html)
+
+            for page in range(1, pages + 1):
+                product_url = f"{category_url}?PAGEN_1={page}"
+                try:
+                    html = get_html(url=product_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{url} - {ex}")
+                    continue
+                soup = BeautifulSoup(html, 'lxml')
+
+                try:
+                    data = soup.find_all('a', class_='thumb shine')
+                    for item in data:
+                        try:
+                            url = "http://teledom46.ru" + item.get('href')
+                            print(url)
+                        except Exception as ex:
+                            print(ex)
+                            continue
+                        product_urls_list.append(url)
+                except Exception as ex:
+                    print(ex)
+
+            print(f'Обработано: {i}/{count_urls}')
+
+        # if not os.path.exists('data'):
+        #     os.mkdir('data')
+        #
+        # with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
+        #     print(*product_urls_list, file=file, sep='\n')
+
 
 def save_json(data):
     cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
@@ -69,12 +114,7 @@ def save_csv(data):
     print('Данные сохранены в файл "data.csv"')
 
 def main():
-    session = requests.Session()
-
-    response, html = get_html(url=url, headers=headers, session=session)
-
-    print(response.status_code)
-    print(html)
+    get_urls(category_urls_list=category_urls_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
