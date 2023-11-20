@@ -1,3 +1,5 @@
+import time
+
 import requests
 import os
 from bs4 import BeautifulSoup
@@ -45,21 +47,24 @@ def get_pages(html):
 
 def get_urls(category_urls_list, headers):
     count_urls = len(category_urls_list)
+    print(f'Всего: {count_urls} категорий')
 
     product_urls_list = []
 
     with requests.Session() as session:
-        for i, category_url in enumerate(category_urls_list[0:1], 1):
+        for i, category_url in enumerate(category_urls_list, 1):
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
             pages = get_pages(html=html)
+            print(f'В {i} категории: {pages} страниц')
 
             for page in range(1, pages + 1):
                 product_url = f"{category_url}?PAGEN_1={page}"
                 try:
+                    time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{url} - {ex}")
@@ -71,7 +76,6 @@ def get_urls(category_urls_list, headers):
                     for item in data:
                         try:
                             url = "http://teledom46.ru" + item.get('href')
-                            print(url)
                         except Exception as ex:
                             print(ex)
                             continue
@@ -79,13 +83,39 @@ def get_urls(category_urls_list, headers):
                 except Exception as ex:
                     print(ex)
 
-            print(f'Обработано: {i}/{count_urls}')
+                print(f'Обработано: {page}/{pages} страниц')
 
-        # if not os.path.exists('data'):
-        #     os.mkdir('data')
-        #
-        # with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
-        #     print(*product_urls_list, file=file, sep='\n')
+            print(f'Обработано: {i}/{count_urls} категорий')
+
+        if not os.path.exists('data'):
+            os.mkdir('data')
+
+        with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
+            print(*product_urls_list, file=file, sep='\n')
+
+def get_data(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+        count_urls = len(product_urls_list)
+
+    result_list = []
+    image_urls_list = []
+
+    with requests.Session() as session:
+        for j, product_url in enumerate(product_urls_list, 1):
+            try:
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                title = soup.find('h2', class_='product_name').text.strip()
+            except Exception:
+                title = None
 
 
 def save_json(data):
@@ -107,7 +137,7 @@ def save_csv(data):
         os.mkdir('data')
 
     with open(f'data/data_{cur_time}.csv', 'w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file, delimiter=';')
+        writer = csv.writer(file)
         writer.writerows(
             data
         )
