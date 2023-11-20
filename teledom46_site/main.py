@@ -7,9 +7,6 @@ import time
 from datetime import datetime
 
 
-url = "http://teledom46.ru/"
-# url = "https://pcshop33.ru/"
-
 category_urls_list = [
     "http://teledom46.ru/catalog/televizory_audio_video/",
     "http://teledom46.ru/catalog/tekhnika_dlya_kukhni/",
@@ -129,12 +126,13 @@ def get_data(file_path, headers):
 
                 for item in image_data:
                     try:
-                        img_url = "http://teledom46.ru" + item.get('href')
+                        image_url = "http://teledom46.ru" + item.get('href')
                     except Exception:
-                        img_url = None
+                        image_url = None
                     image_list.append(
                         {
-                            article_number: img_url
+                            'article_num': article_number,
+                            'image_url': image_url
                         }
                     )
             except Exception as ex:
@@ -178,16 +176,24 @@ def download_imgs(file_path):
     count_urls = len(image_dict)
     count = 1
 
+
+
     for item in image_dict:
-        for art_num, img_url in item.items():
-            img_title = img_url.split('/')[-1].split('.')[0]
+        art_num = item.get('article_num')
+        img_url = item.get('image_url')
+        img_title = img_url.split('/')[-1].split('.')[0]
+
+        try:
             response = requests.get(url=img_url)
+        except Exception as ex:
+            print(ex)
+            continue
 
-            if not os.path.exists(f"images/{art_num}"):
-                os.makedirs(f"images/{art_num}")
+        if not os.path.exists(f"images/{art_num}"):
+            os.makedirs(f"images/{art_num}")
 
-            with open(f"images/{art_num}/{img_title}.png", "wb") as file:
-                file.write(response.content)
+        with open(f"images/{art_num}/{img_title}.png", "wb") as file:
+            file.write(response.content)
 
         print(f'Обработано изображений: {count}/{count_urls}')
 
