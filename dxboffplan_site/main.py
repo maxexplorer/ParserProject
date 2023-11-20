@@ -141,37 +141,37 @@ def get_data(html, session):
                 )
             )
 
-            # try:
-            #     price_range_items = soup.find('div', class_='project-price-range my-3').find_all('ul')
-            # except Exception:
-            #     continue
-            # for item in price_range_items:
-            #     try:
-            #         type_apartment = ' '.join(item.find('li', class_='first-appart').text.strip().split())
-            #     except Exception:
-            #         type_apartment = None
-            #     try:
-            #         size_apartment = '-'.join(
-            #             item.find('li', class_='size-appart').text.strip().replace('Size from - to (Sqft.)',
-            #                                                                        '').replace(
-            #                 'Created with Fabric.js 1.7.22', '').replace('Sqft', '').split())
-            #     except Exception:
-            #         size_apartment = None
-            #     try:
-            #         price_apartment = '-'.join(
-            #             item.find('li', class_='price-appart').text.strip().replace('Price from - to', '').replace(
-            #                 'Ask for Price', '').split())
-            #     except Exception:
-            #         price_apartment = None
-            #
-            #     price_range_list.append(
-            #         (
-            #             project_url,
-            #             type_apartment,
-            #             size_apartment,
-            #             price_apartment
-            #         )
-            #     )
+            try:
+                price_range_items = soup.find('div', class_='project-price-range my-3').find_all('ul')
+            except Exception:
+                continue
+            for item in price_range_items:
+                try:
+                    type_apartment = ' '.join(item.find('li', class_='first-appart').text.strip().split())
+                except Exception:
+                    type_apartment = None
+                try:
+                    size_apartment = '-'.join(
+                        item.find('li', class_='size-appart').text.strip().replace('Size from - to (Sqft.)',
+                                                                                   '').replace(
+                            'Created with Fabric.js 1.7.22', '').replace('Sqft', '').split())
+                except Exception:
+                    size_apartment = None
+                try:
+                    price_apartment = '-'.join(
+                        item.find('li', class_='price-appart').text.strip().replace('Price from - to', '').replace(
+                            'Ask for Price', '').split())
+                except Exception:
+                    price_apartment = None
+
+                price_range_list.append(
+                    (
+                        project_url,
+                        type_apartment,
+                        size_apartment,
+                        price_apartment
+                    )
+                )
 
             print(f'Developer: {developer_name}, Project: {project_name}')
 
