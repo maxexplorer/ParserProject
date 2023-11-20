@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 
-
 category_urls_list = [
     "http://teledom46.ru/catalog/televizory_audio_video/",
     "http://teledom46.ru/catalog/tekhnika_dlya_kukhni/",
@@ -155,7 +154,6 @@ def get_data(file_path, headers):
             except Exception:
                 description = None
 
-
             result_list.append(
                 (
                     article_number,
@@ -166,8 +164,8 @@ def get_data(file_path, headers):
                 )
             )
 
-
     return result_list, image_list
+
 
 def download_imgs(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -175,8 +173,6 @@ def download_imgs(file_path):
 
     count_urls = len(image_dict)
     count = 1
-
-
 
     for item in image_dict:
         art_num = item.get('article_num')
@@ -198,6 +194,7 @@ def download_imgs(file_path):
         print(f'Обработано изображений: {count}/{count_urls}')
 
         count += 1
+
 
 def save_json(data):
     if not os.path.exists('data'):
