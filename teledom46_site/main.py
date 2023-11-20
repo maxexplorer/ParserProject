@@ -1,5 +1,6 @@
 import requests
 import os
+from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import csv
@@ -14,6 +15,15 @@ headers = {
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
 
+category_urls_list = [
+    "http://teledom46.ru/catalog/televizory_audio_video/",
+    "http://teledom46.ru/catalog/tekhnika_dlya_kukhni/",
+    "http://teledom46.ru/catalog/vstraivaemaya_tekhnika/",
+    "http://teledom46.ru/catalog/vytyazhki/",
+    "http://teledom46.ru/catalog/tekhnika_dlya_doma/",
+    "http://teledom46.ru/catalog/klimaticheskaya_tekhnika/",
+    "http://teledom46.ru/catalog/sadovaya-tekhka/"
+]
 
 start_time = datetime.now()
 
@@ -25,6 +35,13 @@ def get_html(url, headers, session):
     except Exception as ex:
         print(ex)
 
+def get_pages(html):
+    soup = BeautifulSoup(html, 'lxml')
+    try:
+        pages = int(soup.find('div', class_='pages').find_all('a')[-1].get('href').split('=')[-1])
+    except Exception:
+        pages = 1
+    return pages
 
 def save_json(data):
     cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
@@ -45,7 +62,7 @@ def save_csv(data):
         os.mkdir('data')
 
     with open(f'data/data_{cur_time}.csv', 'w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, delimiter=';')
         writer.writerows(
             data
         )
