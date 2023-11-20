@@ -2,6 +2,7 @@ import requests
 import os
 from datetime import datetime
 import json
+import csv
 
 
 url = "http://teledom46.ru/"
@@ -37,7 +38,18 @@ def save_json(data):
     print('Данные сохранены в файл "data.json"')
 
 
+def save_csv(data):
+    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
 
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open(f'data/data_{cur_time}.csv', 'w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(
+            data
+        )
+    print('Данные сохранены в файл "data.csv"')
 
 def main():
     session = requests.Session()
