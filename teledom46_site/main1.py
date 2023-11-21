@@ -36,10 +36,14 @@ def get_data(file_path, headers):
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
+    count = len(product_urls_list)
+
+    print(f'Всего {count} товаров')
+
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list[10:20], 1):
+        for i, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -108,7 +112,7 @@ def get_data(file_path, headers):
                 )
             )
 
-            print(f'Обработано товаров: {i}')
+            print(f'Обработано товаров: {i}/{count}')
 
     return result_list
 
