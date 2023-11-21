@@ -51,17 +51,17 @@ def get_data(file_path, headers):
             try:
                 article = soup.find('span', class_='article__value').text.strip()
             except Exception:
-                article = None
+                article = ''
 
             try:
                 name = soup.find('div', class_='topic__heading').text.strip()
             except Exception:
-                name = None
+                name = ''
 
             try:
-                folder = soup.find_all('span', class_='breadcrumbs__item-name font_xs')[2].text.strip()
+                folder = soup.find_all('span', class_='breadcrumbs__item-name font_xs')[-2].text.strip()
             except Exception:
-                folder = None
+                folder = ''
 
             try:
                 image_data = soup.find_all('a', class_='product-detail-gallery__link popup_link fancy')
@@ -79,28 +79,29 @@ def get_data(file_path, headers):
                 continue
 
             try:
-                price = soup.find('span', class_='price_value').text.strip().replace(' ', ' ')
+                price = soup.find('span', class_='price_value').text.strip().replace(' ', '')
             except Exception:
-                price = None
+                price = ''
 
             try:
-                characteristic = ' '.join(soup.find('div', class_='char-side').text.strip().split())
+                characteristic = soup.find('div', class_='char-side').text
             except Exception:
-                characteristic = None
+                characteristic = ''
 
             try:
-                description = ' '.join(
-                    soup.find('div', {'class': 'content', 'itemprop': 'description'}).text.strip().split())
+                description = soup.find('div', {'class': 'content', 'itemprop': 'description'}).text
             except Exception:
-                description = None
+                description = ''
 
             body = f'{characteristic} {description}'
+            amount = 10
 
             result_list.append(
                 (
                     body,
                     name,
                     article,
+                    amount,
                     price,
                     folder,
                     image
@@ -108,7 +109,6 @@ def get_data(file_path, headers):
             )
 
             print(f'Обработано товаров: {i}')
-    print(result_list)
 
     return result_list
 
@@ -126,6 +126,7 @@ def save_csv(data):
                 'body: Описание',
                 'name: Название',
                 'article: Артикул',
+                'amount : Количество',
                 'price: Цена',
                 'folder: Категория',
                 'image: Иллюстрация'
