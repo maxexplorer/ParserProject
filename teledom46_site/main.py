@@ -96,12 +96,11 @@ def get_data(file_path, headers):
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
-        count_urls = len(product_urls_list)
 
     result_list = []
     image_list = []
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[0:10], 1):
+        for j, product_url in enumerate(product_urls_list[10:20], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -164,6 +163,8 @@ def get_data(file_path, headers):
                 )
             )
 
+            print(f'Обработано товаров: {j}')
+
     return result_list, image_list
 
 
@@ -197,10 +198,12 @@ def download_imgs(file_path):
 
 
 def save_json(data):
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/image_data.json', 'w', encoding='utf-8') as file:
+    with open(f'data/image_data_{cur_date}.json', 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     print('Данные сохранены в файл "data.json"')
@@ -213,7 +216,7 @@ def save_csv(data):
         os.mkdir('data')
 
     with open(f'data/data_{cur_date}.csv', 'w', encoding='utf-8') as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, delimiter=';')
         writer.writerow(
             (
                 'Артикул',
@@ -225,7 +228,7 @@ def save_csv(data):
         )
 
     with open(f'data/data_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, delimiter=';')
         writer.writerows(
             data
         )
@@ -234,10 +237,10 @@ def save_csv(data):
 
 def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
-    # result_list, image_data = get_data(file_path="data/product_url_list.txt", headers=headers)
+    result_list, image_data = get_data(file_path="data/product_url_list.txt", headers=headers)
     # save_json(data=image_data)
-    # save_csv(data=result_list)
-    download_imgs(file_path="data/image_data.json")
+    save_csv(data=result_list)
+    # download_imgs(file_path="data/image_data.json")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
