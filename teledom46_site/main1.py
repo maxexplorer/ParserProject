@@ -1,9 +1,7 @@
 import requests
 import os
-import json
 import csv
 from bs4 import BeautifulSoup
-import time
 from datetime import datetime
 
 category_urls_list = [
@@ -38,11 +36,10 @@ def get_data(file_path, headers):
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
-
     result_list = []
-    image_list = []
+
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[10:20], 1):
+        for i, product_url in enumerate(product_urls_list[10:20], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -72,7 +69,8 @@ def get_data(file_path, headers):
                 image = ''
                 for item in image_data:
                     try:
-                        image += ', '.join("http://teledom46.ru" + item.get('href'))
+                        url = "http://teledom46.ru" + item.get('href')
+                        image += f'{url}, '
                     except Exception:
                         image = None
 
@@ -109,7 +107,8 @@ def get_data(file_path, headers):
                 )
             )
 
-            print(f'Обработано товаров: {j}')
+            print(f'Обработано товаров: {i}')
+    print(result_list)
 
     return result_list
 
@@ -124,11 +123,12 @@ def save_csv(data):
         writer = csv.writer(file, delimiter=';')
         writer.writerow(
             (
-                'Артикул',
-                'Название',
-                'Цена',
-                'Характеристики',
-                'Описание'
+                'body',
+                'name',
+                'article',
+                'price',
+                'folder',
+                'image'
             )
         )
 
@@ -141,10 +141,8 @@ def save_csv(data):
 
 
 def main():
-
     result_list = get_data(file_path="data/product_url_list.txt", headers=headers)
     save_csv(data=result_list)
-
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
