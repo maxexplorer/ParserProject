@@ -111,9 +111,7 @@ def get_data(file_path, headers):
 
             print(f'Обработано товаров: {j}')
 
-    return result_list, image_list
-
-
+    return result_list
 
 
 def save_csv(data):
@@ -143,11 +141,10 @@ def save_csv(data):
 
 
 def main():
-    # get_urls(category_urls_list=category_urls_list, headers=headers)
-    result_list, image_data = get_data(file_path="data/product_url_list.txt", headers=headers)
-    # save_json(data=image_data)
+
+    result_list = get_data(file_path="data/product_url_list.txt", headers=headers)
     save_csv(data=result_list)
-    # download_imgs(file_path="data/image_data.json")
+
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
