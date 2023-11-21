@@ -113,16 +113,7 @@ def get_data(file_path, headers):
 
     return result_list, image_list
 
-def save_json(data):
-    cur_date = datetime.now().strftime('%d-%m-%Y')
 
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open(f'data/image_data_{cur_date}.json', 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-
-    print('Данные сохранены в файл "data.json"')
 
 
 def save_csv(data):
