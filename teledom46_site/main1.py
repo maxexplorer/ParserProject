@@ -4,16 +4,6 @@ import csv
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-category_urls_list = [
-    "http://teledom46.ru/catalog/televizory_audio_video/",
-    "http://teledom46.ru/catalog/tekhnika_dlya_kukhni/",
-    "http://teledom46.ru/catalog/vstraivaemaya_tekhnika/",
-    "http://teledom46.ru/catalog/vytyazhki/",
-    "http://teledom46.ru/catalog/tekhnika_dlya_doma/",
-    "http://teledom46.ru/catalog/klimaticheskaya_tekhnika/",
-    "http://teledom46.ru/catalog/sadovaya-tekhka/"
-]
-
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -88,12 +78,13 @@ def get_data(file_path, headers):
                 price = ''
 
             try:
-                characteristic = soup.find('div', class_='char-side').text
+                characteristic = ' '.join(soup.find('div', class_='char-side').text.strip().split())
             except Exception:
                 characteristic = ''
 
             try:
-                description = soup.find('div', {'class': 'content', 'itemprop': 'description'}).text
+                description = ' '.join(
+                    soup.find('div', {'class': 'content', 'itemprop': 'description'}).text.strip().split())
             except Exception:
                 description = ''
 
