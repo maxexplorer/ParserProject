@@ -123,12 +123,12 @@ def save_csv(data):
         writer = csv.writer(file, delimiter=';')
         writer.writerow(
             (
-                'body',
-                'name',
-                'article',
-                'price',
-                'folder',
-                'image'
+                'body: Описание',
+                'name: Название',
+                'article: Артикул',
+                'price: Цена',
+                'folder: Категория',
+                'image: Иллюстрация'
             )
         )
 
