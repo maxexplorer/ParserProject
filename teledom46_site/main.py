@@ -236,11 +236,11 @@ def save_csv(data):
 
 
 def main():
-    # get_urls(category_urls_list=category_urls_list, headers=headers)
+    get_urls(category_urls_list=category_urls_list, headers=headers)
     result_list, image_data = get_data(file_path="data/product_url_list.txt", headers=headers)
-    # save_json(data=image_data)
+    save_json(data=image_data)
     save_csv(data=result_list)
-    # download_imgs(file_path="data/image_data.json")
+    download_imgs(file_path="data/image_data.json")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
