@@ -12,6 +12,7 @@ headers = {
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
 
+
 def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str:
     try:
         response = session.get(url=url, headers=headers, timeout=60)
@@ -19,6 +20,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         return html
     except Exception as ex:
         print(ex)
+
 
 def get_json(url: str, headers: dict, session: requests.sessions.Session) -> dict:
     try:
@@ -43,7 +45,6 @@ def get_products(search: str) -> list:
     print(rs.status_code)
     data = json.loads(rs.text)
 
-
     root = BeautifulSoup(data['html'], 'html.parser')
 
     items = []
@@ -53,8 +54,6 @@ def get_products(search: str) -> list:
             (a.get_text(strip=True), urljoin(rs.url, a['href']))
         )
     return items
-
-
 
 
 def get_data(url: str, headers: dict) -> None:
@@ -74,6 +73,7 @@ def main():
     items = get_products('Видеокарты')
     print(items)
     # print(json)
+
 
 if __name__ == '__main__':
     main()
