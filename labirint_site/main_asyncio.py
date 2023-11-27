@@ -106,8 +106,8 @@ async def gather_data():
         await asyncio.gather(*tasks)
 
 
-async def main():
-    await gather_data()
+def main():
+    asyncio.get_event_loop().run_until_complete(gather_data())
     cur_time = datetime.datetime.now().strftime('%d-%m-%Y-%H-%M')
 
     with open(f'data/data_{cur_time}_async.json', 'a', encoding='utf-8') as file:
@@ -146,5 +146,5 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
+    main()
 
