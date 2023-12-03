@@ -29,8 +29,13 @@ def get_html(url, headers, session):
 
 
 def main():
-    pass
+    session = requests.Session()
+    get_html(url=url, headers=headers, session=session)
 
 
 if __name__ == '__main__':
     main()
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
