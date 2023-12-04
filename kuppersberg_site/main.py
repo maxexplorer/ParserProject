@@ -16,7 +16,7 @@ headers = {
 start_time = datetime.now()
 
 
-url = "https://kuppersberg.ru/catalog/"
+url = "https://kuppersberg.ru/categories/"
 
 
 def get_html(url, headers, session):
@@ -28,9 +28,35 @@ def get_html(url, headers, session):
         print(ex)
 
 
+def get_category_urls(url, headers):
+    category_urls_list = []
+
+    with requests.Session() as session:
+        html = get_html(url=url, headers=headers, session=session)
+
+        soup = BeautifulSoup(html, 'lxml')
+
+        try:
+            data = soup.find('div', class_='catalog-main__wrap').find_all('div', class_='catalog-main__item')
+
+            for item in data:
+                category_url = f"https://kuppersberg.ru{item.find('a').get('href')}"
+
+                category_urls_list.append(category_url)
+
+        except Exception as ex:
+            print(ex)
+
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/category_urls_list.txt', 'w', encoding='utf-8') as file:
+        print(*category_urls_list, file=file, sep='\n')
+
+def save_txt(data):
+
 def main():
-    session = requests.Session()
-    get_html(url=url, headers=headers, session=session)
+    category_urls_list = get_category_urls(url=url, headers=headers)
 
 
 if __name__ == '__main__':
