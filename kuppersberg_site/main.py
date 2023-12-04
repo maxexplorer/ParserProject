@@ -62,11 +62,11 @@ def get_category_urls(url:str, headers:dict) ->list:
     return category_urls_list
 
 # Получаем ссылки всех подкатегорий товаров
-def get_subcategory_urls(file_path:str, headers:dict) ->list:
+def get_subcategory_urls(file_path:str, headers:dict) ->(str, list):
     """
     :param file_path: str
     :param headers: dict
-    :return: list
+    :return: str, list
     """
 
 
