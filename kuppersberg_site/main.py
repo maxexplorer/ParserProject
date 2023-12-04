@@ -161,7 +161,6 @@ def get_product_urls(file_path: str, headers: dict) -> None:
             for page in range(1, pages + 1):
                 product_url = f"{category_url}?PAGEN_1={page}"
                 try:
-                    # time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{url} - {ex}")
@@ -172,8 +171,7 @@ def get_product_urls(file_path: str, headers: dict) -> None:
                     data = soup.find_all('div', class_='prod-card prod-card--small')
                     for item in data:
                         try:
-                            product_url = item.get('href')
-                            print(product_url)
+                            product_url = f"https://kuppersberg.ru{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -185,8 +183,8 @@ def get_product_urls(file_path: str, headers: dict) -> None:
 
             print(f'Обработано: {i}/{count_urls} категорий')
 
-            if not os.path.exists('data'):
-                os.makedirs('data/products')
+            if not os.path.exists('data/products/'):
+                os.makedirs(f'data/products/')
 
             with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
                 print(*product_urls_list, file=file, sep='\n')
