@@ -189,17 +189,22 @@ def get_product_urls(file_path: str, headers: dict) -> None:
             with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
                 print(*product_urls_list, file=file, sep='\n')
 
+def get_data(file_path, headers):
+    pass
+
 
 def main():
     # get_category_urls(url=url, headers=headers)
     # get_subcategory_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
-    # directory = 'data\subcategory'
-    # for filename in os.listdir(directory):
-    #     file_path = os.path.join(directory, filename)
-    #     if os.path.isfile(file_path):
-    #         get_product_urls(file_path=file_path, headers=headers)
 
-    get_product_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
+    # get_product_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
+
+    directory = 'data\products'
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            get_data(file_path=file_path, headers=headers)
+
 
 
 if __name__ == '__main__':
