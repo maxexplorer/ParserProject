@@ -78,11 +78,14 @@ def get_subcategory_urls(file_path: str, headers: dict) -> (str, list):
     with open(file_path, 'r', encoding='utf-8') as file:
         category_urls_list = [line.strip() for line in file.readlines()]
 
+    count_urls = len(category_urls_list)
+    print(f'Всего: {count_urls} категорий')
+
     subcategory_urls_list = []
 
     with requests.Session() as session:
 
-        for category_url in category_urls_list:
+        for i, category_url in enumerate(category_urls_list):
             html = get_html(url=category_url, headers=headers, session=session)
 
             soup = BeautifulSoup(html, 'lxml')
@@ -104,6 +107,8 @@ def get_subcategory_urls(file_path: str, headers: dict) -> (str, list):
 
             with open(f'data/{name}.txt', 'w', encoding='utf-8') as file:
                 print(*data, file=file, sep='\n')
+
+            print(f'Обработано: {i}/{count_urls} категорий')
 
 
 def get_pages(html):
