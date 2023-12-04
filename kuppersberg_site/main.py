@@ -34,6 +34,22 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         print(ex)
 
 
+def get_pages(html: str) -> int:
+    """
+    :param html: str
+    :return: int
+    """
+
+    soup = BeautifulSoup(html, 'lxml')
+    try:
+        pages = int(
+            soup.find('div', class_='module-category__nav__pagin pagination').find_all('a', class_='pagination__one')[
+                -2].text)
+    except Exception:
+        pages = 1
+    return pages
+
+
 # Получаем ссылки всех категорий товаров
 def get_category_urls(url: str, headers: dict) -> list:
     """
@@ -60,19 +76,19 @@ def get_category_urls(url: str, headers: dict) -> list:
         except Exception as ex:
             print(ex)
 
-        if not os.path.exists('data'):
-            os.mkdir('data')
+        if not os.path.exists('data/category'):
+            os.makedirs('data/category')
 
-        with open(f'data/category_urls_list.txt', 'w', encoding='utf-8') as file:
+        with open(f'data/category/category_urls_list.txt', 'w', encoding='utf-8') as file:
             print(*data, file=file, sep='\n')
 
 
 # Получаем ссылки всех подкатегорий товаров
-def get_subcategory_urls(file_path: str, headers: dict) -> (str, list):
+def get_subcategory_urls(file_path: str, headers: dict) -> None:
     """
     :param file_path: str
     :param headers: dict
-    :return: str, list
+    :return: None
     """
 
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -101,40 +117,86 @@ def get_subcategory_urls(file_path: str, headers: dict) -> (str, list):
                     subcategory_url = f"https://kuppersberg.ru{item.get('href')}"
                     if subcategory_url is None:
                         continue
-                    print(subcategory_url)
                     name = subcategory_url.split('/')[-3].strip()
                     subcategory_urls_list.append(subcategory_url)
             else:
                 subcategory_urls_list.append(category_url)
                 name = category_url.split('/')[-2]
-                print(name)
 
-        if not os.path.exists('data'):
-            os.mkdir('data')
+            if not os.path.exists('data'):
+                os.makedirs('data/subcategory')
 
-        with open(f'data/{name}.txt', 'w', encoding='utf-8') as file:
-            print(*subcategory_urls_list, file=file, sep='\n')
+            with open(f'data/subcategory/{name}.txt', 'w', encoding='utf-8') as file:
+                print(*subcategory_urls_list, file=file, sep='\n')
 
-        print(f'Обработано: {i}/{count_urls} категорий')
+            print(f'Обработано: {i}/{count_urls} категорий')
 
 
-def get_pages(html: str) -> int:
+# Получаем ссылки товаров
+def get_product_urls(file_path: str, headers: dict) -> None:
     """
-    :param html: str
-    :return: int
+    :param file_path: str
+    :param headers: dict
+    :return: None
     """
 
-    soup = BeautifulSoup(html, 'lxml')
-    try:
-        pages = int(soup.find('div', class_='module-pagination').find_all('a')[-2].text)
-    except Exception:
-        pages = 1
-    return pages
+    with open(file_path, 'r', encoding='utf-8') as file:
+        subcategory_urls_list = [line.strip() for line in file.readlines()]
+
+    count_urls = len(subcategory_urls_list)
+    print(f'Всего: {count_urls} подкатегорий')
+
+    with requests.Session() as session:
+        for i, subcategory_url in enumerate(subcategory_urls_list, 1):
+            try:
+                html = get_html(url=subcategory_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{subcategory_url} - {ex}")
+                continue
+            pages = get_pages(html=html)
+            print(f'В {i} категории: {pages} страниц')
+
+        #     for page in range(1, pages + 1):
+        #         product_url = f"{category_url}?PAGEN_1={page}"
+        #         try:
+        #             time.sleep(1)
+        #             html = get_html(url=product_url, headers=headers, session=session)
+        #         except Exception as ex:
+        #             print(f"{url} - {ex}")
+        #             continue
+        #         soup = BeautifulSoup(html, 'lxml')
+        #
+        #         try:
+        #             data = soup.find_all('a', class_='thumb shine')
+        #             for item in data:
+        #                 try:
+        #                     url = "http://teledom46.ru" + item.get('href')
+        #                 except Exception as ex:
+        #                     print(ex)
+        #                     continue
+        #                 product_urls_list.append(url)
+        #         except Exception as ex:
+        #             print(ex)
+        #
+        #         print(f'Обработано: {page}/{pages} страниц')
+        #
+        #     print(f'Обработано: {i}/{count_urls} категорий')
+        #
+        # if not os.path.exists('data'):
+        #     os.mkdir('data')
+        #
+        # with open('data/product_url_list.txt', 'w', encoding='utf-8') as file:
+        #     print(*product_urls_list, file=file, sep='\n')
 
 
 def main():
     # get_category_urls(url=url, headers=headers)
-    get_subcategory_urls(file_path='data/category_urls_list.txt', headers=headers)
+    # get_subcategory_urls(file_path='data/category/category_urls_list.txt', headers=headers)
+    directory = 'data\subcategory'
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            get_product_urls(file_path=file_path, headers=headers)
 
 
 if __name__ == '__main__':
