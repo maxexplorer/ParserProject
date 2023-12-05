@@ -219,7 +219,8 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder = ', '.join(i.text.strip() for i in soup.find_all('li', itemprop='itemListElement')[2:])
+                folder = soup.find_all('li', itemprop='itemListElement')[2].text.strip()
+                print(folder)
             except Exception:
                 folder = ''
 
@@ -243,8 +244,8 @@ def get_data(file_path: str, headers: dict) -> list:
 
                 if image_data:
                     image = ', '.join(
-                        f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}" for item
-                        in soup.find_all('button', class_='prodMain__pagin__btn'))
+                        f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}" for item in
+                        soup.find_all('button', class_='prodMain__pagin__btn'))
                 else:
                     image = f"https://kuppersberg.ru{soup.find('picture', class_='prodMain__gallery__img').find('img').get('src')}"
             except Exception:
@@ -253,7 +254,8 @@ def get_data(file_path: str, headers: dict) -> list:
             print(image)
 
             try:
-                body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split('\t'))
+                body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split())
+                print(body)
             except Exception:
                 body = ''
 
@@ -314,7 +316,7 @@ def main():
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
-            # save_csv(name=name, data=result_list)
+            save_csv(name=name, data=result_list)
 
 
 if __name__ == '__main__':
