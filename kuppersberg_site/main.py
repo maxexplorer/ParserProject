@@ -1,9 +1,7 @@
 import requests
 import os
-import json
 import csv
 from bs4 import BeautifulSoup
-import time
 from datetime import datetime
 
 headers = {
