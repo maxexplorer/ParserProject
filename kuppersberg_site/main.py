@@ -239,13 +239,17 @@ def get_data(file_path: str, headers: dict) -> list:
                 price = ''
 
             try:
-                image_data = soup.find_all('button', class_='prodMain__pagin__btn')
+                image_data = soup.find_all('button', {'class': 'prodMain__pagin__btn', 'data-pr-gallery': 'dot'})
 
                 if image_data:
-                    image = ', '.join(
-                        f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}" for item
-                        in
-                        soup.find_all('button', class_='prodMain__pagin__btn'))
+                    image = ''
+                    for item in image_data:
+                        try:
+                            image_url = f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}"
+                            image += f'{image_url}, '
+                        except Exception as ex:
+                            print(ex)
+                            continue
                 else:
                     image = f"https://kuppersberg.ru{soup.find('picture', class_='prodMain__gallery__img').find('img').get('src')}"
             except Exception:
@@ -308,7 +312,7 @@ def main():
     # get_product_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[1:]:
+    for filename in os.listdir(directory)[2:]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
