@@ -210,7 +210,6 @@ def get_data(file_path: str, headers: dict) -> list:
 
     with requests.Session() as session:
         for i, product_url in enumerate(product_urls_list, 1):
-        # for i, product_url in enumerate(["https://kuppersberg.ru/products/fg_601_c_bronze/"], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -250,20 +249,20 @@ def get_data(file_path: str, headers: dict) -> list:
             except Exception:
                 body = ''
 
-        amount = 1
+            amount = 1
 
-        result_list.append(
-            (folder,
-             article,
-             name,
-             price,
-             image,
-             body,
-             amount
-             )
-        )
+            result_list.append(
+                (folder,
+                 article,
+                 name,
+                 price,
+                 image,
+                 body,
+                 amount
+                 )
+            )
 
-        print(f'Обработано товаров: {i}/{count}')
+            print(f'Обработано товаров: {i}/{count}')
 
     return result_list
 
@@ -277,15 +276,14 @@ def save_csv(name, data):
     with open(f'data/results/{name}_{cur_date}.csv', 'w', encoding='utf-8') as file:
         writer = csv.writer(file, delimiter=';')
         writer.writerow(
-            (
-                'body: Описание',
-                'name: Название',
-                'article: Артикул',
-                'amount : Количество',
-                'price: Цена',
-                'folder: Категория',
-                'image: Иллюстрация'
-            )
+            ('folder: Категория',
+             'article: Артикул',
+             'name: Название',
+             'price: Цена',
+             'image: Иллюстрация'
+             'body: Описание',
+             'amount : Количество',
+             )
         )
 
     with open(f'data/results/{name}_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
@@ -309,7 +307,6 @@ def main():
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
             save_csv(name=name, data=result_list)
-
 
 
 if __name__ == '__main__':
