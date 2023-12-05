@@ -190,7 +190,89 @@ def get_product_urls(file_path: str, headers: dict) -> None:
                 print(*product_urls_list, file=file, sep='\n')
 
 def get_data(file_path, headers):
-    pass
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+    count = len(product_urls_list)
+
+    print(f'Всего {count} товаров')
+
+    result_list = []
+
+    with requests.Session() as session:
+        for i, product_url in enumerate(product_urls_list, 1):
+            try:
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                article = soup.find('span', class_='article__value').text.strip()
+            except Exception:
+                article = ''
+
+            try:
+                name = soup.find('div', class_='topic__heading').text.strip()
+            except Exception:
+                name = ''
+
+            try:
+                folder = soup.find_all('span', class_='breadcrumbs__item-name font_xs')[-2].text.strip()
+            except Exception:
+                folder = ''
+
+            try:
+                image_data = soup.find_all('a', class_='product-detail-gallery__link popup_link fancy')
+
+                image = ''
+                for item in image_data:
+                    try:
+                        url = "http://teledom46.ru" + item.get('href')
+                        image += f'{url}, '
+                    except Exception:
+                        image = None
+
+            except Exception as ex:
+                print(ex)
+                continue
+
+            try:
+                price = soup.find('span', class_='price_value').text.strip().replace(' ', '')
+            except Exception:
+                price = ''
+
+            try:
+                characteristic = ' '.join(soup.find('div', class_='char-side').text.strip().split())
+            except Exception:
+                characteristic = ''
+
+            try:
+                description = ' '.join(
+                    soup.find('div', {'class': 'content', 'itemprop': 'description'}).text.strip().split())
+            except Exception:
+                description = ''
+
+            body = f'{characteristic} {description}'
+            amount = 10
+
+            result_list.append(
+                (
+                    body,
+                    name,
+                    article,
+                    amount,
+                    price,
+                    folder,
+                    image
+                )
+            )
+
+            print(f'Обработано товаров: {i}/{count}')
+
+    return result_list
 
 
 def main():
