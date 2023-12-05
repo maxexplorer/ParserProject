@@ -220,7 +220,6 @@ def get_data(file_path: str, headers: dict) -> list:
 
             try:
                 folder = soup.find_all('li', itemprop='itemListElement')[2].text.strip()
-                print(folder)
             except Exception:
                 folder = ''
 
@@ -244,18 +243,16 @@ def get_data(file_path: str, headers: dict) -> list:
 
                 if image_data:
                     image = ', '.join(
-                        f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}" for item in
+                        f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}" for item
+                        in
                         soup.find_all('button', class_='prodMain__pagin__btn'))
                 else:
                     image = f"https://kuppersberg.ru{soup.find('picture', class_='prodMain__gallery__img').find('img').get('src')}"
             except Exception:
                 image = ''
 
-            print(image)
-
             try:
                 body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split())
-                print(body)
             except Exception:
                 body = ''
 
@@ -268,7 +265,7 @@ def get_data(file_path: str, headers: dict) -> list:
                  price,
                  image,
                  body,
-                 amount
+                 amount,
                  )
             )
 
@@ -311,7 +308,7 @@ def main():
     # get_product_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[:1]:
+    for filename in os.listdir(directory)[1:]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
