@@ -31,7 +31,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     except Exception as ex:
         print(ex)
 
-
+# Получаем количество страниц
 def get_pages(html: str) -> int:
     """
     :param html: str
