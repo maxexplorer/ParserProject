@@ -58,7 +58,7 @@ def get_pages(html: str) -> int:
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_urls_list: list, headers: dict, html) -> None:
+def get_product_urls(category_urls_list: list, headers: dict) -> None:
     """
     :param file_path: list
     :param headers: dict
@@ -69,11 +69,10 @@ def get_product_urls(category_urls_list: list, headers: dict, html) -> None:
     print(f'Всего: {count_urls} категорий')
 
     with requests.Session() as session:
-        for i, category_url in enumerate(category_urls_list[:1], 1):
+        for i, category_url in enumerate(category_urls_list, 1):
             product_urls_list = []
 
             name_category = category_url.split('/')[-1]
-            print(name_category)
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -83,8 +82,7 @@ def get_product_urls(category_urls_list: list, headers: dict, html) -> None:
             pages = get_pages(html=html)
             print(f'В категории {name_category}: {pages} страниц')
 
-            # for page in range(1, pages + 1):
-            for page in range(1, 2):
+            for page in range(1, pages + 1):
                 product_url = f"{category_url}_{page}"
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
@@ -116,13 +114,12 @@ def get_product_urls(category_urls_list: list, headers: dict, html) -> None:
                 print(*product_urls_list, file=file, sep='\n')
 
 def main():
-    session = requests.Session()
-    # html = get_html(url=category_urls_list[0], headers=headers, session=session)
+
 
     with open('data/source/index.html', 'r', encoding='utf-8') as file:
         html = file.read()
 
-    get_product_urls(category_urls_list, headers, html)
+    get_product_urls(category_urls_list, headers)
 
     # if not os.path.exists:
     #     os.makedirs('data/source')

@@ -142,7 +142,7 @@ def get_product_urls(file_path: str, headers: dict) -> None:
         category_urls_list = [line.strip() for line in file.readlines()]
 
     count_urls = len(category_urls_list)
-    print(f'Всего: {count_urls} подкатегорий')
+    print(f'Всего: {count_urls} категорий')
 
     with requests.Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
