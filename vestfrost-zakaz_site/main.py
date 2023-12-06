@@ -201,6 +201,33 @@ def get_data(file_path: str, headers: dict) -> list:
 
     return result_list
 
+def save_csv(name, data):
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
+    if not os.path.exists('data/results'):
+        os.makedirs('data/results')
+
+    with open(f'data/results/{name}_{cur_date}.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(
+            ('folder: Категория',
+             'article: Артикул',
+             'name: Название',
+             'price: Цена',
+             'image: Иллюстрация',
+             'body: Описание',
+             'amount : Количество',
+             )
+        )
+
+    with open(f'data/results/{name}_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerows(
+            data
+        )
+    print('Данные сохранены в файл "data.csv"')
+
+
 def main():
 
     # with open('data/source/index.html', 'r', encoding='utf-8') as file:
@@ -208,7 +235,13 @@ def main():
 
     # get_product_urls(category_urls_list, headers)
 
-
+    directory = 'data\products'
+    for filename in os.listdir(directory)[2:]:
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            name = file_path.split('\\')[-1].split('.')[0]
+            result_list = get_data(file_path=file_path, headers=headers)
+            save_csv(name=name, data=result_list)
 
     # if not os.path.exists:
     #     os.makedirs('data/source')
