@@ -236,7 +236,7 @@ def main():
     # get_product_urls(category_urls_list, headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[2:]:
+    for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
