@@ -67,15 +67,36 @@ def get_pages(html: str) -> int:
 
     return pages
 
+
+
+
 def main():
 
     session = requests.Session()
 
-    html = get_html(url=category_urls_list[0], headers=headers, session=session)
+    # html = get_html(url=category_urls_list[0], headers=headers, session=session)
 
-    pages = get_pages(html=html)
+    # pages = get_pages(html=html)
 
-    print(pages)
+    # print(pages)
+
+    url = "https://asko-russia.ru/catalog/stiralnye_mashiny/stiralnaya-mashina-asko-w6098x-w-3.html"
+
+    html = get_html(url=url, headers=headers, session=session)
+
+    soup = BeautifulSoup(html, 'lxml')
+
+    links = soup.find_all('a', class_='product-page-card__slider-link')
+
+    for item in links:
+        url = 'https://asko-russia.ru/' + item.get('href')
+
+        if '.jpg' in url:
+            print(url)
+
+
+
+
 
 
 
