@@ -207,7 +207,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list, 1):
+        for i, product_url in enumerate(product_urls_list[11:], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -310,7 +310,7 @@ def main():
     # get_product_urls(file_path='data/categories/category_urls_list.txt', headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[2:]:
+    for filename in os.listdir(directory)[10:11]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
