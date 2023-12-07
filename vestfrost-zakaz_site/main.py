@@ -134,7 +134,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list[:1], 1):
+        for i, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -165,43 +165,40 @@ def get_data(file_path: str, headers: dict) -> list:
                 price = ''
 
             try:
-                image_data = soup.find('div', class_='slick-list draggable')
+                image_data = soup.find_all('img', class_='zoom', id='currentBigPic')
 
-                if image_data:
-                    image = ''
-                    for item in image_data:
-                        try:
-                            image_url = f"https://www.vestfrost-zakaz.ru{item.get('src')}"
-                            print(image_url)
-                            image += f'{image_url}, '
-                        except Exception as ex:
-                            print(ex)
-                            continue
+                image = ', '.join(f"https://www.vestfrost-zakaz.ru{item.get('src')}" for item in image_data)
 
-                else:
-                    image = f"https://kuppersberg.ru{soup.find('picture', class_='prodMain__gallery__img').find('img').get('src')}"
             except Exception:
                 image = ''
 
-            # try:
-            #     body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split())
-            # except Exception:
-            #     body = ''
-            #
-            # amount = 1
-            #
-            # result_list.append(
-            #     (folder,
-            #      article,
-            #      name,
-            #      price,
-            #      image,
-            #      body,
-            #      amount,
-            #      )
-            # )
-            #
-            # print(f'Обработано товаров: {i}/{count}')
+            try:
+                description = ' '.join(soup.find('div', itemprop='description').text.strip().split())
+            except Exception:
+                description = ''
+
+            try:
+                characteristics = '; '.join(item.text.strip() for item in soup.find('div', id='settings').find_all('tr', class_='tablerow'))
+            except Exception:
+                characteristics = ''
+
+            body = description + characteristics
+
+
+            amount = 1
+
+            result_list.append(
+                (folder,
+                 article,
+                 name,
+                 price,
+                 image,
+                 body,
+                 amount,
+                 )
+            )
+
+            print(f'Обработано товаров: {i}/{count}')
 
     return result_list
 
