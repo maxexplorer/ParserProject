@@ -40,6 +40,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     except Exception as ex:
         print(ex)
 
+
 # Получаем количество страниц
 def get_pages(html: str) -> int:
     """
@@ -80,8 +81,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
-            # pages = get_pages(html=html)
-            pages = 1
+            pages = get_pages(html=html)
             print(f'В категории {name_category}: {pages} страниц')
 
             for page in range(1, pages + 1):
@@ -115,6 +115,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
                 print(*product_urls_list, file=file, sep='\n')
 
+
 # Получаем данные о товарах
 def get_data(file_path: str, headers: dict) -> list:
     """
@@ -133,7 +134,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list, 1):
+        for i, product_url in enumerate(product_urls_list[:1], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -143,63 +144,67 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder = soup.find_all('li', itemprop='itemListElement')[2].text.strip()
+                folder = soup.find('div', class_='breadcrumbs', id='allspec').find_all(
+                    'a', style='text-decoration:underline;')[-1].text.strip()
             except Exception:
                 folder = ''
 
             try:
-                article = soup.find('div', class_='prodMain__artikul').find_next().text.strip()
+                article = soup.find('div', class_='review').find_next().find_next().text.strip()
             except Exception:
                 article = ''
 
             try:
-                name = soup.find('h1', class_='prodMain__name').text.strip()
+                name = soup.find('h1', class_='product-name').text.strip()
             except Exception:
                 name = ''
 
             try:
-                price = soup.find('div', class_='prodMain__price--new').next.text.strip().replace(' ', '')
+                price = soup.find('div', class_='price').find('p', class_='text-right nowrap price-new').next.text.strip().replace(' ', '')
             except Exception:
                 price = ''
 
             try:
-                image_data = soup.find_all('button', {'class': 'prodMain__pagin__btn', 'data-pr-gallery': 'dot'})
+                image_data = soup.find('div', class_='slick-list draggable')
 
                 if image_data:
                     image = ''
                     for item in image_data:
                         try:
-                            image_url = f"https://kuppersberg.ru{item.find('img').get('src').replace('250_300', '1000_1200')}"
+                            image_url = f"https://www.vestfrost-zakaz.ru{item.get('src')}"
+                            print(image_url)
                             image += f'{image_url}, '
                         except Exception as ex:
                             print(ex)
                             continue
+
                 else:
                     image = f"https://kuppersberg.ru{soup.find('picture', class_='prodMain__gallery__img').find('img').get('src')}"
             except Exception:
                 image = ''
 
-            try:
-                body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split())
-            except Exception:
-                body = ''
-
-            amount = 1
-
-            result_list.append(
-                (folder,
-                 article,
-                 name,
-                 price,
-                 image,
-                 body,
-                 amount,
-                 )
-            )
-
-            print(f'Обработано товаров: {i}/{count}')
+            # try:
+            #     body = ' '.join(soup.find('div', class_='prodTabs__item__row grid').text.strip().split())
+            # except Exception:
+            #     body = ''
+            #
+            # amount = 1
+            #
+            # result_list.append(
+            #     (folder,
+            #      article,
+            #      name,
+            #      price,
+            #      image,
+            #      body,
+            #      amount,
+            #      )
+            # )
+            #
+            # print(f'Обработано товаров: {i}/{count}')
 
     return result_list
+
 
 def save_csv(name, data):
     cur_date = datetime.now().strftime('%d-%m-%Y')
@@ -229,25 +234,15 @@ def save_csv(name, data):
 
 
 def main():
-
-    # with open('data/source/index.html', 'r', encoding='utf-8') as file:
-    #     html = file.read()
-
     # get_product_urls(category_urls_list, headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory):
+    for filename in os.listdir(directory)[:1]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
-            save_csv(name=name, data=result_list)
-
-    # if not os.path.exists:
-    #     os.makedirs('data/source')
-    #
-    # with open('data/source/index.html', 'w', encoding='utf-8') as file:
-    #     file.write(html)
+            # save_csv(name=name, data=result_list)
 
 
 if __name__ == '__main__':
