@@ -160,7 +160,9 @@ def get_data(file_path: str, headers: dict) -> list:
                 name = ''
 
             try:
-                price = soup.find('div', class_='price').find('p', class_='text-right nowrap price-new').next.text.strip().replace(' ', '')
+                price = soup.find('div', class_='price').find('p',
+                                                              class_='text-right nowrap price-new').next.text.strip().replace(
+                    ' ', '')
             except Exception:
                 price = ''
 
@@ -173,17 +175,17 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
 
             try:
-                description = ' '.join(soup.find('div', itemprop='description').text.strip().split())
+                description = ' '.join(item.text for item in soup.find('div', itemprop='description').find_all('div'))
             except Exception:
                 description = ''
 
             try:
-                characteristics = '; '.join(item.text.strip() for item in soup.find('div', id='settings').find_all('tr', class_='tablerow'))
+                characteristics = ' '.join(
+                    item.text for item in soup.find('div', id='settings').find_all('tr', class_='tablerow'))
             except Exception:
                 characteristics = ''
 
             body = description + characteristics
-
 
             amount = 1
 
@@ -199,6 +201,7 @@ def get_data(file_path: str, headers: dict) -> list:
             )
 
             print(f'Обработано товаров: {i}/{count}')
+
 
     return result_list
 
@@ -234,12 +237,12 @@ def main():
     # get_product_urls(category_urls_list, headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[:1]:
+    for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
-            # save_csv(name=name, data=result_list)
+            save_csv(name=name, data=result_list)
 
 
 if __name__ == '__main__':
