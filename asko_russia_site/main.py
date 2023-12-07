@@ -68,17 +68,8 @@ def get_pages(html: str) -> int:
     return pages
 
 
-
-
-def main():
-
+def get_image_urls(headers):
     session = requests.Session()
-
-    # html = get_html(url=category_urls_list[0], headers=headers, session=session)
-
-    # pages = get_pages(html=html)
-
-    # print(pages)
 
     url = "https://asko-russia.ru/catalog/stiralnye_mashiny/stiralnaya-mashina-asko-w6098x-w-3.html"
 
@@ -95,9 +86,14 @@ def main():
             print(url)
 
 
+def main():
+    pass
 
+    # html = get_html(url=category_urls_list[0], headers=headers, session=session)
 
+    # pages = get_pages(html=html)
 
+    # print(pages)
 
 
 if __name__ == '__main__':
