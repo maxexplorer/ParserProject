@@ -44,7 +44,6 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
 
     try:
         response = session.get(url=url, headers=headers, timeout=60)
-        print(response.status_code)
         html = response.text
         return html
     except Exception as ex:
@@ -61,7 +60,7 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
     try:
         pages = int(
-            soup.find('ul', class_='pagination pagination-lg').find_all('a', class_='page-link')[-2].find_next().text)
+            soup.find('ul', class_='pages-nav__list').find_all('li', class_='pages-nav__item')[-2].find_next().text)
     except Exception as ex:
         print(ex)
         pages = 1
@@ -69,7 +68,14 @@ def get_pages(html: str) -> int:
     return pages
 
 def main():
-    pass
+
+    session = requests.Session()
+
+    html = get_html(url=category_urls_list[0], headers=headers, session=session)
+
+    pages = get_pages(html=html)
+
+    print(pages)
 
 
 
