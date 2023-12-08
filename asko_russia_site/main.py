@@ -258,6 +258,7 @@ def main():
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
+            print(f'Обрабатывается категория {name}')
             result_list = get_data(file_path=file_path, headers=headers)
             save_csv(name=name, data=result_list)
 

@@ -4,6 +4,9 @@ import csv
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
+start_time = datetime.now()
+
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -21,7 +24,6 @@ category_urls_list = [
     "https://www.vestfrost-zakaz.ru/shop/holodilnye-shkafy-24c"
 ]
 
-start_time = datetime.now()
 
 
 # Получаем html разметку страницы
@@ -243,6 +245,11 @@ def main():
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
             save_csv(name=name, data=result_list)
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
+
 
 
 if __name__ == '__main__':
