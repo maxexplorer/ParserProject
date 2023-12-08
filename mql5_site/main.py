@@ -47,22 +47,58 @@ def main():
     with open('data/index.html', 'r', encoding='utf-8') as file:
         html = file.read()
 
-# Получаем количество страниц
-def get_pages(html: str) -> int:
+# Получаем ссылки товаров
+def get_product_urls(headers: dict) -> None:
     """
-    :param html: str
-    :return: int
+    :param headers: dict
+    :return: None
     """
 
-    soup = BeautifulSoup(html, 'lxml')
-    try:
-        pages = int(
-            soup.find('ul', class_='pages-nav__list').find_all('li', class_='pages-nav__item')[-2].find_next().text)
-    except Exception as ex:
-        print(ex)
-        pages = 1
+    with requests.Session() as session:
+        for i, category_url in enumerate(category_urls_list, 1):
+            product_urls_list = []
 
-    return pages
+            name_category = category_url.split('/')[-1]
+
+            try:
+                html = get_html(url=category_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{category_url} - {ex}")
+                continue
+            pages = get_pages(html=html)
+            print(f'В категории {name_category}: {pages} страниц')
+
+            for page in range(1, pages + 1):
+                page_product_url = f"{category_url}/?PAGEN_6={page}"
+                try:
+                    html = get_html(url=page_product_url, headers=headers, session=session)
+
+                except Exception as ex:
+                    print(f"{page_product_url} - {ex}")
+                    continue
+                soup = BeautifulSoup(html, 'lxml')
+
+                try:
+                    data = soup.find_all('div', class_='catalog-card__text-content')
+                    for item in data:
+                        try:
+                            product_url = f"https://asko-russia.ru{item.find('a').get('href')}"
+                        except Exception as ex:
+                            print(ex)
+                            continue
+                        product_urls_list.append(product_url)
+                except Exception as ex:
+                    print(ex)
+
+                print(f'Обработано: {page}/{pages} страниц')
+
+            print(f'Обработано: {i}/{count_urls} категорий')
+
+            if not os.path.exists('data/products'):
+                os.makedirs(f'data/products')
+
+            with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
+                print(*product_urls_list, file=file, sep='\n')
 
 if __name__ == '__main__':
     main()
