@@ -6,6 +6,8 @@ import csv
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+start_time = datetime.now()
+
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -29,8 +31,6 @@ category_urls_list = [
     "https://asko-russia.ru/catalog/complects-asko",
     "https://asko-russia.ru/catalog/aksessuary"
 ]
-
-start_time = datetime.now()
 
 
 # Получаем html разметку страницы
@@ -220,7 +220,6 @@ def get_data(file_path: str, headers: dict) -> list:
 
             print(f'Обработано товаров: {i}/{count}')
 
-
     return result_list
 
 
@@ -261,6 +260,10 @@ def main():
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
             save_csv(name=name, data=result_list)
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':

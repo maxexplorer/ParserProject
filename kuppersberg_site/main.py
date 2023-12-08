@@ -4,13 +4,13 @@ import csv
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+start_time = datetime.now()
+
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                   ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
 }
-
-start_time = datetime.now()
 
 url = "https://kuppersberg.ru/categories/"
 
@@ -30,6 +30,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         return html
     except Exception as ex:
         print(ex)
+
 
 # Получаем количество страниц
 def get_pages(html: str) -> int:
@@ -317,10 +318,10 @@ def main():
             result_list = get_data(file_path=file_path, headers=headers)
             save_csv(name=name, data=result_list)
 
-
-if __name__ == '__main__':
-    main()
-
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
+
+
+if __name__ == '__main__':
+    main()
