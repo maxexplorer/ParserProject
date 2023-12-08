@@ -71,6 +71,7 @@ def get_pages(html: str) -> int:
 
     return pages
 
+
 # Получаем ссылки товаров
 def get_product_urls(category_urls_list: list, headers: dict) -> None:
     """
@@ -128,6 +129,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
                 print(*product_urls_list, file=file, sep='\n')
 
+
 # Получаем данные о товарах
 def get_data(file_path: str, headers: dict) -> list:
     """
@@ -146,7 +148,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list, 1):
+        for i, product_url in enumerate(product_urls_list[:1], 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -156,44 +158,48 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder = soup.find('div', class_='breadcrumbs', id='allspec').find_all(
-                    'a', style='text-decoration:underline;')[-1].text.strip()
+                folder = soup.find('ul', class_='breadcrumbs').find_all(
+                    'li', class_='breadcrumbs__item')[-2].text.strip()
             except Exception:
                 folder = ''
 
             try:
-                article = soup.find('div', class_='review').find_next().find_next().text.strip()
+                article = soup.find('div', class_='card-info__product-code js-card-info-product-code'
+                                    ).find_next().find_next().text.strip()
             except Exception:
                 article = ''
 
             try:
-                name = soup.find('h1', class_='product-name').text.strip()
+                name = soup.find('h1', class_='page-title').text.strip()
             except Exception:
                 name = ''
 
             try:
-                price = soup.find('div', class_='price').find('p',
-                                                              class_='text-right nowrap price-new').next.text.strip().replace(
-                    ' ', '')
+                price = soup.find('span', class_='big-price__price').next.text.strip().replace(' ', '')
             except Exception:
                 price = ''
 
             try:
-                image_data = soup.find_all('img', class_='zoom', id='currentBigPic')
+                image_data = soup.find_all('a', class_='product-page-card__slider-link')
 
-                image = ', '.join(f"https://www.vestfrost-zakaz.ru{item.get('src')}" for item in image_data)
+                image = ''
+                for item in image_data:
+                    url = 'https://asko-russia.ru/' + item.get('href')
+                    if '.jpg' in url:
+                        image += f'{url}, '
 
             except Exception:
                 image = ''
 
             try:
-                description = ' '.join(item.text for item in soup.find('div', itemprop='description').find_all('div'))
+                description = ' '.join(item.text.strip() for item in
+                                       soup.find('div', class_='product-description _vr-m-s js-product-description'))
             except Exception:
                 description = ''
 
             try:
                 characteristics = ' '.join(
-                    item.text for item in soup.find('div', id='settings').find_all('tr', class_='tablerow'))
+                    item.text.strip() for item in soup.find('section', class_='characteristics _vr-m-s'))
             except Exception:
                 characteristics = ''
 
@@ -217,6 +223,7 @@ def get_data(file_path: str, headers: dict) -> list:
 
     return result_list
 
+
 def get_image_urls(headers):
     session = requests.Session()
 
@@ -236,14 +243,14 @@ def get_image_urls(headers):
 
 
 def main():
-    get_product_urls(category_urls_list, headers)
+    # get_product_urls(category_urls_list, headers)
 
-    # directory = 'data\products'
-    # for filename in os.listdir(directory):
-    #     file_path = os.path.join(directory, filename)
-    #     if os.path.isfile(file_path):
-    #         name = file_path.split('\\')[-1].split('.')[0]
-    #         result_list = get_data(file_path=file_path, headers=headers)
+    directory = 'data\products'
+    for filename in os.listdir(directory)[:1]:
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            name = file_path.split('\\')[-1].split('.')[0]
+            result_list = get_data(file_path=file_path, headers=headers)
     #         save_csv(name=name, data=result_list)
 
 
