@@ -185,7 +185,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
                 for item in image_data:
                     url = 'https://asko-russia.ru/' + item.get('href')
-                    if '.jpg' in url:
+                    if '.jpg' in url or '.png' in url:
                         image += f'{url}, '
 
             except Exception:
