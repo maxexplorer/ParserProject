@@ -148,7 +148,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list[:1], 1):
+        for i, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -224,34 +224,43 @@ def get_data(file_path: str, headers: dict) -> list:
     return result_list
 
 
-def get_image_urls(headers):
-    session = requests.Session()
+def save_csv(name, data):
+    cur_date = datetime.now().strftime('%d-%m-%Y')
 
-    url = "https://asko-russia.ru/catalog/stiralnye_mashiny/stiralnaya-mashina-asko-w6098x-w-3.html"
+    if not os.path.exists('data/results'):
+        os.makedirs('data/results')
 
-    html = get_html(url=url, headers=headers, session=session)
+    with open(f'data/results/{name}_{cur_date}.csv', 'w', encoding='utf-8') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(
+            ('folder: Категория',
+             'article: Артикул',
+             'name: Название',
+             'price: Цена',
+             'image: Иллюстрация',
+             'body: Описание',
+             'amount : Количество',
+             )
+        )
 
-    soup = BeautifulSoup(html, 'lxml')
-
-    links = soup.find_all('a', class_='product-page-card__slider-link')
-
-    for item in links:
-        url = 'https://asko-russia.ru/' + item.get('href')
-
-        if '.jpg' in url:
-            print(url)
+    with open(f'data/results/{name}_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerows(
+            data
+        )
+    print('Данные сохранены в файл "data.csv"')
 
 
 def main():
     # get_product_urls(category_urls_list, headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[:1]:
+    for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
             result_list = get_data(file_path=file_path, headers=headers)
-    #         save_csv(name=name, data=result_list)
+            save_csv(name=name, data=result_list)
 
 
 if __name__ == '__main__':
