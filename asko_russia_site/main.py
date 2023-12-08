@@ -13,21 +13,21 @@ headers = {
 }
 
 category_urls_list = [
-    "https://asko-russia.ru/catalog/stiralnye_mashiny/",
-    "https://asko-russia.ru/catalog/sushilnye_mashiny/",
-    "https://asko-russia.ru/catalog/sushilnye_shkafy/",
-    "https://asko-russia.ru/catalog/posudomoechnye_mashiny/",
-    "https://asko-russia.ru/catalog/dukhovye-shkafy/",
-    "https://asko-russia.ru/catalog/kompaktnye-dukhovye-shkafy/",
-    "https://asko-russia.ru/catalog/varochnye-paneli/",
-    "https://asko-russia.ru/catalog/vytyazhki/",
-    "https://asko-russia.ru/catalog/kholodilniki/",
-    "https://asko-russia.ru/catalog/kofemashiny/",
-    "https://asko-russia.ru/catalog/mikrovolnovye_pechi/",
-    "https://asko-russia.ru/catalog/podogrevateli_posudy/",
-    "https://asko-russia.ru/catalog/vakuumatory/",
-    "https://asko-russia.ru/catalog/complects-asko/",
-    "https://asko-russia.ru/catalog/aksessuary/"
+    "https://asko-russia.ru/catalog/stiralnye_mashiny",
+    "https://asko-russia.ru/catalog/sushilnye_mashiny",
+    "https://asko-russia.ru/catalog/sushilnye_shkafy",
+    "https://asko-russia.ru/catalog/posudomoechnye_mashiny",
+    "https://asko-russia.ru/catalog/dukhovye-shkafy",
+    "https://asko-russia.ru/catalog/kompaktnye-dukhovye-shkafy",
+    "https://asko-russia.ru/catalog/varochnye-paneli",
+    "https://asko-russia.ru/catalog/vytyazhki",
+    "https://asko-russia.ru/catalog/kholodilniki",
+    "https://asko-russia.ru/catalog/kofemashiny",
+    "https://asko-russia.ru/catalog/mikrovolnovye_pechi",
+    "https://asko-russia.ru/catalog/podogrevateli_posudy",
+    "https://asko-russia.ru/catalog/vakuumatory",
+    "https://asko-russia.ru/catalog/complects-asko",
+    "https://asko-russia.ru/catalog/aksessuary"
 ]
 
 start_time = datetime.now()
@@ -83,7 +83,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
     print(f'Всего: {count_urls} категорий')
 
     with requests.Session() as session:
-        for i, category_url in enumerate(category_urls_list[7:], 1):
+        for i, category_url in enumerate(category_urls_list, 1):
             product_urls_list = []
 
             name_category = category_url.split('/')[-1]
@@ -97,19 +97,20 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             print(f'В категории {name_category}: {pages} страниц')
 
             for page in range(1, pages + 1):
-                product_url = f"{category_url}_{page}"
+                page_product_url = f"{category_url}/?PAGEN_6={page}"
                 try:
-                    html = get_html(url=product_url, headers=headers, session=session)
+                    html = get_html(url=page_product_url, headers=headers, session=session)
+
                 except Exception as ex:
-                    print(f"{product_url} - {ex}")
+                    print(f"{page_product_url} - {ex}")
                     continue
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    data = soup.find_all('div', class_='product_name')
+                    data = soup.find_all('div', class_='catalog-card__text-content')
                     for item in data:
                         try:
-                            product_url = f"https://www.vestfrost-zakaz.ru{item.find('a').get('href')}"
+                            product_url = f"https://asko-russia.ru{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -126,6 +127,95 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
 
             with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
                 print(*product_urls_list, file=file, sep='\n')
+
+# Получаем данные о товарах
+def get_data(file_path: str, headers: dict) -> list:
+    """
+    :param file_path: str
+    :param headers: dict
+    :return: list
+    """
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+    count = len(product_urls_list)
+
+    print(f'Всего {count} товаров')
+
+    result_list = []
+
+    with requests.Session() as session:
+        for i, product_url in enumerate(product_urls_list, 1):
+            try:
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                folder = soup.find('div', class_='breadcrumbs', id='allspec').find_all(
+                    'a', style='text-decoration:underline;')[-1].text.strip()
+            except Exception:
+                folder = ''
+
+            try:
+                article = soup.find('div', class_='review').find_next().find_next().text.strip()
+            except Exception:
+                article = ''
+
+            try:
+                name = soup.find('h1', class_='product-name').text.strip()
+            except Exception:
+                name = ''
+
+            try:
+                price = soup.find('div', class_='price').find('p',
+                                                              class_='text-right nowrap price-new').next.text.strip().replace(
+                    ' ', '')
+            except Exception:
+                price = ''
+
+            try:
+                image_data = soup.find_all('img', class_='zoom', id='currentBigPic')
+
+                image = ', '.join(f"https://www.vestfrost-zakaz.ru{item.get('src')}" for item in image_data)
+
+            except Exception:
+                image = ''
+
+            try:
+                description = ' '.join(item.text for item in soup.find('div', itemprop='description').find_all('div'))
+            except Exception:
+                description = ''
+
+            try:
+                characteristics = ' '.join(
+                    item.text for item in soup.find('div', id='settings').find_all('tr', class_='tablerow'))
+            except Exception:
+                characteristics = ''
+
+            body = description + characteristics
+
+            amount = 1
+
+            result_list.append(
+                (folder,
+                 article,
+                 name,
+                 price,
+                 image,
+                 body,
+                 amount,
+                 )
+            )
+
+            print(f'Обработано товаров: {i}/{count}')
+
+
+    return result_list
 
 def get_image_urls(headers):
     session = requests.Session()
@@ -146,13 +236,15 @@ def get_image_urls(headers):
 
 
 def main():
-    session = requests.Session()
+    get_product_urls(category_urls_list, headers)
 
-    html = get_html(url=category_urls_list[0], headers=headers, session=session)
-
-    # pages = get_pages(html=html)
-
-    # print(pages)
+    # directory = 'data\products'
+    # for filename in os.listdir(directory):
+    #     file_path = os.path.join(directory, filename)
+    #     if os.path.isfile(file_path):
+    #         name = file_path.split('\\')[-1].split('.')[0]
+    #         result_list = get_data(file_path=file_path, headers=headers)
+    #         save_csv(name=name, data=result_list)
 
 
 if __name__ == '__main__':
