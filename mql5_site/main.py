@@ -165,10 +165,6 @@ def get_data(file_path: str, headers: dict) -> list:
     soup = BeautifulSoup(html, 'lxml')
 
 
-    try:
-
-
-
     # print(f'Обработано карточек: {i}/{count}')
 
 
