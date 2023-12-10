@@ -19,51 +19,7 @@ headers = {
 
 
 def auth_requests():
-
-    cookies = {
-        'lang': 'ru',
-        '_fz_uniq': '5092989988158047822',
-        'sid': 'CfDJ8FnDEf3cAqtAi8dm607EzngSc7SjPnDrrFrEmJNzs8nlUsN54QCQZqh2SA3iwkgKhx%2BKM8qgNs0dnrNrJaP%2BmH%2BWnrocuUKmNIyFu8rz5G%2B3w2xL9YQBymqyNqMVX5NMUhAre5WNJDyS%2Bn%2Bl3lZiF4oQONgiCxGV4Z5ADheJ03TH',
-        '_fz_fvdt': '1701614673',
-        'utm_source': 'www.mql5.com',
-        'utm_campaign': '509.ru.password.recovery',
-        '_fz_ssn': '1702215185005830593',
-        '_media_uuid': '2218201859',
-    }
-
-    headers = {
-        'authority': 'www.mql5.com',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'cache-control': 'max-age=0',
-        'content-type': 'application/x-www-form-urlencoded',
-        # 'cookie': 'lang=ru; _fz_uniq=5092989988158047822; sid=CfDJ8FnDEf3cAqtAi8dm607EzngSc7SjPnDrrFrEmJNzs8nlUsN54QCQZqh2SA3iwkgKhx%2BKM8qgNs0dnrNrJaP%2BmH%2BWnrocuUKmNIyFu8rz5G%2B3w2xL9YQBymqyNqMVX5NMUhAre5WNJDyS%2Bn%2Bl3lZiF4oQONgiCxGV4Z5ADheJ03TH; _fz_fvdt=1701614673; utm_source=www.mql5.com; utm_campaign=509.ru.password.recovery; _fz_ssn=1702215185005830593; _media_uuid=2218201859',
-        'origin': 'https://www.mql5.com',
-        'referer': 'https://www.mql5.com/ru/auth_login',
-        'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    }
-
-    data = {
-        'RedirectAfterLoginUrl': 'https://www.mql5.com/ru/signals',
-        'RegistrationUrl': '',
-        'ShowOpenId': 'True',
-        'ViewType': '0',
-        'Login': 'Maxexplorer',
-        'Password': '',
-        'signature': '1fd19bf6ad495198af6ac73c5e5f5567d6fe18ebdb52646e39aeaa2e398e57b5',
-    }
-
-    response = requests.post('https://www.mql5.com/ru/auth_login', cookies=cookies, headers=headers, data=data)
-
-    print(response.text)
+    pass
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str:
