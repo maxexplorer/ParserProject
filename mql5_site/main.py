@@ -8,6 +8,7 @@ from fake_useragent import UserAgent
 from random import randint
 from datetime import datetime
 
+
 start_time = datetime.now()
 
 url = "https://www.mql5.com/ru/signals"
@@ -77,7 +78,14 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
     with requests.Session() as session:
 
         for i in range(start_value, finish_value + 1):
-            time.sleep(1)
+            if i % 10 == 0:
+                useragent = UserAgent()
+
+                headers = {
+                    'Accept': '*/*',
+                    'User-Agent': useragent.random
+                }
+
             try:
                 url = f"https://www.mql5.com/ru/signals/{i}"
                 html = get_html(url=url, headers=headers, session=session)
@@ -88,7 +96,7 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                price = ' '.join(soup.find('div', class_='s-btns-area').text.strip())
+                price = ' '.join(soup.find('a', class_='button button_multiline button_green').text.split())
             except Exception:
                 price = ''
 
@@ -114,10 +122,10 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
 
             access = price if price else free
 
-            if not os.path.exists('data'):
-                os.makedirs('data')
+            if not os.path.exists('data/results'):
+                os.makedirs('data/results')
 
-            with open(f'data/data_{cur_date}.csv', 'a', encoding='cp1251', newline='') as file:
+            with open(f'data/results/data_{cur_date}.csv', 'a', encoding='cp1251', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
                 writer.writerow(
                     (
@@ -130,6 +138,8 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
 
             print(f'Обработано: {count}/{total} страниц')
             count += 1
+
+            time.sleep(randint(3, 5))
 
 
 # Получаем данные о товарах
@@ -208,7 +218,7 @@ def main():
     # meta_trader = 'mt5'
 
     start_value = 2_059_495
-    finish_value = 2_060_000
+    finish_value = 2_059_595
 
     get_card_urls(headers=headers, start_value=start_value, finish_value=finish_value)
 
