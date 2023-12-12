@@ -8,7 +8,6 @@ from fake_useragent import UserAgent
 from random import randint
 from datetime import datetime
 
-
 start_time = datetime.now()
 
 url = "https://www.mql5.com/ru/signals"
@@ -75,10 +74,16 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
     total = finish_value - start_value
     count = 1
 
+    print(f'Всего: {total} страниц')
+
     with requests.Session() as session:
 
         for i in range(start_value, finish_value + 1):
-            if i % 10 == 0:
+
+            count += 1
+
+            if count % 10 == 0:
+                print('Изменение User-Agent')
                 useragent = UserAgent()
 
                 headers = {
@@ -96,16 +101,13 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                price = ' '.join(soup.find('a', class_='button button_multiline button_green').text.split())
+                price = ' '.join(soup.find('div', class_='s-btns-area').text.split())
+                print(price)
             except Exception:
                 price = ''
 
-            try:
-                free = soup.find('span', title='Бесплатно').text.strip()
-            except Exception:
-                free = ''
-
-            if not any((price, free)):
+            if not price:
+                print(f'Обработано: {count}/{total} страница. Данных нет.')
                 continue
 
             try:
@@ -118,28 +120,26 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
                 author = soup.find('div', class_='s-plain-card__author').text.strip()
             except Exception as ex:
                 print(f'Author: {i} - {ex}')
-                title = ''
+                author = ''
 
-            access = price if price else free
 
             if not os.path.exists('data/results'):
                 os.makedirs('data/results')
 
-            with open(f'data/results/data_{cur_date}.csv', 'a', encoding='cp1251', newline='') as file:
+            with open(f'data/results/data_{cur_date}_2.csv', 'a', encoding='cp1251', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
                 writer.writerow(
                     (
                         url,
                         title,
                         author,
-                        access
+                        price
                     )
                 )
 
-            print(f'Обработано: {count}/{total} страниц')
-            count += 1
+            print(f'Обработано: {count}/{total} страница. Данные получены. URL: {url}')
 
-            time.sleep(randint(3, 5))
+            time.sleep(randint(2, 3))
 
 
 # Получаем данные о товарах
@@ -218,7 +218,7 @@ def main():
     # meta_trader = 'mt5'
 
     start_value = 2_059_495
-    finish_value = 2_059_595
+    finish_value = 2_059_545
 
     get_card_urls(headers=headers, start_value=start_value, finish_value=finish_value)
 
