@@ -75,15 +75,12 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
     count = 1
 
     with requests.Session() as session:
-        card_urls_list = []
 
-        # for id in range(start_value, finish_value + 1):
-        for i in range(1, 2):
+        for i in range(start_value, finish_value + 1):
+            time.sleep(1)
             try:
                 url = f"https://www.mql5.com/ru/signals/{i}"
-                # html = get_html(url=url, headers=headers, session=session)
-                html = get_html(url=f"https://www.mql5.com/ru/signals/843451?source=Site+Signals+MT5+Tile",
-                                headers=headers, session=session)
+                html = get_html(url=url, headers=headers, session=session)
             except Exception as ex:
                 print(ex)
                 continue
@@ -91,17 +88,17 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
+                price = ' '.join(soup.find('div', class_='s-btns-area').text.strip())
+            except Exception:
+                price = ''
+
+            try:
                 free = soup.find('span', title='Бесплатно').text.strip()
             except Exception:
                 free = ''
 
-            try:
-                price = soup.find('span', title='Бесплатно').text.strip()
-            except Exception:
-                price = ''
-
-
-
+            if not any((price, free)):
+                continue
 
             try:
                 title = soup.find('div', class_='s-plain-card__title').text.strip()
@@ -115,6 +112,8 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
                 print(f'Author: {i} - {ex}')
                 title = ''
 
+            access = price if price else free
+
             if not os.path.exists('data'):
                 os.makedirs('data')
 
@@ -125,19 +124,12 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
                         url,
                         title,
                         author,
-                        price
+                        access
                     )
                 )
 
-            count += 1
-
             print(f'Обработано: {count}/{total} страниц')
-
-        # if not os.path.exists('data/cards'):
-        #     os.makedirs(f'data/cards')
-        #
-        # with open(f'data/cards/card_urls_list_{meta_trader}.txt', 'w', encoding='utf-8') as file:
-        #     print(*card_urls_list, file=file, sep='\n')
+            count += 1
 
 
 # Получаем данные о товарах
@@ -215,8 +207,8 @@ def save_csv(data):
 def main():
     # meta_trader = 'mt5'
 
-    start_value = 40000
-    finish_value = 50000
+    start_value = 2_059_495
+    finish_value = 2_060_000
 
     get_card_urls(headers=headers, start_value=start_value, finish_value=finish_value)
 
