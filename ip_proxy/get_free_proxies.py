@@ -1,6 +1,9 @@
 import requests
-import random
+import os
 from bs4 import BeautifulSoup
+from datetime import datetime
+
+start_time = datetime.now()
 
 
 def get_free_proxies():
@@ -15,28 +18,56 @@ def get_free_proxies():
     with requests.Session() as session:
         response = session.get(url=url, headers=headers, timeout=60)
 
+        if response.status_code != 200:
+            print(f'status_code: {response.status_code}')
+
     soup = BeautifulSoup(response.text, 'lxml')
 
     proxies = []
 
     try:
-        items_data = soup.find('table', class_='table table-striped table-bordered').find_all('tr')
+        items = soup.find('table', class_='table table-striped table-bordered').find('tbody').find_all('tr')
     except Exception as ex:
         print(f'items_data: {ex}')
-        items_data = []
+        items = []
 
-    for item in items_data:
+    for item in items:
+        tds = item.find_all("td")
         try:
+            if tds[-2].text.strip() == 'yes':
+                continue
             ip = tds[0].text.strip()
             port = tds[1].text.strip()
             host = f"{ip}:{port}"
             proxies.append(host)
-        except IndexError:
+        except Exception as ex:
+            print(ex)
             continue
+
     return proxies
 
-free_proxies = get_free_proxies()
 
-print(f'Обнаружено бесплатных прокси - {len(free_proxies)}:')
-for i in range(len(free_proxies)):
-    print(f"{i+1}) {free_proxies[i]}")
+def main():
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
+    free_proxies = get_free_proxies()
+
+    print(f'Обнаружено бесплатных прокси - {len(free_proxies)}:')
+
+    if not os.path.exists('data/results'):
+        os.makedirs(f'data/results')
+
+    with open(f'data/results/{cur_date}.txt', 'w', encoding='utf-8') as file:
+        print(*free_proxies, file=file, sep='\n')
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
+
+
+
+
+
+if __name__ == '__main__':
+    main()
+
