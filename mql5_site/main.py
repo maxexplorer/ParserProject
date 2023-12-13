@@ -139,7 +139,7 @@ def get_card_urls(headers: dict, start_value: int, finish_value: int) -> None:
 
             print(f'Обработано: {count}/{total} страница. Данные получены. URL: {url}')
 
-            time.sleep(randint(2, 3))
+            time.sleep(randint(1, 2))
 
 
 # Получаем данные о товарах
