@@ -57,7 +57,7 @@ def main():
     if not os.path.exists('data/results'):
         os.makedirs(f'data/results')
 
-    with open(f'data/results/{cur_date}.txt', 'w', encoding='utf-8') as file:
+    with open(f'data/results/proxies_{cur_date}.txt', 'w', encoding='utf-8') as file:
         print(*free_proxies, file=file, sep='\n')
 
     execution_time = datetime.now() - start_time

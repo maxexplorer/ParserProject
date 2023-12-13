@@ -10,29 +10,21 @@ headers = {
 }
 
 proxies = {
-    'http': 'http://66.225.254.16:80'
+    'http': 'http://34.77.56.122:8080'
 }
 
 
 def get_html():
-    response = requests.get(url="https://sitespy.ru/my-ip", headers=headers, proxies=proxies, timeout=60)
+    response = requests.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
+
+    print(response.headers)
+    print(response.json())
 
     return response.text
 
 
-def get_data(html):
-    soup = BeautifulSoup(html, 'lxml')
-
-    ip = soup.find('span', class_='ip').text.strip()
-    ua = soup.find('span', class_='ip').find_next_sibling('span').text.strip()
-
-    print(ip)
-    print(ua)
-
-
 def main():
     html = get_html()
-    get_data(html=html)
 
 
 if __name__ == '__main__':
