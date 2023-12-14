@@ -1,5 +1,6 @@
 import requests
 import os
+import random
 from bs4 import BeautifulSoup
 from datetime import datetime
 
@@ -46,19 +47,40 @@ def get_free_proxies():
 
     return proxies
 
+def get_session(proxies):
+    # создать HTTP‑сеанс
+    session = requests.Session()
+    # выбираем один случайный прокси
+    proxy = random.choice(proxies)
+    session.proxies = {"http": proxy, "https": proxy}
+    return session
+
+
+
 
 def main():
     cur_date = datetime.now().strftime('%d-%m-%Y')
 
-    free_proxies = get_free_proxies()
+    # free_proxies = get_free_proxies()
+    #
+    # print(f'Обнаружено бесплатных прокси - {len(free_proxies)}:')
+    #
+    # if not os.path.exists('data/results'):
+    #     os.makedirs(f'data/results')
+    #
+    # with open(f'data/results/proxies_{cur_date}.txt', 'w', encoding='utf-8') as file:
+    #     print(*free_proxies, file=file, sep='\n')
 
-    print(f'Обнаружено бесплатных прокси - {len(free_proxies)}:')
 
-    if not os.path.exists('data/results'):
-        os.makedirs(f'data/results')
 
-    with open(f'data/results/proxies_{cur_date}.txt', 'w', encoding='utf-8') as file:
-        print(*free_proxies, file=file, sep='\n')
+    # for i in range(len(free_proxies)):
+    #     s = get_session(free_proxies)
+    #     try:
+    #         response = s.get("http://icanhazip.com", timeout=1.5)
+    #         print("Страница запроса с IP:", response.text.strip())
+    #     except Exception as e:
+    #         print(e)
+    #         continue
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
