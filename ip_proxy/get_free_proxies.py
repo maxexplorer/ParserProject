@@ -6,6 +6,8 @@ from datetime import datetime
 
 start_time = datetime.now()
 
+exception_list = []
+
 
 def get_free_proxies():
     headers = {
@@ -47,6 +49,7 @@ def get_free_proxies():
 
     return proxies
 
+
 def get_session(proxies):
     # создать HTTP‑сеанс
     session = requests.Session()
@@ -54,8 +57,6 @@ def get_session(proxies):
     proxy = random.choice(proxies)
     session.proxies = {"http": proxy, "https": proxy}
     return session
-
-
 
 
 def main():
@@ -71,25 +72,25 @@ def main():
     # with open(f'data/results/proxies_{cur_date}.txt', 'w', encoding='utf-8') as file:
     #     print(*free_proxies, file=file, sep='\n')
 
+    with open('data/results/proxies_14-12-2023.txt', 'r', encoding='utf-8') as file:
+        proxies = [line.strip() for line in file.readlines()]
 
+    for i in range(len(proxies)):
+        s = get_session(proxies)
+        try:
+            response = s.get("http://icanhazip.com", timeout=1.5)
+            print("Страница запроса с IP:", response.text.strip())
+        except Exception as e:
+            exception_list.append(e)
+            continue
+        print(f'Обработано: {i + 1}/{len(proxies)} прокси')
 
-    # for i in range(len(free_proxies)):
-    #     s = get_session(free_proxies)
-    #     try:
-    #         response = s.get("http://icanhazip.com", timeout=1.5)
-    #         print("Страница запроса с IP:", response.text.strip())
-    #     except Exception as e:
-    #         print(e)
-    #         continue
+    print(f'Количество не рабочих прокси: {len(exception_list)}')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
 
 
-
-
-
 if __name__ == '__main__':
     main()
-
