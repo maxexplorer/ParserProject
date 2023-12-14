@@ -14,11 +14,10 @@ proxies = {
 }
 
 
-def get_html():
+def get_ip():
     response = requests.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
-    print(response.headers)
-    print(response.json())
+    print(response.json()['ip'])
 
     return response.text
 
