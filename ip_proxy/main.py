@@ -10,13 +10,17 @@ headers = {
 }
 
 proxies = {
-    'http': 'http://141.145.214.176:80'
+    'http': 'http://141.145.214.176:80',
+
 }
 
 
 def get_ip():
     # response = requests.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
-    response = requests.get(url="https://2ip.ru/", headers=headers, proxies=proxies)
+    session = requests.Session()
+    session.proxies.update(proxies)
+    session.headers.update(headers)
+    response = session.get(url="https://2ip.ru/")
 
     soup = BeautifulSoup(response.text, 'lxml')
 
