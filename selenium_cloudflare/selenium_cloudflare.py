@@ -1,16 +1,17 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 import time
 
 # options = webdriver.ChromeOptions()
 # is equivalent to
 options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")
-# options.add_experimental_option("excludeSwitches", ["enable-automation"])
-# options.add_experimental_option('useAutomationExtension', False)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option('useAutomationExtension', False)
 
-service = Service(executable_path="/chromedriver/chromedriver.exe")
+service = Service()
 driver = webdriver.Chrome(service=service, options=options)
 
 driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
@@ -23,8 +24,16 @@ driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
 
 try:
     driver.maximize_window()
-    driver.get(url="https://www.ozon.ru/")
-    time.sleep(10)
+    driver.get(url="https://tokensniffer.com/")
+
+    # element = driver.find_element(By.CSS_SELECTOR, 'label.ctp-checkbox-label')
+    time.sleep(5)
+    print(driver.page_source)
+    # element = driver.find_element(By.CSS_SELECTOR, 'input[type=checkbox]')
+    # time.sleep(50)
+    # print(element)
+
+
 except Exception as ex:
     print(ex)
 finally:
