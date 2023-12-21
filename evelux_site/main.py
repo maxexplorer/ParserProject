@@ -54,7 +54,7 @@ def get_category_urls(url: str, headers: dict) -> list:
             data = soup.find('div', class_='catalog-main__menu').find_all('a', class_='catalog-main__menu-item')
 
             for item in data:
-                category_url = f"https://evelux.ru/catalog{item.find('a').get('href')}"
+                category_url = f"https://evelux.ru/catalog{item.get('href')}"
 
                 category_urls_list.append(category_url)
 

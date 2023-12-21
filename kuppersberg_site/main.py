@@ -79,7 +79,7 @@ def get_category_urls(url: str, headers: dict) -> list:
             os.makedirs('data/categories')
 
         with open(f'data/categories/category_urls_list.txt', 'w', encoding='utf-8') as file:
-            print(*data, file=file, sep='\n')
+            print(*category_urls_list, file=file, sep='\n')
 
 
 # Получаем ссылки всех подкатегорий товаров
