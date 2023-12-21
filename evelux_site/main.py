@@ -35,6 +35,38 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     except Exception as ex:
         print(ex)
 
+# Получаем ссылки всех категорий товаров
+def get_category_urls(url: str, headers: dict) -> list:
+    """
+    :param url: str
+    :param headers: dict
+    :return: list
+    """
+
+    category_urls_list = []
+
+    with requests.Session() as session:
+        html = get_html(url=url, headers=headers, session=session)
+
+        soup = BeautifulSoup(html, 'lxml')
+
+        try:
+            data = soup.find('div', class_='catalog-main__menu').find_all('a', class_='catalog-main__menu-item')
+
+            for item in data:
+                category_url = f"https://evelux.ru/catalog{item.find('a').get('href')}"
+
+                category_urls_list.append(category_url)
+
+        except Exception as ex:
+            print(ex)
+
+        if not os.path.exists('data/categories'):
+            os.makedirs('data/categories')
+
+        with open(f'data/categories/category_urls_list.txt', 'w', encoding='utf-8') as file:
+            print(*data, file=file, sep='\n')
+
 
 def save_csv(name, data):
     cur_date = datetime.now().strftime('%d-%m-%Y')
@@ -65,8 +97,7 @@ def save_csv(name, data):
 
 
 def main():
-    session = requests.Session()
-    html = get_html(url=url, headers=headers, session=session)
+    get_category_urls(url=url, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
