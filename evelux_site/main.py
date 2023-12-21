@@ -6,6 +6,10 @@ from datetime import datetime
 
 start_time = datetime.now()
 
+
+url = "https://evelux.ru/catalog/"
+
+
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -34,7 +38,8 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
 
 
 def main():
-
+    session = requests.Session()
+    html = get_html(url=url, headers=headers, session=session)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
