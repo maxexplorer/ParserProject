@@ -141,33 +141,37 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder = soup.find('ul', class_='breadcrumbs').find_all(
-                    'li', class_='breadcrumbs__item')[-2].text.strip()
+                folder_items = soup.find('ul', class_='container breadcrumbs').find_all('li',
+                                                                                        class_='breadcrumbs__item')
+                folder = '/'.join(i.text.strip() for i in folder_items[1:3])
             except Exception:
                 folder = ''
 
             try:
-                article = soup.find('div', class_='card-info__product-code js-card-info-product-code'
-                                    ).find_next().find_next().text.strip()
+                lst = folder_items[-1].text.split()
+                res = lst.copy()
+                for c in lst:
+                    if c.isupper():
+                        position = lst.index(c)
+                        res.insert(position, 'Evelux')
+                        name = ' '.join(res)
+                        article = ''.join(lst[position:])
+                        break
             except Exception:
+                name = ''
                 article = ''
 
             try:
-                name = soup.find('h1', class_='page-title').text.strip()
-            except Exception:
-                name = ''
-
-            try:
-                price = soup.find('span', class_='big-price__price').next.text.strip().replace(' ', '')
+                price = soup.find('div', class_='product__order-price').next.text.strip().replace(' ', '')
             except Exception:
                 price = ''
 
             try:
-                image_data = soup.find_all('a', class_='product-page-card__slider-link')
+                image_data = soup.find_all('a', class_='web-gallery__fancybox-thumb js-web-gallery__fancybox-thumb')
 
                 image = ''
                 for item in image_data:
-                    url = 'https://asko-russia.ru/' + item.get('href')
+                    url = 'https://evelux.ru' + item.get('href')
                     if '.jpg' in url or '.png' in url or '.webp' in url:
                         image += f'{url}, '
 
@@ -175,27 +179,22 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
 
             try:
-                description = ' '.join(item.text.strip() for item in
-                                       soup.find('div', class_='product-description _vr-m-s js-product-description'))
+                body = ' '.join(soup.find('div', class_='product__descr').find('div',
+                                                                                      {'class': 'product__content',
+                                                                                       'data-content': '2'}).text.strip().split())
             except Exception:
-                description = ''
+                body = ''
 
-            try:
-                characteristics = ' '.join(
-                    item.text.strip() for item in soup.find('section', class_='characteristics _vr-m-s'))
-            except Exception:
-                characteristics = ''
 
-            body = description + characteristics
 
-            vendor = ''
+            vendor = 'Evelux'
 
             amount = 1
 
             result_list.append(
                 (
                     vendor,
-                    folder,
+                    f"Evelux/{folder}",
                     article,
                     name,
                     price,
