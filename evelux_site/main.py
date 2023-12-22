@@ -28,7 +28,6 @@ category_urls_list = [
     "https://evelux.ru/catalog/vstraivaemaya/mikrovolnovye-pechi/",
     "https://evelux.ru/catalog/vstraivaemaya/stiralnye-mashiny/",
     "https://evelux.ru/catalog/vstraivaemaya/kholodilniki/",
-    "https://evelux.ru/catalog/komplekty/",
     "https://evelux.ru/catalog/otdelnostoyashaja/stiralnye-mashiny-solo/",
     "https://evelux.ru/catalog/otdelnostoyashaja/sushilnye-mashiny/",
     "https://evelux.ru/catalog/otdelnostoyashaja/kholodilniki-solo/",
@@ -65,14 +64,14 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
     :return: None
     """
 
-    count_urls = len(category_urls_list)
-    print(f'Всего: {count_urls} категорий')
+    # count_urls = len(category_urls_list)
+    # print(f'Всего: {count_urls} категорий')
 
     with requests.Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
             product_urls_list = []
 
-            name_category = category_url.split('/')[-1]
+            name_category = category_url.split('/')[-2]
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -94,12 +93,12 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
 
                     for item in data:
                         try:
-                            product_url = f"{page_product_url}/{item.find('a').get('href')}"
-                            print(product_url)
+                            # product_url = f"{'/'.join(page_product_url.split('/')[:-1])}/{item.find('a').get('href')}"
+                            product_url = f"{page_product_url}{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
-                        # product_urls_list.append(product_url)
+                        product_urls_list.append(product_url)
                 except Exception as ex:
                     print(ex)
 
@@ -107,11 +106,108 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
 
             # print(f'Обработано: {i}/{count_urls} категорий')
 
-            # if not os.path.exists('data/products'):
-            #     os.makedirs(f'data/products')
-            #
-            # with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
-            #     print(*product_urls_list, file=file, sep='\n')
+            if not os.path.exists('data/products'):
+                os.makedirs(f'data/products')
+
+            with open(f'data/products/{name_category}.txt', 'a', encoding='utf-8') as file:
+                print(*product_urls_list, file=file, sep='\n')
+
+
+# Получаем данные о товарах
+def get_data(file_path: str, headers: dict) -> list:
+    """
+    :param file_path: str
+    :param headers: dict
+    :return: list
+    """
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+    count = len(product_urls_list)
+
+    print(f'Всего {count} товаров')
+
+    result_list = []
+
+    with requests.Session() as session:
+        for i, product_url in enumerate(product_urls_list, 1):
+            try:
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                folder = soup.find('ul', class_='breadcrumbs').find_all(
+                    'li', class_='breadcrumbs__item')[-2].text.strip()
+            except Exception:
+                folder = ''
+
+            try:
+                article = soup.find('div', class_='card-info__product-code js-card-info-product-code'
+                                    ).find_next().find_next().text.strip()
+            except Exception:
+                article = ''
+
+            try:
+                name = soup.find('h1', class_='page-title').text.strip()
+            except Exception:
+                name = ''
+
+            try:
+                price = soup.find('span', class_='big-price__price').next.text.strip().replace(' ', '')
+            except Exception:
+                price = ''
+
+            try:
+                image_data = soup.find_all('a', class_='product-page-card__slider-link')
+
+                image = ''
+                for item in image_data:
+                    url = 'https://asko-russia.ru/' + item.get('href')
+                    if '.jpg' in url or '.png' in url or '.webp' in url:
+                        image += f'{url}, '
+
+            except Exception:
+                image = ''
+
+            try:
+                description = ' '.join(item.text.strip() for item in
+                                       soup.find('div', class_='product-description _vr-m-s js-product-description'))
+            except Exception:
+                description = ''
+
+            try:
+                characteristics = ' '.join(
+                    item.text.strip() for item in soup.find('section', class_='characteristics _vr-m-s'))
+            except Exception:
+                characteristics = ''
+
+            body = description + characteristics
+
+            vendor = ''
+
+            amount = 1
+
+            result_list.append(
+                (
+                    vendor,
+                    folder,
+                    article,
+                    name,
+                    price,
+                    image,
+                    body,
+                    amount,
+                )
+            )
+
+            print(f'Обработано товаров: {i}/{count}')
+
+    return result_list
 
 
 def save_csv(name, data):
@@ -143,9 +239,7 @@ def save_csv(name, data):
 
 
 def main():
-    category_urls_list = ["https://evelux.ru/catalog/vstraivaemaya/dukhovye-shkafy/?FILTER=DSHELECTRO"]
-
-    get_product_urls(category_urls_list=category_urls_list, headers=headers)
+    # get_product_urls(category_urls_list=category_urls_list[:1], headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
