@@ -238,7 +238,7 @@ def save_csv(name, data):
 
 
 def main():
-    # get_product_urls(category_urls_list=category_urls_list[:1], headers=headers)
+    get_product_urls(category_urls_list=category_urls_list[:1], headers=headers)
 
     directory = 'data\products'
     for filename in os.listdir(directory):
