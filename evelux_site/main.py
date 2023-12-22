@@ -94,7 +94,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
 
                     for item in data:
                         try:
-                            product_url = f"{'/'.join(page_product_url.split('/')[:-1])}/{item.find('a').get('href')}"
+                            product_url = f"{page_product_url}/{item.find('a').get('href')}"
                             print(product_url)
                         except Exception as ex:
                             print(ex)
