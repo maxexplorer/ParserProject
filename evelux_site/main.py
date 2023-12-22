@@ -241,6 +241,15 @@ def save_csv(name, data):
 def main():
     # get_product_urls(category_urls_list=category_urls_list[:1], headers=headers)
 
+    directory = 'data\products'
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            name = file_path.split('\\')[-1].split('.')[0]
+            print(f'Обрабатывается категория {name}')
+            result_list = get_data(file_path=file_path, headers=headers)
+            save_csv(name=name, data=result_list)
+
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
