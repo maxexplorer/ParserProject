@@ -148,14 +148,17 @@ def get_data(file_path: str, headers: dict) -> list:
                 price = ''
 
             try:
-                image_data = soup.find('ul', id='product-img-max').find_all('li')
-                image = ''
-                for item in image_data:
-                    url = item.find_next().get('data-normal')
-                    if '.jpg' in url or '.png' in url or '.webp' in url:
-                        image += f'{url}, '
-
-            except Exception:
+                try:
+                    image_data = soup.find('ul', id='product-img-max').find_all('li')
+                    image = ''
+                    for item in image_data:
+                        url = item.find_next().get('data-normal')
+                        if '.jpg' in url or '.png' in url or '.webp' in url:
+                            image += f'{url}, '
+                except Exception:
+                    image = soup.find('span', class_='et_pb_image_wrap').find('img').get('data-normal')
+            except Exception as ex:
+                print(ex)
                 image = ''
 
             try:
