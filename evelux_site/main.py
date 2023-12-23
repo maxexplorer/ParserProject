@@ -179,13 +179,10 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
 
             try:
-                body = ' '.join(soup.find('div', class_='product__descr').find('div',
-                                                                                      {'class': 'product__content',
-                                                                                       'data-content': '2'}).text.strip().split())
+                body = ' '.join(soup.find('div', class_='product__descr').find('div', {
+                    'class': 'product__content', 'data-content': '2'}).text.strip().split())
             except Exception:
                 body = ''
-
-
 
             vendor = 'Evelux'
 

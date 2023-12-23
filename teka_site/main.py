@@ -126,33 +126,32 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder = soup.find('ul', class_='breadcrumbs').find_all(
-                    'li', class_='breadcrumbs__item')[-2].text.strip()
+                folder = soup.find('div', id='breadcrumbs').find_all('span', property='itemListElement')[
+                    -2].text.strip()
             except Exception:
                 folder = ''
 
             try:
-                article = soup.find('div', class_='card-info__product-code js-card-info-product-code'
-                                    ).find_next().find_next().text.strip()
-            except Exception:
-                article = ''
-
-            try:
-                name = soup.find('h1', class_='page-title').text.strip()
+                items = soup.find('div', id='product-title')
+                name = f"{items.find('h1').text.strip()}/ Teka {items.find('h2').text.strip()}"
             except Exception:
                 name = ''
 
             try:
-                price = soup.find('span', class_='big-price__price').next.text.strip().replace(' ', '')
+                article = ''.join(
+                    j for j in soup.find('div', id='ref-ean').find('div', class_='ref').text.strip() if j.isdigit())
+            except Exception:
+                article = ''
+            try:
+                price = ''.join(k for k in soup.find('div', id='product-pvpr').text.strip() if k.isdigit())
             except Exception:
                 price = ''
 
             try:
-                image_data = soup.find_all('a', class_='product-page-card__slider-link')
-
+                image_data = soup.find('ul', id='product-img-max').find_all('li')
                 image = ''
                 for item in image_data:
-                    url = 'https://asko-russia.ru/' + item.get('href')
+                    url = item.find_next().get('data-normal')
                     if '.jpg' in url or '.png' in url or '.webp' in url:
                         image += f'{url}, '
 
@@ -160,30 +159,33 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
 
             try:
-                description = ' '.join(item.text.strip() for item in
-                                       soup.find('div', class_='product-description _vr-m-s js-product-description'))
+                description = ' '.join(soup.find('div', id='product-benefits-section').text.strip().split())
             except Exception:
                 description = ''
 
             try:
-                characteristics = ' '.join(
-                    item.text.strip() for item in soup.find('section', class_='characteristics _vr-m-s'))
+                characteristics = ' / '.join(
+                    item.text for item in soup.find('div', id='product-technical').find_all('li'))
             except Exception:
                 characteristics = ''
 
             body = description + characteristics
 
+            vendor = 'Teka'
+
             amount = 1
 
             result_list.append(
-                (folder,
-                 article,
-                 name,
-                 price,
-                 image,
-                 body,
-                 amount,
-                 )
+                (
+                    vendor,
+                    f"Teka/{folder}",
+                    article,
+                    name,
+                    price,
+                    image,
+                    body,
+                    amount,
+                )
             )
 
             print(f'Обработано товаров: {i}/{count}')
