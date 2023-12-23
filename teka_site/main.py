@@ -6,7 +6,6 @@ from datetime import datetime
 
 start_time = datetime.now()
 
-
 url = "https://www.teka.com/ru-ru/kuhni/duhovye-shkafy/"
 
 headers = {
@@ -37,7 +36,6 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         print(ex)
 
 
-
 # Получаем ссылки товаров
 def get_product_urls(category_urls_list: list, headers: dict) -> None:
     """
@@ -64,10 +62,12 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data = soup.find_all('div', class_='catalog-card__text-content')
+                data = soup.find('div', class_='et_pb_portfolio_grid_items product-list').find_all('div',
+                                                                                                   class_='productCat')
                 for item in data:
                     try:
-                        product_url = f"https://asko-russia.ru{item.find('a').get('href')}"
+                        product_url = item.find('a').get('href')
+                        print(product_url)
                     except Exception as ex:
                         print(ex)
                         continue
@@ -75,27 +75,24 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             except Exception as ex:
                 print(ex)
 
-        print(f'Обработано: {i}/{count_urls} категорий')
-
-        if not os.path.exists('data/products'):
-            os.makedirs(f'data/products')
-
-        with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
-            print(*product_urls_list, file=file, sep='\n')
+        # print(f'Обработано: {i}/{count_urls} категорий')
+        #
+        # if not os.path.exists('data/products'):
+        #     os.makedirs(f'data/products')
+        #
+        # with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
+        #     print(*product_urls_list, file=file, sep='\n')
 
 
 def main():
-
     session = requests.Session()
 
     html = get_html(url=url, headers=headers, session=session)
 
-
-
-
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
+
 
 if __name__ == '__main__':
     main()
