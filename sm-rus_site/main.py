@@ -34,6 +34,25 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     except Exception as ex:
         print(ex)
 
+
+# Получаем количество страниц
+def get_pages(html: str) -> int:
+    """
+    :param html: str
+    :return: int
+    """
+
+    soup = BeautifulSoup(html, 'lxml')
+    try:
+        pages = int(
+            soup.find('ul', class_='pages-nav__list').find_all('li', class_='pages-nav__item')[-2].find_next().text)
+    except Exception as ex:
+        print(ex)
+        pages = 1
+
+    return pages
+
+
 def main():
     session = requests.Session()
     get_html(url=url, headers=headers, session=session)
