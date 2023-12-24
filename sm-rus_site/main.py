@@ -6,6 +6,8 @@ from datetime import datetime
 
 start_time = datetime.now()
 
+url = "https://sm-rus.ru/smeg/holodilniki/"
+
 headers = {
     'Accept': '*/*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -33,6 +35,9 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         print(ex)
 
 def main():
+    session = requests.Session()
+    get_html(url=url, headers=headers, session=session)
+
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
