@@ -6,7 +6,7 @@ from datetime import datetime
 
 start_time = datetime.now()
 
-url = "https://sm-rus.ru/smeg/holodilniki/"
+url = "https://sm-rus.ru/"
 
 headers = {
     'Accept': '*/*',
@@ -68,10 +68,11 @@ def get_category_urls(url: str, headers: dict) -> list:
         soup = BeautifulSoup(html, 'lxml')
 
         try:
-            data = soup.find('div', class_='catalog-main__wrap').find_all('div', class_='catalog-main__item')
+            data = soup.find('ul', class_='dropdown-menu js-dropdown').find_all('li')
+
 
             for item in data:
-                category_url = f"https://kuppersberg.ru{item.find('a').get('href')}"
+                category_url = f"https://sm-rus.ru{item.find('a').get('href')}"
 
                 category_urls_list.append(category_url)
 
@@ -85,8 +86,7 @@ def get_category_urls(url: str, headers: dict) -> list:
             print(*category_urls_list, file=file, sep='\n')
 
 def main():
-    session = requests.Session()
-    get_html(url=url, headers=headers, session=session)
+    get_category_urls(url=url, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
