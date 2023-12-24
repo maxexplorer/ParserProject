@@ -52,6 +52,37 @@ def get_pages(html: str) -> int:
 
     return pages
 
+# Получаем ссылки всех категорий товаров
+def get_category_urls(url: str, headers: dict) -> list:
+    """
+    :param url: str
+    :param headers: dict
+    :return: list
+    """
+
+    category_urls_list = []
+
+    with requests.Session() as session:
+        html = get_html(url=url, headers=headers, session=session)
+
+        soup = BeautifulSoup(html, 'lxml')
+
+        try:
+            data = soup.find('div', class_='catalog-main__wrap').find_all('div', class_='catalog-main__item')
+
+            for item in data:
+                category_url = f"https://kuppersberg.ru{item.find('a').get('href')}"
+
+                category_urls_list.append(category_url)
+
+        except Exception as ex:
+            print(ex)
+
+        if not os.path.exists('data/categories'):
+            os.makedirs('data/categories')
+
+        with open(f'data/categories/category_urls_list.txt', 'w', encoding='utf-8') as file:
+            print(*category_urls_list, file=file, sep='\n')
 
 def main():
     session = requests.Session()
