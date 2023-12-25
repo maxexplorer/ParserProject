@@ -1,3 +1,4 @@
+import random
 import re
 import time
 
@@ -65,7 +66,7 @@ def get_pages(html: str) -> int:
 
 
 # Получаем ссылки всех категорий товаров
-def get_category_urls(url: str, headers: dict) -> list:
+def get_category_urls(url: str, headers: dict) -> None:
     """
     :param url: str
     :param headers: dict
@@ -176,7 +177,7 @@ def get_data(file_path: str, headers: dict) -> list:
     with requests.Session() as session:
         for i, product_url in enumerate(product_urls_list, 1):
             try:
-                time.sleep(1)
+                time.sleep(random.randint(1, 3))
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{product_url} - {ex}")
