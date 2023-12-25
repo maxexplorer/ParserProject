@@ -1,4 +1,5 @@
 import re
+import time
 
 import requests
 import os
@@ -175,9 +176,13 @@ def get_data(file_path: str, headers: dict) -> list:
     with requests.Session() as session:
         for i, product_url in enumerate(product_urls_list, 1):
             try:
+                time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{product_url} - {ex}")
+                continue
+
+            if not html:
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
@@ -220,8 +225,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
                 for item in image_data:
                     url = 'https://sm-rus.ru' + item.get('href')
-                    if '.jpg' in url or '.png' in url or '.webp' in url or 'jpeg' in url:
-                        image += f'{url}, '
+                    image += f'{url}, '
             except Exception:
                 image = ''
 
@@ -268,7 +272,7 @@ def main():
     # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[:1]:
+    for filename in os.listdir(directory)[2:3]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
