@@ -173,7 +173,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list[:1], 1):
+        for i, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
@@ -184,7 +184,7 @@ def get_data(file_path: str, headers: dict) -> list:
 
             try:
                 folder_item = soup.find('ul', class_='breadcrumbs').find_all('li', class_='breadcrumbs__item')[
-                    -2].text.strip()
+                    1].text.strip()
             except Exception:
                 folder_item = ''
 
@@ -220,7 +220,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 image = ''
                 for item in image_data:
                     url = 'https://sm-rus.ru' + item.get('href')
-                    if '.jpg' in url or '.png' in url or '.webp' in url:
+                    if '.jpg' in url or '.png' in url or '.webp' in url or 'jpeg' in url:
                         image += f'{url}, '
             except Exception:
                 image = ''
@@ -274,7 +274,7 @@ def main():
             name = file_path.split('\\')[-1].split('.')[0]
             print(f'Обрабатывается категория {name}')
             result_list = get_data(file_path=file_path, headers=headers)
-            # save_csv(name=name, data=result_list)
+            save_csv(name=name, data=result_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
