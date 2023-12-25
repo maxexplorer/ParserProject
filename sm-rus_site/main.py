@@ -267,25 +267,6 @@ def get_data(file_path: str, headers: dict) -> list:
     return result_list
 
 
-def main():
-    # get_category_urls(url=url, headers=headers)
-
-    # get_product_urls(category_urls_list=category_urls_list, headers=headers)
-
-    directory = 'data\products'
-    for filename in os.listdir(directory)[2:3]:
-        file_path = os.path.join(directory, filename)
-        if os.path.isfile(file_path):
-            name = file_path.split('\\')[-1].split('.')[0]
-            print(f'Обрабатывается категория {name}')
-            result_list = get_data(file_path=file_path, headers=headers)
-            save_csv(name=name, data=result_list)
-
-    execution_time = datetime.now() - start_time
-    print('Сбор данных завершен!')
-    print(f'Время работы программы: {execution_time}')
-
-
 def save_csv(name, data):
     cur_date = datetime.now().strftime('%d-%m-%Y')
 
@@ -312,6 +293,25 @@ def save_csv(name, data):
             data
         )
     print('Данные сохранены в файл "data.csv"')
+
+
+def main():
+    # get_category_urls(url=url, headers=headers)
+
+    # get_product_urls(category_urls_list=category_urls_list, headers=headers)
+
+    directory = 'data\products'
+    for filename in os.listdir(directory)[3:]:
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            name = file_path.split('\\')[-1].split('.')[0]
+            print(f'Обрабатывается категория {name}')
+            result_list = get_data(file_path=file_path, headers=headers)
+            save_csv(name=name, data=result_list)
+
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
