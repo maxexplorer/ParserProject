@@ -21,6 +21,7 @@ category_urls_list = [
     # "https://sm-rus.ru/smeg/sushilnye-mashiny/"
 ]
 
+
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str:
     """
@@ -108,7 +109,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
         for i, category_url in enumerate(category_urls_list, 1):
             product_urls_list = []
 
-            name_category = category_url.split('/')[-1]
+            name_category = category_url.split('/')[-2]
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -119,7 +120,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             print(f'В категории {name_category}: {pages} страниц')
 
             for page in range(1, pages + 1):
-                page_product_url = f"{category_url}/?PAGEN_6={page}"
+                page_product_url = f"{category_url}/?PAGEN_7={page}"
                 try:
                     html = get_html(url=page_product_url, headers=headers, session=session)
 
@@ -130,13 +131,20 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
 
                 try:
                     data = soup.find_all('div', class_='catalog-card__text-content')
+
                     for item in data:
                         try:
-                            product_url = f"https://asko-russia.ru{item.find('a').get('href')}"
+                            product_url = f"https://sm-rus.ru{item.find('a', class_='card-type-and-title catalog-card__type-and-title').get('href')}"
+
+                            item_info = item.find_all('li', class_='card-characteristics__list-item')[0].find('span', class_='card-characteristics__list-item-value').text.strip()
+
                         except Exception as ex:
                             print(ex)
                             continue
-                        product_urls_list.append(product_url)
+                        product_urls_list.append(
+                            (product_url,
+                             item_info)
+                        )
                 except Exception as ex:
                     print(ex)
 
@@ -151,10 +159,107 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
                 print(*product_urls_list, file=file, sep='\n')
 
 
+# Получаем данные о товарах
+def get_data(file_path: str, headers: dict) -> list:
+    """
+    :param file_path: str
+    :param headers: dict
+    :return: list
+    """
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+    count = len(product_urls_list)
+
+    print(f'Всего {count} товаров')
+
+    result_list = []
+
+    with requests.Session() as session:
+        for i, product_url in enumerate(product_urls_list, 1):
+            try:
+                html = get_html(url=product_url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                folder = soup.find('div', id='breadcrumbs').find_all('span', property='itemListElement')[
+                    -2].text.strip()
+            except Exception:
+                folder = ''
+
+            try:
+                items = soup.find('div', id='product-title')
+                name = f"{items.find('h1').text.strip()}/ Teka {items.find('h2').text.strip()}"
+            except Exception:
+                name = ''
+
+            try:
+                article = ''.join(
+                    j for j in soup.find('div', id='ref-ean').find('div', class_='ref').text.strip() if j.isdigit())
+            except Exception:
+                article = ''
+            try:
+                price = ''.join(k for k in soup.find('div', id='product-pvpr').text.strip() if k.isdigit())
+            except Exception:
+                price = ''
+
+            try:
+                try:
+                    image_data = soup.find('ul', id='product-img-max').find_all('li')
+                    image = ''
+                    for item in image_data:
+                        url = item.find_next().get('data-normal')
+                        if '.jpg' in url or '.png' in url or '.webp' in url:
+                            image += f'{url}, '
+                except Exception:
+                    image = soup.find('span', class_='et_pb_image_wrap').find('img').get('data-normal')
+            except Exception as ex:
+                print(ex)
+                image = ''
+
+            try:
+                description = ' '.join(soup.find('div', id='product-benefits-section').text.strip().split())
+            except Exception:
+                description = ''
+
+            try:
+                characteristics = ' / '.join(
+                    item.text for item in soup.find('div', id='product-technical').find_all('li'))
+            except Exception:
+                characteristics = ''
+
+            body = description + characteristics
+
+            vendor = 'Teka'
+
+            amount = 1
+
+            result_list.append(
+                (
+                    vendor,
+                    f"Teka/{folder}",
+                    article,
+                    name,
+                    price,
+                    image,
+                    body,
+                    amount,
+                )
+            )
+
+            print(f'Обработано товаров: {i}/{count}')
+
+    return result_list
+
 def main():
     # get_category_urls(url=url, headers=headers)
 
-
+    # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
