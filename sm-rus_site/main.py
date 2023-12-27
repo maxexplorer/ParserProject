@@ -19,10 +19,10 @@ headers = {
 }
 
 category_urls_list = [
-    # "https://sm-rus.ru/smeg/duhovye-shkafy/",
-    # "https://sm-rus.ru/smeg/varochnye-paneli/",
-    # "https://sm-rus.ru/smeg/vytjazhki/",
-    # "https://sm-rus.ru/smeg/sushilnye-mashiny/",
+    "https://sm-rus.ru/smeg/duhovye-shkafy/",
+    "https://sm-rus.ru/smeg/varochnye-paneli/",
+    "https://sm-rus.ru/smeg/vytjazhki/",
+    "https://sm-rus.ru/smeg/sushilnye-mashiny/",
     "https://sm-rus.ru/smeg/holodilniki/",
     "https://sm-rus.ru/smeg/varochnye-centry/",
     "https://sm-rus.ru/smeg/mikrovolnovye-pechi/",
@@ -157,6 +157,10 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
                 except Exception as ex:
                     print(f"{page_product_url} - {ex}")
                     continue
+
+                if not html:
+                    continue
+
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
@@ -220,15 +224,19 @@ def get_data(file_path: str, headers: dict) -> list:
             except Exception:
                 folder_item = ''
 
-            try:
-                characteristic_item = \
-                    soup.find('span', string=re.compile('ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find_all('div',
-                                                                                                                  class_='characteristics__row')[
-                        0].find('span', class_='characteristics__property').text.strip()
-            except Exception:
-                characteristic_item = ''
+            # try:
+            #     characteristic_item = \
+            #         soup.find('span', string=re.compile('ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find_all('div',
+            #                                                                                                       class_='characteristics__row')[
+            #             0].find('span', class_='characteristics__property').text.strip()
+            # except Exception:
+            #     characteristic_item = ''
 
-            folder = f'{folder_item}/{characteristic_item}'
+
+
+            # folder = f'{folder_item}/{characteristic_item}'
+
+            folder = folder_item
 
             try:
 
@@ -327,7 +335,7 @@ def main():
     # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[1:2]:
+    for filename in os.listdir(directory)[16:17]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
