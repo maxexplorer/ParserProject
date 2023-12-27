@@ -19,10 +19,36 @@ headers = {
 }
 
 category_urls_list = [
-    "https://sm-rus.ru/smeg/duhovye-shkafy/",
-    "https://sm-rus.ru/smeg/varochnye-paneli/",
-    "https://sm-rus.ru/smeg/vytjazhki/",
-    "https://sm-rus.ru/smeg/sushilnye-mashiny/"
+    # "https://sm-rus.ru/smeg/duhovye-shkafy/",
+    # "https://sm-rus.ru/smeg/varochnye-paneli/",
+    # "https://sm-rus.ru/smeg/vytjazhki/",
+    # "https://sm-rus.ru/smeg/sushilnye-mashiny/",
+    "https://sm-rus.ru/smeg/holodilniki/",
+    "https://sm-rus.ru/smeg/varochnye-centry/",
+    "https://sm-rus.ru/smeg/mikrovolnovye-pechi/",
+    "https://sm-rus.ru/smeg/kofemashiny/",
+    "https://sm-rus.ru/smeg/podogrevateli/",
+    "https://sm-rus.ru/smeg/vakuumnyie/",
+    "https://sm-rus.ru/smeg/yashchiki-somele/",
+    "https://sm-rus.ru/smeg/posudomoechnye-mashiny/",
+    "https://sm-rus.ru/smeg/stiralnye-mashiny/",
+    "https://sm-rus.ru/smeg/aksessuary/",
+    "https://sm-rus.ru/smeg/chainiki/",
+    "https://sm-rus.ru/smeg/kofemolki/",
+    "https://sm-rus.ru/smeg/tostery/",
+    "https://sm-rus.ru/smeg/blendery/",
+    "https://sm-rus.ru/smeg/kofevarki/",
+    "https://sm-rus.ru/smeg/vspenivateli-moloka/",
+    "https://sm-rus.ru/smeg/sokovyzhimalki/",
+    "https://sm-rus.ru/smeg/miksery/",
+    "https://sm-rus.ru/smeg/smesiteli/",
+    "https://sm-rus.ru/smeg/moyki/",
+    "https://sm-rus.ru/smeg/pechi/",
+    "https://sm-rus.ru/smeg/stakanomoechnye-mashiny/",
+    "https://sm-rus.ru/smeg/kholodilnoe-oborudovanie/",
+    "https://sm-rus.ru/smeg/posudomoechnye-mashiny-pro/",
+    "https://sm-rus.ru/smeg/kotlomoechnye-mashiny-pro/",
+    "https://sm-rus.ru/smeg/aksessuary_pro/"
 ]
 
 
