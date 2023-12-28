@@ -232,11 +232,18 @@ def get_data(file_path: str, headers: dict) -> list:
             # except Exception:
             #     characteristic_item = ''
 
+            try:
+                characteristic_item1 = soup.find('span', string=re.compile('Вид')).find_next().find_next().text.strip()
+            except Exception:
+                characteristic_item1 = ''
 
 
-            # folder = f'{folder_item}/{characteristic_item}'
 
-            folder = folder_item
+
+
+            folder = f'{folder_item}/{characteristic_item1}'
+
+            # folder = folder_item
 
             try:
 
@@ -335,7 +342,7 @@ def main():
     # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[11:12]:
+    for filename in os.listdir(directory)[25:26]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
