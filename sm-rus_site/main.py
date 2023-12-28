@@ -233,17 +233,33 @@ def get_data(file_path: str, headers: dict) -> list:
             #     characteristic_item = ''
 
             try:
-                characteristic_item1 = soup.find('span', string=re.compile('Вид')).find_next().find_next().text.strip()
+                characteristic_item1 = soup.find('span', string=re.compile(
+                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
+                    'span', string=re.compile('Способ установки')).find_next().find_next().text.strip()
             except Exception:
                 characteristic_item1 = ''
 
+            try:
+                characteristic_item2 = soup.find('span', string=re.compile(
+                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
+                    'span', string=re.compile('Форм-фактор')).find_next().find_next().text.strip()
+                if 'классический' in characteristic_item2:
+                    characteristic_item2 = 'Классический'
 
+            except Exception:
+                characteristic_item2 = ''
 
+            try:
+                characteristic_item3 = soup.find('span', string=re.compile(
+                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find('span', string=re.compile(
+                    'Вид холодильника')).find_next().find_next().text.strip()
+                if 'Винный шкаф' in characteristic_item3:
+                    characteristic_item3 = 'Винный шкаф'
 
+            except Exception:
+                characteristic_item3 = ''
 
-            folder = f'{folder_item}/{characteristic_item1}'
-
-            # folder = folder_item
+            folder = f'{folder_item}/{characteristic_item1}/{characteristic_item2}/{characteristic_item3}'
 
             try:
 
@@ -342,7 +358,7 @@ def main():
     # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data\products'
-    for filename in os.listdir(directory)[25:26]:
+    for filename in os.listdir(directory)[5:6]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             name = file_path.split('\\')[-1].split('.')[0]
