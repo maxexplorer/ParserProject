@@ -353,9 +353,9 @@ def save_csv(name, data):
 
 
 def main():
-    get_category_urls(url=url, headers=headers)
+    # get_category_urls(url=url, headers=headers)
 
-    get_product_urls(category_urls_list=category_urls_list, headers=headers)
+    # get_product_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data\products'
     for filename in os.listdir(directory)[5:6]:
