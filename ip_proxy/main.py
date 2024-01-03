@@ -10,25 +10,24 @@ headers = {
 }
 
 proxies = {
-    'http': '20.198.96.26:80',
+    'http': 'http://20.198.96.26:80',
 }
 
 
 def get_ip():
-    # response = requests.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
     session = requests.Session()
-    session.headers = {
-        'Accept': '*/*',
-        'User-Agent': useragent.random
-    }
-
-    session.proxies = {
-        'http': '20.198.96.26:80',
-    }
+    # session.headers = {
+    #     'Accept': '*/*',
+    #     'User-Agent': useragent.random
+    # }
+    #
+    # session.proxies = {
+    #     'http': 'http://20.198.96.26:80',
+    # }
 
     # session.proxies.update(proxies)
     # session.headers.update(headers)
-    response = session.get(url="https://2ip.ru/")
+    response = session.get(url="https://2ip.ru/", headers=headers, proxies=proxies)
     # response = session.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
     soup = BeautifulSoup(response.text, 'lxml')
