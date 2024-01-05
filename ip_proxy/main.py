@@ -13,10 +13,6 @@ proxies = {
     'http': 'http://20.198.96.26:80',
 }
 
-proxies_ = {
-    'http': 'socks5://proxy-address:proxy-port',
-    'https': 'socks5://proxy-address:proxy-port',
-}
 
 
 def get_ip():
