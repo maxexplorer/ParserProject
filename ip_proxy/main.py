@@ -10,8 +10,11 @@ headers = {
 }
 
 proxies = {
-    'http': 'http://20.198.96.26:80',
+    'http': 'http://67.43.228.250:17285',
+    'https': 'http://67.43.228.250:17285',
 }
+
+
 
 
 def get_ip():
@@ -23,6 +26,11 @@ def get_ip():
     #
     # session.proxies = {
     #     'http': 'http://20.198.96.26:80',
+    # }
+
+    # session.proxies_socks = {
+    #     'http': 'socks5://198.27.124.188:40000',
+    #     'https': 'socks5://198.27.124.188:40000',
     # }
 
     # session.proxies.update(proxies)
