@@ -27,6 +27,12 @@ def get_ip(url: str, headers: dict) -> str:
 
     soup = BeautifulSoup(html, 'lxml')
 
+    try:
+        ip = soup.find('span', class_="ip").text.strip()
+        ua = soup.find('span', class_="ip").find_next_sibling('span').text.strip()
+
+    except Exception as ex:
+        print(ex)
 
 
 def main():
