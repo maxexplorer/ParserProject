@@ -15,8 +15,8 @@ def get_html(url: str, headers: dict = None) -> str:
         session = requests.Session()
 
         session.proxies = {
-            'http': 'socks5://213.251.185.168:9922',
-            'https': 'socks5://213.251.185.168:9922',
+            'http': 'socks5://149.102.155.62:49187',
+            'https': 'socks5://149.102.155.62:49187',
         }
         response = session.get(url=url, headers=headers, timeout=3)
 
