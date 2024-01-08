@@ -2,33 +2,25 @@ import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-useragent = UserAgent()
-
-headers = {
-    'Accept': '*/*',
-    'User-Agent': useragent.random
-}
-
-proxies = {
-    'http': 'socks5://213.251.185.168:9922',
-}
-
-
 
 def get_ip():
+    useragent = UserAgent()
+
     session = requests.Session()
-    # session.headers = {
-    #     'Accept': '*/*',
-    #     'User-Agent': useragent.random
-    # }
-    #
-    # session.proxies = {
-    #     'http': 'http://20.198.96.26:80',
-    # }
+
+    session.headers = {
+        'Accept': '*/*',
+        'User-Agent': useragent.random
+    }
+
+    session.proxies = {
+        'http': 'socks5://72.37.216.68:4145',
+        'https': 'socks5://72.37.216.68:4145',
+    }
 
     # session.proxies.update(proxies)
     # session.headers.update(headers)
-    response = session.get(url="https://2ip.ru/", headers=headers, proxies=proxies)
+    response = session.get(url="https://2ip.ru/", timeout=3)
     # response = session.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
     soup = BeautifulSoup(response.text, 'lxml')
