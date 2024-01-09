@@ -40,7 +40,7 @@ ip_addresses = ["mysuperproxy.com:5000", "mysuperproxy.com:5001", "mysuperproxy.
                 "mysuperproxy.com:5050", "mysuperproxy.com:8080", "mysuperproxy.com:8001",
                 "mysuperproxy.com:8000", "mysuperproxy.com:8050"]
 
-def proxy_request(url, ip_addresses):
+def proxy_request(ip_addresses):
     while True:
         try:
             proxy = random.randint(0, len(ip_addresses) - 1)
@@ -51,11 +51,11 @@ def proxy_request(url, ip_addresses):
         except:
             print("Ошибка, ищем другой прокси-сервер")
 
-    return response
+
 
 def main():
     # ip = get_ip()
-    proxy_request(url=url, ip_addresses=ip_addresses)
+    proxy_request(ip_addresses=ip_addresses)
 
 
 
