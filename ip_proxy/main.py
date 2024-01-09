@@ -14,13 +14,21 @@ def get_ip():
     }
 
     session.proxies = {
-        'http': 'socks5://192.252.220.92:17328',
-        'https': 'socks5://192.252.220.92:17328',
+        'https': 'socks5://85.113.47.102:1080',
+        # 'https': 'socks5://122.191.108.101:7891',
+        # 'http': 'http://5.161.103.41:88',
+        # 'https': 'http://5.161.103.41:88',
     }
+
 
     # session.proxies.update(proxies)
     # session.headers.update(headers)
-    response = session.get(url="https://2ip.ru/", timeout=10)
+    try:
+        response = session.get(url="https://2ip.ru/", timeout=10)
+
+    except Exception as ex:
+        print(ex)
+
     # response = session.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
     soup = BeautifulSoup(response.text, 'lxml')
