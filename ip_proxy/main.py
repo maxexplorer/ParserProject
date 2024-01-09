@@ -25,13 +25,17 @@ def get_ip():
     # session.headers.update(headers)
     try:
         response = session.get(url="https://2ip.ru/", timeout=10)
+        html = response.text
 
     except Exception as ex:
         print(ex)
 
     # response = session.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
-    soup = BeautifulSoup(response.text, 'lxml')
+    if not html:
+        pass
+
+    soup = BeautifulSoup(html, 'lxml')
 
     ip = soup.find('div', class_='ip').text.strip()
     location = ' '.join(soup.find('div', class_='value-country').text.split()[:-1])

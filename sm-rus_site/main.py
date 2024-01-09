@@ -153,7 +153,6 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
                 page_product_url = f"{category_url}/?PAGEN_7={page}"
                 try:
                     html = get_html(url=page_product_url, headers=headers, session=session)
-
                 except Exception as ex:
                     print(f"{page_product_url} - {ex}")
                     continue
