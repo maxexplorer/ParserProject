@@ -35,7 +35,27 @@ def get_ip():
 
 
 def main():
-    ip = get_ip()
+    # ip = get_ip()
+    import requests
+    import random
+
+    ip_addresses = ["mysuperproxy.com:5000", "mysuperproxy.com:5001", "mysuperproxy.com:5100", "mysuperproxy.com:5010",
+                    "mysuperproxy.com:5050", "mysuperproxy.com:8080", "mysuperproxy.com:8001",
+                    "mysuperproxy.com:8000", "mysuperproxy.com:8050"]
+
+    def proxy_request(request_type, url, **kwargs):
+        while True:
+            try:
+                proxy = random.randint(0, len(ip_addresses) - 1)
+                proxies = {"http": ip_addresses[proxy], "https": ip_addresses[proxy]}
+                response = requests.get(request_type, url, proxies=proxies, timeout=5, **kwargs)
+                print(f"Используемый в настоящее время прокси-сервер: {proxy['https']}")
+            break
+        except:
+            print("Ошибка, ищем другой прокси-сервер")
+
+
+        return response
 
 
 if __name__ == '__main__':
