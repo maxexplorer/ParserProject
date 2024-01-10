@@ -32,8 +32,6 @@ def get_ip():
 
     # response = session.get(url="https://api.2ip.me/provider.json", headers=headers, proxies=proxies)
 
-    if not html:
-        pass
 
     soup = BeautifulSoup(html, 'lxml')
 
