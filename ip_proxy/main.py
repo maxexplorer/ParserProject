@@ -21,8 +21,8 @@ def get_ip():
     }
 
 
-    # session.proxies.update(proxies)
-    # session.headers.update(headers)
+    session.proxies.update(proxies)
+    session.headers.update(headers)
     try:
         response = session.get(url="https://2ip.ru/", timeout=10)
         html = response.text
