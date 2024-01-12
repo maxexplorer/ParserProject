@@ -23,7 +23,8 @@ driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
 
 try:
     driver.maximize_window()
-    driver.get(url="https://tokensniffer.com/")
+    driver.get(url="https://www.sneakersnstuff.com/")
+    time.sleep(30)
 except Exception as ex:
     print(ex)
 finally:
