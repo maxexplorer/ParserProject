@@ -8,12 +8,12 @@ def get_ip():
 
     session = requests.Session()
 
-    headers = {
+    session.headers = {
         'Accept': '*/*',
         'User-Agent': useragent.random
     }
 
-    proxies = {
+    session.proxies = {
         'http': 'socks5://85.113.47.102:1080',
         'https': 'socks5://85.113.47.102:1080',
         # 'http': 'http://5.161.103.41:88',
@@ -21,8 +21,8 @@ def get_ip():
     }
 
 
-    session.proxies.update(proxies)
-    session.headers.update(headers)
+    # session.proxies.update(proxies)
+    # session.headers.update(headers)
     try:
         response = session.get(url="https://2ip.ru/", timeout=10)
         html = response.text
