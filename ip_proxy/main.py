@@ -8,12 +8,12 @@ def get_ip():
 
     session = requests.Session()
 
-    session.headers = {
+    headers = {
         'Accept': '*/*',
         'User-Agent': useragent.random
     }
 
-    session.proxies = {
+    proxies = {
         'http': 'socks5://85.113.47.102:1080',
         'https': 'socks5://85.113.47.102:1080',
         # 'http': 'http://5.161.103.41:88',
