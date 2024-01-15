@@ -13,8 +13,7 @@ driver = undetected_chromedriver.Chrome(options=options)
 driver.maximize_window()
 
 try:
-    # driver.get(url="https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
-    driver.get(url="https://www.sneakersnstuff.com/")
+    driver.get(url="https://intoli.com/blog/not-possible-to-block-chrome-headless/chrome-headless-test.html")
     time.sleep(15)
 except Exception as ex:
     print(ex)
