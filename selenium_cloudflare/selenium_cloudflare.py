@@ -13,8 +13,8 @@ useragent = UserAgent().random
 #                      ' Chrome/120.0.0.0 Safari/537.36')
 options.add_argument(f'User-Agent={useragent}')
 options.add_argument('--disable-blink-features=AutomationControlled')
-options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.add_experimental_option('useAutomationExtension', False)
+# options.add_experimental_option("excludeSwitches", ["enable-automation"])
+# options.add_experimental_option('useAutomationExtension', False)
 
 service = Service()
 driver = webdriver.Chrome(service=service, options=options)
