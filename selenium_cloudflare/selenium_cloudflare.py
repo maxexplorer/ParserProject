@@ -4,9 +4,9 @@ from selenium.webdriver.chrome.service import Service
 from fake_useragent import UserAgent
 import time
 
-options = webdriver.ChromeOptions()
+# options = webdriver.ChromeOptions()
 # is equivalent to
-# options = Options()
+options = Options()
 useragent = UserAgent().random
 
 # options.add_argument('User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
