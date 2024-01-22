@@ -1,59 +1,15 @@
-# import requests
-# from bs4 import BeautifulSoup
-#
-#
-# url = "https://www.ozon.ru/"
-#
-#
-# response = requests.get(url=url)
-# print(response)
-# soup = BeautifulSoup(response.text, 'lxml')
-# item = soup.find('h1', class_='zm0')
-# print(item)
-#
-# with open('index.html', 'w', encoding='utf-8') as file:
-#     file.write(response.text)
-
-
 import requests
+from bs4 import BeautifulSoup
 
-cookies = {
-    'xcid': '0d46e0e0d7c4786863abfc4f18fba3a6',
-    '__Secure-ext_xcid': '0d46e0e0d7c4786863abfc4f18fba3a6',
-    '__Secure-ab-group': '42',
-    'abt_data': '10d2abfdfc5f0b4603b2cbc4a2e013d4:6f59c0fa17f623e3be11a32d21fac082d4aeab1eea48eb3ada30bfa185aeaefc6a6a406c695217fa2e76e5c65c4b6cbde2970c5873c88cfa6810e1b8afaa630e649c53af25adabdd492bb40d0460f11f8ad651abaed295036aa629f5897cf18caffcc62440ee1ca8a1794350b88d840223ab77a9297bbfc2ab29801d20db40b8a5a849b21c65d8c305fc77a3f1e405d02dbe031674472b69c788b98b9e0c717fb94cbb44d865fa8fc915d6ac5da8b7dd873f306acd8a20940669c27c09586de2',
-    'ADDRESSBOOKBAR_WEB_CLARIFICATION': '1705645122',
-    'guest': 'true',
-    'is_adult_confirmed': '',
-    'is_alco_adult_confirmed': '',
-    'is_cookies_accepted': '1',
-    'rfuid': 'NjkyNDcyNDUyLDEyNC4wNDM0NzUyNzUxNjA3NCwxOTA3MzMzOTM0LC0xLDIwMTEzNTc2MzcsVzNzaWJtRnRaU0k2SWxCRVJpQldhV1YzWlhJaUxDSmtaWE5qY21sd2RHbHZiaUk2SWxCdmNuUmhZbXhsSUVSdlkzVnRaVzUwSUVadmNtMWhkQ0lzSW0xcGJXVlVlWEJsY3lJNlczc2lkSGx3WlNJNkltRndjR3hwWTJGMGFXOXVMM0JrWmlJc0luTjFabVpwZUdWeklqb2ljR1JtSW4wc2V5SjBlWEJsSWpvaWRHVjRkQzl3WkdZaUxDSnpkV1ptYVhobGN5STZJbkJrWmlKOVhYMHNleUp1WVcxbElqb2lRMmh5YjIxbElGQkVSaUJXYVdWM1pYSWlMQ0prWlhOamNtbHdkR2x2YmlJNklsQnZjblJoWW14bElFUnZZM1Z0Wlc1MElFWnZjbTFoZENJc0ltMXBiV1ZVZVhCbGN5STZXM3NpZEhsd1pTSTZJbUZ3Y0d4cFkyRjBhVzl1TDNCa1ppSXNJbk4xWm1acGVHVnpJam9pY0dSbUluMHNleUowZVhCbElqb2lkR1Y0ZEM5d1pHWWlMQ0p6ZFdabWFYaGxjeUk2SW5Ca1ppSjlYWDBzZXlKdVlXMWxJam9pUTJoeWIyMXBkVzBnVUVSR0lGWnBaWGRsY2lJc0ltUmxjMk55YVhCMGFXOXVJam9pVUc5eWRHRmliR1VnUkc5amRXMWxiblFnUm05eWJXRjBJaXdpYldsdFpWUjVjR1Z6SWpwYmV5SjBlWEJsSWpvaVlYQndiR2xqWVhScGIyNHZjR1JtSWl3aWMzVm1abWw0WlhNaU9pSndaR1lpZlN4N0luUjVjR1VpT2lKMFpYaDBMM0JrWmlJc0luTjFabVpwZUdWeklqb2ljR1JtSW4xZGZTeDdJbTVoYldVaU9pSk5hV055YjNOdlpuUWdSV1JuWlNCUVJFWWdWbWxsZDJWeUlpd2laR1Z6WTNKcGNIUnBiMjRpT2lKUWIzSjBZV0pzWlNCRWIyTjFiV1Z1ZENCR2IzSnRZWFFpTENKdGFXMWxWSGx3WlhNaU9sdDdJblI1Y0dVaU9pSmhjSEJzYVdOaGRHbHZiaTl3WkdZaUxDSnpkV1ptYVhobGN5STZJbkJrWmlKOUxIc2lkSGx3WlNJNkluUmxlSFF2Y0dSbUlpd2ljM1ZtWm1sNFpYTWlPaUp3WkdZaWZWMTlMSHNpYm1GdFpTSTZJbGRsWWt0cGRDQmlkV2xzZEMxcGJpQlFSRVlpTENKa1pYTmpjbWx3ZEdsdmJpSTZJbEJ2Y25SaFlteGxJRVJ2WTNWdFpXNTBJRVp2Y20xaGRDSXNJbTFwYldWVWVYQmxjeUk2VzNzaWRIbHdaU0k2SW1Gd2NHeHBZMkYwYVc5dUwzQmtaaUlzSW5OMVptWnBlR1Z6SWpvaWNHUm1JbjBzZXlKMGVYQmxJam9pZEdWNGRDOXdaR1lpTENKemRXWm1hWGhsY3lJNkluQmtaaUo5WFgxZCxXeUp5ZFMxU1ZTSmQsMCwxLDAsMjQsMjM3NDE1OTMwLDgsMjI3MTI2NTIwLDAsMSwwLC00OTEyNzU1MjMsUjI5dloyeGxJRWx1WXk0Z1RtVjBjMk5oY0dVZ1IyVmphMjhnVjJsdU16SWdOUzR3SUNoWGFXNWtiM2R6SUU1VUlERXdMakE3SUZkcGJqWTBPeUI0TmpRcElFRndjR3hsVjJWaVMybDBMelV6Tnk0ek5pQW9TMGhVVFV3c0lHeHBhMlVnUjJWamEyOHBJRU5vY205dFpTOHhNakF1TUM0d0xqQWdVMkZtWVhKcEx6VXpOeTR6TmlBeU1EQXpNREV3TnlCTmIzcHBiR3hoLGV5SmphSEp2YldVaU9uc2lZWEJ3SWpwN0ltbHpTVzV6ZEdGc2JHVmtJanBtWVd4elpTd2lTVzV6ZEdGc2JGTjBZWFJsSWpwN0lrUkpVMEZDVEVWRUlqb2laR2x6WVdKc1pXUWlMQ0pKVGxOVVFVeE1SVVFpT2lKcGJuTjBZV3hzWldRaUxDSk9UMVJmU1U1VFZFRk1URVZFSWpvaWJtOTBYMmx1YzNSaGJHeGxaQ0o5TENKU2RXNXVhVzVuVTNSaGRHVWlPbnNpUTBGT1RrOVVYMUpWVGlJNkltTmhibTV2ZEY5eWRXNGlMQ0pTUlVGRVdWOVVUMTlTVlU0aU9pSnlaV0ZrZVY5MGIxOXlkVzRpTENKU1ZVNU9TVTVISWpvaWNuVnVibWx1WnlKOWZYMTksNjUsLTEyODU1NTEzLDEsMSwtMSwxNjk5OTU0ODg3LDE2OTk5NTQ4ODcsMzM2MDA3OTMzLDg=',
-    '__cf_bm': 'rwUJchB9lC6X3Ih3hbdqxg5lYGv73dqcOAzTg_zw1m4-1705900681-1-AS+ss3lW/fzT9ygWXJyteIo1TpYb8U2mvnxlBrVcoh+L3+bqeIxoq1wRlQUT+bqXPWs/2kgHQNCmT7ohALPj7aQ=',
-    'cf_clearance': 'Z2LcsZqv.56c6Q3zmRxiDofezI6reDOU4X83Yb6BwfQ-1705900694-1-Af7fgUX1dhxGqVHUB3MHVJYyk2blTuWaIUKYiELRsckW7/2naqpyg2/LPhtQZ+TheQJPuqgIxhNq0cJEJCTIyUs=',
-    '__Secure-access-token': '3.0.Hcn-yt3NRQaVyTl1PkEbNQ.42.l8cMBQAAAABlrfq3G4s-ZaN3ZWKgAICQoA..20240122071847.frS7o_BJgTin90iMKIb6YWZaVzpY-KMCi8qBQHjZ8Wo',
-    '__Secure-refresh-token': '3.0.Hcn-yt3NRQaVyTl1PkEbNQ.42.l8cMBQAAAABlrfq3G4s-ZaN3ZWKgAICQoA..20240122071847.0N2J32R0YV58H4giCp_FJ6d3-AWTQcNExnk1zEeKIlc',
-    '__Secure-user-id': '0',
-}
 
-headers = {
-    'authority': 'www.ozon.ru',
-    'accept': 'application/json',
-    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'content-type': 'application/json',
-    # 'cookie': 'xcid=0d46e0e0d7c4786863abfc4f18fba3a6; __Secure-ext_xcid=0d46e0e0d7c4786863abfc4f18fba3a6; __Secure-ab-group=42; abt_data=10d2abfdfc5f0b4603b2cbc4a2e013d4:6f59c0fa17f623e3be11a32d21fac082d4aeab1eea48eb3ada30bfa185aeaefc6a6a406c695217fa2e76e5c65c4b6cbde2970c5873c88cfa6810e1b8afaa630e649c53af25adabdd492bb40d0460f11f8ad651abaed295036aa629f5897cf18caffcc62440ee1ca8a1794350b88d840223ab77a9297bbfc2ab29801d20db40b8a5a849b21c65d8c305fc77a3f1e405d02dbe031674472b69c788b98b9e0c717fb94cbb44d865fa8fc915d6ac5da8b7dd873f306acd8a20940669c27c09586de2; ADDRESSBOOKBAR_WEB_CLARIFICATION=1705645122; guest=true; is_adult_confirmed=; is_alco_adult_confirmed=; is_cookies_accepted=1; rfuid=NjkyNDcyNDUyLDEyNC4wNDM0NzUyNzUxNjA3NCwxOTA3MzMzOTM0LC0xLDIwMTEzNTc2MzcsVzNzaWJtRnRaU0k2SWxCRVJpQldhV1YzWlhJaUxDSmtaWE5qY21sd2RHbHZiaUk2SWxCdmNuUmhZbXhsSUVSdlkzVnRaVzUwSUVadmNtMWhkQ0lzSW0xcGJXVlVlWEJsY3lJNlczc2lkSGx3WlNJNkltRndjR3hwWTJGMGFXOXVMM0JrWmlJc0luTjFabVpwZUdWeklqb2ljR1JtSW4wc2V5SjBlWEJsSWpvaWRHVjRkQzl3WkdZaUxDSnpkV1ptYVhobGN5STZJbkJrWmlKOVhYMHNleUp1WVcxbElqb2lRMmh5YjIxbElGQkVSaUJXYVdWM1pYSWlMQ0prWlhOamNtbHdkR2x2YmlJNklsQnZjblJoWW14bElFUnZZM1Z0Wlc1MElFWnZjbTFoZENJc0ltMXBiV1ZVZVhCbGN5STZXM3NpZEhsd1pTSTZJbUZ3Y0d4cFkyRjBhVzl1TDNCa1ppSXNJbk4xWm1acGVHVnpJam9pY0dSbUluMHNleUowZVhCbElqb2lkR1Y0ZEM5d1pHWWlMQ0p6ZFdabWFYaGxjeUk2SW5Ca1ppSjlYWDBzZXlKdVlXMWxJam9pUTJoeWIyMXBkVzBnVUVSR0lGWnBaWGRsY2lJc0ltUmxjMk55YVhCMGFXOXVJam9pVUc5eWRHRmliR1VnUkc5amRXMWxiblFnUm05eWJXRjBJaXdpYldsdFpWUjVjR1Z6SWpwYmV5SjBlWEJsSWpvaVlYQndiR2xqWVhScGIyNHZjR1JtSWl3aWMzVm1abWw0WlhNaU9pSndaR1lpZlN4N0luUjVjR1VpT2lKMFpYaDBMM0JrWmlJc0luTjFabVpwZUdWeklqb2ljR1JtSW4xZGZTeDdJbTVoYldVaU9pSk5hV055YjNOdlpuUWdSV1JuWlNCUVJFWWdWbWxsZDJWeUlpd2laR1Z6WTNKcGNIUnBiMjRpT2lKUWIzSjBZV0pzWlNCRWIyTjFiV1Z1ZENCR2IzSnRZWFFpTENKdGFXMWxWSGx3WlhNaU9sdDdJblI1Y0dVaU9pSmhjSEJzYVdOaGRHbHZiaTl3WkdZaUxDSnpkV1ptYVhobGN5STZJbkJrWmlKOUxIc2lkSGx3WlNJNkluUmxlSFF2Y0dSbUlpd2ljM1ZtWm1sNFpYTWlPaUp3WkdZaWZWMTlMSHNpYm1GdFpTSTZJbGRsWWt0cGRDQmlkV2xzZEMxcGJpQlFSRVlpTENKa1pYTmpjbWx3ZEdsdmJpSTZJbEJ2Y25SaFlteGxJRVJ2WTNWdFpXNTBJRVp2Y20xaGRDSXNJbTFwYldWVWVYQmxjeUk2VzNzaWRIbHdaU0k2SW1Gd2NHeHBZMkYwYVc5dUwzQmtaaUlzSW5OMVptWnBlR1Z6SWpvaWNHUm1JbjBzZXlKMGVYQmxJam9pZEdWNGRDOXdaR1lpTENKemRXWm1hWGhsY3lJNkluQmtaaUo5WFgxZCxXeUp5ZFMxU1ZTSmQsMCwxLDAsMjQsMjM3NDE1OTMwLDgsMjI3MTI2NTIwLDAsMSwwLC00OTEyNzU1MjMsUjI5dloyeGxJRWx1WXk0Z1RtVjBjMk5oY0dVZ1IyVmphMjhnVjJsdU16SWdOUzR3SUNoWGFXNWtiM2R6SUU1VUlERXdMakE3SUZkcGJqWTBPeUI0TmpRcElFRndjR3hsVjJWaVMybDBMelV6Tnk0ek5pQW9TMGhVVFV3c0lHeHBhMlVnUjJWamEyOHBJRU5vY205dFpTOHhNakF1TUM0d0xqQWdVMkZtWVhKcEx6VXpOeTR6TmlBeU1EQXpNREV3TnlCTmIzcHBiR3hoLGV5SmphSEp2YldVaU9uc2lZWEJ3SWpwN0ltbHpTVzV6ZEdGc2JHVmtJanBtWVd4elpTd2lTVzV6ZEdGc2JGTjBZWFJsSWpwN0lrUkpVMEZDVEVWRUlqb2laR2x6WVdKc1pXUWlMQ0pKVGxOVVFVeE1SVVFpT2lKcGJuTjBZV3hzWldRaUxDSk9UMVJmU1U1VFZFRk1URVZFSWpvaWJtOTBYMmx1YzNSaGJHeGxaQ0o5TENKU2RXNXVhVzVuVTNSaGRHVWlPbnNpUTBGT1RrOVVYMUpWVGlJNkltTmhibTV2ZEY5eWRXNGlMQ0pTUlVGRVdWOVVUMTlTVlU0aU9pSnlaV0ZrZVY5MGIxOXlkVzRpTENKU1ZVNU9TVTVISWpvaWNuVnVibWx1WnlKOWZYMTksNjUsLTEyODU1NTEzLDEsMSwtMSwxNjk5OTU0ODg3LDE2OTk5NTQ4ODcsMzM2MDA3OTMzLDg=; __cf_bm=rwUJchB9lC6X3Ih3hbdqxg5lYGv73dqcOAzTg_zw1m4-1705900681-1-AS+ss3lW/fzT9ygWXJyteIo1TpYb8U2mvnxlBrVcoh+L3+bqeIxoq1wRlQUT+bqXPWs/2kgHQNCmT7ohALPj7aQ=; cf_clearance=Z2LcsZqv.56c6Q3zmRxiDofezI6reDOU4X83Yb6BwfQ-1705900694-1-Af7fgUX1dhxGqVHUB3MHVJYyk2blTuWaIUKYiELRsckW7/2naqpyg2/LPhtQZ+TheQJPuqgIxhNq0cJEJCTIyUs=; __Secure-access-token=3.0.Hcn-yt3NRQaVyTl1PkEbNQ.42.l8cMBQAAAABlrfq3G4s-ZaN3ZWKgAICQoA..20240122071847.frS7o_BJgTin90iMKIb6YWZaVzpY-KMCi8qBQHjZ8Wo; __Secure-refresh-token=3.0.Hcn-yt3NRQaVyTl1PkEbNQ.42.l8cMBQAAAABlrfq3G4s-ZaN3ZWKgAICQoA..20240122071847.0N2J32R0YV58H4giCp_FJ6d3-AWTQcNExnk1zEeKIlc; __Secure-user-id=0',
-    'referer': 'https://www.ozon.ru/product/adapter-dlya-ledobura-pod-shurupovert-18mm-dlya-ledoburov-tonar-nero-aysberg-274368601/?utm_campaign=productpage_link&utm_medium=share_button&utm_source=smm&sh=FG38VJaw3w',
-    'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'x-o3-app-name': 'dweb_client',
-    'x-o3-app-version': 'release_19-0-2024_8fdb2798',
-    'x-o3-manifest-version': '8fdb2798201e97e1da40ca6fafcaa364029964b6',
-}
+url = "https://www.ozon.ru/"
 
-response = requests.get('https://www.ozon.ru/api/composer-api.bx/_action/summary', cookies=cookies, headers=headers)
 
+response = requests.get(url=url)
 print(response)
+soup = BeautifulSoup(response.text, 'lxml')
+item = soup.find('h1', class_='zm0')
+print(item)
+
+with open('index.html', 'w', encoding='utf-8') as file:
+    file.write(response.text)
