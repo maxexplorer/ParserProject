@@ -20,7 +20,8 @@ stealth(driver,
         fix_hairline=True,
         )
 
-url = "https://bot.sannysoft.com/"
+# url = "https://bot.sannysoft.com/"
+url = "https://www.sneakersnstuff.com/"
 driver.get(url)
-time.sleep(5)
+time.sleep(15)
 driver.quit()
