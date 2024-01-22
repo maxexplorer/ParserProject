@@ -22,7 +22,7 @@ def undetected_chromdriver():
     driver.maximize_window()
 
     try:
-        driver.get(url="https://ozon.ru/t/jYDXY4o")
+        driver.get(url="https://ozon.ru/t/601oMbY")
         time.sleep(15)
     except Exception as ex:
         print(ex)
@@ -32,7 +32,7 @@ def undetected_chromdriver():
 
 
 def main():
-    pass
+    undetected_chromdriver()
 
 if __name__ == '__main__':
     main()
