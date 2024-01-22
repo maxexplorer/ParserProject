@@ -1,3 +1,5 @@
+import os.path
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -22,8 +24,16 @@ def undetected_chromdriver():
     driver.maximize_window()
 
     try:
-        driver.get(url="https://ozon.ru/t/601oMbY")
-        time.sleep(15)
+        # driver.get(url="https://ozon.ru/t/601oMbY")
+        driver.get(url="https://www.ozon.ru/cart")
+        time.sleep(5)
+
+        if not os.path.exists('data'):
+            os.makedirs('data')
+
+        with open('data/page_source.html', 'w', encoding='utf-8') as file:
+            file.write(driver.page_source)
+
     except Exception as ex:
         print(ex)
     finally:
