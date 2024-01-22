@@ -1,23 +1,38 @@
-import json
-import os
-
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from undetected_chromedriver import Chrome
 from fake_useragent import UserAgent
+import time
 
-useragent = UserAgent()
 
-url = "https://www.ozon.ru/api/entrypoint-api.bx/page/json/v2?url=%2Fproduct%2Fsmartfon-huawei-nova-y70-4-128-gb-goluboy-622866113"
 
-headers = {
-    'User-Agent': useragent.random
-}
+def undetected_chromdriver():
+    driver = Chrome()
+    driver.maximize_window()
+    options = Options()
+    # options.add_argument("--disable-blink-features=AutomationControlled")
 
-response = requests.get(url=url, headers=headers)
-print(response)
-data = response.json()
+    driver = Chrome(options=options)
+    driver.maximize_window()
 
-if not os.path.exists('data'):
-    os.mkdir('data')
+    try:
+        driver.get(url="https://ozon.ru/t/jYDXY4o")
+        time.sleep(15)
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
-with open('data/data.json', 'w', encoding='utf-8') as file:
-    json.dump(data, file, indent=4, ensure_ascii=False)
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
