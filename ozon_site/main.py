@@ -17,10 +17,8 @@ import time
 def undetected_chromdriver():
     driver = Chrome()
     driver.maximize_window()
-    options = Options()
-    # options.add_argument("--disable-blink-features=AutomationControlled")
 
-    driver = Chrome(options=options)
+    driver = Chrome()
     driver.maximize_window()
 
     try:
