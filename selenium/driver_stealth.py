@@ -21,7 +21,7 @@ stealth(driver,
         )
 
 # url = "https://bot.sannysoft.com/"
-url = "https://www.sneakersnstuff.com/"
+url = "https://www.ozon.ru/"
 driver.get(url)
 time.sleep(15)
 driver.quit()
