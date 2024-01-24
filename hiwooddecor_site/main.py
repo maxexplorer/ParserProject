@@ -62,7 +62,6 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
     try:
         pages = int(soup.find('div', class_='pagination__catalog').find_all('li')[-1].text.strip())
-        print(pages)
     except Exception as ex:
         print(ex)
         pages = 1
@@ -95,7 +94,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             pages = get_pages(html=html)
 
             for page in range(1, pages + 1):
-                product_url = f"{category_url}?PAGEN_1={page}"
+                product_url = f"{category_url}?&PAGES_1={page}"
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -104,10 +103,11 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    data = soup.find('div', class_='types').find_next().find_next().find_next().find_all(class_='item')
+                    data = soup.find('div', class_='catalog__list').find_all('div', class_='catalog__list-item')
                     for item in data:
                         try:
-                            url = "https://decor-dizayn.ru" + item.find(class_='image').get('href')
+                            url = f"https://hiwooddecor.ru{item.find('a', class_='title').get('href')}"
+                            print(url)
                         except Exception as ex:
                             print(ex)
                             continue
