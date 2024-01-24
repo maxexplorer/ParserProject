@@ -137,6 +137,7 @@ def get_data(file_path: str, headers: dict) -> list:
         count_urls = len(product_urls_list)
 
     result_list = []
+    image_urls_list = []
 
     with requests.Session() as session:
         for j, product_url in enumerate(product_urls_list[:3], 1):
@@ -158,8 +159,8 @@ def get_data(file_path: str, headers: dict) -> list:
                 category = ''
 
             try:
-                images_data = soup.find('div', class_='section__preview-images').find_all('a',
-                                                                                          class_='section__preview-img_item')
+                images_data = soup.find('div', class_='section__preview-images').find_all(
+                    'a', class_='section__preview-img_item')
             except Exception as ex:
                 print(f'{product_url} - {ex}')
                 images_data = ''
@@ -191,53 +192,83 @@ def get_data(file_path: str, headers: dict) -> list:
                 description = None
 
             try:
-                diagram_url = f"https://hiwooddecor.ru{info_data.find('img', class_='diagram').get('src')}"
-            except Exception:
-                diagram_url = ''
-
-            image_folder = product_url.split('/')[-2]
-
-            try:
                 for item_url in images_data:
                     img_url = f"https://hiwooddecor.ru{item_url.get('href')}"
-                    download_imgs(image_folder, img_url)
-                    if diagram_url:
-                        download_imgs(image_folder, diagram_url)
+                    image_urls_list.append(img_url)
             except Exception as ex:
                 print(f'image_data: {product_url} - {ex}')
 
+            try:
+                diagram_url = f"https://hiwooddecor.ru{info_data.find('img', class_='diagram').get('src')}"
+                if diagram_url:
+                    image_urls_list.append(diagram_url)
+            except Exception:
+                diagram_url = ''
+
+            try:
+                image_title = ' ,'.join(item_url.get('href').split('/')[-1] for item_url in images_data)
+                if diagram_url:
+                    image_title += f", {diagram_url.split('/')[-1]}"
+            except Exception:
+                image_title = ''
+
             result_list.append(
-                {
-                    'Ссылка': product_url,
-                    'Категория товара': category,
-                    'Название товара': title,
-                    'Размеры': dimensions,
-                    'Описание': description,
-                    'Цена': price,
-                    'Изображения': image_folder
-                }
+                {'Название товара': title,
+                 'Категория товара': category,
+                 'Ссылка': product_url,
+                 'Изображения': image_title,
+                 'Размеры': dimensions,
+                 'Описание': description,
+                 'Цена': price,
+                 }
             )
 
             print(f'Обработано: {j}/{count_urls}')
 
+    if not os.path.exists('data'):
+        os.mkdir('data')
+
+    with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
+        print(*image_urls_list, file=file, sep='\n')
+
     return result_list
 
 
-def download_imgs(image_folder: str, img_url: str) -> None:
-    """
-    :param image_folder: str
-    :return: None
-    """
+def download_imgs(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        image_urls_list = [line.strip() for line in file.readlines()]
 
-    response = requests.get(url=img_url)
+    count_urls = len(image_urls_list)
 
-    image_title = img_url.split('/')[-1]
+    for k, img_url in enumerate(image_urls_list, 1):
+        image_title = img_url.split('/')[-1]
 
-    if not os.path.exists(f'images/{image_folder}'):
-        os.makedirs(f'images/{image_folder}')
+        response = requests.get(url=img_url)
 
-    with open(f"images/{image_folder}/{image_title}", "wb") as file:
-        file.write(response.content)
+        if not os.path.exists('images'):
+            os.mkdir('images')
+
+        with open(f"images/{image_title}", "wb") as file:
+            file.write(response.content)
+
+        print(f'Обработано: {k}/{count_urls} изображений')
+
+
+# def download_imgs(image_folder: str, img_url: str) -> None:
+#     """
+#     :param image_folder: str
+#     :return: None
+#     """
+#
+#     response = requests.get(url=img_url)
+#
+#     image_title = img_url.split('/')[-1]
+#
+#     if not os.path.exists(f'images/{image_folder}'):
+#         os.makedirs(f'images/{image_folder}')
+#
+#     with open(f"images/{image_folder}/{image_title}", "wb") as file:
+#         file.write(response.content)
 
 
 def save_excel(data):
@@ -256,6 +287,7 @@ def main():
     # get_product_urls(category_urls_list=category_urls_list, headers=headers)
     result_list = get_data(file_path="data/product_urls_list.txt", headers=headers)
     save_excel(data=result_list)
+    download_imgs(file_path="data/image_urls_list.txt")
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')

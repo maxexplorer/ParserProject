@@ -23,8 +23,7 @@ def get_data(data_list):
     result_list = []
 
     with requests.Session() as session:
-        # for id, title, url in data_list:
-        for url in data_list:
+        for id, title, url in data_list:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
                 soup = BeautifulSoup(response.text, 'lxml')
