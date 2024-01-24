@@ -206,7 +206,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 diagram_url = ''
 
             try:
-                image_title = ' ,'.join(item_url.get('href').split('/')[-1] for item_url in images_data)
+                image_title = ', '.join(item_url.get('href').split('/')[-1] for item_url in images_data)
                 if diagram_url:
                     image_title += f", {diagram_url.split('/')[-1]}"
             except Exception:
