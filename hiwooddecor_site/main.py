@@ -140,9 +140,8 @@ def get_data(file_path: str, headers: dict) -> list:
     image_urls_list = []
 
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[:3], 1):
+        for j, product_url in enumerate(product_urls_list, 1):
             try:
-                time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{product_url} - {ex}")
@@ -252,24 +251,6 @@ def download_imgs(file_path):
             file.write(response.content)
 
         print(f'Обработано: {k}/{count_urls} изображений')
-
-
-# def download_imgs(image_folder: str, img_url: str) -> None:
-#     """
-#     :param image_folder: str
-#     :return: None
-#     """
-#
-#     response = requests.get(url=img_url)
-#
-#     image_title = img_url.split('/')[-1]
-#
-#     if not os.path.exists(f'images/{image_folder}'):
-#         os.makedirs(f'images/{image_folder}')
-#
-#     with open(f"images/{image_folder}/{image_title}", "wb") as file:
-#         file.write(response.content)
-
 
 def save_excel(data):
     if not os.path.exists('data'):
