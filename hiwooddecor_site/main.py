@@ -1,4 +1,6 @@
 import re
+import time
+from random import randint
 
 import requests
 from bs4 import BeautifulSoup
@@ -96,6 +98,7 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
             for page in range(1, pages + 1):
                 product_url = f"{category_url}?&PAGES_1={page}"
                 try:
+                    time.sleep(randint(1, 3))
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{url} - {ex}")
@@ -107,7 +110,6 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
                     for item in data:
                         try:
                             url = f"https://hiwooddecor.ru{item.find('a', class_='title').get('href')}"
-                            print(url)
                         except Exception as ex:
                             print(ex)
                             continue
