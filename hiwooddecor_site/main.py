@@ -139,7 +139,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_list = []
 
     with requests.Session() as session:
-        for j, product_url in enumerate(product_urls_list[:10], 1):
+        for j, product_url in enumerate(product_urls_list[:3], 1):
             try:
                 time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
@@ -206,15 +206,17 @@ def get_data(file_path: str, headers: dict) -> list:
             except Exception as ex:
                 print(f'image_data: {product_url} - {ex}')
 
-            result_list = {
-                'Ссылка': product_url,
-                'Категория товара': category,
-                'Название товара': title,
-                'Размеры': dimensions,
-                'Описание': description,
-                'Цена': price,
-                'Изображения': image_folder
-            }
+            result_list.append(
+                {
+                    'Ссылка': product_url,
+                    'Категория товара': category,
+                    'Название товара': title,
+                    'Размеры': dimensions,
+                    'Описание': description,
+                    'Цена': price,
+                    'Изображения': image_folder
+                }
+            )
 
             print(f'Обработано: {j}/{count_urls}')
 
@@ -229,8 +231,6 @@ def download_imgs(image_folder: str, img_url: str) -> None:
 
     response = requests.get(url=img_url)
 
-
-
     image_title = img_url.split('/')[-1]
 
     if not os.path.exists(f'images/{image_folder}'):
@@ -242,7 +242,7 @@ def download_imgs(image_folder: str, img_url: str) -> None:
 
 def save_excel(data):
     if not os.path.exists('data'):
-        os.mkdir('data')
+        os.makedirs('data')
 
     dataframe = DataFrame(data)
 

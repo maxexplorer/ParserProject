@@ -23,17 +23,15 @@ def get_data(data_list):
     result_list = []
 
     with requests.Session() as session:
-        for id, title, url in data_list:
+        # for id, title, url in data_list:
+        for url in data_list:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception as ex:
                 print(f"{url} - {ex}")
                 continue
-            try:
-                title_site = soup.find('h2', class_='product_name').text.strip()
-            except Exception:
-                title_site = None
+
             try:
                 price = soup.find('div', class_='price').text.strip()
             except Exception:
@@ -44,7 +42,6 @@ def get_data(data_list):
                     id,
                     title,
                     url,
-                    title_site,
                     price
                 )
             )
@@ -67,9 +64,13 @@ def save_excel(data):
 
 
 def main():
-    with open('data/decor_dizayn.csv', 'r', encoding='cp1251') as file:
-        reader = csv.reader(file, delimiter=';')
-        data_list = list(reader)
+    try:
+        with open('data/hiwooddecor.csv', 'r', encoding='cp1251') as file:
+            reader = csv.reader(file, delimiter=';')
+            data_list = list(reader)
+    except Exception as ex:
+        print(ex)
+        input()
     data = get_data(data_list=data_list)
     save_excel(data)
     execution_time = datetime.now() - start_time
