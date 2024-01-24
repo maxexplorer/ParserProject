@@ -11,24 +11,15 @@ import openpyxl
 start_time = datetime.now()
 
 category_urls_list = [
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/karnizy-belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/moldingi_belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/plintusy_belye/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/ugolki_belie/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/pilyastry/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/dekorativnye-elementi/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/paneli/",
-    "https://decor-dizayn.ru/catalog/belaya-lepnina/skrytoe-osveshchenie/",
-    "https://decor-dizayn.ru/catalog/rashodnye-materiali/kley/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/tsvetniye_plintusy/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dekorativnye-reyki/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/neo-klassika/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/afrodita/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/mramor/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/sultan/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/khay-tek/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-2/",
-    "https://decor-dizayn.ru/catalog/tsvetnaya-lepnina/dykhanie-vostoka/"
+    "https://hiwooddecor.ru/catalog/paneli-iz-fitopolimera/",
+    "https://hiwooddecor.ru/catalog/finishnye-moldingi-dlya-paneley/",
+    "https://hiwooddecor.ru/catalog/karnizy-iz-fitopolimera/",
+    "https://hiwooddecor.ru/catalog/moldingi-i-ugly/",
+    "https://hiwooddecor.ru/catalog/plintusy/",
+    "https://hiwooddecor.ru/catalog/profili-podsvetku/",
+    "https://hiwooddecor.ru/catalog/dekorirovannye-reyki/",
+    "https://hiwooddecor.ru/catalog/klei/",
+    "https://hiwooddecor.ru/catalog/reklamnaya-produktsiya/"
 ]
 
 headers = {
@@ -50,6 +41,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     try:
         response = session.get(url=url, headers=headers, timeout=60)
 
+
         if response.status_code != 200:
             print(response.status_code)
 
@@ -69,8 +61,8 @@ def get_pages(html: str) -> int:
 
     soup = BeautifulSoup(html, 'lxml')
     try:
-        pages = int(
-            soup.find('ul', class_='pages-nav__list').find_all('li', class_='pages-nav__item')[-2].text.strip())
+        pages = int(soup.find('div', class_='pagination__catalog').find_all('li')[-1].text.strip())
+        print(pages)
     except Exception as ex:
         print(ex)
         pages = 1
@@ -88,6 +80,8 @@ def get_product_urls(category_urls_list: list, headers: dict) -> None:
     """
 
     count_urls = len(category_urls_list)
+
+    print(f'Всего: {count_urls} категорий')
 
     product_urls_list = []
 
@@ -259,13 +253,13 @@ def save_excel(data):
 
 
 def main():
-    # get_urls(category_urls_list=category_urls_list, headers=headers)
-    result_list = get_data(file_path="data/product_urls_list.txt")
-    save_excel(data=result_list)
-    download_imgs(file_path="data/image_urls_list.txt")
-    execution_time = datetime.now() - start_time
-    print('Сбор данных завершен!')
-    print(f'Время работы программы: {execution_time}')
+    get_product_urls(category_urls_list=category_urls_list, headers=headers)
+    # result_list = get_data(file_path="data/product_urls_list.txt")
+    # save_excel(data=result_list)
+    # download_imgs(file_path="data/image_urls_list.txt")
+    # execution_time = datetime.now() - start_time
+    # print('Сбор данных завершен!')
+    # print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
