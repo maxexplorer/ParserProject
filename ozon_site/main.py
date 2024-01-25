@@ -1,16 +1,12 @@
-import os.path
+import time
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from undetected_chromedriver import Chrome
-from fake_useragent import UserAgent
-import time
+from bs4 import BeautifulSoup
+
+
 
 
 def undetected_chromdriver():
@@ -22,51 +18,37 @@ def undetected_chromdriver():
     try:
         driver.get(url="https://ozon.ru/t/601oMbY")
 
-        # basket = driver.find_element(By.CSS_SELECTOR, 'div.j0s')
+        time.sleep(5)
 
-        # print(basket)
+        soup = BeautifulSoup(driver.page_source, 'lxml')
 
-        basket = WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.j0s'))
-        )
+        price = soup.find('span', class_='l1n ln').text
 
+        print(driver.page_source)
 
-
+        basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
         basket.click()
 
+        WebDriverWait(driver, 15).until(
+            EC.text_to_be_present_in_element((By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'), 'В корзине')
+        )
 
+        in_basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+        in_basket.click()
 
-        #
-        # WebDriverWait(driver, 15).until(
-        #     EC.text_to_be_present_in_element((By.CSS_SELECTOR, '#layoutPage > div.b0 > div.container.b4 > div.kq7.r1k > div.kq7.r2k.rk.kr0 > div.kq7.r2k.rk.k0r > div.ql1.q3l > div > div.q2l > div > div > div.j0s > div > div > div > div.d4153-a.jr9 > button > div.b235-a'), 'В корзине')
-        # )
-        #
-        # in_basket = driver.find_element(By.CSS_SELECTOR, '#layoutPage > div.b0 > div.container.b4 > div.kq7.r1k > div.kq7.r2k.rk.kr0 > div.kq7.r2k.rk.k0r > div.ql1.q3l > div > div.q2l > div > div > div.j0s > div > div > div > div.d4153-a.jr9 > button > div.b235-a')
-        # in_basket.click()
-        #
-        #
-        # quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute('max')
-        #
-        # print(quantity)
+        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute('max')
 
+        button_del1 = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
 
-        # button_del = driver.find_element(By.CSS_SELECTOR, '#layoutPage > div.b0 > div > div > div.container.b4 > div:nth-child(5) > div.d6.c7 > div > div > div.l8b > div.bl9 > button')
-        # # button_del = driver.find_element(By.CSS_SELECTOR, 'button.mb bm0 ga26-a undefined')
-        #
-        # button_del.click()
-        #
-        # time.sleep(10)
+        button_del1.click()
 
-        # delete = driver.find_element(By.CSS_SELECTOR, 'button.b235-a0 b235-b5')
+        button_del2 = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
+        )
 
-        #
-        # if not os.path.exists('data'):
-        #     os.makedirs('data')
-        #
-        # with open('data/page_source.html', 'w', encoding='utf-8') as file:
-        #     file.write(driver.page_source)
+        button_del2.click()
+        time.sleep(10)
 
-        # time.sleep(5)
 
     except Exception as ex:
         print(ex)
