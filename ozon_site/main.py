@@ -19,40 +19,61 @@ def undetected_chromdriver():
 
         soup = BeautifulSoup(driver.page_source, 'lxml')
 
-        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
+        try:
+            price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
+        except Exception as ex:
+            print(f'price - {ex}')
+            price = ''
 
-        stor_item = soup.find('span', class_='ia1 m1j').find_next().find_next().find_next().text
+        try:
+            stor_item = soup.find('span', class_='ia1 m1j').find_next().find_next().find_next().text
+            storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
+        except Exception as ex:
+            print(f'storage - {ex}')
+            storage = ''
 
-        storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
 
-        basket = driver.find_element(By.XPATH,
-                                     '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-        basket.click()
+        try:
+            basket = driver.find_element(By.XPATH,
+                                         '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+            basket.click()
 
-        WebDriverWait(driver, 15).until(
-            EC.text_to_be_present_in_element((By.XPATH,
-                                              '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
-                                             'В корзине')
-        )
+            WebDriverWait(driver, 15).until(
+                EC.text_to_be_present_in_element((By.XPATH,
+                                                  '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
+                                                 'В корзине')
+            )
 
-        in_basket = driver.find_element(By.XPATH,
-                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-        in_basket.click()
+            in_basket = driver.find_element(By.XPATH,
+                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+            in_basket.click()
+        except Exception as ex:
+            print(ex)
+            pass
 
-        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute('max')
+        try:
+            quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute('max')
+        except Exception as ex:
+            print(f'quantity - {ex}')
+            quantity = ''
 
-        button_del1 = WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button'))
-        )
+        time.sleep(5)
 
-        button_del1.click()
+        try:
+            button_del1 = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
 
-        button_del2 = WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
-        )
+            button_del1.click()
 
-        button_del2.click()
-        time.sleep(10)
+            button_del2 = WebDriverWait(driver, 15).until(
+                EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
+            )
+
+            button_del2.click()
+        except Exception as ex:
+            print(ex)
+            pass
+
+        print(price, storage, quantity)
 
 
     except Exception as ex:
