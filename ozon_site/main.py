@@ -22,9 +22,12 @@ def undetected_chromdriver():
 
         soup = BeautifulSoup(driver.page_source, 'lxml')
 
-        price = soup.find('span', class_='l1n ln').text
+        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
 
-        print(driver.page_source)
+        storage = None
+
+
+        # print(driver.page_source)
 
         basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
         basket.click()
