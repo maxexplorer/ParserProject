@@ -20,17 +20,21 @@ def undetected_chromdriver():
     driver.maximize_window()
     driver.implicitly_wait(15)
 
-    for row in ws.iter_rows(min_row=4):
-        for cell in row:
-            if cell.hyperlink is not None:
-                # print(f'row {cell.row}: {cell.hyperlink.target}')
+    try:
+        for row in ws.iter_rows(min_row=4):
+            for cell in row:
+                if cell.hyperlink is not None:
+                    # print(f'row {cell.row}: {cell.hyperlink.target}')
 
-                try:
-                    driver.get(url=cell.hyperlink.target)
+                    try:
+                        driver.get(url=cell.hyperlink.target)
 
-                    time.sleep(5)
+                        time.sleep(5)
 
-                    soup = BeautifulSoup(driver.page_source, 'lxml')
+                        soup = BeautifulSoup(driver.page_source, 'lxml')
+                    except Exception as ex:
+                        print(ex)
+                        continue
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
@@ -87,12 +91,11 @@ def undetected_chromdriver():
 
                     print(price, storage, quantity)
 
-
-                except Exception as ex:
-                    print(ex)
-                finally:
-                    driver.close()
-                    driver.quit()
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
 
 def get_data():
