@@ -29,12 +29,17 @@ def undetected_chromdriver():
                     try:
                         driver.get(url=cell.hyperlink.target)
 
-                        time.sleep(5)
-
                         soup = BeautifulSoup(driver.page_source, 'lxml')
                     except Exception as ex:
                         print(ex)
                         continue
+
+                    try:
+                        if 'Этот товар закончился' == soup.find('h2', class_='yk5').text.strip():
+                            print(True)
+                            continue
+                    except Exception as ex:
+                        pass
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
@@ -48,7 +53,6 @@ def undetected_chromdriver():
                     except Exception as ex:
                         print(f'storage - {ex}')
                         storage = ''
-
 
                     try:
                         basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
