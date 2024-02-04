@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-start_time = datetime.now()
+# start_time = datetime.now()
 
 # Открываем файл Excel
 workbook = openpyxl.load_workbook("D:/PycharmProjects/ParserProject/ozon_site/data/table.xlsx")
@@ -70,7 +70,7 @@ def undetected_chromdriver():
                                                             '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
                         add_in_basket.click()
                     except Exception as ex:
-                        print(f'add_in_basket: {ex}')
+                        # print(f'add_in_basket: {ex}')
                         continue
 
                     try:
@@ -84,7 +84,7 @@ def undetected_chromdriver():
                                                         '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
                         in_basket.click()
                     except Exception as ex:
-                        print(f'in_basket: {ex}')
+                        # print(f'in_basket: {ex}')
                         continue
 
                     try:
@@ -101,7 +101,7 @@ def undetected_chromdriver():
                                                           '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
                         button_del1.click()
                     except Exception as ex:
-                        print(f'button_del1: {ex}')
+                        # print(f'button_del1: {ex}')
                         continue
 
                     try:
@@ -111,19 +111,17 @@ def undetected_chromdriver():
                         )
                         button_del2.click()
                     except Exception as ex:
-                        print(f'button_del2: {ex}')
+                        # print(f'button_del2: {ex}')
                         continue
 
                     row[cell.column - 4].value = price
                     row[cell.column - 3].value = quantity
                     row[cell.column - 2].value = storage
 
-                    print(price, quantity, storage, cell.hyperlink.target)
-
     except Exception as ex:
         print(ex)
     finally:
-        workbook.save('data/table_result.xlsx')
+        workbook.save('data/result_table.xlsx')
         driver.close()
         driver.quit()
 
@@ -135,9 +133,9 @@ def get_data():
 def main():
     undetected_chromdriver()
 
-    execution_time = datetime.now() - start_time
-    print('Сбор данных завершен!')
-    print(f'Время работы программы: {execution_time}')
+    # execution_time = datetime.now() - start_time
+    # print('Сбор данных завершен!')
+    # print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
