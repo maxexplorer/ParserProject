@@ -18,6 +18,7 @@ ws = workbook.active
 def undetected_chromdriver():
     driver = Chrome()
     driver.maximize_window()
+    # driver.set_page_load_timeout(15)
     driver.implicitly_wait(15)
 
     try:
@@ -28,6 +29,7 @@ def undetected_chromdriver():
 
                     try:
                         driver.get(url=cell.hyperlink.target)
+                        time.sleep(5)
 
                         soup = BeautifulSoup(driver.page_source, 'lxml')
                     except Exception as ex:
@@ -35,28 +37,28 @@ def undetected_chromdriver():
                         continue
 
                     try:
-                        if 'Этот товар закончился' == soup.find('h2', class_='yk5').text.strip():
-                            print(True)
+                        out_of_stock = soup.find('h2', class_='yk5').text.strip()
+                        if 'Этот товар закончился' == out_of_stock:
                             continue
                     except Exception as ex:
                         pass
 
                     try:
-                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lm5 l3m').text))
+                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol2 o0l').text))
                     except Exception as ex:
                         print(f'price - {ex}')
                         price = ''
 
                     try:
-                        stor_item = soup.find('span', class_='ia1 m1j').find_next().find_next().find_next().text
+                        stor_item = soup.find('span', class_='ia1').find_next().find_next().find_next().text
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
                     except Exception as ex:
                         print(f'storage - {ex}')
                         storage = ''
 
                     try:
-                        basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-                        basket.click()
+                        add_in_basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                        add_in_basket.click()
 
                         WebDriverWait(driver, 15).until(
                             EC.text_to_be_present_in_element((By.XPATH,
