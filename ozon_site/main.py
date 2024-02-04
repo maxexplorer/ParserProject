@@ -1,5 +1,7 @@
+import re
 import time
 from datetime import datetime
+from random import randint
 
 from undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
@@ -9,15 +11,14 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-
 start_time = datetime.now()
-
 
 # Открываем файл Excel
 workbook = openpyxl.load_workbook("D:/PycharmProjects/ParserProject/ozon_site/data/table.xlsx")
 
 # Выбираем активный лист (или любой другой лист)
 ws = workbook.active
+
 
 def undetected_chromdriver():
     driver = Chrome()
@@ -30,7 +31,7 @@ def undetected_chromdriver():
                 if cell.hyperlink is not None:
                     try:
                         driver.get(url=cell.hyperlink.target)
-                        time.sleep(5)
+                        time.sleep(randint(3, 5))
 
                         soup = BeautifulSoup(driver.page_source, 'lxml')
                     except Exception as ex:
@@ -38,10 +39,17 @@ def undetected_chromdriver():
                         continue
 
                     try:
-                        out_of_stock = soup.find('h2', class_='yk5').text.strip()
-                        if 'Этот товар закончился' == out_of_stock:
+                        out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
+                        if out_of_stock:
                             continue
-                    except Exception as ex:
+                    except Exception:
+                        pass
+
+                    try:
+                        no_such_page = soup.find('h2', string=re.compile('Такой страницы не существует'))
+                        if no_such_page:
+                            continue
+                    except Exception:
                         pass
 
                     try:
@@ -58,7 +66,8 @@ def undetected_chromdriver():
                         storage = None
 
                     try:
-                        add_in_basket = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                        add_in_basket = driver.find_element(By.XPATH,
+                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
                         add_in_basket.click()
                     except Exception as ex:
                         print(f'add_in_basket: {ex}')
@@ -79,7 +88,8 @@ def undetected_chromdriver():
                         continue
 
                     try:
-                        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute('max')
+                        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute(
+                            'max')
                     except Exception as ex:
                         # print(f'quantity - {ex}')
                         quantity = None
@@ -87,7 +97,8 @@ def undetected_chromdriver():
                     time.sleep(5)
 
                     try:
-                        button_del1 = driver.find_element(By.XPATH, '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
+                        button_del1 = driver.find_element(By.XPATH,
+                                                          '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
                         button_del1.click()
                     except Exception as ex:
                         print(f'button_del1: {ex}')
@@ -95,7 +106,8 @@ def undetected_chromdriver():
 
                     try:
                         button_del2 = WebDriverWait(driver, 15).until(
-                            EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
+                            EC.element_to_be_clickable(
+                                (By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
                         )
                         button_del2.click()
                     except Exception as ex:
