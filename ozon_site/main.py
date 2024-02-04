@@ -28,8 +28,6 @@ def undetected_chromdriver():
         for row in ws.iter_rows(min_row=4):
             for cell in row:
                 if cell.hyperlink is not None:
-                    # print(f'row {cell.row}: {cell.hyperlink.target}')
-
                     try:
                         driver.get(url=cell.hyperlink.target)
                         time.sleep(5)
@@ -107,6 +105,8 @@ def undetected_chromdriver():
                     row[cell.column - 4].value = price
                     row[cell.column - 3].value = quantity
                     row[cell.column - 2].value = storage
+
+                    print(price, quantity, storage, cell.hyperlink.target)
 
     except Exception as ex:
         print(ex)
