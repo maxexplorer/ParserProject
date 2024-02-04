@@ -8,6 +8,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from undetected_chromedriver import Chrome
 from fake_useragent import UserAgent
+from bs4 import BeautifulSoup
+import re
 import time
 
 useragent = UserAgent().random
@@ -33,15 +35,17 @@ def chromdriver():
 def undetected_chromdriver():
     driver = Chrome()
     driver.maximize_window()
-    options = Options()
-    # options.add_argument("--disable-blink-features=AutomationControlled")
-
-    driver = Chrome(options=options)
-    driver.maximize_window()
 
     try:
         driver.get(url="https://ozon.ru/t/jYDXY4o")
-        time.sleep(15)
+        time.sleep(5)
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+
+        out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
+
+        print(out_of_stock)
+
+
     except Exception as ex:
         print(ex)
     finally:
