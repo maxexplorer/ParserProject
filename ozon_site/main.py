@@ -17,7 +17,8 @@ import openpyxl
 workbook = openpyxl.load_workbook("D:/PycharmProjects/ParserProject/ozon_site/data/table.xlsx")
 
 # Выбираем активный лист (или любой другой лист)
-ws = workbook.active
+# ws = workbook.active
+ws = workbook['Лист1']
 
 
 def undetected_chromdriver():
