@@ -14,11 +14,11 @@ import openpyxl
 # start_time = datetime.now()
 
 # Открываем файл Excel
-workbook = openpyxl.load_workbook("D:/PycharmProjects/ParserProject/ozon_site/data/table.xlsx")
+workbook = openpyxl.load_workbook("data/table.xlsx")
 
 # Выбираем активный лист (или любой другой лист)
-# ws = workbook.active
-ws = workbook['Лист1']
+ws = workbook.active
+# ws = workbook['Лист1']
 
 
 def undetected_chromdriver():
