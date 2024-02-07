@@ -37,13 +37,18 @@ def undetected_chromdriver():
     driver.maximize_window()
 
     try:
-        driver.get(url="https://ozon.ru/t/jYDXY4o")
+        driver.get(url="https://ozon.ru/t/601oMbY")
         time.sleep(5)
         soup = BeautifulSoup(driver.page_source, 'lxml')
 
-        out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
+        # out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
 
-        print(out_of_stock)
+        # print(out_of_stock)
+
+        stor_item = soup.find('span', class_='ai2')
+
+        print(stor_item)
+        time.sleep(10)
 
 
     except Exception as ex:

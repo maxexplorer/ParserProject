@@ -54,13 +54,16 @@ def undetected_chromdriver():
                         pass
 
                     try:
-                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol2 o0l').text))
+                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='o3l lo2').text))
+                        if not price:
+                            price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol8 o8l pl2').text))
+
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = None
 
                     try:
-                        stor_item = soup.find('span', class_='ia1').find_next().find_next().find_next().text
+                        stor_item = soup.find('span', class_='ai2').find_next().find_next().find_next().text
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
                     except Exception as ex:
                         # print(f'storage - {ex}')
@@ -68,7 +71,9 @@ def undetected_chromdriver():
 
                     try:
                         add_in_basket = driver.find_element(By.XPATH,
-                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+
+
                         add_in_basket.click()
                     except Exception as ex:
                         # print(f'add_in_basket: {ex}')
@@ -89,7 +94,7 @@ def undetected_chromdriver():
                         continue
 
                     try:
-                        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode = numeric]').get_attribute(
+                        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode=numeric]').get_attribute(
                             'max')
                     except Exception as ex:
                         # print(f'quantity - {ex}')
@@ -118,6 +123,8 @@ def undetected_chromdriver():
                     row[cell.column - 4].value = price
                     row[cell.column - 3].value = quantity
                     row[cell.column - 2].value = storage
+
+                    print(f'{cell.hyperlink.target}: price-{price}, quantity-{quantity}, storage-{storage}')
 
     except Exception as ex:
         print(ex)
