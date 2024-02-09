@@ -19,12 +19,6 @@ import requests
 # Открываем файл Excel
 workbook = openpyxl.load_workbook("data/table_1.xlsx")
 
-# # Выбираем активный лист (или любой другой лист)
-# ws = workbook.active
-
-
-# ws = workbook['Лист1']
-
 
 def ozone_parser(workbook):
     # Выбираем активный лист (или любой другой лист)
@@ -148,10 +142,24 @@ def ozone_parser(workbook):
 
 
 def wildberries_parser(workbook):
+    headers = {
+        'Accept': '*/*',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Connection': 'keep-alive',
+        'Origin': 'https://www.wildberries.ru',
+        'Referer': 'https://www.wildberries.ru/catalog/18172488/detail.aspx',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931',
+        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+    }
+
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ВБ']
-
-    c = 1
 
     for row in ws.iter_rows(min_row=4):
         for cell in row:
@@ -159,47 +167,29 @@ def wildberries_parser(workbook):
                 url = cell.hyperlink.target
                 prod_id = url.split('catalog')[-1].split('detail')[0].strip('/')
 
+                params = {
+                    'appType': '1',
+                    'curr': 'rub',
+                    'dest': '-1257786',
+                    'spp': '30',
+                    'nm': {prod_id},
+                }
 
-    #
-    # headers = {
-    #     'Accept': '*/*',
-    #     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    #     'Connection': 'keep-alive',
-    #     'Origin': 'https://www.wildberries.ru',
-    #     'Referer': 'https://www.wildberries.ru/catalog/18172488/detail.aspx',
-    #     'Sec-Fetch-Dest': 'empty',
-    #     'Sec-Fetch-Mode': 'cors',
-    #     'Sec-Fetch-Site': 'cross-site',
-    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    #     'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-    #     'sec-ch-ua-mobile': '?0',
-    #     'sec-ch-ua-platform': '"Windows"',
-    # }
-    #
-    # params = {
-    #     'appType': '1',
-    #     'curr': 'rub',
-    #     'dest': '-1257786',
-    #     'spp': '30',
-    #     'nm': '18172488',
-    # }
-    #
-    # response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
-    #
-    # print(response.status_code)
+                try:
+                    response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
+                    if response.status_code != 200:
+                        print(f'{url}: {response.status_code}')
+                except Exception as ex:
+                    print(f'{url}: ex')
+                    continue
 
 
 
-    # with open('data/wb_res.json', 'w', encoding='utf-8') as file:
-    #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
+                price = data['data']['products'][0]['salePriceU']
+                quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
+                storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
+                storage = 'FBO' if storage_id == 4 else 'FBS'
 
-    # with open('data/wb_res.json', 'r', encoding='utf-8') as file:
-    #     data = json.load(file)
-    #
-    #
-    # print(data['data']['products'][0]['salePriceU'])
-    # print(data['data']['products'][0]['sizes'][0]['stocks'][0]['qty'])
-    #
 
 
 def main():
