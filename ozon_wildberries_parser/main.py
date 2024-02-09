@@ -1,3 +1,4 @@
+import json
 import re
 import time
 from datetime import datetime
@@ -11,19 +12,24 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
+import requests
+
 # start_time = datetime.now()
 
 # Открываем файл Excel
-workbook = openpyxl.load_workbook("data/table.xlsx")
+workbook = openpyxl.load_workbook("data/table_1.xlsx")
 
-# Выбираем активный лист (или любой другой лист)
-ws = workbook.active
+# # Выбираем активный лист (или любой другой лист)
+# ws = workbook.active
 
 
 # ws = workbook['Лист1']
 
 
-def ozone_parser():
+def ozone_parser(workbook):
+    # Выбираем активный лист (или любой другой лист)
+    ws = workbook['ОЗОН']
+
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -141,12 +147,63 @@ def ozone_parser():
         driver.quit()
 
 
-def wildberries_parser():
-    pass
+def wildberries_parser(workbook):
+    # Выбираем активный лист (или любой другой лист)
+    ws = workbook['ВБ']
+
+    c = 1
+
+    for row in ws.iter_rows(min_row=4):
+        for cell in row:
+            if cell.hyperlink is not None:
+                url = cell.hyperlink.target
+                prod_id = url.split('catalog')[-1].split('detail')[0].strip('/')
+
+
+    #
+    # headers = {
+    #     'Accept': '*/*',
+    #     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    #     'Connection': 'keep-alive',
+    #     'Origin': 'https://www.wildberries.ru',
+    #     'Referer': 'https://www.wildberries.ru/catalog/18172488/detail.aspx',
+    #     'Sec-Fetch-Dest': 'empty',
+    #     'Sec-Fetch-Mode': 'cors',
+    #     'Sec-Fetch-Site': 'cross-site',
+    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    #     'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+    #     'sec-ch-ua-mobile': '?0',
+    #     'sec-ch-ua-platform': '"Windows"',
+    # }
+    #
+    # params = {
+    #     'appType': '1',
+    #     'curr': 'rub',
+    #     'dest': '-1257786',
+    #     'spp': '30',
+    #     'nm': '18172488',
+    # }
+    #
+    # response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
+    #
+    # print(response.status_code)
+
+
+
+    # with open('data/wb_res.json', 'w', encoding='utf-8') as file:
+    #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
+
+    # with open('data/wb_res.json', 'r', encoding='utf-8') as file:
+    #     data = json.load(file)
+    #
+    #
+    # print(data['data']['products'][0]['salePriceU'])
+    # print(data['data']['products'][0]['sizes'][0]['stocks'][0]['qty'])
+    #
 
 
 def main():
-    wildberries_parser()
+    wildberries_parser(workbook=workbook)
 
     # execution_time = datetime.now() - start_time
     # print('Сбор данных завершен!')
