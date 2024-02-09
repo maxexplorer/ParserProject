@@ -18,10 +18,12 @@ workbook = openpyxl.load_workbook("data/table.xlsx")
 
 # Выбираем активный лист (или любой другой лист)
 ws = workbook.active
+
+
 # ws = workbook['Лист1']
 
 
-def undetected_chromdriver():
+def ozone_parser():
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -42,6 +44,9 @@ def undetected_chromdriver():
                     try:
                         out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
                         if out_of_stock:
+                            row[cell.column - 4].value = ''
+                            row[cell.column - 3].value = ''
+                            row[cell.column - 2].value = 'Этот товар закончился'
                             continue
                     except Exception:
                         pass
@@ -49,6 +54,9 @@ def undetected_chromdriver():
                     try:
                         no_such_page = soup.find('h2', string=re.compile('Такой страницы не существует'))
                         if no_such_page:
+                            row[cell.column - 4].value = ''
+                            row[cell.column - 3].value = ''
+                            row[cell.column - 2].value = 'Такой страницы не существует'
                             continue
                     except Exception:
                         pass
@@ -63,7 +71,7 @@ def undetected_chromdriver():
                         price = None
 
                     try:
-                        stor_item = soup.find('span', class_='ai2').find_next().find_next().find_next().text
+                        stor_item = soup.find('span', class_='ai2').text.strip()
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
                     except Exception as ex:
                         # print(f'storage - {ex}')
@@ -72,7 +80,6 @@ def undetected_chromdriver():
                     try:
                         add_in_basket = driver.find_element(By.XPATH,
                                                             '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-
 
                         add_in_basket.click()
                     except Exception as ex:
@@ -124,7 +131,7 @@ def undetected_chromdriver():
                     row[cell.column - 3].value = quantity
                     row[cell.column - 2].value = storage
 
-                    print(f'{cell.hyperlink.target}: price-{price}, quantity-{quantity}, storage-{storage}')
+                    # print(f'{cell.hyperlink.target}: price-{price}, quantity-{quantity}, storage-{storage}')
 
     except Exception as ex:
         print(ex)
@@ -134,12 +141,12 @@ def undetected_chromdriver():
         driver.quit()
 
 
-def get_data():
+def wildberries_parser():
     pass
 
 
 def main():
-    undetected_chromdriver()
+    wildberries_parser()
 
     # execution_time = datetime.now() - start_time
     # print('Сбор данных завершен!')
