@@ -17,7 +17,7 @@ import requests
 # start_time = datetime.now()
 
 # Открываем файл Excel
-workbook = openpyxl.load_workbook("data/table_1.xlsx")
+workbook = openpyxl.load_workbook("data/data_1.xlsx")
 
 
 def ozone_parser(workbook):
@@ -47,6 +47,7 @@ def ozone_parser(workbook):
                             row[cell.column - 4].value = ''
                             row[cell.column - 3].value = ''
                             row[cell.column - 2].value = 'Этот товар закончился'
+                            print(f'{cell.hyperlink.target}: Этот товар закончился')
                             continue
                     except Exception:
                         pass
@@ -57,6 +58,7 @@ def ozone_parser(workbook):
                             row[cell.column - 4].value = ''
                             row[cell.column - 3].value = ''
                             row[cell.column - 2].value = 'Такой страницы не существует'
+                            print(f'{cell.hyperlink.target}: Такой страницы не существует')
                             continue
                     except Exception:
                         pass
@@ -131,12 +133,12 @@ def ozone_parser(workbook):
                     row[cell.column - 3].value = quantity
                     row[cell.column - 2].value = storage
 
-                    # print(f'{cell.hyperlink.target}: price-{price}, quantity-{quantity}, storage-{storage}')
+                    print(f'{cell.hyperlink.target}: price - {price}, quantity - {quantity}, storage - {storage}')
 
     except Exception as ex:
         print(ex)
     finally:
-        workbook.save('data/result_table.xlsx')
+        workbook.save('data/result_data.xlsx')
         driver.close()
         driver.quit()
 
@@ -176,6 +178,7 @@ def wildberries_parser(workbook):
                 }
 
                 try:
+                    time.sleep(randint(1, 3))
                     response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
                     if response.status_code != 200:
                         print(f'{url}: {response.status_code}')
@@ -183,21 +186,45 @@ def wildberries_parser(workbook):
                     print(f'{url}: ex')
                     continue
 
+                data = response.json()
 
+                try:
+                    quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
+                except Exception:
+                    print(f'{url}: Этот товар закончился')
+                    row[cell.column - 4].value = ''
+                    row[cell.column - 3].value = ''
+                    row[cell.column - 2].value = 'Этот товар закончился'
+                    continue
 
-                price = data['data']['products'][0]['salePriceU']
-                quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
-                storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
-                storage = 'FBO' if storage_id == 4 else 'FBS'
+                try:
+                    storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
+                    storage = 'FBO' if storage_id == 4 else 'FBS'
+                except Exception:
+                    storage = None
 
+                try:
+                    price = str(data['data']['products'][0]['salePriceU']).rstrip('00')
+                except Exception:
+                    price = None
+
+                row[cell.column - 4].value = price
+                row[cell.column - 3].value = quantity
+                row[cell.column - 2].value = storage
+
+                print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
+
+    workbook.save('data/result_data.xlsx')
 
 
 def main():
-    wildberries_parser(workbook=workbook)
+    # print('Сбор данных Ozone')
+    # ozone_parser(workbook=workbook)
+    # print('Сбор данных Ozone завершен')
 
-    # execution_time = datetime.now() - start_time
-    # print('Сбор данных завершен!')
-    # print(f'Время работы программы: {execution_time}')
+    print('Сбор данных Wildberries')
+    wildberries_parser(workbook=workbook)
+    print('Сбор данных Wildberries завершен')
 
 
 if __name__ == '__main__':
