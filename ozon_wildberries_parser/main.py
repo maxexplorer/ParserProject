@@ -17,7 +17,7 @@ import requests
 # start_time = datetime.now()
 
 # Открываем файл Excel
-workbook = openpyxl.load_workbook("data/data_1.xlsx")
+workbook = openpyxl.load_workbook("data/data.xlsx")
 
 
 def ozone_parser(workbook):
@@ -38,7 +38,6 @@ def ozone_parser(workbook):
 
                         soup = BeautifulSoup(driver.page_source, 'lxml')
                     except Exception as ex:
-                        print(ex)
                         continue
 
                     try:
@@ -64,10 +63,10 @@ def ozone_parser(workbook):
                         pass
 
                     try:
-                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='o3l lo2').text))
+                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lp l8o').text))
                         if not price:
                             price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol8 o8l pl2').text))
-
+                            row[cell.column - 4].value = price
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = None
@@ -75,6 +74,7 @@ def ozone_parser(workbook):
                     try:
                         stor_item = soup.find('span', class_='ai2').text.strip()
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
+                        row[cell.column - 2].value = storage
                     except Exception as ex:
                         # print(f'storage - {ex}')
                         storage = None
@@ -105,6 +105,7 @@ def ozone_parser(workbook):
                     try:
                         quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode=numeric]').get_attribute(
                             'max')
+                        row[cell.column - 3].value = quantity
                     except Exception as ex:
                         # print(f'quantity - {ex}')
                         quantity = None
@@ -128,10 +129,6 @@ def ozone_parser(workbook):
                     except Exception as ex:
                         # print(f'button_del2: {ex}')
                         continue
-
-                    row[cell.column - 4].value = price
-                    row[cell.column - 3].value = quantity
-                    row[cell.column - 2].value = storage
 
                     print(f'{cell.hyperlink.target}: price - {price}, quantity - {quantity}, storage - {storage}')
 
@@ -190,6 +187,7 @@ def wildberries_parser(workbook):
 
                 try:
                     quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
+                    row[cell.column - 3].value = quantity
                 except Exception:
                     print(f'{url}: Этот товар закончился')
                     row[cell.column - 4].value = ''
@@ -200,17 +198,19 @@ def wildberries_parser(workbook):
                 try:
                     storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
                     storage = 'FBO' if storage_id == 4 else 'FBS'
+                    row[cell.column - 2].value = storage
                 except Exception:
                     storage = None
 
                 try:
                     price = str(data['data']['products'][0]['salePriceU']).rstrip('00')
+                    row[cell.column - 4].value = price
                 except Exception:
                     price = None
 
-                row[cell.column - 4].value = price
-                row[cell.column - 3].value = quantity
-                row[cell.column - 2].value = storage
+
+
+
 
                 print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
@@ -218,13 +218,26 @@ def wildberries_parser(workbook):
 
 
 def main():
-    # print('Сбор данных Ozone')
-    # ozone_parser(workbook=workbook)
-    # print('Сбор данных Ozone завершен')
+    value = input('Введите значение:\n1 - Ozone\n2 - Wildberries\n3 - Оба сайта\n')
 
-    print('Сбор данных Wildberries')
-    wildberries_parser(workbook=workbook)
-    print('Сбор данных Wildberries завершен')
+    if value == '1':
+        print('Сбор данных Ozone')
+        ozone_parser(workbook=workbook)
+        print('Сбор данных Ozone завершен')
+    elif value == '2':
+        print('Сбор данных Wildberries')
+        wildberries_parser(workbook=workbook)
+        print('Сбор данных Wildberries завершен')
+    elif value == '3':
+        print('Сбор данных Ozone')
+        ozone_parser(workbook=workbook)
+        print('Сбор данных Ozone завершен')
+
+        print('Сбор данных Wildberries')
+        wildberries_parser(workbook=workbook)
+        print('Сбор данных Wildberries завершен')
+    else:
+        print('Введено неправильное значение')
 
 
 if __name__ == '__main__':
