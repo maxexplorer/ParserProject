@@ -197,15 +197,15 @@ def wildberries_parser(workbook):
                 try:
                     storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
                     storage = 'FBO' if storage_id == 4 else 'FBS'
-                    row[cell.column - 2].value = storage
                 except Exception:
                     storage = None
+                row[cell.column - 2].value = storage
 
                 try:
                     price = str(data['data']['products'][0]['salePriceU']).rstrip('00')
-                    row[cell.column - 4].value = price
                 except Exception:
                     price = None
+                row[cell.column - 4].value = price
 
                 print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
