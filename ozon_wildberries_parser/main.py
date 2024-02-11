@@ -208,10 +208,6 @@ def wildberries_parser(workbook):
                 except Exception:
                     price = None
 
-
-
-
-
                 print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
     workbook.save('data/result_data.xlsx')
