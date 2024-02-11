@@ -66,18 +66,19 @@ def ozone_parser(workbook):
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lp l8o').text))
                         if not price:
                             price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol8 o8l pl2').text))
-                            row[cell.column - 4].value = price
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = None
+                    row[cell.column - 4].value = price
 
                     try:
-                        stor_item = soup.find('span', class_='ai2').text.strip()
+                        stor_item = soup.find('span', class_='a1i jn9').find('span', class_='a2i').text.strip()
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
-                        row[cell.column - 2].value = storage
+
                     except Exception as ex:
                         # print(f'storage - {ex}')
                         storage = None
+                    row[cell.column - 2].value = storage
 
                     try:
                         add_in_basket = driver.find_element(By.XPATH,
@@ -105,12 +106,10 @@ def ozone_parser(workbook):
                     try:
                         quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode=numeric]').get_attribute(
                             'max')
-                        row[cell.column - 3].value = quantity
                     except Exception as ex:
                         # print(f'quantity - {ex}')
                         quantity = None
-
-                    time.sleep(5)
+                    row[cell.column - 3].value = quantity
 
                     try:
                         button_del1 = driver.find_element(By.XPATH,
