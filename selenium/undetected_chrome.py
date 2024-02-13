@@ -2,6 +2,7 @@ import re
 import time
 
 from undetected_chromedriver import Chrome
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 def undetected_chromdriver():
@@ -11,12 +12,6 @@ def undetected_chromdriver():
     try:
         driver.get(url="https://ozon.ru/t/601oMbY")
         time.sleep(3)
-
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-
-        storage = soup.find('span', string=re.compile('Со склада')).text.strip()
-
-        print(storage)
 
     except Exception as ex:
         print(ex)
