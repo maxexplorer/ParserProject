@@ -63,16 +63,14 @@ def ozone_parser(workbook):
                         pass
 
                     try:
-                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='lp l8o').text))
-                        if not price:
-                            price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='ol8 o8l pl2').text))
+                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile('c Ozon Картой')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = None
                     row[cell.column - 4].value = price
 
                     try:
-                        stor_item = soup.find('span', class_='a1i jn9').find('span', class_='a2i').text.strip()
+                        stor_item = soup.find('span', string=re.compile('Со склада')).text.strip()
                         storage = 'FBO' if 'Со склада Ozon' in stor_item else 'FBS'
 
                     except Exception as ex:

@@ -1,17 +1,23 @@
-from undetected_chromedriver import Chrome
+import re
 import time
 
+from undetected_chromedriver import Chrome
+from bs4 import BeautifulSoup
 
 def undetected_chromdriver():
     driver = Chrome()
     driver.maximize_window()
 
-    driver = Chrome()
-    driver.maximize_window()
-
     try:
-        driver.get(url="https://ozon.ru/t/jYDXY4o")
-        time.sleep(15)
+        driver.get(url="https://ozon.ru/t/601oMbY")
+        time.sleep(3)
+
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+
+        storage = soup.find('span', string=re.compile('Со склада')).text.strip()
+
+        print(storage)
+
     except Exception as ex:
         print(ex)
     finally:
