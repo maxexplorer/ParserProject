@@ -14,7 +14,7 @@ import openpyxl
 
 import requests
 
-# start_time = datetime.now()
+start_time = datetime.now()
 
 # Открываем файл Excel
 workbook = openpyxl.load_workbook("data/data.xlsx")
@@ -233,6 +233,9 @@ def main():
         print('Сбор данных Wildberries завершен')
     else:
         print('Введено неправильное значение')
+
+    execution_time = datetime.now() - start_time
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
