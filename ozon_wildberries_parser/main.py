@@ -33,7 +33,8 @@ def ozone_parser(workbook):
             for cell in row:
                 if cell.hyperlink is not None:
                     try:
-                        driver.get(url=cell.hyperlink.target)
+                        url = cell.hyperlink.target
+                        driver.get(url=url)
                         time.sleep(randint(3, 5))
 
                         soup = BeautifulSoup(driver.page_source, 'lxml')
@@ -44,8 +45,8 @@ def ozone_parser(workbook):
                         out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
                         if out_of_stock:
                             row[cell.column - 4].value = ''
-                            row[cell.column - 3].value = ''
-                            row[cell.column - 2].value = 'Этот товар закончился'
+                            row[cell.column - 3].value = 'Этот товар закончился'
+                            row[cell.column - 2].value = ''
                             print(f'{cell.hyperlink.target}: Этот товар закончился')
                             continue
                     except Exception:
@@ -55,15 +56,16 @@ def ozone_parser(workbook):
                         no_such_page = soup.find('h2', string=re.compile('Такой страницы не существует'))
                         if no_such_page:
                             row[cell.column - 4].value = ''
-                            row[cell.column - 3].value = ''
-                            row[cell.column - 2].value = 'Такой страницы не существует'
+                            row[cell.column - 3].value = 'Такой страницы не существует'
+                            row[cell.column - 2].value = ''
                             print(f'{cell.hyperlink.target}: Такой страницы не существует')
                             continue
                     except Exception:
                         pass
 
                     try:
-                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile('c Ozon Картой')).find_parent().text))
+                        price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
+                            'c Ozon Картой')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = None
@@ -79,31 +81,49 @@ def ozone_parser(workbook):
                     row[cell.column - 2].value = storage
 
                     try:
-                        add_in_basket = driver.find_element(By.XPATH,
-                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-
-                        add_in_basket.click()
+                        add_in_basket = driver.find_element(By.XPATH, '//div[contains(text(), "Добавить в корзину")]')
+                        parent_element = add_in_basket.find_element(By.XPATH, "../..")
+                        parent_element.click()
                     except Exception as ex:
                         # print(f'add_in_basket: {ex}')
                         continue
 
-                    try:
-                        WebDriverWait(driver, 15).until(
-                            EC.text_to_be_present_in_element((By.XPATH,
-                                                              '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
-                                                             'В корзине')
-                        )
+                    if url in ["https://ozon.ru/t/nYDaYbE", "https://ozon.ru/t/Z2bq28z", "https://ozon.ru/t/8V34MAg"]:
+                        try:
+                            WebDriverWait(driver, 15).until(
+                                EC.text_to_be_present_in_element((By.XPATH,
+                                                                  '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[4]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
+                                                                 'В корзине')
 
-                        in_basket = driver.find_element(By.XPATH,
-                                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-                        in_basket.click()
-                    except Exception as ex:
-                        # print(f'in_basket: {ex}')
-                        continue
+                            )
+
+                            in_basket = driver.find_element(By.XPATH,
+                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[4]/div/div/div[1]/div/div/div/div[1]/button')
+                            in_basket.click()
+                        except Exception as ex:
+                            print(f'in_basket: {ex}')
+                    else:
+                        try:
+                            WebDriverWait(driver, 15).until(
+                                EC.text_to_be_present_in_element((By.XPATH,
+                                                                  '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
+                                                                 'В корзине')
+                            )
+
+                            in_basket = driver.find_element(By.XPATH,
+                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+
+                            in_basket.click()
+                        except Exception as ex:
+                            # print(f'in_basket: {ex}')
+                            continue
+
+                        time.sleep(randint(3, 5))
 
                     try:
-                        quantity = driver.find_element(By.CSS_SELECTOR, 'input[inputmode=numeric]').get_attribute(
-                            'max')
+                        soup = BeautifulSoup(driver.page_source, 'lxml')
+                        items = soup.find_all('input', inputmode='numeric')
+                        quantity = items[0].get('max')
                     except Exception as ex:
                         # print(f'quantity - {ex}')
                         quantity = None
@@ -123,6 +143,8 @@ def ozone_parser(workbook):
                                 (By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
                         )
                         button_del2.click()
+
+                        time.sleep(randint(3, 5))
                     except Exception as ex:
                         # print(f'button_del2: {ex}')
                         continue
