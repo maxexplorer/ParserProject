@@ -1,4 +1,5 @@
 import requests
+from requests import Session
 
 urls_list = [
     "https://www.wildberries.ru/brands/97714537-belgatto",
@@ -6,7 +7,7 @@ urls_list = [
 ]
 
 
-def get_id_brand(url):
+def get_id_brand(url: str, session: Session) -> int:
 
     headers = {
         'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
@@ -18,8 +19,7 @@ def get_id_brand(url):
 
     brand = url.split('brands')[-1].strip()
 
-    with requests.Session() as session:
-        response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/brands{brand}.json', headers=headers)
+    response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/brands{brand}.json', headers=headers)
 
     json_data = response.json()
 
@@ -28,14 +28,25 @@ def get_id_brand(url):
     return id_brand
 
 
-def get_data():
+def get_data(urls_list):
+
+    # with open(file_path, 'r', encoding='utf-8') as file:
+    #     product_urls_list = [line.strip() for line in file.readlines()]
+
+    with Session() as session:
+        for url in urls_list:
+            id_brand = get_id_brand(url=url, session=session)
+
+
+            if id_brand is None:
+                continue
 
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'Connection': 'keep-alive',
         'Origin': 'https://www.wildberries.ru',
-        'Referer': 'https://www.wildberries.ru/brands/97714537-belgatto',
+        'Referer': url,
         'Sec-Fetch-Dest': 'empty',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Site': 'cross-site',
@@ -47,7 +58,7 @@ def get_data():
 
     params = {
         'appType': '1',
-        'brand': '97714537',
+        'brand': id_brand,
         'curr': 'rub',
         'dest': '-1257786',
         'sort': 'popular',
@@ -60,9 +71,8 @@ def get_data():
 
 
 def main():
-    for url in urls_list:
-        get_id_brand(url=url)
-    # get_data()
+
+    get_data(urls_list=urls_list)
 
 
 if __name__ == '__main__':
