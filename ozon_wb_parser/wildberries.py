@@ -1,9 +1,10 @@
 import json
 import os.path
 import time
+from datetime import datetime
+from random import randint
 from math import floor
 
-import requests
 from requests import Session
 
 urls_list = [
@@ -13,7 +14,6 @@ urls_list = [
 
 
 def get_id_brand(url: str, session: Session) -> int:
-
     headers = {
         'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
         'Referer': url,
@@ -24,7 +24,13 @@ def get_id_brand(url: str, session: Session) -> int:
 
     brand = url.split('brands')[-1].strip()
 
-    response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/brands{brand}.json', headers=headers)
+    try:
+        response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/brands{brand}.json', headers=headers)
+
+        if response.status_code != 200:
+            print(response.status_code)
+    except Exception as ex:
+        print(f'{url}: {ex}')
 
     json_data = response.json()
 
@@ -33,16 +39,19 @@ def get_id_brand(url: str, session: Session) -> int:
     return id_brand
 
 
-def get_data_products(urls_list):
+def get_data_products(file_path: str):
 
-    # with open(file_path, 'r', encoding='utf-8') as file:
-    #     product_urls_list = [line.strip() for line in file.readlines()]
+    # Открываем файл в формате .txt
+    with open(file_path, 'r', encoding='utf-8') as file:
+        urls_list = [line.strip() for line in file.readlines()]
 
+    # Создаем сессию
     with Session() as session:
         for url in urls_list[:1]:
 
-            time.sleep(1)
+            time.sleep(randint(1, 3))
 
+            # Получаем id продавца
             id_brand = get_id_brand(url=url, session=session)
 
             if id_brand is None:
@@ -74,14 +83,6 @@ def get_data_products(urls_list):
 
             response = session.get('https://catalog.wb.ru/brands/b/catalog', params=params, headers=headers)
 
-            if not os.path.exists('data'):
-                os.makedirs('data')
-
-        # with open('data/data_json.json', 'w', encoding='utf-8') as file:
-        #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
-        #
-        # with open('data/data_json.json', 'r', encoding='utf-8') as file:
-        #     json_data = json.load(file)
 
             json_data = response.json()
 
@@ -113,7 +114,6 @@ def get_data_products(urls_list):
 
 
 def get_card_product(id_product=None, session=None):
-
     # headers = {
     #     'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
     #     'Referer': f'https://www.wildberries.ru/catalog/{id_product}/detail.aspx',
@@ -137,13 +137,8 @@ def get_card_product(id_product=None, session=None):
     get_feedbacks(imt_id)
 
 
-
 def get_feedbacks(imt_id=None):
-
-
-
     # response = requests.get(f'https://feedbacks1.wb.ru/feedbacks/v1/{imt_id}')
-
 
     # with open('data/feedbacks_json.json', 'w', encoding='utf-8') as file:
     #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
@@ -153,28 +148,27 @@ def get_feedbacks(imt_id=None):
 
     json_data = json_data['feedbacks']
 
-
-
     # Сортировка списка словарей по дате
-    sorted_list_of_dicts = sorted([i for i in json_data], key=extract_date, reverse=True)
+    # sorted_list_of_dicts = sorted([i for i in json_data], key=extract_date, reverse=True)
+    sorted_list_of_dicts = sorted([item for item in json_data],
+                                  key=lambda item: datetime.strptime(item['createdDate'], "%Y-%m-%dT%H:%M:%SZ"),
+                                  reverse=True)
 
-    # Вывод отсортированного списка словарей
-    res = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / 5
+    # Вычисляем среднюю оценку последних 5 отзывов
+    average_rating = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / 5
 
-    print(res)
 
 
 # Функция для извлечения даты из строки и преобразования в объект datetime
-from datetime import datetime
 def extract_date(dict_item):
     return datetime.strptime(dict_item['createdDate'], "%Y-%m-%dT%H:%M:%SZ")
 
 
 def main():
-
-    # get_data_products(urls_list=urls_list)
+    get_data_products(file_path='data/urls_list.txt')
     # get_feedbacks()
     get_card_product()
+
 
 if __name__ == '__main__':
     main()
