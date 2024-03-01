@@ -12,7 +12,7 @@ import openpyxl
 
 start_time = datetime.now()
 
-
+# Функция для получения id бренда
 def get_id_brand(url: str, session: Session) -> int:
     headers = {
         'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
@@ -41,7 +41,7 @@ def get_id_brand(url: str, session: Session) -> int:
 
     return id_brand
 
-
+# Функция для получения данных о продукте
 def get_data_products(file_path: str):
     # Открываем файл в формате .txt
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -51,7 +51,9 @@ def get_data_products(file_path: str):
 
     # Создаем сессию
     with Session() as session:
-        for url in urls_list[:1]:
+        for url in urls_list:
+
+            print(f'Обрабатывается: {url}')
 
             time.sleep(randint(1, 3))
 
@@ -116,7 +118,9 @@ def get_data_products(file_path: str):
                 id_product = item.get('id')
 
                 # Цвета продукта
-                colors = ', '.join(c.get('name') for c in item.get('colors'))
+                # colors = ', '.join(c.get('name') for c in item.get('colors'))
+
+                colors = get_card_product(id_product=id_product, session=session)
 
                 # Ценна со скидкой
                 sale_price = item.get('salePriceU', 0) // 100
@@ -130,14 +134,14 @@ def get_data_products(file_path: str):
                 # Цена с WB кошельком
                 wb_price = floor(sale_price * 0.95)
 
-                # root id
+                # imt_id необходим для формирования ссылки и получения данных feedbacks
                 imt_id = item.get('root')
 
                 if imt_id:
                     try:
                         average_rating = get_feedbacks(imt_id=imt_id, session=session)
                     except Exception:
-                        average_rating = ''
+                        average_rating = None
 
                 url_product = f"https://www.wildberries.ru/catalog/{id_product}/detail.aspx"
 
@@ -159,11 +163,9 @@ def get_data_products(file_path: str):
 
                 print(f'Обработано: {i}/{count_prod}')
 
-            print(f'Обработано: {url}')
-
     return result_list
 
-
+# Функция для получения данных о цветах из карточки продукта
 def get_card_product(id_product: int, session: Session) -> str:
     short_id = id_product // 100000
 
@@ -227,10 +229,7 @@ def get_card_product(id_product: int, session: Session) -> str:
 
     return colors
 
-
-
-
-
+# Функция для получения отзывов о продукте
 def get_feedbacks(imt_id: int, session: Session) -> int:
     try:
         time.sleep(randint(1, 2))
@@ -241,11 +240,11 @@ def get_feedbacks(imt_id: int, session: Session) -> int:
 
         json_data = response.json()
 
-        json_data = json_data['feedbacks']
+        json_data = json_data.get('feedbacks')
 
     except Exception as ex:
         print(f'{imt_id}: {ex}')
-        json_data = {}
+        json_data = None
 
     if json_data:
         # Сортировка списка словарей по дате
@@ -255,6 +254,10 @@ def get_feedbacks(imt_id: int, session: Session) -> int:
                                       reverse=True)
 
         # Вычисляем среднюю оценку последних 5 отзывов
+        # Если количество отзывов меньше 5
+        if len(json_data['feedbacks']) < 5:
+            average_rating = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / len(json_data['feedbacks'])
+            return average_rating
         average_rating = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / 5
 
         return average_rating
@@ -264,17 +267,17 @@ def get_feedbacks(imt_id: int, session: Session) -> int:
 def extract_date(dict_item):
     return datetime.strptime(dict_item['createdDate'], "%Y-%m-%dT%H:%M:%SZ")
 
-
+# Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
     if not os.path.exists('data'):
         os.makedirs('data')
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_list_1.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='WB', index=False)
 
-    print(f'Данные сохранены в файл "data.xlsx"')
+    print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
