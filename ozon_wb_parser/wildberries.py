@@ -109,40 +109,40 @@ def get_data_products(file_path: str):
                 try:
                     brand = item['brand']
                 except Exception:
-                    brand = ''
+                    brand = None
                 try:
                     name = item['name']
                 except Exception:
-                    name = ''
+                    name = None
                 try:
-                    id_product = str(item['id'])
+                    id_product = item['id']
                 except Exception:
-                    id_product = ''
+                    id_product = None
                 try:
                     colors = ', '.join(c['name'] for c in item['colors'])
                 except Exception:
-                    colors = ''
+                    colors = None
                 try:
                     sale_price = item['salePriceU'] // 100
                 except Exception:
-                    sale_price = ''
+                    sale_price = None
                 try:
                     reviewRating = item['reviewRating']
                 except Exception:
-                    reviewRating = ''
+                    reviewRating = None
                 try:
                     count_feedbacks = item['feedbacks']
                 except Exception:
-                    count_feedbacks = ''
+                    count_feedbacks = None
                 try:
                     wb_price = floor(sale_price * 0.95)
                 except Exception:
-                    wb_price = ''
+                    wb_price = None
 
                 try:
-                    imt_id = str(item['root'])
+                    imt_id = item['root']
                 except Exception:
-                    imt_id = ''
+                    imt_id = 0
 
                 if imt_id:
                     try:
@@ -174,8 +174,63 @@ def get_data_products(file_path: str):
 
     return result_list
 
+def get_card_product(id_product: int, session: Session) -> str:
+    short_id = id_product // 100000
 
-def get_feedbacks(imt_id, session) -> int:
+    match short_id:
+        case int(short_id) if 0 <= short_id <= 143:
+            basket = '01'
+        case int(short_id) if 144 <= short_id <= 287:
+            basket = '02'
+        case int(short_id) if 288 <= short_id <= 431:
+            basket = '03'
+        case int(short_id) if 432 <= short_id <= 719:
+            basket = '04'
+        case int(short_id) if 720 <= short_id <= 1007:
+            basket = '05'
+        case int(short_id) if 1008 <= short_id <= 1061:
+            basket = '06'
+        case int(short_id) if 1062 <= short_id <= 1115:
+            basket = '07'
+        case int(short_id) if 1116 <= short_id <= 1169:
+            basket = '08'
+        case int(short_id) if 1170 <= short_id <= 1313:
+            basket = '09'
+        case int(short_id) if 1314 <= short_id <= 1601:
+            basket = '10'
+        case int(short_id) if 1602 <= short_id <= 1655:
+            basket = '11'
+        case int(short_id) if 1656 <= short_id <= 1919:
+            basket = '12'
+        case int(short_id) if 1920 <= short_id <= 2045:
+            basket = '13'
+        case int(short_id) if 2046 <= short_id <= 2189:
+            basket = '14'
+        case int(short_id) if short_id > 2189:
+            basket = '15'
+        case _:
+            print('Значение должно быть class int')
+            basket = None
+
+
+
+    headers = {
+        'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'Referer': f'https://www.wildberries.ru/catalog/{id_product}/detail.aspx',
+        'sec-ch-ua-mobile': '?0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'sec-ch-ua-platform': '"Windows"',
+    }
+
+    response = session.get(f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{id_product//1000}/{id_product}/info/ru/card.json',
+                            headers=headers)
+
+    json_data = response.json()
+
+    colors = json_data['nm_colors_names']
+
+
+def get_feedbacks(imt_id: int, session: Session) -> int:
     try:
         time.sleep(randint(1, 2))
         response = session.get(f'https://feedbacks1.wb.ru/feedbacks/v1/{imt_id}')
