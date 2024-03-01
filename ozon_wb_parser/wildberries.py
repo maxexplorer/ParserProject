@@ -1,4 +1,3 @@
-import json
 import os.path
 import time
 from datetime import datetime
@@ -167,6 +166,8 @@ def get_data_products(file_path: str):
 
 # Функция для получения данных о цветах из карточки продукта
 def get_card_product(id_product: int, session: Session) -> str:
+
+    # Получаем значения для формирования ссылки и получения данных feedbacks
     short_id = id_product // 100000
 
     match short_id:
