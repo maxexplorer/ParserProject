@@ -10,8 +10,8 @@ from requests import Session
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 start_time = datetime.now()
+
 
 def get_id_brand(url: str, session: Session) -> int:
     headers = {
@@ -106,43 +106,32 @@ def get_data_products(file_path: str):
                 continue
 
             for i, item in enumerate(prod_items, 1):
-                try:
-                    brand = item['brand']
-                except Exception:
-                    brand = None
-                try:
-                    name = item['name']
-                except Exception:
-                    name = None
-                try:
-                    id_product = item['id']
-                except Exception:
-                    id_product = None
-                try:
-                    colors = ', '.join(c['name'] for c in item['colors'])
-                except Exception:
-                    colors = None
-                try:
-                    sale_price = item['salePriceU'] // 100
-                except Exception:
-                    sale_price = None
-                try:
-                    reviewRating = item['reviewRating']
-                except Exception:
-                    reviewRating = None
-                try:
-                    count_feedbacks = item['feedbacks']
-                except Exception:
-                    count_feedbacks = None
-                try:
-                    wb_price = floor(sale_price * 0.95)
-                except Exception:
-                    wb_price = None
+                # Название бренда
+                brand = item.get('brand')
 
-                try:
-                    imt_id = item['root']
-                except Exception:
-                    imt_id = 0
+                # Название товара
+                name = item.get('name')
+
+                # Артикул продукта
+                id_product = item.get('id')
+
+                # Цвета продукта
+                colors = ', '.join(c.get('name') for c in item.get('colors'))
+
+                # Ценна со скидкой
+                sale_price = item.get('salePriceU', 0) // 100
+
+                # Рейтинг
+                reviewRating = item.get('reviewRating')
+
+                # Количество отзывов
+                count_feedbacks = item['feedbacks']
+
+                # Цена с WB кошельком
+                wb_price = floor(sale_price * 0.95)
+
+                # root id
+                imt_id = item.get('root')
 
                 if imt_id:
                     try:
@@ -173,6 +162,7 @@ def get_data_products(file_path: str):
             print(f'Обработано: {url}')
 
     return result_list
+
 
 def get_card_product(id_product: int, session: Session) -> str:
     short_id = id_product // 100000
@@ -212,8 +202,6 @@ def get_card_product(id_product: int, session: Session) -> str:
             print('Значение должно быть class int')
             basket = None
 
-
-
     headers = {
         'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
         'Referer': f'https://www.wildberries.ru/catalog/{id_product}/detail.aspx',
@@ -222,12 +210,25 @@ def get_card_product(id_product: int, session: Session) -> str:
         'sec-ch-ua-platform': '"Windows"',
     }
 
-    response = session.get(f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{id_product//1000}/{id_product}/info/ru/card.json',
-                            headers=headers)
+    try:
+        response = session.get(
+            f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{id_product // 1000}/{id_product}/info/ru/card.json',
+            headers=headers)
+        if response.status_code != 200:
+            print(f'colors: {id_product} status_code: {response.status_code}')
 
-    json_data = response.json()
+        json_data = response.json()
 
-    colors = json_data['nm_colors_names']
+        colors = json_data['nm_colors_names']
+
+    except Exception as ex:
+        print(f'{id_product}: {ex}')
+        colors = None
+
+    return colors
+
+
+
 
 
 def get_feedbacks(imt_id: int, session: Session) -> int:

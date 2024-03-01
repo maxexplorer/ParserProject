@@ -88,38 +88,30 @@ def ozone_parser(workbook):
                         # print(f'add_in_basket: {ex}')
                         continue
 
-                    if url in ["https://ozon.ru/t/nYDaYbE", "https://ozon.ru/t/Z2bq28z", "https://ozon.ru/t/8V34MAg"]:
-                        try:
-                            WebDriverWait(driver, 15).until(
-                                EC.text_to_be_present_in_element((By.XPATH,
-                                                                  '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[4]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
-                                                                 'В корзине')
+                    try:
+                        WebDriverWait(driver, 15).until(
+                            EC.text_to_be_present_in_element((By.XPATH,
+                                                              '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
+                                                             'В корзине')
+                        )
 
-                            )
+                        in_basket = driver.find_elements(By.XPATH,
+                                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
 
-                            in_basket = driver.find_element(By.XPATH,
-                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[4]/div/div/div[1]/div/div/div/div[1]/button')
-                            in_basket.click()
-                        except Exception as ex:
-                            print(f'in_basket: {ex}')
-                    else:
-                        try:
-                            WebDriverWait(driver, 15).until(
-                                EC.text_to_be_present_in_element((By.XPATH,
-                                                                  '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
-                                                                 'В корзине')
-                            )
+                        if not in_basket:
+                            try:
+                                in_basket = driver.find_elements(By.XPATH,
+                                                                '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                            except Exception as ex:
+                                # print(f'in_basket: {ex}')
+                                continue
 
-                            in_basket = driver.find_element(By.XPATH,
-                                                            '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                        in_basket[0].click()
+                    except Exception as ex:
+                        # print(f'in_basket: {ex}')
+                        continue
 
-
-                            in_basket.click()
-                        except Exception as ex:
-                            # print(f'in_basket: {ex}')
-                            continue
-
-                        time.sleep(randint(3, 5))
+                    time.sleep(randint(3, 5))
 
                     try:
                         soup = BeautifulSoup(driver.page_source, 'lxml')
