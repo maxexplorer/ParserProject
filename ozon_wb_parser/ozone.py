@@ -49,17 +49,21 @@ def get_data(file_path: str):
             html = driver.page_source
             pages = get_pages(html=html)
 
-            for page in range(1, pages + 1):
-                try:
-                    driver.get(url=url)
-                    time.sleep(randint(3, 5))
-                except Exception as ex:
-                    print(f'{url}: {ex}')
-                    continue
+            # for page in range(1, pages + 1):
+            #     try:
+            #         driver.get(url=url)
+            #         time.sleep(randint(3, 5))
+            #     except Exception as ex:
+            #         print(f'{url}: {ex}')
+            #         continue
 
 
             with open('index.html', 'r', encoding='utf-8') as file:
                 html = file.read()
+
+            soup = BeautifulSoup(html, 'lxml')
+
+
 
 
 

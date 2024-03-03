@@ -68,7 +68,7 @@ def ozone_parser(workbook):
                             'c Ozon Картой')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
-                        price = None
+                        price = ''
                     row[cell.column - 4].value = price
 
                     try:
@@ -77,7 +77,7 @@ def ozone_parser(workbook):
 
                     except Exception as ex:
                         # print(f'storage - {ex}')
-                        storage = None
+                        storage = ''
                     row[cell.column - 2].value = storage
 
                     try:
@@ -119,7 +119,7 @@ def ozone_parser(workbook):
                         quantity = items[0].get('max')
                     except Exception as ex:
                         # print(f'quantity - {ex}')
-                        quantity = None
+                        quantity = ''
                     row[cell.column - 3].value = quantity
 
                     try:
