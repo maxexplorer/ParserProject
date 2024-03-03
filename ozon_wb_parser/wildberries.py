@@ -1,4 +1,4 @@
-import os.path
+import os
 import time
 from datetime import datetime
 from random import randint
@@ -84,6 +84,7 @@ def get_data_products(file_path: str):
                 'dest': '-1257786',
                 'sort': 'popular',
                 'spp': '30',
+                'limit': 300
             }
 
             try:
@@ -275,14 +276,14 @@ def save_excel(data: list) -> None:
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list_1.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='WB', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
-    result_data = get_data_products(file_path='data/urls_list.txt')
+    result_data = get_data_products(file_path='data/urls_list_wb.txt')
     save_excel(data=result_data)
 
     execution_time = datetime.now() - start_time
