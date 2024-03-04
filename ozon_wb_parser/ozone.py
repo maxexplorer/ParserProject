@@ -87,14 +87,82 @@ def get_urls(file_path: str) -> list:
     except Exception as ex:
         print(ex)
     finally:
-        time.sleep(10)
         driver.close()
         driver.quit()
 
+def get_data(file_path) -> list[dict]:
+    # Открываем файл в формате .txt
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_urls_list = [line.strip() for line in file.readlines()]
+
+    # # Создаем объект опций
+    # # options = ChromeOptions()
+    # # Включение фонового режима
+    # # options.add_argument('--headless')
+    driver = Chrome()
+    driver.maximize_window()
+    driver.implicitly_wait(15)
+    # result_list = []
+    try:
+        for url in product_urls_list[:1]:
+            try:
+                driver.get(url=url)
+                time.sleep(randint(3, 5))
+                # driver.execute_script("window.scrollTo(0, 4000);")
+                # time.sleep(randint(3, 5))
+                # driver.execute_script("window.scrollTo(4000, 8000);")
+                # time.sleep(randint(8, 10))
+            except Exception as ex:
+                print(f'{url}: {ex}')
+                continue
+
+            with open('data/product.html', 'w', encoding='utf-8') as file:
+                file.write(driver.page_source)
+
+
+
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
+
+    # with open('data/product.html', 'r', encoding='utf-8') as file:
+    #     html = file.read()
+    #
+    # soup = BeautifulSoup(html, 'lxml')
+    #
+    # name = soup.find('div', {'data-widget': 'webProductHeading'}).find('h1').text.strip()
+    #
+    # print(name)
+
+
+
+    # product_url = ''
+    #
+    # result_list.append(
+    #     {
+    #         'Wildberries': 'Wildberries',
+    #         'Ссылка': product_url,
+    #         'Бренд': brand,
+    #         'Название': name,
+    #         'SKU': id_product,
+    #         'Цвет': colors,
+    #         'РЦ+СПП': sale_price,
+    #         'Рейтинг': reviewRating,
+    #         'Кол-во отзывов': count_feedbacks,
+    #         'Последние 5 отзывов': average_rating,
+    #         'Цена с WB кошельком': wb_price
+    #     }
+    # )
+
+
+
 
 def main():
-    get_urls(file_path='data/urls_list_ozone.txt')
-    # get_pages()
+    # product_urls_list = get_urls(file_path='data/urls_list_ozone.txt')
+    ozone_data = get_data(file_path='data/product_urls_list.txt')
+
 
 
 if __name__ == '__main__':

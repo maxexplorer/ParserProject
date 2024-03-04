@@ -41,7 +41,7 @@ def get_id_brand(url: str, session: Session) -> int:
     return id_brand
 
 # Функция для получения данных о продукте
-def get_data_products(file_path: str):
+def get_data_products(file_path: str) -> list[dict]:
     # Открываем файл в формате .txt
     with open(file_path, 'r', encoding='utf-8') as file:
         urls_list = [line.strip() for line in file.readlines()]
@@ -143,12 +143,12 @@ def get_data_products(file_path: str):
                     except Exception:
                         average_rating = None
 
-                url_product = f"https://www.wildberries.ru/catalog/{id_product}/detail.aspx"
+                product_url = f"https://www.wildberries.ru/catalog/{id_product}/detail.aspx"
 
                 result_list.append(
                     {
                         'Wildberries': 'Wildberries',
-                        'Ссылка': url_product,
+                        'Ссылка': product_url,
                         'Бренд': brand,
                         'Название': name,
                         'SKU': id_product,
@@ -266,7 +266,7 @@ def get_feedbacks(imt_id: int, session: Session) -> int:
 
 
 # Функция для извлечения даты из строки и преобразования в объект datetime
-def extract_date(dict_item):
+def extract_date(dict_item: dict) -> datetime:
     return datetime.strptime(dict_item['createdDate'], "%Y-%m-%dT%H:%M:%SZ")
 
 # Функция для записи данных в формат xlsx
@@ -283,8 +283,8 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    result_data = get_data_products(file_path='data/urls_list_wb.txt')
-    save_excel(data=result_data)
+    wb_data = get_data_products(file_path='data/urls_list_wb.txt')
+    save_excel(data=wb_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
