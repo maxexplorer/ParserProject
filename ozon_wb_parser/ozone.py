@@ -115,7 +115,7 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
     result_list = []
 
     try:
-        for item in product_data[:10]:
+        for item in product_data:
             try:
                 driver.get(url=item['url'])
                 time.sleep(randint(3, 5))
