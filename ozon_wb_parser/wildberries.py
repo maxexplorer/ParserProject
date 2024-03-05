@@ -256,7 +256,7 @@ def get_feedbacks(imt_id: int, session: Session) -> int:
 
         # Вычисляем среднюю оценку последних 5 отзывов
         # Если количество отзывов меньше 5
-        if len(json_data['feedbacks']) < 5:
+        if len(sorted_list_of_dicts) < 5:
             average_rating = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / len(json_data['feedbacks'])
             return average_rating
         average_rating = sum(item['productValuation'] for item in sorted_list_of_dicts[:5]) / 5
@@ -275,7 +275,7 @@ def save_excel_wb(data: list) -> None:
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='a') as writer:
+    with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='WB', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
