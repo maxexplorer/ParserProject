@@ -145,7 +145,7 @@ def get_data_products(product_data: list) -> list[dict]:
             except Exception:
                 id_product = None
             try:
-                color = soup.find('span', string=re.compile('Цвет')).find_next().text.strip()
+                color = soup.find('span', string='Цвет:').find_next().text.strip()
             except Exception:
                 color = None
 
