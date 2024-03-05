@@ -270,13 +270,13 @@ def extract_date(dict_item: dict) -> datetime:
     return datetime.strptime(dict_item['createdDate'], "%Y-%m-%dT%H:%M:%SZ")
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
+def save_excel_wb(data: list) -> None:
     if not os.path.exists('data'):
         os.makedirs('data')
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_list.xlsx', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='WB', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
@@ -284,10 +284,10 @@ def save_excel(data: list) -> None:
 
 def main():
     wb_data = get_data_products(file_path='data/urls_list_wb.txt')
-    save_excel(data=wb_data)
+    save_excel_wb(data=wb_data)
 
     execution_time = datetime.now() - start_time
-    print('Сбор данных завершен!')
+    print('Сбор данных Wildberries завершён!')
     print(f'Время работы программы: {execution_time}')
 
 
