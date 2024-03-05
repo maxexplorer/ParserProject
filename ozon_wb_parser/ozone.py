@@ -44,7 +44,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
     product_data = []
 
     try:
-        for url in urls_list:
+        for url in urls_list[:1]:
 
             print(f'Обрабатывается: {url}')
 
@@ -75,6 +75,11 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
 
                 print(f'Всего: {len(data_items)} продуктов на {page} странице!')
 
+                try:
+                    brand = soup.find('span', class_='tsHeadline600Large').text.strip()
+                except Exception:
+                    brand = None
+
                 for item in data_items:
                     try:
                         url_product = f"https://www.ozon.ru{item.find('a').get('href')}"
@@ -92,6 +97,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
                     product_data.append(
                         {
                             'url': url_product,
+                            'brand': brand,
                             'rating': rating,
                             'feedbacks_count': feedbacks_count
                         }
@@ -115,7 +121,7 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
     result_list = []
 
     try:
-        for item in product_data:
+        for item in product_data[:10]:
             try:
                 driver.get(url=item['url'])
                 time.sleep(randint(3, 5))
@@ -137,11 +143,8 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
             except Exception:
                 name = None
             try:
-                brand = soup.find('a', class_='qj7').text.strip()
-            except Exception:
-                brand = None
-            try:
-                id_product = soup.find('div', {'data-widget': 'webDetailSKU'}).text.strip()
+                id_product = ''.join(
+                    filter(lambda x: x.isdigit(), soup.find('span', {'data-widget': 'webDetailSKU'}).text.strip()))
             except Exception:
                 id_product = None
             try:
@@ -168,7 +171,7 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
                 {
                     'Ozone': 'Ozone',
                     'Ссылка': item.get('url'),
-                    'Бренд': brand,
+                    'Бренд': item.get('brand'),
                     'Название': name,
                     'SKU': id_product,
                     'Цвет': color,
