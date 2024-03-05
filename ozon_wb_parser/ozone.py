@@ -192,12 +192,14 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
 
 # Функция для записи данных в формат xlsx
 def save_excel_ozone(data: list) -> None:
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    if not os.path.exists('data/result_list.xlsx'):
+        # Если файл не существует, создаем его с пустым DataFrame
+        with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='WB', index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='Ozone', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')

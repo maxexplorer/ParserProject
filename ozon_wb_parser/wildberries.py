@@ -270,8 +270,10 @@ def extract_date(dict_item: dict) -> datetime:
 
 # Функция для записи данных в формат xlsx
 def save_excel_wb(data: list) -> None:
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    if not os.path.exists('data/result_list.xlsx'):
+        # Если файл не существует, создаем его с пустым DataFrame
+        with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='WB', index=False)
 
     dataframe = DataFrame(data)
 
