@@ -41,7 +41,7 @@ def get_id_brand(url: str, session: Session) -> int:
     return id_brand
 
 # Функция для получения данных о продукте
-def get_data_products(file_path: str) -> list[dict]:
+def get_data_products_wb(file_path: str) -> list[dict]:
     # Открываем файл в формате .txt
     with open(file_path, 'r', encoding='utf-8') as file:
         urls_list = [line.strip() for line in file.readlines()]
@@ -283,7 +283,7 @@ def save_excel_wb(data: list) -> None:
 
 
 def main():
-    wb_data = get_data_products(file_path='data/urls_list_wb.txt')
+    wb_data = get_data_products_wb(file_path='data/urls_list_wb.txt')
     save_excel_wb(data=wb_data)
 
     execution_time = datetime.now() - start_time

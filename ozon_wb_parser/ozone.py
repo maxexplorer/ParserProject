@@ -106,7 +106,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
         driver.quit()
 
 # Функция получения данных с карточки продукта
-def get_data_products(product_data: list) -> list[dict]:
+def get_data_products_ozone(product_data: list) -> list[dict]:
 
     driver = Chrome()
     driver.maximize_window()
@@ -145,7 +145,7 @@ def get_data_products(product_data: list) -> list[dict]:
             except Exception:
                 id_product = None
             try:
-                color = soup.find('span', string='Цвет:').find_next().text.strip()
+                color = soup.find('span', string=re.compile('Цвет:')).find_next().text.strip()
             except Exception:
                 color = None
 
@@ -194,14 +194,14 @@ def save_excel_ozone(data: list) -> None:
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='a') as writer:
+    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='Ozone', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 
 def main():
     product_data = get_urls_rating_feedbacks(file_path='data/urls_list_ozone.txt')
-    ozone_data = get_data_products(product_data=product_data)
+    ozone_data = get_data_products_ozone(product_data=product_data)
     save_excel_ozone(data=ozone_data)
 
     execution_time = datetime.now() - start_time
