@@ -96,7 +96,8 @@ def ozone_parser(workbook):
                         )
 
                         in_basket = driver.find_elements(By.XPATH,
-                                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
+                                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div[1]/div[1]/button')
+
 
                         if not in_basket:
                             try:
