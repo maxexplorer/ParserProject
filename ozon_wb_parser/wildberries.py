@@ -84,7 +84,6 @@ def get_data_products_wb(file_path: str) -> list[dict]:
                 'dest': '-1257786',
                 'sort': 'popular',
                 'spp': '30',
-                'limit': 300
             }
 
             try:
