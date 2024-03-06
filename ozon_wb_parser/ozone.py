@@ -113,7 +113,6 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
 
 # Функция получения данных с карточки продукта
 def get_data_products_ozone(product_data: list) -> list[dict]:
-
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -204,16 +203,3 @@ def save_excel_ozone(data: list) -> None:
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 
-def main():
-    product_data = get_urls_rating_feedbacks(file_path='data/urls_list_ozone.txt')
-    ozone_data = get_data_products_ozone(product_data=product_data)
-    save_excel_ozone(data=ozone_data)
-
-    execution_time = datetime.now() - start_time
-    print('Сбор данных Ozone завершён!')
-    print(f'Время работы программы: {execution_time}')
-
-
-
-if __name__ == '__main__':
-    main()

@@ -282,15 +282,3 @@ def save_excel_wb(data: list) -> None:
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 
-
-def main():
-    wb_data = get_data_products_wb(file_path='data/urls_list_wb.txt')
-    save_excel_wb(data=wb_data)
-
-    execution_time = datetime.now() - start_time
-    print('Сбор данных Wildberries завершён!')
-    print(f'Время работы программы: {execution_time}')
-
-
-if __name__ == '__main__':
-    main()
