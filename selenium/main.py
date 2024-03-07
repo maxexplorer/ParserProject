@@ -1,3 +1,7 @@
+import time
+from random import randint
+import re
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -8,9 +12,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from undetected_chromedriver import Chrome
 from fake_useragent import UserAgent
+
 from bs4 import BeautifulSoup
-import re
-import time
+
 
 useragent = UserAgent().random
 
@@ -37,18 +41,31 @@ def undetected_chromdriver():
     driver.maximize_window()
 
     try:
-        driver.get(url="https://ozon.ru/t/601oMbY")
+        driver.get(url="https://ozon.ru/t/Z2b4LLK")
         time.sleep(5)
-        soup = BeautifulSoup(driver.page_source, 'lxml')
+        try:
+            add_in_basket = driver.find_element(By.XPATH, '//div[contains(text(), "Добавить в корзину")]')
+            parent_element = add_in_basket.find_element(By.XPATH, "../..")
+            parent_element.click()
+        except Exception as ex:
+            print(f'add_in_basket: {ex}')
 
-        # out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
+        try:
 
-        # print(out_of_stock)
+            time.sleep(randint(3, 5))
 
-        stor_item = soup.find('span', class_='ai2')
+            in_basket = driver.find_element(By.XPATH, '//span[contains(text(), "Корзина")]')
 
-        print(stor_item)
-        time.sleep(10)
+            in_basket.click()
+
+            time.sleep(randint(3, 5))
+
+
+        except Exception as ex:
+            print(f'in_basket: {ex}')
+
+
+        time.sleep(randint(3, 5))
 
 
     except Exception as ex:

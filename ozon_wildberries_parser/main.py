@@ -84,30 +84,16 @@ def ozone_parser(workbook):
                         add_in_basket = driver.find_element(By.XPATH, '//div[contains(text(), "Добавить в корзину")]')
                         parent_element = add_in_basket.find_element(By.XPATH, "../..")
                         parent_element.click()
+                        time.sleep(randint(3, 5))
                     except Exception as ex:
                         # print(f'add_in_basket: {ex}')
                         continue
 
                     try:
-                        WebDriverWait(driver, 15).until(
-                            EC.text_to_be_present_in_element((By.XPATH,
-                                                              '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button/div[1]/div/span[1]'),
-                                                             'В корзине')
-                        )
+                        in_basket = driver.find_element(By.XPATH, '//span[contains(text(), "Корзина")]')
+                        in_basket.click()
+                        time.sleep(randint(3, 5))
 
-                        in_basket = driver.find_elements(By.XPATH,
-                                                        '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div[2]/div/div[3]/div/div/div[1]/div/div/div[1]/div[1]/button')
-
-
-                        if not in_basket:
-                            try:
-                                in_basket = driver.find_elements(By.XPATH,
-                                                                '//*[@id="layoutPage"]/div[1]/div[4]/div[3]/div[2]/div[2]/div/div/div[3]/div/div/div[1]/div/div/div/div[1]/button')
-                            except Exception as ex:
-                                # print(f'in_basket: {ex}')
-                                continue
-
-                        in_basket[0].click()
                     except Exception as ex:
                         # print(f'in_basket: {ex}')
                         continue
