@@ -98,8 +98,6 @@ def ozone_parser(workbook):
                         # print(f'in_basket: {ex}')
                         continue
 
-                    time.sleep(randint(3, 5))
-
                     try:
                         soup = BeautifulSoup(driver.page_source, 'lxml')
                         items = soup.find_all('input', inputmode='numeric')
