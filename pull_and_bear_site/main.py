@@ -8,6 +8,9 @@ import requests
 from requests import Session
 from bs4 import BeautifulSoup
 
+from pandas import DataFrame, ExcelWriter
+import openpyxl
+
 from config import headers, params
 
 start_time = datetime.now()
@@ -161,10 +164,9 @@ def get_data(file_path: str):
     with open(file_path, 'r', encoding='utf-8') as file:
         products_data = json.load(file)
 
-
     result_data = []
 
-    for item in products_data['products'][2:3]:
+    for item in products_data['products'][1:2]:
         try:
             id_product = item['id']
         except Exception:
@@ -176,7 +178,7 @@ def get_data(file_path: str):
             sku = None
 
         try:
-            name = item['name']
+            name = item['nameEn']
         except Exception:
             name = None
 
@@ -185,12 +187,52 @@ def get_data(file_path: str):
         except Exception:
             price = None
 
-        # try:
-        #     price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
-        # except Exception:
-        #     price = None
+        try:
+            color = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+        except Exception:
+            color = None
 
-        print(id_product)
+        try:
+            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            sizes = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
+        except Exception:
+            sizes = None
+
+        try:
+            type_product = item['subFamilyNameEN']
+        except Exception:
+            type_product = None
+
+        try:
+            gender = item['sectionNameEN']
+        except Exception:
+            gender = None
+
+        try:
+            description = item['detail']['longDescription']
+        except Exception:
+            description = None
+
+        try:
+            care_items = item['bundleProductSummaries'][0]['detail']['care']
+            care = ', '.join(item['description'] for item in care_items)
+        except Exception:
+            care = None
+
+        try:
+            # composition = ''
+            composition_items = item['bundleProductSummaries'][0]['detail']['composition']
+            # for item in composition_items:
+            #     for elem in item['composition']:
+            #         composition += f"{elem['name']}: {elem['description']} "
+
+            composition = ' '.join(
+                f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
+
+        except Exception:
+            composition = None
+
+        print(composition)
 
         brand = 'Pull and Bear'
 
@@ -215,12 +257,12 @@ def get_data(file_path: str):
                 'Артикул фото': None,
                 'Бренд в одежде и обуви*': brand,
                 'Объединить на одной карточке*': sku,
-                'Цвет товара*': None,
+                'Цвет товара*': color,
                 'Российский размер*': None,
-                'Размер производителя': None,
-                'Название цвета': None,
-                'Тип*': None,
-                'Пол*': None,
+                'Размер производителя': sizes,
+                'Название цвета': color,
+                'Тип*': type_product,
+                'Пол*': gender,
                 'Размер пеленки': None,
                 'ТН ВЭД коды ЕАЭС': None,
                 'Ключевые слова': None,
@@ -231,18 +273,27 @@ def get_data(file_path: str):
                 'Коллекция': None,
                 'Страна-изготовитель': None,
                 'Вид принта': None,
-                'Аннотация': None,
-                'Инструкция по уходу': None,
+                'Аннотация': description,
+                'Инструкция по уходу': care,
                 'Серия в одежде и обуви': None,
-                'Материал': None,
-                'Состав материала': None,
+                'Материал': composition,
+                'Состав материала': composition,
             }
         )
 
+# Функция для записи данных в формат xlsx
+def save_excel_wb(data: list) -> None:
+    if not os.path.exists('data/result_list.xlsx'):
+        # Если файл не существует, создаем его с пустым DataFrame
+        with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='WB', index=False)
 
+    dataframe = DataFrame(data)
 
+    with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
+        dataframe.to_excel(writer, sheet_name='WB', index=False)
 
-
+    print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
