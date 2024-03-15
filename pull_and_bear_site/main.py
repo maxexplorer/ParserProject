@@ -124,9 +124,9 @@ def get_products_array(file_path: str, headers: dict) -> dict:
     with open(file_path, 'r', encoding='utf-8') as file:
         id_products_list = json.load(file)
 
-    for item_dict in id_products_list:
+    for item_dict in id_products_list[1:2]:
         for key in item_dict:
-            lst = item_dict[key]
+            lst = item_dict[key][:10]
             id_products = ','.join(map(str, lst))
 
             params = {
@@ -152,10 +152,10 @@ def get_products_array(file_path: str, headers: dict) -> dict:
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
-
+            #
             # if not os.path.exists('data'):
             #     os.makedirs('data')
-
+            #
             # with open('data/products_array1.json', 'w', encoding='utf-8') as file:
             #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
 
@@ -166,7 +166,7 @@ def get_data(file_path: str):
 
     result_data = []
 
-    for item in products_data['products'][1:2]:
+    for item in products_data['products'][:1]:
         try:
             id_product = item['id']
         except Exception:
@@ -189,8 +189,32 @@ def get_data(file_path: str):
 
         try:
             color = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+
         except Exception:
             color = None
+
+        try:
+            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+        except Exception:
+            id_color = ''
+
+        try:
+            main_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
+        except Exception:
+            main_image = None
+
+        try:
+            additional_images_list = []
+            images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
+            for img_item in images_items:
+                color_code = img_item['colorCode']
+                if color_code == id_color:
+                    for img in img_item['xmediaItems'][0]['medias']:
+                        additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
+            additional_images = '; '.join(additional_images_list)
+
+        except Exception:
+            additional_images = None
 
         try:
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
@@ -207,6 +231,16 @@ def get_data(file_path: str):
             gender = item['sectionNameEN']
         except Exception:
             gender = None
+
+        try:
+            model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh']
+        except Exception:
+            model_height = None
+
+        try:
+            model_size = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelSize']
+        except Exception:
+            model_size = None
 
         try:
             description = item['detail']['longDescription']
@@ -232,7 +266,6 @@ def get_data(file_path: str):
         except Exception:
             composition = None
 
-        print(composition)
 
         brand = 'Pull and Bear'
 
@@ -300,7 +333,7 @@ def main():
     # id_categories_list = get_id_categories(headers=headers)
     # id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
     # products_data = get_products_array(file_path='data/id_products_list.json', headers=headers)
-    result_data = get_data(file_path='data/products_array.json')
+    result_data = get_data(file_path='data/products_array1.json')
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
