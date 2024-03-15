@@ -13,32 +13,23 @@ from config import headers, params
 start_time = datetime.now()
 
 
-def get_id_categories():
+def get_id_categories(headers: dict) -> list:
     id_categories_list = []
 
-    # params = {
-    #     'languageId': '-1',
-    #     'typeCatalog': '1',
-    #     'appId': '1',
-    # }
-    #
-    # with Session() as session:
-    #     response = session.get(
-    #         'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
-    #         params=params,
-    #         headers=headers,
-    #     )
-    #
-    # print(response)
-    #
-    # if not os.path.exists('data'):
-    #     os.makedirs('data')
-    #
-    # with open('data/categories.json', 'w', encoding='utf-8') as file:
-    #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
+    with Session() as session:
+        try:
+            response = session.get(
+                'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
+                params=params,
+                headers=headers,
+            )
 
-    with open('data/categories.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
+            if response.status_code != 200:
+                print(f'status_code: {response.status_code}')
+
+            json_data = response.json()
+        except Exception as ex:
+            print(f'get_id_categories: {ex}')
 
     category_items = json_data['categories']
 
@@ -49,7 +40,7 @@ def get_id_categories():
             if subcategory_item.get('name') == 'Clothing':
                 clothing_subcategory_items = subcategory_item.get('subcategories')
                 for clothing_subcategory_item in clothing_subcategory_items:
-                    id = clothing_subcategory_item.get('id')
+                    id_category = clothing_subcategory_item.get('id')
                     subcategory_name = clothing_subcategory_item.get('name')
                     if subcategory_name == '-':
                         continue
@@ -58,13 +49,18 @@ def get_id_categories():
                     subcategories = clothing_subcategory_item.get('subcategories')
                     if subcategories:
                         for subcategory in subcategories:
-                            if subcategory.get('name') == 'See all':
-                                id = subcategory.get('id')
-                                id_categories_list.append(id)
+                            if subcategory_name == 'Jeans' and subcategory.get('name') == 'See all':
+                                id_category = subcategory.get('id')
+                                id_categories_list.append(id_category)
+                            else:
+                                id_categories_list.append(id_category)
                     else:
-                        id_categories_list.append(id)
+                        id_categories_list.append(id_category)
 
                     print(category_name, subcategory_name)
+
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
     with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
@@ -72,7 +68,7 @@ def get_id_categories():
     return id_categories_list
 
 
-def get_id_products(file_path: str):
+def get_id_products(file_path: str, headers: dict) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         id_categories_list = [line.strip() for line in file.readlines()]
 
@@ -84,13 +80,23 @@ def get_id_products(file_path: str):
     with Session() as session:
         for i, id_category in enumerate(id_categories_list, 1):
             time.sleep(1)
-            response = session.get(
-                f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
-                params=params,
-                headers=headers,
-            )
 
-            json_data = response.json()
+            try:
+                response = session.get(
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
+                    params=params,
+                    headers=headers,
+                )
+
+                json_data = response.json()
+
+                if response.status_code != 200:
+                    print(f'status_code: {response.status_code}')
+
+                json_data = response.json()
+
+            except Exception as ex:
+                print(f'get_id_products: {ex}')
 
             product_ids = json_data.get('productIds')
 
@@ -102,15 +108,20 @@ def get_id_products(file_path: str):
 
             print(f'Обработано: {i}/{count_categories}')
 
-    with open('data/id_products_list.json', 'w', encoding='utf-8') as file:
-        json.dump(id_products_list, file, indent=4, ensure_ascii=False)
+    # if not os.path.exists('data'):
+    #     os.makedirs('data')
+
+    # with open('data/id_products_list.json', 'w', encoding='utf-8') as file:
+    #     json.dump(id_products_list, file, indent=4, ensure_ascii=False)
+
+    return id_products_list
 
 
-def get_products_array(file_path):
+def get_products_array(file_path: str, headers: dict) -> dict:
     with open(file_path, 'r', encoding='utf-8') as file:
         id_products_list = json.load(file)
 
-    for item_dict in id_products_list[1:2]:
+    for item_dict in id_products_list:
         for key in item_dict:
             lst = item_dict[key]
             id_products = ','.join(map(str, lst))
@@ -122,59 +133,131 @@ def get_products_array(file_path):
                 'appId': '1',
             }
 
-            response = requests.get(
-                'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
-                params=params,
-                headers=headers,
-                )
-
-            with open('data/products_array1.json', 'w', encoding='utf-8') as file:
-                json.dump(response.json(), file, indent=4, ensure_ascii=False)
-
-
-def get_data(file_path: str):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        id_products_list = json.load(file)
-
-    with Session() as session:
-        for id_product in id_products_list[:1]:
-                response = session.get(
-                    f'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category/0/product/'
-                    f'{id_product}/detail',
+            try:
+                response = requests.get(
+                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
                     params=params,
                     headers=headers,
                 )
 
+                if response.status_code != 200:
+                    print(f'status_code: {response.status_code}')
+
                 json_data = response.json()
 
-        with open('data/product1.json', 'w', encoding='utf-8') as file:
-            json.dump(json_data, file, indent=4, ensure_ascii=False)
+                return json_data
+
+            except Exception as ex:
+                print(f'get_products_array: {ex}')
+
+            # if not os.path.exists('data'):
+            #     os.makedirs('data')
+
+            # with open('data/products_array1.json', 'w', encoding='utf-8') as file:
+            #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
 
 
-    with open('data/product1.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
+def get_data(file_path: str):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        products_data = json.load(file)
 
-    sku = json_data.get('bundleProductSummaries')
+
+    result_data = []
+
+    for item in products_data['products'][2:3]:
+        try:
+            id_product = item['id']
+        except Exception:
+            id_product = None
+
+        try:
+            sku = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
+        except Exception:
+            sku = None
+
+        try:
+            name = item['name']
+        except Exception:
+            name = None
+
+        try:
+            price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
+        except Exception:
+            price = None
+
+        # try:
+        #     price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
+        # except Exception:
+        #     price = None
+
+        print(id_product)
+
+        brand = 'Pull and Bear'
+
+        result_data.append(
+            {
+                '№': None,
+                'Артикул': sku,
+                'Название товара': name,
+                'Цена, руб.*': price,
+                'Цена до скидки, руб.': None,
+                'НДС, %*': None,
+                'Включить продвижение': None,
+                'Id': id_product,
+                'Штрихкод (Серийный номер / EAN)': None,
+                'Вес в упаковке, г*': None,
+                'Ширина упаковки, мм*': None,
+                'Высота упаковки, мм*': None,
+                'Длина упаковки, мм*': None,
+                'Ссылка на главное фото*': None,
+                'Ссылки на дополнительные фото': None,
+                'Ссылки на фото 360': None,
+                'Артикул фото': None,
+                'Бренд в одежде и обуви*': brand,
+                'Объединить на одной карточке*': sku,
+                'Цвет товара*': None,
+                'Российский размер*': None,
+                'Размер производителя': None,
+                'Название цвета': None,
+                'Тип*': None,
+                'Пол*': None,
+                'Размер пеленки': None,
+                'ТН ВЭД коды ЕАЭС': None,
+                'Ключевые слова': None,
+                'Сезон': None,
+                'Рост модели на фото': None,
+                'Параметры модели на фото': None,
+                'Размер товара на фото': None,
+                'Коллекция': None,
+                'Страна-изготовитель': None,
+                'Вид принта': None,
+                'Аннотация': None,
+                'Инструкция по уходу': None,
+                'Серия в одежде и обуви': None,
+                'Материал': None,
+                'Состав материала': None,
+            }
+        )
+
+
+
 
 
 
 
 def main():
-    # id_categories_list = get_id_categories()
-    # id_products_list = get_id_products(file_path='data/id_categories_list.txt')
-    # data = get_data(file_path='data/id_products_list.json')
-    # get_products_array(file_path='data/id_products_list.json')
+    # id_categories_list = get_id_categories(headers=headers)
+    # id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
+    # products_data = get_products_array(file_path='data/id_products_list.json', headers=headers)
+    result_data = get_data(file_path='data/products_array.json')
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
 
-
-    with open('data/products_array1.json') as file:
-        data = json.load(file)
-
-    print(len(data['products']))
-
-
+    # with open('data/products_array1.json') as file:
+    #     data = json.load(file)
+    #
+    # print(len(data['products']))
 
 
 if __name__ == '__main__':
