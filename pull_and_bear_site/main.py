@@ -12,10 +12,13 @@ from pandas import DataFrame, ExcelWriter
 import openpyxl
 
 from config import headers, params
+from functions import colors_format
+from functions import sizes_format
 
 start_time = datetime.now()
 
 
+# Функция получения id категорий
 def get_id_categories(headers: dict) -> list:
     id_categories_list = []
 
@@ -71,6 +74,7 @@ def get_id_categories(headers: dict) -> list:
     return id_categories_list
 
 
+# Функция получения id товаров
 def get_id_products(file_path: str, headers: dict) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         id_categories_list = [line.strip() for line in file.readlines()]
@@ -81,7 +85,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
     id_products_list = []
     with Session() as session:
-        for i, id_category in enumerate(id_categories_list, 1):
+        for i, id_category in enumerate(id_categories_list[:1], 1):
             time.sleep(1)
 
             try:
@@ -111,22 +115,17 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             print(f'Обработано: {i}/{count_categories}')
 
-    # if not os.path.exists('data'):
-    #     os.makedirs('data')
-
-    # with open('data/id_products_list.json', 'w', encoding='utf-8') as file:
-    #     json.dump(id_products_list, file, indent=4, ensure_ascii=False)
-
     return id_products_list
 
 
-def get_products_array(file_path: str, headers: dict) -> dict:
-    with open(file_path, 'r', encoding='utf-8') as file:
-        id_products_list = json.load(file)
+# Функция получения json данных товаров
+def get_products_array(id_products_list: list, headers: dict) -> None:
+    # with open(file_path, 'r', encoding='utf-8') as file:
+    #     id_products_list = json.load(file)
 
-    for item_dict in id_products_list[1:2]:
+    for item_dict in id_products_list:
         for key in item_dict:
-            lst = item_dict[key][:10]
+            lst = item_dict[key]
             id_products = ','.join(map(str, lst))
 
             params = {
@@ -148,25 +147,18 @@ def get_products_array(file_path: str, headers: dict) -> dict:
 
                 json_data = response.json()
 
-                return json_data
+                get_products_data(products_data=json_data)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
-            #
-            # if not os.path.exists('data'):
-            #     os.makedirs('data')
-            #
-            # with open('data/products_array1.json', 'w', encoding='utf-8') as file:
-            #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
 
 
-def get_data(file_path: str):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        products_data = json.load(file)
+# Функция получения данных товаров
+def get_products_data(products_data: dict) -> None:
 
     result_data = []
 
-    for item in products_data['products'][:1]:
+    for item in products_data['products']:
         try:
             id_product = item['id']
         except Exception:
@@ -188,10 +180,12 @@ def get_data(file_path: str):
             price = None
 
         try:
-            color = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_ru = colors_format(value=color_en)
 
         except Exception:
-            color = None
+            color_en = None
+            color_ru = None
 
         try:
             id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
@@ -205,22 +199,42 @@ def get_data(file_path: str):
 
         try:
             additional_images_list = []
-            images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
-            for img_item in images_items:
-                color_code = img_item['colorCode']
-                if color_code == id_color:
-                    for img in img_item['xmediaItems'][0]['medias']:
-                        additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
+            for i in range(2, 11):
+                additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
+                additional_images_list.append(additional_image)
             additional_images = '; '.join(additional_images_list)
+
 
         except Exception:
             additional_images = None
 
+        # try:
+        #     additional_images_list = []
+        #     images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
+        #     for img_item in images_items:
+        #         color_code = img_item['colorCode']
+        #         if color_code == id_color:
+        #             for img in img_item['xmediaItems'][0]['medias']:
+        #                 additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
+        #     additional_images = '; '.join(additional_images_list)
+        #
+        # except Exception:
+        #     additional_images = None
+
         try:
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            sizes = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
+            sizes_eur = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
         except Exception:
-            sizes = None
+            sizes_eur = None
+
+        try:
+            sizes_values = any(map( lambda value: value.isdigit(), sizes_eur.split(';')))
+            if sizes_values:
+                sizes_rus = sizes_eur
+            else:
+                sizes_rus = sizes_format(sizes=sizes_eur)
+        except Exception:
+            sizes_rus = None
 
         try:
             type_product = item['subFamilyNameEN']
@@ -228,7 +242,13 @@ def get_data(file_path: str):
             type_product = None
 
         try:
-            gender = item['sectionNameEN']
+            gender_en = item['sectionNameEN']
+            if gender_en == 'WOMAN':
+                gender = 'женский'
+            elif gender_en == 'MAN':
+                gender = 'мужской'
+            else:
+                gender = gender_en
         except Exception:
             gender = None
 
@@ -259,13 +279,12 @@ def get_data(file_path: str):
             # for item in composition_items:
             #     for elem in item['composition']:
             #         composition += f"{elem['name']}: {elem['description']} "
-
+            # is equivalent to
             composition = ' '.join(
                 f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
 
         except Exception:
             composition = None
-
 
         brand = 'Pull and Bear'
 
@@ -284,16 +303,16 @@ def get_data(file_path: str):
                 'Ширина упаковки, мм*': None,
                 'Высота упаковки, мм*': None,
                 'Длина упаковки, мм*': None,
-                'Ссылка на главное фото*': None,
-                'Ссылки на дополнительные фото': None,
+                'Ссылка на главное фото*': main_image,
+                'Ссылки на дополнительные фото': additional_images,
                 'Ссылки на фото 360': None,
                 'Артикул фото': None,
                 'Бренд в одежде и обуви*': brand,
                 'Объединить на одной карточке*': sku,
-                'Цвет товара*': color,
+                'Цвет товара*': color_ru,
                 'Российский размер*': None,
-                'Размер производителя': sizes,
-                'Название цвета': color,
+                'Размер производителя': sizes_eur,
+                'Название цвета': color_en,
                 'Тип*': type_product,
                 'Пол*': gender,
                 'Размер пеленки': None,
@@ -346,35 +365,33 @@ def get_data(file_path: str):
                 'Предупреждение': None,
             }
         )
+    print(f'Обработана категория: {type_product}')
+    save_excel(data=result_data)
+
 
 # Функция для записи данных в формат xlsx
-def save_excel_wb(data: list) -> None:
+def save_excel(data: list) -> None:
     if not os.path.exists('data/result_list.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
         with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='WB', index=False)
+            DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     dataframe = DataFrame(data)
 
     with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
-        dataframe.to_excel(writer, sheet_name='WB', index=False)
+        dataframe.to_excel(writer, sheet_name='ОЗОН', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
     # id_categories_list = get_id_categories(headers=headers)
-    # id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
-    # products_data = get_products_array(file_path='data/id_products_list.json', headers=headers)
-    result_data = get_data(file_path='data/products_array1.json')
+    id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
+    get_products_array(id_products_list=id_products_list, headers=headers)
+
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
-
-    # with open('data/products_array1.json') as file:
-    #     data = json.load(file)
-    #
-    # print(len(data['products']))
 
 
 if __name__ == '__main__':

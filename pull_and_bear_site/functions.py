@@ -1,0 +1,486 @@
+# Функция для перевода формата цветов Pull and Bear в Ozone
+def colors_format(value: str) -> str:
+    match value:
+        case 'ANTHRACITEGREY':
+            color = 'светло-серый'
+        case 'APRICOT':
+            color = 'оранжевый'
+        case 'AQUAMARINE':
+            color = 'серый'
+        case 'ASH':
+            color = 'серый'
+        case 'BEIGE':
+            color = 'бежевый'
+        case 'BEIGE GREEN':
+            color = 'зеленый'
+        case 'BEIGEMARL':
+            color = 'бежевый'
+        case 'BEIGE-PINK':
+            color = 'розовый'
+        case 'BERRY':
+            color = 'бордовый'
+        case 'BLACK':
+            color = 'черный'
+        case 'BLACK BROWN':
+            color = 'коричневый'
+        case 'BLACK ECRU':
+            color = 'бежевый'
+        case 'BLACK GREEN':
+            color = 'зеленый'
+        case 'BLACK SILVER':
+            color = 'серебристый'
+        case 'BLACK WHITE':
+            color = 'белый'
+        case 'BLACK YELLOW':
+            color = 'желтый'
+        case 'BLACKGOLD':
+            color = 'золотой'
+        case 'BLUE':
+            color = 'синий'
+        case 'BLUE MARL':
+            color = 'бежевый'
+        case 'BLUE BLACK':
+            color = 'черный'
+        case 'BLUE GREEN':
+            color = 'зеленый'
+        case 'BLUE GREY':
+            color = 'серый'
+        case 'BLUE INDIGO':
+            color = 'синий'
+        case 'BLUE NAVY':
+            color = 'синий'
+        case 'BLUE WHITE':
+            color = 'синий'
+        case 'BLUEGREEN':
+            color = 'зеленый'
+        case 'BLUEGREY':
+            color = 'серый'
+        case 'BLUES':
+            color = 'синий'
+        case 'BLUISH':
+            color = 'синий'
+        case 'BLUISH GREY':
+            color = 'серый'
+        case 'BONE':
+            color = 'белый'
+        case 'BONEWHITE':
+            color = 'белый'
+        case 'BOTTLE':
+            color = 'белый'
+        case 'BRICK':
+            color = 'белый'
+        case 'BRIGHTRED':
+            color = 'красный'
+        case 'BRONZE':
+            color = 'светло-коричневый'
+        case 'BROWN':
+            color = 'коричневый'
+        case 'BROWN ORANGE':
+            color = 'оранжевый'
+        case 'BROWN TAUPE':
+            color = 'серый'
+        case 'BROWN WHITE':
+            color = 'белый'
+        case 'BROWNISH TONE':
+            color = 'коричневый'
+        case 'BURGUNDY':
+            color = 'бордовый'
+        case 'BURGUNDYRED':
+            color = 'бордовый'
+        case 'CAMEL':
+            color = 'светло-бежевый'
+        case 'CAMEL WHITE':
+            color = 'белый'
+        case 'CAMELBROWN':
+            color = 'коричневый'
+        case 'CANVAS':
+            color = 'белый'
+        case 'CARAMEL':
+            color = 'желтый'
+        case 'CAVA':
+            color = 'белый'
+        case 'CHALKPINK':
+            color = 'розовый'
+        case 'CHARCOAL':
+            color = 'белый'
+        case 'CHARCOALGREY':
+            color = 'серый'
+        case 'CHOCOLATE':
+            color = 'шоколадный'
+        case 'CHOCOLATEBROWN':
+            color = 'коричневый'
+        case 'CONTRAST':
+            color = 'белый'
+        case 'COPPER':
+            color = 'желтый'
+        case 'CREAM':
+            color = 'бежевый'
+        case 'DARK BLUE':
+            color = 'синий'
+        case 'DARK GREY':
+            color = 'серый'
+        case 'DARK KHAKI':
+            color = 'хаки'
+        case 'DARKANTHRACITE':
+            color = 'светло-серый'
+        case 'DARKBEIGE':
+            color = 'бежевый'
+        case 'DARKBLUE':
+            color = 'синий'
+        case 'DARKBROWN':
+            color = 'коричневый'
+        case 'DARKCAMEL':
+            color = 'желтый'
+        case 'DARKGREEN':
+            color = 'зеленый'
+        case 'DARKGREY':
+            color = 'серый'
+        case 'DARKGREYMARL':
+            color = 'серый'
+        case 'DARKKHAKI':
+            color = 'хаки'
+        case 'DARKMAUVE':
+            color = 'белый'
+        case 'DARKNAVY':
+            color = 'синий'
+        case 'DARKPINK':
+            color = 'розовый'
+        case 'DARKRED':
+            color = 'красный'
+        case 'DARKTAN':
+            color = 'бежевый'
+        case 'DEEPBLUE':
+            color = 'синий'
+        case 'DENIM INDIGO':
+            color = 'синий'
+        case 'DENIMBLUE':
+            color = 'голубой'
+        case 'DENIMBLUE':
+            color = 'синий'
+        case 'DUCKBLUE':
+            color = 'синий'
+        case 'DUCKGREEN':
+            color = 'зеленый'
+        case 'DUSTYPINK':
+            color = 'розовый'
+        case 'DUSTYPURPLE':
+            color = 'сиреневый'
+        case 'ECRU':
+            color = 'светло-бежевый'
+        case 'ECRU BEIGE':
+            color = 'бежевый'
+        case 'ECRU BLACK':
+            color = 'черный'
+        case 'ECRU BLUE':
+            color = 'голубой'
+        case 'ECRU GREEN':
+            color = 'зеленый'
+        case 'ECRU MARL':
+            color = 'бежевый'
+        case 'ECRU MAROON':
+            color = 'бежевый'
+        case 'ECRU NAVY':
+            color = 'синий'
+        case 'ECRUWHITE':
+            color = 'белый'
+        case 'EMERALD':
+            color = 'зеленый'
+        case 'FADED BLACK':
+            color = 'черный'
+        case 'FADED GREEN':
+            color = 'зеленый'
+        case 'FADEDBLUE':
+            color = 'голубой'
+        case 'FADEDNAVY':
+            color = 'синий'
+        case 'FADEDPINK':
+            color = 'розовый'
+        case 'FUCHSIA':
+            color = 'перламутровый'
+        case 'GOLD':
+            color = 'золотой'
+        case 'GOLDEN':
+            color = 'золотой'
+        case 'GREEN':
+            color = 'зеленый'
+        case 'GREEN MARL':
+            color = 'белый'
+        case 'GREEN BLUE':
+            color = 'голубой'
+        case 'GREEN ECRU':
+            color = 'бежевый'
+        case 'GREENISH':
+            color = 'зеленый'
+        case 'GREY':
+            color = 'серый'
+        case 'GREY BLUE':
+            color = 'синий'
+        case 'GREY MARL':
+            color = 'серый'
+        case 'GREY SHADES':
+            color = 'серый'
+        case 'GREY BEIGE':
+            color = 'серый'
+        case 'GREY BLUE':
+            color = 'серый'
+        case 'GREY NATURAL':
+            color = 'серый'
+        case 'GREYGREEN':
+            color = 'зеленый'
+        case 'GREYISH':
+            color = 'серый'
+        case 'GREYMARL':
+            color = 'серый'
+        case 'ICE':
+            color = 'светло-синий'
+        case 'INDIGO':
+            color = 'светло-синий'
+        case 'INKBLUE':
+            color = 'синий'
+        case 'IVORY':
+            color = 'бежевый'
+        case 'IVORYWHITE':
+            color = 'белый'
+        case 'JEANS':
+            color = 'голубой'
+        case 'KHAKI':
+            color = 'хаки'
+        case 'KHAKIGREEN':
+            color = 'зеленый'
+        case 'KHAKIMARL':
+            color = 'хаки'
+        case 'LEOPARD':
+            color = 'желтый'
+        case 'LIGHTBEIGE':
+            color = 'светло-бежевый'
+        case 'LIGHTBLUE':
+            color = 'синий'
+        case 'LIGHTBROWN':
+            color = 'коричневый'
+        case 'LIGHTCAMEL':
+            color = 'желтый'
+        case 'LIGHTECRU':
+            color = 'светло-бежевый'
+        case 'LIGHTGREEN':
+            color = 'светло-зеленый'
+        case 'LIGHTGREY':
+            color = 'светло-серый'
+        case 'LIGHTKHAKI':
+            color = 'хаки'
+        case 'LIGHTLIMEGREEN':
+            color = 'зеленый'
+        case 'LIGHTMINK':
+            color = 'белый'
+        case 'LIGHTPINK':
+            color = 'светло-розовый'
+        case 'LIGHTTAN':
+            color = 'желтый'
+        case 'LIGHTYELLOW':
+            color = 'желтый'
+        case 'LILAC':
+            color = 'сиреневый'
+        case 'LILAC WHITE':
+            color = 'белый'
+        case 'LIME':
+            color = 'желтый'
+        case 'MAROON':
+            color = 'бордовый'
+        case 'MAROONGREY':
+            color = 'серый'
+        case 'MAUVE':
+            color = 'сиреневый'
+        case 'MEDIUM BLUE':
+            color = 'синий'
+        case 'MEDIUM ECRU':
+            color = 'бежевый'
+        case 'MEDIUM GREY':
+            color = 'серый'
+        case 'MEDIUMBROWN':
+            color = 'коричневый'
+        case 'MID-BLUE':
+            color = 'светло-синий'
+        case 'MID-CAMEL':
+            color = 'желтый'
+        case 'MID-ECRU':
+            color = 'бежевый'
+        case 'MID-GREEN':
+            color = 'зеленый'
+        case 'MID-GREY':
+            color = 'серый'
+        case 'MIDKHAKI':
+            color = 'хаки'
+        case 'MIDNIGHTBLUE':
+            color = 'голубой'
+        case 'MID-PINK':
+            color = 'розовый'
+        case 'MID-TURQUOISE':
+            color = 'голубой'
+        case 'MINK':
+            color = 'бежевый'
+        case 'MINKMARL':
+            color = 'белый'
+        case 'MINT':
+            color = 'светло-зеленый'
+        case 'MOLE BROWN':
+            color = 'коричневый'
+        case 'MOSS':
+            color = 'зеленый'
+        case 'MOSSGREEN':
+            color = 'зеленый'
+        case 'MULBERRY':
+            color = 'фуксия'
+        case 'MULTICOLOURED':
+            color = 'разноцветный'
+        case 'MUSTARD':
+            color = 'горчичный'
+        case 'NAVY':
+            color = 'голубой'
+        case 'NAVY WHITE':
+            color = 'белый'
+        case 'NAVYBLUE':
+            color = 'темно-синий'
+        case 'OCHRE':
+            color = 'коричневый'
+        case 'OFF PINK':
+            color = 'розовый'
+        case 'OFF WHITE':
+            color = 'белый'
+        case 'OIL':
+            color = 'оливковый'
+        case 'OLIVEGREEN':
+            color = 'оливковый'
+        case 'ONLYONE':
+            color = 'розовый'
+        case 'ORANGE':
+            color = 'оранжевый'
+        case 'ORANGES':
+            color = 'оранжевый'
+        case 'OYSTERWHITE':
+            color = 'белый'
+        case 'PALE BLUE':
+            color = 'синий'
+        case 'PALE GREY':
+            color = 'серый'
+        case 'PALE INDIGO':
+            color = 'синий'
+        case 'PALE KHAKI':
+            color = 'хаки'
+        case 'PALE MARL':
+            color = 'белый'
+        case 'PALE OCHRE':
+            color = 'оранжевый'
+        case 'PALEPINK':
+            color = 'розовый'
+        case 'PALEPINK':
+            color = 'розовый'
+        case 'PASTEL BLUE':
+            color = 'голубой'
+        case 'PASTELPINK':
+            color = 'розовый'
+        case 'PEARLGREY':
+            color = 'светло-серый'
+        case 'PETROLBLUE':
+            color = 'голубой'
+        case 'PINK':
+            color = 'розовый'
+        case 'PINK LILAC':
+            color = 'розовый'
+        case 'PINKMARL':
+            color = 'розовый'
+        case 'PISTACHIO':
+            color = 'светло-зеленый'
+        case 'PRINT 1':
+            color = 'белый'
+        case 'PRINTED':
+            color = 'белый'
+        case 'PURPLE':
+            color = 'фиолетовый'
+        case 'RED':
+            color = 'красный'
+        case 'REDDISH':
+            color = 'красный'
+        case 'RUSSET':
+            color = 'коричневый'
+        case 'RUST':
+            color = 'коричневый'
+        case 'SAND':
+            color = 'светло-бежевый'
+        case 'SAND BROWN':
+            color = 'коричневый'
+        case 'SAND MARL':
+            color = 'бежевый'
+        case 'SANDBROWN':
+            color = 'коричневый'
+        case 'SEAGREEN':
+            color = 'светло-синий'
+        case 'SILVER':
+            color = 'серебристый'
+        case 'SKYBLUE':
+            color = 'голубой'
+        case 'STONE':
+            color = 'серый'
+        case 'STRAW':
+            color = 'белый'
+        case 'STRIPED':
+            color = 'белый'
+        case 'STRIPES':
+            color = 'белый'
+        case 'TAN GREY':
+            color = 'серый'
+        case 'TANGERINE':
+            color = 'оранжевый'
+        case 'TANMARL':
+            color = 'белый'
+        case 'TAUPE':
+            color = 'белый'
+        case 'TAUPEGREY':
+            color = 'серый'
+        case 'TERRACOTTA':
+            color = 'белый'
+        case 'TOBACCO BROWN':
+            color = 'коричневый'
+        case 'TOFFEE':
+            color = 'светло-коричневый'
+        case 'TURQUOISE':
+            color = 'бирюзовый'
+        case 'VANILLA':
+            color = 'светло-бежевый'
+        case 'WASHEDPETROL':
+            color = 'белый'
+        case 'WHISKYYELLOW':
+            color = 'желтый'
+        case 'WHITE':
+            color = 'белый'
+        case 'WHITE NAVY':
+            color = 'белый'
+        case 'WINE':
+            color = 'бордовый'
+        case 'YELLOW':
+            color = 'желтый'
+        case _:
+            color = value
+
+    return color
+
+
+def sizes_format(sizes: str = None) -> str:
+
+    sizes = 'XS;S;M;L;XL'
+
+    sizes_dict = {
+        'XS': '40',
+        'S': '42',
+        'M': '44',
+        'L': '46',
+        'XL': '48'
+    }
+    sizes = sizes.split(';')
+
+    sizes_rus = ';'.join(sizes_dict.get(size, size) for size in sizes)
+
+    print(sizes_rus)
+
+
+
+
+sizes_format()
