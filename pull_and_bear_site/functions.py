@@ -1,3 +1,5 @@
+from googletrans import Translator
+
 # Функция для перевода формата цветов Pull and Bear в Ozone
 def colors_format(value: str) -> str:
     match value:
@@ -463,24 +465,26 @@ def colors_format(value: str) -> str:
     return color
 
 
-def sizes_format(sizes: str = None) -> str:
-
-    sizes = 'XS;S;M;L;XL'
-
+# Функция для перевода европейских размеров в российские
+def sizes_format(sizes: str) -> str:
     sizes_dict = {
         'XS': '40',
-        'S': '42',
-        'M': '44',
-        'L': '46',
-        'XL': '48'
+        'S': '42, 44',
+        'M': '44, 46',
+        'L': '48, 50',
+        'XL': '52',
+        'XXl': '54'
     }
     sizes = sizes.split(';')
 
     sizes_rus = ';'.join(sizes_dict.get(size, size) for size in sizes)
 
-    print(sizes_rus)
+    return sizes_rus
 
 
+# Функция перевода текста
+def translator(text: str) -> str:
+    translator = Translator()
+    translation = translator.translate(text, dest='ru')
 
-
-sizes_format()
+    return translation

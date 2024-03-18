@@ -11,9 +11,11 @@ from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
+
 from config import headers, params
 from functions import colors_format
 from functions import sizes_format
+from functions import translator
 
 start_time = datetime.now()
 
@@ -276,6 +278,7 @@ def get_products_data(products_data: dict) -> None:
         try:
             # composition = ''
             composition_items = item['bundleProductSummaries'][0]['detail']['composition']
+            material = composition_items[0]['composition'][0]['name']
             # for item in composition_items:
             #     for elem in item['composition']:
             #         composition += f"{elem['name']}: {elem['description']} "
@@ -285,6 +288,7 @@ def get_products_data(products_data: dict) -> None:
 
         except Exception:
             composition = None
+            material = None
 
         brand = 'Pull and Bear'
 
@@ -292,7 +296,7 @@ def get_products_data(products_data: dict) -> None:
             {
                 '№': None,
                 'Артикул': id_product,
-                'Название товара': name,
+                'Название товара': translator(name),
                 'Цена, руб.*': price,
                 'Цена до скидки, руб.': None,
                 'НДС, %*': None,
@@ -310,10 +314,10 @@ def get_products_data(products_data: dict) -> None:
                 'Бренд в одежде и обуви*': brand,
                 'Объединить на одной карточке*': sku,
                 'Цвет товара*': color_ru,
-                'Российский размер*': None,
+                'Российский размер*': sizes_rus,
                 'Размер производителя': sizes_eur,
                 'Название цвета': color_en,
-                'Тип*': type_product,
+                'Тип*': translator(type_product),
                 'Пол*': gender,
                 'Размер пеленки': None,
                 'ТН ВЭД коды ЕАЭС': None,
@@ -325,11 +329,11 @@ def get_products_data(products_data: dict) -> None:
                 'Коллекция': None,
                 'Страна-изготовитель': None,
                 'Вид принта': None,
-                'Аннотация': description,
-                'Инструкция по уходу': care,
+                'Аннотация': translator(description),
+                'Инструкция по уходу': translator(care),
                 'Серия в одежде и обуви': None,
-                'Материал': composition,
-                'Состав материала': composition,
+                'Материал': translator(material),
+                'Состав материала': translator(composition),
                 'Материал подклада/внутренней отделки': None,
                 'Материал наполнителя': None,
                 'Утеплитель, гр': None,
