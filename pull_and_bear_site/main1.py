@@ -164,15 +164,6 @@ def get_products_data(products_data: dict) -> None:
     result_data = []
 
     for item in products_data['products']:
-        try:
-            id_product = item['id']
-        except Exception:
-            id_product = None
-
-        try:
-            sku = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
-        except Exception:
-            sku = None
 
         try:
             name = item['nameEn']
@@ -188,48 +179,6 @@ def get_products_data(products_data: dict) -> None:
             price = 0
 
         try:
-            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-            color_ru = colors_format(value=color_en)
-
-        except Exception:
-            color_en = None
-            color_ru = None
-
-        try:
-            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
-        except Exception:
-            id_color = ''
-
-        try:
-            main_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
-        except Exception:
-            main_image = None
-
-        try:
-            additional_images_list = []
-            for i in range(2, 11):
-                additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
-                additional_images_list.append(additional_image)
-            additional_images = '; '.join(additional_images_list)
-
-
-        except Exception:
-            additional_images = None
-
-        # try:
-        #     additional_images_list = []
-        #     images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
-        #     for img_item in images_items:
-        #         color_code = img_item['colorCode']
-        #         if color_code == id_color:
-        #             for img in img_item['xmediaItems'][0]['medias']:
-        #                 additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
-        #     additional_images = '; '.join(additional_images_list)
-        #
-        # except Exception:
-        #     additional_images = None
-
-        try:
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             sizes_eur = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
         except Exception:
@@ -243,60 +192,6 @@ def get_products_data(products_data: dict) -> None:
                 sizes_rus = sizes_format(sizes=sizes_eur)
         except Exception:
             sizes_rus = None
-
-        try:
-            type_product = item['subFamilyNameEN']
-        except Exception:
-            type_product = None
-
-        try:
-            gender_en = item['sectionNameEN']
-            if gender_en == 'WOMEN':
-                gender = 'женский'
-            elif gender_en == 'MAN':
-                gender = 'мужской'
-            else:
-                gender = gender_en
-        except Exception:
-            gender = None
-
-        try:
-            model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh']
-        except Exception:
-            model_height = None
-
-        try:
-            model_size = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelSize']
-        except Exception:
-            model_size = None
-
-        try:
-            description = item['detail']['longDescription']
-        except Exception:
-            description = None
-
-        try:
-            care_items = item['bundleProductSummaries'][0]['detail']['care']
-            care = ', '.join(item['description'] for item in care_items)
-        except Exception:
-            care = None
-
-        try:
-            # composition = ''
-            composition_items = item['bundleProductSummaries'][0]['detail']['composition']
-            material = composition_items[0]['composition'][0]['name']
-            # for item in composition_items:
-            #     for elem in item['composition']:
-            #         composition += f"{elem['name']}: {elem['description']} "
-            # is equivalent to
-            composition = ' '.join(
-                f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
-
-        except Exception:
-            composition = None
-            material = None
-
-        brand = 'Pull and Bear'
 
         result_data.append(
             {
