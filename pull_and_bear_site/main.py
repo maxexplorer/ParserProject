@@ -16,9 +16,11 @@ from config import headers, params
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
+from functions import get_exchange_rate
 
 start_time = datetime.now()
 
+rub = get_exchange_rate()
 
 # Функция получения id категорий
 def get_id_categories(headers: dict) -> list:
@@ -297,7 +299,7 @@ def get_products_data(products_data: dict) -> None:
                 '№': None,
                 'Артикул': id_product,
                 'Название товара': translator(name),
-                'Цена, руб.*': price,
+                'Цена, руб.*': round(price * rub),
                 'Цена до скидки, руб.': None,
                 'НДС, %*': None,
                 'Включить продвижение': None,
