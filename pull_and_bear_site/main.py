@@ -1,12 +1,10 @@
-import json
 import os
 import time
 from datetime import datetime
-from random import randint
+import json
 
 import requests
 from requests import Session
-from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
 import openpyxl
@@ -21,6 +19,8 @@ from functions import get_exchange_rate
 start_time = datetime.now()
 
 rub = get_exchange_rate()
+
+print(f'Курс EUR/RUB: {rub}')
 
 # Функция получения id категорий
 def get_id_categories(headers: dict) -> list:
