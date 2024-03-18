@@ -22,60 +22,8 @@ rub = get_exchange_rate()
 
 print(f'Курс EUR/RUB: {rub}')
 
-# Функция получения id категорий
-def get_id_categories(headers: dict) -> list:
-    id_categories_list = []
-
-    with Session() as session:
-        try:
-            response = session.get(
-                'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
-                params=params,
-                headers=headers,
-            )
-
-            if response.status_code != 200:
-                print(f'status_code: {response.status_code}')
-
-            json_data = response.json()
-        except Exception as ex:
-            print(f'get_id_categories: {ex}')
-
-    category_items = json_data['categories']
-
-    for category_item in category_items[:2]:
-        category_name = category_item.get('name')
-        subcategory_items = category_item.get('subcategories')
-        for subcategory_item in subcategory_items:
-            if subcategory_item.get('name') == 'Clothing':
-                clothing_subcategory_items = subcategory_item.get('subcategories')
-                for clothing_subcategory_item in clothing_subcategory_items:
-                    id_category = clothing_subcategory_item.get('id')
-                    subcategory_name = clothing_subcategory_item.get('name')
-                    if subcategory_name == '-':
-                        continue
-                    if 'Best sellers' in subcategory_name:
-                        break
-                    subcategories = clothing_subcategory_item.get('subcategories')
-                    if subcategories:
-                        for subcategory in subcategories:
-                            if subcategory_name == 'Jeans' and subcategory.get('name') == 'See all':
-                                id_category = subcategory.get('id')
-                                id_categories_list.append(id_category)
-                            else:
-                                id_categories_list.append(id_category)
-                    else:
-                        id_categories_list.append(id_category)
-
-                    print(category_name, subcategory_name)
-
-    if not os.path.exists('data'):
-        os.makedirs('data')
-
-    with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
-        print(*id_categories_list, file=file, sep='\n')
-
-    return id_categories_list
+# Открываем файл Excel
+workbook = openpyxl.load_workbook("data/result_data.xlsx")
 
 
 # Функция получения id товаров
@@ -164,7 +112,6 @@ def get_products_data(products_data: dict) -> None:
     result_data = []
 
     for item in products_data['products']:
-
         try:
             name = item['nameEn']
         except Exception:
@@ -276,14 +223,14 @@ def get_products_data(products_data: dict) -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
-    if not os.path.exists('data/result_list.xlsx'):
+    if not os.path.exists('data/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+        with ExcelWriter('data/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
+    with ExcelWriter('data/result_data.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='ОЗОН', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')

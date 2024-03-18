@@ -381,14 +381,14 @@ def get_products_data(products_data: dict) -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
-    if not os.path.exists('data/result_list.xlsx'):
+    if not os.path.exists('data/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+        with ExcelWriter('data/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
+    with ExcelWriter('data/result_data.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name='ОЗОН', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
