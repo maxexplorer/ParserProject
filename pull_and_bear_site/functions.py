@@ -490,7 +490,7 @@ def translator(text: str) -> str:
     try:
         translator = Translator()
         translation = translator.translate(text, dest='ru')
-        return translation
+        return translation.text
     except Exception:
         return text
 

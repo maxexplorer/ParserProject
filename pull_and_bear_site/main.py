@@ -89,8 +89,8 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
     id_products_list = []
     with Session() as session:
-        for i, id_category in enumerate(id_categories_list[:1], 1):
-            time.sleep(1)
+        for i, id_category in enumerate(id_categories_list[1:2], 1):
+            time.sleep(3)
 
             try:
                 response = session.get(
@@ -117,7 +117,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
                 }
             )
 
-            print(f'Обработано: {i}/{count_categories}')
+            print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
 
     return id_products_list
 
@@ -151,6 +151,7 @@ def get_products_array(id_products_list: list, headers: dict) -> None:
 
                 json_data = response.json()
 
+                print(f'Сбор данных id категории: {key}')
                 get_products_data(products_data=json_data)
 
             except Exception as ex:
@@ -178,10 +179,13 @@ def get_products_data(products_data: dict) -> None:
         except Exception:
             name = None
 
+        if not name:
+            continue
+
         try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
         except Exception:
-            price = None
+            price = 0
 
         try:
             color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
@@ -247,7 +251,7 @@ def get_products_data(products_data: dict) -> None:
 
         try:
             gender_en = item['sectionNameEN']
-            if gender_en == 'WOMAN':
+            if gender_en == 'WOMEN':
                 gender = 'женский'
             elif gender_en == 'MAN':
                 gender = 'мужской'
@@ -371,7 +375,7 @@ def get_products_data(products_data: dict) -> None:
                 'Предупреждение': None,
             }
         )
-    print(f'Обработана категория: {type_product}')
+
     save_excel(data=result_data)
 
 
@@ -397,7 +401,9 @@ def main():
 
 
     execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
+
 
 
 if __name__ == '__main__':
