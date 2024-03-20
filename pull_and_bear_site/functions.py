@@ -2,10 +2,11 @@ import requests
 
 from googletrans import Translator
 
+
 # Функция для перевода формата цветов Pull and Bear в Ozone
 def colors_format(value: str) -> str:
     match value:
-        case 'ANTHRACITEGREY':
+        case 'ANTHRACITE GREY':
             color = 'светло-серый'
         case 'APRICOT':
             color = 'оранжевый'
@@ -17,7 +18,7 @@ def colors_format(value: str) -> str:
             color = 'бежевый'
         case 'BEIGE GREEN':
             color = 'зеленый'
-        case 'BEIGEMARL':
+        case 'BEIGE MARL':
             color = 'бежевый'
         case 'BEIGE-PINK':
             color = 'розовый'
@@ -31,13 +32,15 @@ def colors_format(value: str) -> str:
             color = 'бежевый'
         case 'BLACK GREEN':
             color = 'зеленый'
+        case 'BLACK MARL':
+            color = 'чёрный'
         case 'BLACK SILVER':
             color = 'серебристый'
         case 'BLACK WHITE':
             color = 'белый'
         case 'BLACK YELLOW':
             color = 'желтый'
-        case 'BLACKGOLD':
+        case 'BLACK GOLD':
             color = 'золотой'
         case 'BLUE':
             color = 'синий'
@@ -55,9 +58,9 @@ def colors_format(value: str) -> str:
             color = 'синий'
         case 'BLUE WHITE':
             color = 'синий'
-        case 'BLUEGREEN':
+        case 'BLUE GREEN':
             color = 'зеленый'
-        case 'BLUEGREY':
+        case 'BLUE GREY':
             color = 'серый'
         case 'BLUES':
             color = 'синий'
@@ -67,13 +70,13 @@ def colors_format(value: str) -> str:
             color = 'серый'
         case 'BONE':
             color = 'белый'
-        case 'BONEWHITE':
+        case 'BONE WHITE':
             color = 'белый'
         case 'BOTTLE':
             color = 'белый'
         case 'BRICK':
             color = 'белый'
-        case 'BRIGHTRED':
+        case 'BRIGHT RED':
             color = 'красный'
         case 'BRONZE':
             color = 'светло-коричневый'
@@ -89,13 +92,13 @@ def colors_format(value: str) -> str:
             color = 'коричневый'
         case 'BURGUNDY':
             color = 'бордовый'
-        case 'BURGUNDYRED':
+        case 'BURGUNDY RED':
             color = 'бордовый'
         case 'CAMEL':
             color = 'светло-бежевый'
         case 'CAMEL WHITE':
             color = 'белый'
-        case 'CAMELBROWN':
+        case 'CAMEL BROWN':
             color = 'коричневый'
         case 'CANVAS':
             color = 'белый'
@@ -103,15 +106,15 @@ def colors_format(value: str) -> str:
             color = 'желтый'
         case 'CAVA':
             color = 'белый'
-        case 'CHALKPINK':
+        case 'CHALK PINK':
             color = 'розовый'
         case 'CHARCOAL':
             color = 'белый'
-        case 'CHARCOALGREY':
+        case 'CHARCOAL GREY':
             color = 'серый'
         case 'CHOCOLATE':
             color = 'шоколадный'
-        case 'CHOCOLATEBROWN':
+        case 'CHOCOLATE BROWN':
             color = 'коричневый'
         case 'CONTRAST':
             color = 'белый'
@@ -125,49 +128,49 @@ def colors_format(value: str) -> str:
             color = 'серый'
         case 'DARK KHAKI':
             color = 'хаки'
-        case 'DARKANTHRACITE':
+        case 'DARK ANTHRACITE':
             color = 'светло-серый'
-        case 'DARKBEIGE':
+        case 'DARK BEIGE':
             color = 'бежевый'
-        case 'DARKBLUE':
+        case 'DARK BLUE':
             color = 'синий'
-        case 'DARKBROWN':
+        case 'DARK BROWN':
             color = 'коричневый'
-        case 'DARKCAMEL':
+        case 'DARK CAMEL':
             color = 'желтый'
-        case 'DARKGREEN':
+        case 'DARK GREEN':
             color = 'зеленый'
-        case 'DARKGREY':
+        case 'DARK GREY':
             color = 'серый'
-        case 'DARKGREYMARL':
+        case 'DARK GREY MARL':
             color = 'серый'
-        case 'DARKKHAKI':
+        case 'DARK KHAKI':
             color = 'хаки'
-        case 'DARKMAUVE':
+        case 'DARK MAUVE':
             color = 'белый'
-        case 'DARKNAVY':
+        case 'DARK NAVY':
             color = 'синий'
-        case 'DARKPINK':
+        case 'DARK PINK':
             color = 'розовый'
-        case 'DARKRED':
+        case 'DARK RED':
             color = 'красный'
-        case 'DARKTAN':
+        case 'DARK TAN':
             color = 'бежевый'
-        case 'DEEPBLUE':
+        case 'DEEP BLUE':
             color = 'синий'
         case 'DENIM INDIGO':
             color = 'синий'
-        case 'DENIMBLUE':
+        case 'DENIM BLUE':
             color = 'голубой'
-        case 'DENIMBLUE':
+        case 'DENIM BLUE':
             color = 'синий'
-        case 'DUCKBLUE':
+        case 'DUCK BLUE':
             color = 'синий'
-        case 'DUCKGREEN':
+        case 'DUCK GREEN':
             color = 'зеленый'
-        case 'DUSTYPINK':
+        case 'DUSTY PINK':
             color = 'розовый'
-        case 'DUSTYPURPLE':
+        case 'DUSTY PURPLE':
             color = 'сиреневый'
         case 'ECRU':
             color = 'светло-бежевый'
@@ -185,19 +188,19 @@ def colors_format(value: str) -> str:
             color = 'бежевый'
         case 'ECRU NAVY':
             color = 'синий'
-        case 'ECRUWHITE':
+        case 'ECRU WHITE':
             color = 'белый'
         case 'EMERALD':
             color = 'зеленый'
         case 'FADED BLACK':
             color = 'черный'
+        case 'FADED BLUE':
+            color = 'голубой'
         case 'FADED GREEN':
             color = 'зеленый'
-        case 'FADEDBLUE':
-            color = 'голубой'
-        case 'FADEDNAVY':
+        case 'FADED NAVY':
             color = 'синий'
-        case 'FADEDPINK':
+        case 'FADED PINK':
             color = 'розовый'
         case 'FUCHSIA':
             color = 'перламутровый'
@@ -451,6 +454,8 @@ def colors_format(value: str) -> str:
             color = 'светло-бежевый'
         case 'WASHEDPETROL':
             color = 'белый'
+        case 'WATER BLUE':
+            color = 'синий'
         case 'WHISKYYELLOW':
             color = 'желтый'
         case 'WHITE':
@@ -468,25 +473,32 @@ def colors_format(value: str) -> str:
 
 
 # Функция для перевода европейских размеров в российские
-def sizes_format(sizes: str) -> str:
+def sizes_format(gender: str, size_eur: str) -> str:
     sizes_dict = {
-        'XS': '40',
-        'S': '42, 44',
-        'M': '44, 46',
-        'L': '48, 50',
-        'XL': '52',
-        'XXl': '54'
+        'WOMEN': {
+            'XS': '40',
+            'S': '42, 44',
+            'M': '44, 46',
+            'L': '48, 50',
+            'XL': '52',
+            'XXl': '54'
+        },
+        'MAN': {
+            'S': '46',
+            'M': '48',
+            'L': '50, 52',
+            'XL': '52, 54',
+            'XXl': '56, 58'
+        }
     }
-    sizes = sizes.split(';')
 
-    sizes_rus = ';'.join(sizes_dict.get(size, size) for size in sizes)
+    size_rus = sizes_dict[gender][size_eur]
 
-    return sizes_rus
+    return size_rus
 
 
 # Функция перевода текста
 def translator(text: str) -> str:
-
     try:
         translator = Translator()
         translation = translator.translate(text, dest='ru')
@@ -512,3 +524,5 @@ def get_exchange_rate() -> int:
         exchange_rate = 0
 
     return exchange_rate
+
+

@@ -9,7 +9,6 @@ from requests import Session
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 from config import headers, params
 from functions import colors_format
 from functions import sizes_format
@@ -21,6 +20,7 @@ start_time = datetime.now()
 rub = get_exchange_rate()
 
 print(f'Курс EUR/RUB: {rub}')
+
 
 # Функция получения id категорий
 def get_id_categories(headers: dict) -> list:
@@ -160,7 +160,6 @@ def get_products_array(id_products_list: list, headers: dict) -> None:
 
 # Функция получения данных товаров
 def get_products_data(products_data: dict) -> None:
-
     result_data = []
 
     for item in products_data['products']:
@@ -176,6 +175,7 @@ def get_products_data(products_data: dict) -> None:
 
         try:
             name = item['nameEn']
+            name = translator(name)
         except Exception:
             name = None
 
@@ -183,7 +183,14 @@ def get_products_data(products_data: dict) -> None:
             continue
 
         try:
+            old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
+            old_price = round(old_price * rub)
+        except Exception:
+            old_price = 0
+
+        try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
+            price = round(price * rub)
         except Exception:
             price = 0
 
@@ -211,8 +218,6 @@ def get_products_data(products_data: dict) -> None:
                 additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
                 additional_images_list.append(additional_image)
             additional_images = '; '.join(additional_images_list)
-
-
         except Exception:
             additional_images = None
 
@@ -230,22 +235,8 @@ def get_products_data(products_data: dict) -> None:
         #     additional_images = None
 
         try:
-            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            sizes_eur = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
-        except Exception:
-            sizes_eur = None
-
-        try:
-            sizes_values = any(map(lambda value: value.isdigit(), sizes_eur.split(';')))
-            if sizes_values:
-                sizes_rus = sizes_eur
-            else:
-                sizes_rus = sizes_format(sizes=sizes_eur)
-        except Exception:
-            sizes_rus = None
-
-        try:
             type_product = item['subFamilyNameEN']
+            type_product = translator(type_product)
         except Exception:
             type_product = None
 
@@ -258,6 +249,7 @@ def get_products_data(products_data: dict) -> None:
             else:
                 gender = gender_en
         except Exception:
+            gender_en = None
             gender = None
 
         try:
@@ -272,12 +264,14 @@ def get_products_data(products_data: dict) -> None:
 
         try:
             description = item['detail']['longDescription']
+            description = translator(description)
         except Exception:
             description = None
 
         try:
             care_items = item['bundleProductSummaries'][0]['detail']['care']
             care = ', '.join(item['description'] for item in care_items)
+            care = translator(care)
         except Exception:
             care = None
 
@@ -285,96 +279,112 @@ def get_products_data(products_data: dict) -> None:
             # composition = ''
             composition_items = item['bundleProductSummaries'][0]['detail']['composition']
             material = composition_items[0]['composition'][0]['name']
+            material = translator(material)
             # for item in composition_items:
             #     for elem in item['composition']:
             #         composition += f"{elem['name']}: {elem['description']} "
             # is equivalent to
             composition = ' '.join(
                 f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
-
+            composition = translator(composition)
         except Exception:
             composition = None
             material = None
 
         brand = 'Pull and Bear'
 
-        result_data.append(
-            {
-                '№': None,
-                'Артикул': id_product,
-                'Название товара': translator(name),
-                'Цена, руб.*': round(price * rub),
-                'Цена до скидки, руб.': None,
-                'НДС, %*': None,
-                'Включить продвижение': None,
-                'Ozon ID': id_product,
-                'Штрихкод (Серийный номер / EAN)': None,
-                'Вес в упаковке, г*': None,
-                'Ширина упаковки, мм*': None,
-                'Высота упаковки, мм*': None,
-                'Длина упаковки, мм*': None,
-                'Ссылка на главное фото*': main_image,
-                'Ссылки на дополнительные фото': additional_images,
-                'Ссылки на фото 360': None,
-                'Артикул фото': None,
-                'Бренд в одежде и обуви*': brand,
-                'Объединить на одной карточке*': sku,
-                'Цвет товара*': color_ru,
-                'Российский размер*': sizes_rus,
-                'Размер производителя': sizes_eur,
-                'Название цвета': color_en,
-                'Тип*': translator(type_product),
-                'Пол*': gender,
-                'Размер пеленки': None,
-                'ТН ВЭД коды ЕАЭС': None,
-                'Ключевые слова': None,
-                'Сезон': None,
-                'Рост модели на фото': model_height,
-                'Параметры модели на фото': None,
-                'Размер товара на фото': model_size,
-                'Коллекция': None,
-                'Страна-изготовитель': None,
-                'Вид принта': None,
-                'Аннотация': translator(description),
-                'Инструкция по уходу': translator(care),
-                'Серия в одежде и обуви': None,
-                'Материал': translator(material),
-                'Состав материала': translator(composition),
-                'Материал подклада/внутренней отделки': None,
-                'Материал наполнителя': None,
-                'Утеплитель, гр': None,
-                'Диапазон температур, °С': None,
-                'Стиль': None,
-                'Вид спорта': None,
-                'Вид одежды': None,
-                'Тип застежки': None,
-                'Длина рукава': None,
-                'Талия': None,
-                'Для беременных или новорожденных': None,
-                'Тип упаковки одежды': None,
-                'Количество в упаковке': None,
-                'Состав комплекта': None,
-                'Рост': None,
-                'Длина изделия, см': None,
-                'Длина подола': None,
-                'Форма воротника/горловины': None,
-                'Детали': None,
-                'Таблица размеров JSON': None,
-                'Rich-контент JSON': None,
-                'Плотность, DEN': None,
-                'Количество пар в упаковке': None,
-                'Класс компрессии': None,
-                'Персонаж': None,
-                'Праздник': None,
-                'Тематика карнавальных костюмов': None,
-                'Признак 18+': None,
-                'Назначение спецодежды': None,
-                'HS-код': None,
-                'Количество заводских упаковок': None,
-                'Ошибка': None,
-                'Предупреждение': None,
-            }
-        )
+        try:
+            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            # sizes_eur = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
+            for item in sizes_items:
+                size_sku = item.get('sku')
+                size_eur = item.get('name')
+                status_size = item.get('visibilityValue')
+                if not size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(gender=gender_en, size_eur=size_eur)
+                else:
+                    size_rus = size_eur
+
+                result_data.append(
+                    {
+                        '№': None,
+                        'Артикул': id_product,
+                        'Название товара': name,
+                        'Цена, руб.*': price,
+                        'Цена до скидки, руб.': old_price,
+                        'НДС, %*': None,
+                        'Включить продвижение': None,
+                        'Ozon ID': size_sku,
+                        'Штрихкод (Серийный номер / EAN)': None,
+                        'Вес в упаковке, г*': None,
+                        'Ширина упаковки, мм*': None,
+                        'Высота упаковки, мм*': None,
+                        'Длина упаковки, мм*': None,
+                        'Ссылка на главное фото*': main_image,
+                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылки на фото 360': None,
+                        'Артикул фото': None,
+                        'Бренд в одежде и обуви*': brand,
+                        'Объединить на одной карточке*': sku,
+                        'Цвет товара*': color_ru,
+                        'Российский размер*': size_rus,
+                        'Размер производителя': size_eur,
+                        'Статус наличия': status_size,
+                        'Название цвета': color_en,
+                        'Тип*': type_product,
+                        'Пол*': gender,
+                        'Размер пеленки': None,
+                        'ТН ВЭД коды ЕАЭС': None,
+                        'Ключевые слова': None,
+                        'Сезон': None,
+                        'Рост модели на фото': model_height,
+                        'Параметры модели на фото': None,
+                        'Размер товара на фото': model_size,
+                        'Коллекция': None,
+                        'Страна-изготовитель': None,
+                        'Вид принта': None,
+                        'Аннотация': description,
+                        'Инструкция по уходу': care,
+                        'Серия в одежде и обуви': None,
+                        'Материал': material,
+                        'Состав материала': composition,
+                        'Материал подклада/внутренней отделки': None,
+                        'Материал наполнителя': None,
+                        'Утеплитель, гр': None,
+                        'Диапазон температур, °С': None,
+                        'Стиль': None,
+                        'Вид спорта': None,
+                        'Вид одежды': None,
+                        'Тип застежки': None,
+                        'Длина рукава': None,
+                        'Талия': None,
+                        'Для беременных или новорожденных': None,
+                        'Тип упаковки одежды': None,
+                        'Количество в упаковке': None,
+                        'Состав комплекта': None,
+                        'Рост': None,
+                        'Длина изделия, см': None,
+                        'Длина подола': None,
+                        'Форма воротника/горловины': None,
+                        'Детали': None,
+                        'Таблица размеров JSON': None,
+                        'Rich-контент JSON': None,
+                        'Плотность, DEN': None,
+                        'Количество пар в упаковке': None,
+                        'Класс компрессии': None,
+                        'Персонаж': None,
+                        'Праздник': None,
+                        'Тематика карнавальных костюмов': None,
+                        'Признак 18+': None,
+                        'Назначение спецодежды': None,
+                        'HS-код': None,
+                        'Количество заводских упаковок': None,
+                        'Ошибка': None,
+                        'Предупреждение': None,
+                    }
+                )
+        except Exception as ex:
+            print(f'sizes: {ex}')
 
     save_excel(data=result_data)
 
@@ -399,11 +409,9 @@ def main():
     id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
     get_products_array(id_products_list=id_products_list, headers=headers)
 
-
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
-
 
 
 if __name__ == '__main__':
