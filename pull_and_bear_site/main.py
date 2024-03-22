@@ -87,6 +87,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
     print(f'Всего: {count_categories} категорий!')
 
+    data_products_list = []
     id_products_list = []
     with Session() as session:
         for i, id_category in enumerate(id_categories_list[1:2], 1):
@@ -111,23 +112,31 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             product_ids = json_data.get('productIds')
 
-            id_products_list.append(
+            data_products_list.append(
                 {
                     id_category: product_ids
                 }
             )
 
+            id_products_list.extend(product_ids)
+
             print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
 
-    return id_products_list
+    if not os.path.exists('data'):
+        os.makedirs('data')
+
+    with open('data/id_products_list.txt', 'w', encoding='utf-8') as file:
+        print(*id_products_list, file=file, sep='\n')
+
+    return data_products_list
 
 
 # Функция получения json данных товаров
-def get_products_array(id_products_list: list, headers: dict) -> None:
+def get_products_array(data_products_list: list, headers: dict) -> None:
     # with open(file_path, 'r', encoding='utf-8') as file:
     #     id_products_list = json.load(file)
 
-    for item_dict in id_products_list:
+    for item_dict in data_products_list:
         for key in item_dict:
             lst = item_dict[key]
             id_products = ','.join(map(str, lst))
@@ -169,9 +178,9 @@ def get_products_data(products_data: dict) -> None:
             id_product = None
 
         try:
-            sku = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
+            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
         except Exception:
-            sku = None
+            reference = None
 
         try:
             name = item['nameEn']
@@ -308,7 +317,7 @@ def get_products_data(products_data: dict) -> None:
                 result_data.append(
                     {
                         '№': None,
-                        'Артикул': id_product,
+                        'Артикул': size_sku,
                         'Название товара': name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
@@ -325,7 +334,7 @@ def get_products_data(products_data: dict) -> None:
                         'Ссылки на фото 360': None,
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,
-                        'Объединить на одной карточке*': sku,
+                        'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
@@ -406,8 +415,8 @@ def save_excel(data: list) -> None:
 
 def main():
     # id_categories_list = get_id_categories(headers=headers)
-    id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
-    get_products_array(id_products_list=id_products_list, headers=headers)
+    data_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
+    get_products_array(id_products_list=data_products_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
