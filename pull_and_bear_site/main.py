@@ -305,13 +305,16 @@ def get_products_data(products_data: dict) -> None:
 
         try:
             size = ''
+            status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             for item in sizes_items:
                 size_sku = item.get('sku')
                 size_eur = item.get('name')
                 status_size = item.get('visibilityValue')
-                if size == size_eur and status_size == 'SHOW':
-                    continue
+                if size == size_eur:
+                    if status_size in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(status_size)
                 size = size_eur
 
                 if not size_eur.isdigit() and gender_en:
