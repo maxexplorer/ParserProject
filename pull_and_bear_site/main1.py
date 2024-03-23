@@ -55,7 +55,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             product_ids = json_data.get('productIds')
 
-            id_products_list.append()
+            id_products_list.extend(product_ids)
 
             print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
 
@@ -371,6 +371,7 @@ def get_size_data(products_data: dict) -> None:
                 size_eur = item.get('name')
                 if size == size_eur:
                     continue
+                size = size_eur
                 status_size = item.get('visibilityValue')
 
                 result_data.append(
@@ -379,7 +380,6 @@ def get_size_data(products_data: dict) -> None:
                         'Статус наличия': status_size,
                     }
                 )
-                size = size_eur
         except Exception as ex:
             print(f'sizes: {ex}')
 

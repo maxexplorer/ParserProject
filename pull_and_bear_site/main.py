@@ -87,7 +87,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
     print(f'Всего: {count_categories} категорий!')
 
-    data_products_list = []
+    products_data_list = []
     id_products_list = []
     with Session() as session:
         for i, id_category in enumerate(id_categories_list[1:2], 1):
@@ -103,7 +103,8 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
                 json_data = response.json()
 
                 if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                    print(f'id_category: {id_category} status_code: {response.status_code}')
+                    continue
 
                 json_data = response.json()
 
@@ -112,7 +113,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             product_ids = json_data.get('productIds')
 
-            data_products_list.append(
+            products_data_list.append(
                 {
                     id_category: product_ids
                 }
@@ -125,18 +126,18 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_products_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
         print(*id_products_list, file=file, sep='\n')
 
-    return data_products_list
+    return products_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(data_products_list: list, headers: dict) -> None:
+def get_products_array(products_data_list: list, headers: dict) -> None:
     # with open(file_path, 'r', encoding='utf-8') as file:
     #     id_products_list = json.load(file)
 
-    for item_dict in data_products_list:
+    for item_dict in products_data_list:
         for key in item_dict:
             lst = item_dict[key]
             id_products = ','.join(map(str, lst))
@@ -303,97 +304,115 @@ def get_products_data(products_data: dict) -> None:
         brand = 'Pull and Bear'
 
         try:
+            # size = ''
+            size_dict = {}
+            size_list = []
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             # sizes_eur = ';'.join(item['name'] for item in sizes_items if item['visibilityValue'] == 'SHOW')
             for item in sizes_items:
                 size_sku = item.get('sku')
-                size_eur = item.get('name')
-                status_size = item.get('visibilityValue')
-                if not size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(gender=gender_en, size_eur=size_eur)
-                else:
-                    size_rus = size_eur
+                size_name = item.get('name')
+                size_value = item.get('visibilityValue')
+                # if size == size_eur:
+                #     if status_size != 'SHOW':
+                #         continue
+                # size = size_eur
 
-                result_data.append(
-                    {
-                        '№': None,
-                        'Артикул': size_sku,
-                        'Название товара': name,
-                        'Цена, руб.*': price,
-                        'Цена до скидки, руб.': old_price,
-                        'НДС, %*': None,
-                        'Включить продвижение': None,
-                        'Ozon ID': size_sku,
-                        'Штрихкод (Серийный номер / EAN)': None,
-                        'Вес в упаковке, г*': None,
-                        'Ширина упаковки, мм*': None,
-                        'Высота упаковки, мм*': None,
-                        'Длина упаковки, мм*': None,
-                        'Ссылка на главное фото*': main_image,
-                        'Ссылки на дополнительные фото': additional_images,
-                        'Ссылки на фото 360': None,
-                        'Артикул фото': None,
-                        'Бренд в одежде и обуви*': brand,
-                        'Объединить на одной карточке*': reference,
-                        'Цвет товара*': color_ru,
-                        'Российский размер*': size_rus,
-                        'Размер производителя': size_eur,
-                        'Статус наличия': status_size,
-                        'Название цвета': color_en,
-                        'Тип*': type_product,
-                        'Пол*': gender,
-                        'Размер пеленки': None,
-                        'ТН ВЭД коды ЕАЭС': None,
-                        'Ключевые слова': None,
-                        'Сезон': None,
-                        'Рост модели на фото': model_height,
-                        'Параметры модели на фото': None,
-                        'Размер товара на фото': model_size,
-                        'Коллекция': None,
-                        'Страна-изготовитель': None,
-                        'Вид принта': None,
-                        'Аннотация': description,
-                        'Инструкция по уходу': care,
-                        'Серия в одежде и обуви': None,
-                        'Материал': material,
-                        'Состав материала': composition,
-                        'Материал подклада/внутренней отделки': None,
-                        'Материал наполнителя': None,
-                        'Утеплитель, гр': None,
-                        'Диапазон температур, °С': None,
-                        'Стиль': None,
-                        'Вид спорта': None,
-                        'Вид одежды': None,
-                        'Тип застежки': None,
-                        'Длина рукава': None,
-                        'Талия': None,
-                        'Для беременных или новорожденных': None,
-                        'Тип упаковки одежды': None,
-                        'Количество в упаковке': None,
-                        'Состав комплекта': None,
-                        'Рост': None,
-                        'Длина изделия, см': None,
-                        'Длина подола': None,
-                        'Форма воротника/горловины': None,
-                        'Детали': None,
-                        'Таблица размеров JSON': None,
-                        'Rich-контент JSON': None,
-                        'Плотность, DEN': None,
-                        'Количество пар в упаковке': None,
-                        'Класс компрессии': None,
-                        'Персонаж': None,
-                        'Праздник': None,
-                        'Тематика карнавальных костюмов': None,
-                        'Признак 18+': None,
-                        'Назначение спецодежды': None,
-                        'HS-код': None,
-                        'Количество заводских упаковок': None,
-                        'Ошибка': None,
-                        'Предупреждение': None,
-                    }
-                )
+                size_dict.setdefault(size_name, []).append(size_value)
+
         except Exception as ex:
+            size_dict = {}
             print(f'sizes: {ex}')
+
+        for size_eur, size_status in size_dict.items():
+            status = 'SHOW' if 'SHOW' in size_status else size_status[0]
+
+            if not size_eur.isdigit() and gender_en:
+                size_rus = sizes_format(gender=gender_en, size_eur=size_eur)
+            else:
+                size_rus = size_eur
+
+
+
+            result_data.append(
+                {
+                    '№': None,
+                    'Артикул': size_sku,
+                    'Название товара': name,
+                    'Цена, руб.*': price,
+                    'Цена до скидки, руб.': old_price,
+                    'НДС, %*': None,
+                    'Включить продвижение': None,
+                    'Ozon ID': size_sku,
+                    'Штрихкод (Серийный номер / EAN)': None,
+                    'Вес в упаковке, г*': None,
+                    'Ширина упаковки, мм*': None,
+                    'Высота упаковки, мм*': None,
+                    'Длина упаковки, мм*': None,
+                    'Ссылка на главное фото*': main_image,
+                    'Ссылки на дополнительные фото': additional_images,
+                    'Ссылки на фото 360': None,
+                    'Артикул фото': None,
+                    'Бренд в одежде и обуви*': brand,
+                    'Объединить на одной карточке*': reference,
+                    'Цвет товара*': color_ru,
+                    'Российский размер*': size_rus,
+                    'Размер производителя': size_eur,
+                    'Статус наличия': status_size,
+                    'Название цвета': color_en,
+                    'Тип*': type_product,
+                    'Пол*': gender,
+                    'Размер пеленки': None,
+                    'ТН ВЭД коды ЕАЭС': None,
+                    'Ключевые слова': None,
+                    'Сезон': None,
+                    'Рост модели на фото': model_height,
+                    'Параметры модели на фото': None,
+                    'Размер товара на фото': model_size,
+                    'Коллекция': None,
+                    'Страна-изготовитель': None,
+                    'Вид принта': None,
+                    'Аннотация': description,
+                    'Инструкция по уходу': care,
+                    'Серия в одежде и обуви': None,
+                    'Материал': material,
+                    'Состав материала': composition,
+                    'Материал подклада/внутренней отделки': None,
+                    'Материал наполнителя': None,
+                    'Утеплитель, гр': None,
+                    'Диапазон температур, °С': None,
+                    'Стиль': None,
+                    'Вид спорта': None,
+                    'Вид одежды': None,
+                    'Тип застежки': None,
+                    'Длина рукава': None,
+                    'Талия': None,
+                    'Для беременных или новорожденных': None,
+                    'Тип упаковки одежды': None,
+                    'Количество в упаковке': None,
+                    'Состав комплекта': None,
+                    'Рост': None,
+                    'Длина изделия, см': None,
+                    'Длина подола': None,
+                    'Форма воротника/горловины': None,
+                    'Детали': None,
+                    'Таблица размеров JSON': None,
+                    'Rich-контент JSON': None,
+                    'Плотность, DEN': None,
+                    'Количество пар в упаковке': None,
+                    'Класс компрессии': None,
+                    'Персонаж': None,
+                    'Праздник': None,
+                    'Тематика карнавальных костюмов': None,
+                    'Признак 18+': None,
+                    'Назначение спецодежды': None,
+                    'HS-код': None,
+                    'Количество заводских упаковок': None,
+                    'Ошибка': None,
+                    'Предупреждение': None,
+                }
+            )
+
 
     save_excel(data=result_data)
 
@@ -415,8 +434,8 @@ def save_excel(data: list) -> None:
 
 def main():
     # id_categories_list = get_id_categories(headers=headers)
-    data_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
-    get_products_array(id_products_list=data_products_list, headers=headers)
+    products_data_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
+    get_products_array(products_data_list=products_data_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
