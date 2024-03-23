@@ -44,10 +44,10 @@ def ozone_parser(workbook):
                     try:
                         out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
                         if out_of_stock:
+                            print(f'{url}: Этот товар закончился')
                             row[cell.column - 4].value = ''
-                            row[cell.column - 3].value = 'Этот товар закончился'
+                            row[cell.column - 3].value = 0
                             row[cell.column - 2].value = ''
-                            print(f'{cell.hyperlink.target}: Этот товар закончился')
                             continue
                     except Exception:
                         pass
@@ -188,7 +188,7 @@ def wildberries_parser(workbook):
                 except Exception:
                     print(f'{url}: Этот товар закончился')
                     row[cell.column - 4].value = ''
-                    row[cell.column - 3].value = 'Этот товар закончился'
+                    row[cell.column - 3].value = 0
                     row[cell.column - 2].value = ''
                     continue
 
