@@ -188,8 +188,8 @@ def wildberries_parser(workbook):
                 except Exception:
                     print(f'{url}: Этот товар закончился')
                     row[cell.column - 4].value = ''
-                    row[cell.column - 3].value = ''
-                    row[cell.column - 2].value = 'Этот товар закончился'
+                    row[cell.column - 3].value = 'Этот товар закончился'
+                    row[cell.column - 2].value = ''
                     continue
 
                 try:

@@ -23,15 +23,19 @@ print(f'Курс EUR/RUB: {rub}')
 
 
 # Функция получения id товаров
-def get_id_products(file_path: str, headers: dict) -> list[dict]:
-    with open(file_path, 'r', encoding='utf-8') as file:
+def get_id_products(id_categories_list_path: str, id_products_list_path: str, headers: dict) -> list[dict]:
+    with open(id_categories_list_path, 'r', encoding='utf-8') as file:
         id_categories_list = [line.strip() for line in file.readlines()]
+
+    with open(id_products_list_path, 'r', encoding='utf-8') as file:
+        id_products_list = [line.strip() for line in file.readlines()]
 
     count_categories = len(id_categories_list)
 
     print(f'Всего: {count_categories} категорий!')
 
-    id_products_list = []
+    new_id_list = []
+
     with Session() as session:
         for i, id_category in enumerate(id_categories_list[1:2], 1):
             time.sleep(3)
@@ -46,7 +50,8 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
                 json_data = response.json()
 
                 if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                    print(f'id_category: {id_category} status_code: {response.status_code}')
+                    continue
 
                 json_data = response.json()
 
@@ -55,19 +60,25 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             product_ids = json_data.get('productIds')
 
-            id_products_list.extend(product_ids)
+            for id_product in product_ids:
+                if id_product in id_products_list:
+                    continue
+
+                new_id_list.append(id_product)
 
             print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
 
-    return id_products_list
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
+    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+        print(*new_id_list, file=file, sep='\n')
+
+    return new_id_list
 
 # Функция получения json данных товаров
-def get_products_array(id_products_list: list, headers: dict) -> None:
-    # with open(file_path, 'r', encoding='utf-8') as file:
-    #     id_products_list = json.load(file)
-
-    for item_dict in id_products_list:
+def get_products_array(products_data_list: list, headers: dict) -> None:
+    for item_dict in products_data_list:
         for key in item_dict:
             lst = item_dict[key]
             id_products = ','.join(map(str, lst))
@@ -92,10 +103,38 @@ def get_products_array(id_products_list: list, headers: dict) -> None:
                 json_data = response.json()
 
                 print(f'Сбор данных id категории: {key}')
-                get_size_data(products_data=json_data)
+                get_products_data(products_data=json_data)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
+
+# Функция получения json данных товаров
+def get_new_products_array(id_products_list: list, headers: dict) -> None:
+
+    params = {
+        'languageId': '-1',
+        'productIds': id_products_list,
+        'appId': '1',
+    }
+
+    try:
+        response = requests.get(
+            'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+            params=params,
+            headers=headers,
+        )
+
+        if response.status_code != 200:
+            print(f'status_code: {response.status_code}')
+
+        json_data = response.json()
+
+        print(f'Сбор данных!')
+        get_size_data(products_data=json_data)
+
+    except Exception as ex:
+        print(f'get_products_array: {ex}')
+
 
 # Функция получения данных товаров
 def get_products_data(products_data: dict) -> None:
@@ -364,15 +403,18 @@ def get_size_data(products_data: dict) -> None:
         #     price = 0
 
         try:
-            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             size = ''
+            status_dict = {}
+            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             for item in sizes_items:
                 size_sku = item.get('sku')
                 size_eur = item.get('name')
-                if size == size_eur:
-                    continue
-                size = size_eur
                 status_size = item.get('visibilityValue')
+                if size == size_eur:
+                    if status_size in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(status_size)
+                size = size_eur
 
                 result_data.append(
                     {
@@ -400,8 +442,10 @@ def save_excel(data: list, flag: str) -> None:
 
 
 def main():
-    id_products_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
-    get_products_array(id_products_list=id_products_list, headers=headers)
+    new_id_list = get_id_products(id_categories_list_path='data/id_categories_list.txt',
+                                       id_products_list_path='data/id_products_list.txt', headers=headers)
+    if new_id_list:
+        get_new_products_array(id_products_list=new_id_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
