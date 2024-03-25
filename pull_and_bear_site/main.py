@@ -263,7 +263,7 @@ def get_products_data(products_data: dict) -> None:
             gender = None
 
         try:
-            model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh']
+            model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh'].replace('cm', 'см')
         except Exception:
             model_height = None
 
@@ -301,7 +301,7 @@ def get_products_data(products_data: dict) -> None:
             composition = None
             material = None
 
-        brand = 'Pull and Bear'
+        brand = 'Pull&Bear'
 
         try:
             size = ''
