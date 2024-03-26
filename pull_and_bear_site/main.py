@@ -1,16 +1,16 @@
 import os
 import time
 from datetime import datetime
-import json
 from random import randint
 
 import requests
 from requests import Session
 
-from pandas import DataFrame, ExcelWriter
-import openpyxl
+from pandas import DataFrame
+from pandas import ExcelWriter
+from pandas import read_excel
 
-from config import headers, params
+from configs.config import headers, params
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
@@ -33,6 +33,7 @@ def get_id_categories(headers: dict) -> list:
                 'https://www.pullandbear.com/itxrest/2/catalog/store/24009404/20309424/category',
                 params=params,
                 headers=headers,
+                timeout=60
             )
 
             if response.status_code != 200:
@@ -99,6 +100,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
                     f'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/category/{id_category}/product',
                     params=params,
                     headers=headers,
+                    timeout=60
                 )
 
                 json_data = response.json()
@@ -112,7 +114,10 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
             except Exception as ex:
                 print(f'get_id_products: {ex}')
 
-            product_ids = json_data.get('productIds')
+            try:
+                product_ids = json_data.get('productIds')
+            except Exception:
+                product_ids = []
 
             products_data_list.append(
                 {
@@ -122,7 +127,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             id_products_list.extend(product_ids)
 
-            print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
+            print(f'Обработано: {i}/{count_categories}, в категории {id_category}: {len(product_ids)} товаров!')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -155,6 +160,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
                     'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
                     params=params,
                     headers=headers,
+                    timeout=60
                 )
 
                 if response.status_code != 200:
@@ -431,10 +437,18 @@ def save_excel(data: list) -> None:
         with ExcelWriter('data/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
+    # Загружаем данные из файла
+    df = read_excel('data/result_data.xlsx', sheet_name='ОЗОН')
+
+    # Определение количества уже записанных строк
+    num_existing_rows = len(df.index)
+    print(num_existing_rows)
+
+    # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_data.xlsx', if_sheet_exists='replace', mode='a') as writer:
-        dataframe.to_excel(writer, sheet_name='ОЗОН', index=False)
+    with ExcelWriter('data/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 

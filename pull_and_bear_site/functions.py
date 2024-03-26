@@ -485,7 +485,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'M-L': '46;50',
                 'XL': '50;52'
             },
-            'MAN': {
+            'MEN': {
                 'XS': '44',
                 'S': '46',
                 'M': '48',
@@ -508,7 +508,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '46': '52',
                 '48': '54'
             },
-            'MAN': {
+            'MEN': {
                 '32': '38',
                 '34': '40',
                 '36': '42',

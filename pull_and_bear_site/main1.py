@@ -1,15 +1,13 @@
 import os
 import time
 from datetime import datetime
-import json
 
 import requests
 from requests import Session
 
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
-from config import headers, params
+from configs.config import headers, params
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
@@ -58,7 +56,10 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
             except Exception as ex:
                 print(f'get_id_products: {ex}')
 
-            product_ids = json_data.get('productIds')
+            try:
+                product_ids = json_data.get('productIds')
+            except Exception:
+                product_ids = []
 
             for id_product in product_ids:
                 if id_product in id_products_list:
@@ -272,13 +273,33 @@ def get_products_data(products_data: dict) -> None:
         brand = 'Pull&Bear'
 
         try:
+            size = ''
+            status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            for item in sizes_items:
-                size_sku = item.get('sku')
-                size_eur = item.get('name')
-                status_size = item.get('visibilityValue')
+
+            for i in sizes_items:
+                size_eur = i.get('name')
+                size_value = i.get('visibilityValue')
+
+                if size == size_eur:
+                    if size_value in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(size_value)
+                size = size_eur
+
+            for c in sizes_items:
+                size_eur = c.get('name')
 
                 id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
+
+                if size == size_eur:
+                    continue
+                size = size_eur
+
+                if 'SHOW' in status_dict.get(size_eur):
+                    status_size = 'SHOW'
+                else:
+                    status_size = status_dict.get(size_eur)[0]
 
                 if size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
@@ -413,21 +434,45 @@ def get_size_data(products_data: dict) -> None:
             color_en = None
 
         try:
+            gender_en = item['sectionNameEN']
+        except Exception:
+            gender_en = None
+
+        try:
             size = ''
             status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            for item in sizes_items:
-                size_sku = item.get('sku')
-                size_eur = item.get('name')
-                status_size = item.get('visibilityValue')
+
+            for i in sizes_items:
+                size_eur = i.get('name')
+                size_value = i.get('visibilityValue')
+
+                if size == size_eur:
+                    if size_value in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(size_value)
+                size = size_eur
+
+            for c in sizes_items:
+                size_eur = c.get('name')
 
                 id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
 
                 if size == size_eur:
-                    if status_size in status_dict.get(size_eur):
-                        continue
-                status_dict.setdefault(size_eur, []).append(status_size)
+                    continue
                 size = size_eur
+
+                if 'SHOW' in status_dict.get(size_eur):
+                    status_size = 'SHOW'
+                else:
+                    status_size = status_dict.get(size_eur)[0]
+
+                if size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
+                elif not size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
+                else:
+                    size_rus = size_eur
 
                 result_data.append(
                     {
