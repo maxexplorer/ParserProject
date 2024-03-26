@@ -71,7 +71,7 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_products_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
         print(*new_id_list, file=file, sep='\n')
 
     return new_id_list

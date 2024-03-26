@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 import json
+from random import randint
 
 import requests
 from requests import Session
@@ -91,7 +92,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
     id_products_list = []
     with Session() as session:
         for i, id_category in enumerate(id_categories_list, 1):
-            time.sleep(3)
+            time.sleep(randint(3, 5))
 
             try:
                 response = session.get(
@@ -323,17 +324,21 @@ def get_products_data(products_data: dict) -> None:
 
                 id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
 
+                if size == size_eur:
+                    continue
+                size = size_eur
+
+                if 'SHOW' in status_dict.get(size_eur):
+                    status_size = 'SHOW'
+                else:
+                    status_size = status_dict.get(size_eur)[0]
+
                 if size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
                 elif not size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
                 else:
                     size_rus = size_eur
-
-                if 'SHOW' in status_dict.get(size_eur):
-                    status_size = 'SHOW'
-                else:
-                    status_size = status_dict.get(size_eur)[0]
 
                 result_data.append(
                     {

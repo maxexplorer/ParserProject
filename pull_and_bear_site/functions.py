@@ -506,7 +506,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '42': '48',
                 '44': '50',
                 '46': '52',
-                '48': '52'
+                '48': '54'
             },
             'MAN': {
                 '32': '38',
@@ -522,7 +522,10 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
         }
     }
 
-    size_rus = sizes_dict[format][gender][size_eur]
+    try:
+        size_rus = sizes_dict[format][gender][size_eur]
+    except Exception:
+        size_rus = size_eur
 
     return size_rus
 
