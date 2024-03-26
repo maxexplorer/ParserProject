@@ -473,26 +473,56 @@ def colors_format(value: str) -> str:
 
 
 # Функция для перевода европейских размеров в российские
-def sizes_format(gender: str, size_eur: str) -> str:
+def sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
-        'WOMEN': {
-            'XS': '40',
-            'S': '42; 44',
-            'M': '44; 46',
-            'L': '48; 50',
-            'XL': '52',
-            'XXl': '54'
+        'alpha': {
+            'WOMEN': {
+                'XXS': '40',
+                'XS': '42',
+                'S': '44',
+                'M': '46;48',
+                'L': '48;50',
+                'M-L': '46;50',
+                'XL': '50;52'
+            },
+            'MAN': {
+                'XS': '44',
+                'S': '46',
+                'M': '48',
+                'S-M': '46;48',
+                'L': '50;52',
+                'XL': '52; 54',
+                'L-XL': '50;54',
+                'XXl': '56; 58'
+            }
         },
-        'MAN': {
-            'S': '46',
-            'M': '48',
-            'L': '50; 52',
-            'XL': '52; 54',
-            'XXl': '56; 58'
+        'digit': {
+            'WOMEN': {
+                '32': '38',
+                '34': '40',
+                '36': '42',
+                '38': '44',
+                '40': '46',
+                '42': '48',
+                '44': '50',
+                '46': '52',
+                '48': '52'
+            },
+            'MAN': {
+                '32': '38',
+                '34': '40',
+                '36': '42',
+                '38': '44',
+                '40': '46',
+                '42': '48',
+                '44': '50',
+                '46': '52',
+                '48': '54'
+            }
         }
     }
 
-    size_rus = sizes_dict[gender][size_eur]
+    size_rus = sizes_dict[format][gender][size_eur]
 
     return size_rus
 
@@ -524,5 +554,3 @@ def get_exchange_rate() -> int:
         exchange_rate = 0
 
     return exchange_rate
-
-

@@ -42,7 +42,7 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/category/{id_category}/product',
                     params=params,
                     headers=headers,
                 )
@@ -76,6 +76,7 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
 
     return new_id_list
 
+
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict) -> None:
     for item_dict in products_data_list:
@@ -92,7 +93,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
             try:
                 response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
                     params=params,
                     headers=headers,
                 )
@@ -108,9 +109,9 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
             except Exception as ex:
                 print(f'get_products_array: {ex}')
 
+
 # Функция получения json данных товаров
 def get_new_products_array(id_products_list: list, headers: dict) -> None:
-
     params = {
         'languageId': '-1',
         'productIds': id_products_list,
@@ -119,7 +120,7 @@ def get_new_products_array(id_products_list: list, headers: dict) -> None:
 
     try:
         response = requests.get(
-            'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+            'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
             params=params,
             headers=headers,
         )
@@ -175,7 +176,6 @@ def get_products_data(products_data: dict) -> None:
         try:
             color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
             color_ru = colors_format(value=color_en)
-
         except Exception:
             color_en = None
             color_ru = None
@@ -277,21 +277,26 @@ def get_products_data(products_data: dict) -> None:
                 size_sku = item.get('sku')
                 size_eur = item.get('name')
                 status_size = item.get('visibilityValue')
-                if not size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(gender=gender_en, size_eur=size_eur)
+
+                id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
+
+                if size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
+                elif not size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
                 else:
                     size_rus = size_eur
 
                 result_data.append(
                     {
                         '№': None,
-                        'Артикул': size_sku,
+                        'Артикул': id_product_size,
                         'Название товара': name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
                         'Включить продвижение': None,
-                        'Ozon ID': size_sku,
+                        'Ozon ID': id_product_size,
                         'Штрихкод (Серийный номер / EAN)': None,
                         'Вес в упаковке, г*': None,
                         'Ширина упаковки, мм*': None,
@@ -371,11 +376,11 @@ def get_size_data(products_data: dict) -> None:
     result_data = []
 
     for item in products_data['products']:
-        # try:
-        #     id_product = item['id']
-        # except Exception:
-        #     id_product = None
-        #
+        try:
+            id_product = item['id']
+        except Exception:
+            id_product = None
+
         # try:
         #     reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
         # except Exception:
@@ -403,6 +408,11 @@ def get_size_data(products_data: dict) -> None:
         #     price = 0
 
         try:
+            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+        except Exception:
+            color_en = None
+
+        try:
             size = ''
             status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
@@ -410,6 +420,9 @@ def get_size_data(products_data: dict) -> None:
                 size_sku = item.get('sku')
                 size_eur = item.get('name')
                 status_size = item.get('visibilityValue')
+
+                id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
+
                 if size == size_eur:
                     if status_size in status_dict.get(size_eur):
                         continue
@@ -418,7 +431,7 @@ def get_size_data(products_data: dict) -> None:
 
                 result_data.append(
                     {
-                        'Артикул': size_sku,
+                        'Артикул': id_product_size,
                         'Статус наличия': status_size,
                     }
                 )
@@ -443,7 +456,7 @@ def save_excel(data: list, flag: str) -> None:
 
 def main():
     new_id_list = get_id_products(id_categories_list_path='data/id_categories_list.txt',
-                                       id_products_list_path='data/id_products_list.txt', headers=headers)
+                                  id_products_list_path='data/id_products_list.txt', headers=headers)
     if new_id_list:
         get_new_products_array(id_products_list=new_id_list, headers=headers)
 

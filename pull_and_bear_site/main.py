@@ -29,7 +29,7 @@ def get_id_categories(headers: dict) -> list:
     with Session() as session:
         try:
             response = session.get(
-                'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
+                'https://www.pullandbear.com/itxrest/2/catalog/store/24009404/20309424/category',
                 params=params,
                 headers=headers,
             )
@@ -90,12 +90,12 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
     products_data_list = []
     id_products_list = []
     with Session() as session:
-        for i, id_category in enumerate(id_categories_list[1:2], 1):
+        for i, id_category in enumerate(id_categories_list, 1):
             time.sleep(3)
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/category/{id_category}/product',
                     params=params,
                     headers=headers,
                 )
@@ -151,7 +151,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
             try:
                 response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
                     params=params,
                     headers=headers,
                 )
@@ -307,31 +307,44 @@ def get_products_data(products_data: dict) -> None:
             size = ''
             status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            for item in sizes_items:
-                size_sku = item.get('sku')
-                size_eur = item.get('name')
-                status_size = item.get('visibilityValue')
+
+            for i in sizes_items:
+                size_eur = i.get('name')
+                size_value = i.get('visibilityValue')
+
                 if size == size_eur:
-                    if status_size in status_dict.get(size_eur):
+                    if size_value in status_dict.get(size_eur):
                         continue
-                status_dict.setdefault(size_eur, []).append(status_size)
+                status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-                if not size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(gender=gender_en, size_eur=size_eur)
+            for c in sizes_items:
+                size_eur = c.get('name')
+
+                id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
+
+                if size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
+                elif not size_eur.isdigit() and gender_en:
+                    size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
                 else:
                     size_rus = size_eur
+
+                if 'SHOW' in status_dict.get(size_eur):
+                    status_size = 'SHOW'
+                else:
+                    status_size = status_dict.get(size_eur)[0]
 
                 result_data.append(
                     {
                         '№': None,
-                        'Артикул': size_sku,
+                        'Артикул': id_product_size,
                         'Название товара': name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
                         'Включить продвижение': None,
-                        'Ozon ID': size_sku,
+                        'Ozon ID': id_product_size,
                         'Штрихкод (Серийный номер / EAN)': None,
                         'Вес в упаковке, г*': None,
                         'Ширина упаковки, мм*': None,
