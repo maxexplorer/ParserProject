@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import time
@@ -6,10 +5,6 @@ from datetime import datetime
 from random import randint
 
 from undetected_chromedriver import Chrome
-from undetected_chromedriver import ChromeOptions
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
@@ -71,7 +66,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
 
                 soup = BeautifulSoup(html, 'lxml')
 
-                data_items = soup.find('div', class_='x6i').find_all('div', class_='iv4')
+                data_items = soup.find('div', class_='iy2').find_all('div', class_='i0w')
 
                 print(f'Всего: {len(data_items)} продуктов на {page} странице!')
 
@@ -86,11 +81,11 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
                     except Exception:
                         url_product = ''
                     try:
-                        rating = item.find('div', class_='t8 t9 u tsBodyMBold').text.split()[0]
+                        rating = item.find('div', class_='ai8 aj t3 t4 t5 tsBodyMBold').text.split()[0]
                     except Exception:
                         rating = ''
                     try:
-                        feedbacks_count = item.find('div', class_='t8 t9 u tsBodyMBold').text.split()[1]
+                        feedbacks_count = item.find('div', class_='ai8 aj t3 t4 t5 tsBodyMBold').text.split()[1]
                     except Exception:
                         feedbacks_count = ''
 
