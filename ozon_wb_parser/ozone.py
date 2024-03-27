@@ -66,7 +66,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
 
                 soup = BeautifulSoup(html, 'lxml')
 
-                data_items = soup.find('div', class_='iy2').find_all('div', class_='i0w')
+                data_items = soup.find('div', class_='widget-search-result-container').find_all('div', class_='tile-root')
 
                 print(f'Всего: {len(data_items)} продуктов на {page} странице!')
 
