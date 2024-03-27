@@ -40,7 +40,7 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
                     params=params,
                     headers=headers,
                 )
@@ -94,7 +94,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
             try:
                 response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
+                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
                     params=params,
                     headers=headers,
                 )
@@ -121,7 +121,7 @@ def get_new_products_array(id_products_list: list, headers: dict) -> None:
 
     try:
         response = requests.get(
-            'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
+            'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
             params=params,
             headers=headers,
         )

@@ -30,7 +30,7 @@ def get_id_categories(headers: dict) -> list:
     with Session() as session:
         try:
             response = session.get(
-                'https://www.pullandbear.com/itxrest/2/catalog/store/24009404/20309424/category',
+                'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
                 params=params,
                 headers=headers,
                 timeout=60
@@ -97,7 +97,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
                     params=params,
                     headers=headers,
                     timeout=60
@@ -157,7 +157,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
             try:
                 response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009404/20309424/productsArray',
+                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
                     params=params,
                     headers=headers,
                     timeout=60
