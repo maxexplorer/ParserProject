@@ -11,6 +11,7 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from configs.config import headers, params
+from data.data import id_category_list
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
@@ -46,7 +47,6 @@ def get_id_categories(headers: dict) -> list:
     category_items = json_data['categories']
 
     for category_item in category_items[:2]:
-        category_name = category_item.get('name')
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
             if subcategory_item.get('name') == 'Clothing':
@@ -58,32 +58,19 @@ def get_id_categories(headers: dict) -> list:
                         continue
                     if 'Best sellers' in subcategory_name:
                         break
-                    subcategories = clothing_subcategory_item.get('subcategories')
-                    if subcategories:
-                        for subcategory in subcategories:
-                            if subcategory_name == 'Jeans' and subcategory.get('name') == 'See all':
-                                id_category = subcategory.get('id')
-                                id_categories_list.append(id_category)
-                            else:
-                                id_categories_list.append(id_category)
-                    else:
-                        id_categories_list.append(id_category)
-
-                    print(category_name, subcategory_name)
+                    id_categories_list.append((subcategory_name, id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/data.py', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
 
 
 # Функция получения id товаров
-def get_id_products(file_path: str, headers: dict) -> list[dict]:
-    with open(file_path, 'r', encoding='utf-8') as file:
-        id_categories_list = [line.strip() for line in file.readlines()]
+def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
 
     count_categories = len(id_categories_list)
 
@@ -92,7 +79,7 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
     products_data_list = []
     id_products_list = []
     with Session() as session:
-        for i, id_category in enumerate(id_categories_list, 1):
+        for name_category, id_category in id_categories_list:
             time.sleep(randint(3, 5))
 
             try:
@@ -121,13 +108,13 @@ def get_id_products(file_path: str, headers: dict) -> list[dict]:
 
             products_data_list.append(
                 {
-                    id_category: product_ids
+                    (name_category, id_category): product_ids
                 }
             )
 
             id_products_list.extend(product_ids)
 
-            print(f'Обработано: {i}/{count_categories}, в категории {id_category}: {len(product_ids)} товаров!')
+            print(f'Обработано: категория {id_category} - {len(product_ids)} товаров!')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -145,13 +132,15 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
     for item_dict in products_data_list:
         for key in item_dict:
+            type_product = key[0]
             lst = item_dict[key]
             id_products = ','.join(map(str, lst))
+
 
             params = {
                 'languageId': '-1',
                 'productIds': id_products,
-                'categoryId': key,
+                'categoryId': key[1],
                 'appId': '1',
             }
 
@@ -168,15 +157,15 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
                 json_data = response.json()
 
-                print(f'Сбор данных id категории: {key}')
-                get_products_data(products_data=json_data)
+                print(f'Сбор данных id категории: {key[1]}')
+                get_products_data(products_data=json_data, type_product=type_product)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict) -> None:
+def get_products_data(products_data: dict, type_product: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -251,11 +240,11 @@ def get_products_data(products_data: dict) -> None:
         # except Exception:
         #     additional_images = None
 
-        try:
-            type_product = item['subFamilyNameEN']
-            type_product = translator(type_product)
-        except Exception:
-            type_product = None
+        # try:
+        #     type_product = item['subFamilyNameEN']
+        #     type_product = translator(type_product)
+        # except Exception:
+        #     type_product = None
 
         try:
             gender_en = item['sectionNameEN']
@@ -432,13 +421,16 @@ def get_products_data(products_data: dict) -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
-    if not os.path.exists('data/result_data.xlsx'):
+    if not os.path.exists('results'):
+        os.makedirs('results')
+
+    if not os.path.exists('results/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('data/result_data.xlsx', mode='w') as writer:
+        with ExcelWriter('results/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('data/result_data.xlsx', sheet_name='ОЗОН')
+    df = read_excel('results/result_data.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -447,7 +439,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter('result/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
@@ -455,7 +447,7 @@ def save_excel(data: list) -> None:
 
 def main():
     # id_categories_list = get_id_categories(headers=headers)
-    products_data_list = get_id_products(file_path='data/id_categories_list.txt', headers=headers)
+    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers)
     get_products_array(products_data_list=products_data_list, headers=headers)
 
     execution_time = datetime.now() - start_time

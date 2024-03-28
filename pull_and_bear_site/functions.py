@@ -220,15 +220,11 @@ def colors_format(value: str) -> str:
             color = 'зеленый'
         case 'GREY':
             color = 'серый'
-        case 'GREY BLUE':
-            color = 'синий'
         case 'GREY MARL':
             color = 'серый'
         case 'GREY SHADES':
             color = 'серый'
         case 'GREY BEIGE':
-            color = 'серый'
-        case 'GREY BLUE':
             color = 'серый'
         case 'GREY NATURAL':
             color = 'серый'
@@ -242,47 +238,47 @@ def colors_format(value: str) -> str:
             color = 'светло-синий'
         case 'INDIGO':
             color = 'светло-синий'
-        case 'INKBLUE':
+        case 'INK BLUE':
             color = 'синий'
         case 'IVORY':
             color = 'бежевый'
-        case 'IVORYWHITE':
+        case 'IVORY WHITE':
             color = 'белый'
         case 'JEANS':
             color = 'голубой'
         case 'KHAKI':
             color = 'хаки'
-        case 'KHAKIGREEN':
+        case 'KHAKI GREEN':
             color = 'зеленый'
-        case 'KHAKIMARL':
+        case 'KHAKI MARL':
             color = 'хаки'
         case 'LEOPARD':
             color = 'желтый'
-        case 'LIGHTBEIGE':
+        case 'LIGHT BEIGE':
             color = 'светло-бежевый'
-        case 'LIGHTBLUE':
+        case 'LIGHT BLUE':
             color = 'синий'
-        case 'LIGHTBROWN':
+        case 'LIGHT BROWN':
             color = 'коричневый'
-        case 'LIGHTCAMEL':
+        case 'LIGHT CAMEL':
             color = 'желтый'
-        case 'LIGHTECRU':
+        case 'LIGHTE CRU':
             color = 'светло-бежевый'
-        case 'LIGHTGREEN':
+        case 'LIGHT GREEN':
             color = 'светло-зеленый'
-        case 'LIGHTGREY':
+        case 'LIGHT GREY':
             color = 'светло-серый'
-        case 'LIGHTKHAKI':
+        case 'LIGHT KHAKI':
             color = 'хаки'
-        case 'LIGHTLIMEGREEN':
+        case 'LIGHT LIME GREEN':
             color = 'зеленый'
-        case 'LIGHTMINK':
+        case 'LIGHT MINK':
             color = 'белый'
-        case 'LIGHTPINK':
+        case 'LIGHT PINK':
             color = 'светло-розовый'
-        case 'LIGHTTAN':
+        case 'LIGHT TAN':
             color = 'желтый'
-        case 'LIGHTYELLOW':
+        case 'LIGHT YELLOW':
             color = 'желтый'
         case 'LILAC':
             color = 'сиреневый'
@@ -292,7 +288,7 @@ def colors_format(value: str) -> str:
             color = 'желтый'
         case 'MAROON':
             color = 'бордовый'
-        case 'MAROONGREY':
+        case 'MAROON GREY':
             color = 'серый'
         case 'MAUVE':
             color = 'сиреневый'
@@ -302,7 +298,7 @@ def colors_format(value: str) -> str:
             color = 'бежевый'
         case 'MEDIUM GREY':
             color = 'серый'
-        case 'MEDIUMBROWN':
+        case 'MEDIUM BROWN':
             color = 'коричневый'
         case 'MID-BLUE':
             color = 'светло-синий'
@@ -314,9 +310,9 @@ def colors_format(value: str) -> str:
             color = 'зеленый'
         case 'MID-GREY':
             color = 'серый'
-        case 'MIDKHAKI':
+        case 'MID KHAKI':
             color = 'хаки'
-        case 'MIDNIGHTBLUE':
+        case 'MIDNIGHT BLUE':
             color = 'голубой'
         case 'MID-PINK':
             color = 'розовый'
@@ -324,7 +320,7 @@ def colors_format(value: str) -> str:
             color = 'голубой'
         case 'MINK':
             color = 'бежевый'
-        case 'MINKMARL':
+        case 'MINK MARL':
             color = 'белый'
         case 'MINT':
             color = 'светло-зеленый'
@@ -332,9 +328,9 @@ def colors_format(value: str) -> str:
             color = 'коричневый'
         case 'MOSS':
             color = 'зеленый'
-        case 'MOSSGREEN':
+        case 'MOSS GREEN':
             color = 'зеленый'
-        case 'MULBERRY':
+        case 'MUL BERRY':
             color = 'фуксия'
         case 'MULTICOLOURED':
             color = 'разноцветный'
@@ -344,7 +340,7 @@ def colors_format(value: str) -> str:
             color = 'голубой'
         case 'NAVY WHITE':
             color = 'белый'
-        case 'NAVYBLUE':
+        case 'NAVY BLUE':
             color = 'темно-синий'
         case 'OCHRE':
             color = 'коричневый'
@@ -354,15 +350,15 @@ def colors_format(value: str) -> str:
             color = 'белый'
         case 'OIL':
             color = 'оливковый'
-        case 'OLIVEGREEN':
+        case 'OLIVE GREEN':
             color = 'оливковый'
-        case 'ONLYONE':
+        case 'ONLY ONE':
             color = 'розовый'
         case 'ORANGE':
             color = 'оранжевый'
         case 'ORANGES':
             color = 'оранжевый'
-        case 'OYSTERWHITE':
+        case 'OYSTE RWHITE':
             color = 'белый'
         case 'PALE BLUE':
             color = 'синий'
@@ -376,23 +372,21 @@ def colors_format(value: str) -> str:
             color = 'белый'
         case 'PALE OCHRE':
             color = 'оранжевый'
-        case 'PALEPINK':
-            color = 'розовый'
-        case 'PALEPINK':
+        case 'PALE PINK':
             color = 'розовый'
         case 'PASTEL BLUE':
             color = 'голубой'
-        case 'PASTELPINK':
+        case 'PASTEL PINK':
             color = 'розовый'
-        case 'PEARLGREY':
+        case 'PEARL GREY':
             color = 'светло-серый'
-        case 'PETROLBLUE':
+        case 'PETROL BLUE':
             color = 'голубой'
         case 'PINK':
             color = 'розовый'
         case 'PINK LILAC':
             color = 'розовый'
-        case 'PINKMARL':
+        case 'PINK MARL':
             color = 'розовый'
         case 'PISTACHIO':
             color = 'светло-зеленый'
@@ -416,13 +410,13 @@ def colors_format(value: str) -> str:
             color = 'коричневый'
         case 'SAND MARL':
             color = 'бежевый'
-        case 'SANDBROWN':
+        case 'SAND ROWN':
             color = 'коричневый'
-        case 'SEAGREEN':
+        case 'SEA GREEN':
             color = 'светло-синий'
         case 'SILVER':
             color = 'серебристый'
-        case 'SKYBLUE':
+        case 'SKY BLUE':
             color = 'голубой'
         case 'STONE':
             color = 'серый'
@@ -436,11 +430,11 @@ def colors_format(value: str) -> str:
             color = 'серый'
         case 'TANGERINE':
             color = 'оранжевый'
-        case 'TANMARL':
+        case 'TAN MARL':
             color = 'белый'
         case 'TAUPE':
             color = 'белый'
-        case 'TAUPEGREY':
+        case 'TAUPE GREY':
             color = 'серый'
         case 'TERRACOTTA':
             color = 'белый'
@@ -452,11 +446,11 @@ def colors_format(value: str) -> str:
             color = 'бирюзовый'
         case 'VANILLA':
             color = 'светло-бежевый'
-        case 'WASHEDPETROL':
+        case 'WASHED PETROL':
             color = 'белый'
         case 'WATER BLUE':
             color = 'синий'
-        case 'WHISKYYELLOW':
+        case 'WHISKY YELLOW':
             color = 'желтый'
         case 'WHITE':
             color = 'белый'
@@ -466,6 +460,149 @@ def colors_format(value: str) -> str:
             color = 'бордовый'
         case 'YELLOW':
             color = 'желтый'
+        case 'WHITE RED':
+            color = 'белый'
+        case 'WHITE BLACK':
+            color = 'белый'
+        case 'CORAL':
+            color = 'разноцветный'
+        case 'TRANSPARENT':
+            color = 'белый'
+        case 'BEIGE-T':
+            color = 'бежевый'
+        case 'MEDIUM GREEN':
+            color = 'зеленый'
+        case 'GREEN GREY':
+            color = 'серый'
+        case 'BLUISH GREEN':
+            color = 'зеленый'
+        case 'BUTTER':
+            color = 'бежевый'
+        case 'PLUM':
+            color = 'фиолетовый'
+        case 'STEEL BLUE':
+            color = 'синий'
+        case 'SNAKESKIN PRINT':
+            color = 'черно-серый'
+        case 'AUBERGINE':
+            color = 'фиолетовый'
+        case 'LEAD':
+            color = 'черный'
+        case 'ECRU KHAKI':
+            color = 'хаки'
+
+        case 'CEMENT':
+            color = 'серый'
+        case 'OLIVE':
+            color = 'оливковый'
+        case 'OCEAN':
+            color = 'синий'
+        case 'PASTEL YELLOW':
+            color = 'желтый'
+        case 'CHEWING GUM':
+            color = 'розовый'
+        case 'PINK SHADES':
+            color = 'розовый'
+        case 'WHITE GREY':
+            color = 'белый'
+        case 'SAND KHAKI':
+            color = 'хаки'
+        case 'BOTTLE GREEN-T':
+            color = 'зеленый'
+        case 'BRIGHT WHITE':
+            color = 'белый'
+        case 'SAND BLUE':
+            color = 'синий'
+        case 'PEACH':
+            color = 'оранжевый'
+        case 'ECRU YELLOW':
+            color = 'желтый'
+        case 'PALE LILAC':
+            color = 'светло-розовый'
+        case 'BLUE SHADES':
+            color = 'синий'
+        case 'DARK YARN':
+            color = 'коричневый'
+        case 'BLACK-BROWN':
+            color = 'коричневый'
+        case 'FADED SKY BLUE':
+            color = 'голубой'
+        case 'MEDIUM KHAKI':
+            color = 'хаки'
+        case 'APPLE GREEN':
+            color = 'зеленый'
+        case 'NUDE':
+            color = 'прозрачный'
+        case 'ANTHRACITE KHAKI':
+            color = 'хаки'
+        case 'PALE ECRU':
+            color = 'бежевый'
+        case 'LAVENDER':
+            color = 'фиолетовый'
+        case 'INDIGO BLUE':
+            color = 'синий'
+        case 'GREENISH BLUE':
+            color = 'зеленый'
+        case 'RED NAVY':
+            color = 'красный'
+        case 'BEIGE BROWN':
+            color = 'коричневый'
+        case 'BLUISH NAVY':
+            color = 'голубой'
+        case 'SPECKLED MAUVE':
+            color = 'серый'
+        case 'NATURAL GREY':
+            color = 'серый'
+        case 'MEDIUM MARL':
+            color = 'серый'
+        case 'YARN':
+            color = 'светло-серый'
+        case 'DEEP GREEN':
+            color = 'зеленый'
+        case 'DARK OCHRE':
+            color = 'коричневый'
+        case 'DARK MULBERRY':
+            color = 'синий'
+        case 'DARK MARL':
+            color = 'светло-серый'
+        case 'LEATHER':
+            color = 'коричневый'
+        case 'GREY BLUE':
+            color = 'зеленый'
+        case 'NEON BLUE':
+            color = 'синий'
+        case 'RASPBERRY':
+            color = 'розовый'
+        case 'PALE STONE GREY':
+            color = 'серый'
+        case 'LAVENDER BLUE':
+            color = 'синий'
+        case 'PALE GREEN':
+            color = 'зеленый'
+        case 'BROWN-T':
+            color = 'коричневый'
+        case 'STRAWBERRY':
+            color = 'розовый'
+        case 'BLUISH TONE':
+            color = 'голубой'
+        case 'PALE PURPLE':
+            color = 'фиолетовый'
+        case 'VARIOUS':
+            color = 'коричневый'
+        case 'LAGOON GREEN':
+            color = 'зеленый'
+        case 'PEARL MARL':
+            color = 'серый'
+        case 'PETROLEUM':
+            color = 'серый'
+        case 'PASTEL GREEN':
+            color = 'зеленый'
+        case 'PALE BROWN':
+            color = 'коричневый'
+        case 'CLAY':
+            color = 'коричневый'
+        case 'ROSE PINK':
+            color = 'розовый'
         case _:
             color = value
 
