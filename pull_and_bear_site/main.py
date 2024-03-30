@@ -10,7 +10,8 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from configs.config import headers, params
+from configs.config import headers
+from configs.config import params
 from data.data import id_category_list
 from functions import colors_format
 from functions import sizes_format
@@ -44,7 +45,10 @@ def get_id_categories(headers: dict) -> list:
         except Exception as ex:
             print(f'get_id_categories: {ex}')
 
-    category_items = json_data['categories']
+    try:
+        category_items = json_data['categories']
+    except Exception:
+        category_items = []
 
     for category_item in category_items[:2]:
         subcategory_items = category_item.get('subcategories')
@@ -71,7 +75,6 @@ def get_id_categories(headers: dict) -> list:
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
-
     count_categories = len(id_categories_list)
 
     print(f'Всего: {count_categories} категорий!')
@@ -114,7 +117,7 @@ def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
 
             id_products_list.extend(product_ids)
 
-            print(f'Обработано: категория {id_category} - {len(product_ids)} товаров!')
+            print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -130,38 +133,38 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
     # with open(file_path, 'r', encoding='utf-8') as file:
     #     id_products_list = json.load(file)
 
-    for item_dict in products_data_list:
-        for key in item_dict:
-            type_product = key[0]
-            lst = item_dict[key]
-            id_products = ','.join(map(str, lst))
+    with Session() as session:
+        for item_dict in products_data_list:
+            for key in item_dict:
+                type_product = key[0]
+                lst = item_dict[key]
+                id_products = ','.join(map(str, lst))
 
+                params = {
+                    'languageId': '-1',
+                    'productIds': id_products,
+                    'categoryId': key[1],
+                    'appId': '1',
+                }
 
-            params = {
-                'languageId': '-1',
-                'productIds': id_products,
-                'categoryId': key[1],
-                'appId': '1',
-            }
+                try:
+                    response = session.get(
+                        'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
 
-            try:
-                response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
 
-                if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                    json_data = response.json()
 
-                json_data = response.json()
+                    print(f'Сбор данных категории: {key[0]}/{key[1]}')
+                    get_products_data(products_data=json_data, type_product=type_product)
 
-                print(f'Сбор данных id категории: {key[1]}')
-                get_products_data(products_data=json_data, type_product=type_product)
-
-            except Exception as ex:
-                print(f'get_products_array: {ex}')
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
 
 
 # Функция получения данных товаров
@@ -250,7 +253,7 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             gender_en = item['sectionNameEN']
             if gender_en == 'WOMEN':
                 gender = 'женский'
-            elif gender_en == 'MAN':
+            elif gender_en == 'MEN':
                 gender = 'мужской'
             else:
                 gender = gender_en
@@ -434,13 +437,13 @@ def save_excel(data: list) -> None:
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
-    print(num_existing_rows)
 
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('result/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
-        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН', index=False)
+    with ExcelWriter('results/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
+                           index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 

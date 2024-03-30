@@ -416,18 +416,6 @@ def get_size_data(products_data: dict) -> None:
         if not name:
             continue
 
-        # try:
-        #     old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
-        #     old_price = round(old_price * rub)
-        # except Exception:
-        #     old_price = 0
-
-        # try:
-        #     price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
-        #     price = round(price * rub)
-        # except Exception:
-        #     price = 0
-
         try:
             color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
         except Exception:
