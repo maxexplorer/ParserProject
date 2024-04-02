@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 from random import randint
 
-import requests
 from requests import Session
 
 from pandas import DataFrame
@@ -221,27 +220,29 @@ def get_products_data(products_data: dict, type_product: str) -> None:
         except Exception:
             main_image = None
 
-        try:
-            additional_images_list = []
-            for i in range(2, 11):
-                additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
-                additional_images_list.append(additional_image)
-            additional_images = '; '.join(additional_images_list)
-        except Exception:
-            additional_images = None
-
         # try:
         #     additional_images_list = []
-        #     images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
-        #     for img_item in images_items:
-        #         color_code = img_item['colorCode']
-        #         if color_code == id_color:
-        #             for img in img_item['xmediaItems'][0]['medias']:
-        #                 additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
+        #     for i in range(2, 11):
+        #         additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
+        #         additional_images_list.append(additional_image)
         #     additional_images = '; '.join(additional_images_list)
-        #
         # except Exception:
         #     additional_images = None
+
+        try:
+            additional_images_list = []
+            images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
+            for img_item in images_items:
+                color_code = img_item['colorCode']
+                if color_code == id_color:
+                    for img in img_item['xmediaItems'][0]['medias']:
+                        img_url = f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}"
+                        additional_images_list.append(img_url)
+
+            additional_images = '; '.join(additional_images_list[:14])
+
+        except Exception:
+            additional_images = None
 
         # try:
         #     type_product = item['subFamilyNameEN']

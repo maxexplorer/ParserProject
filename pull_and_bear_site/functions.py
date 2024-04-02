@@ -603,6 +603,70 @@ def colors_format(value: str) -> str:
             color = 'коричневый'
         case 'ROSE PINK':
             color = 'розовый'
+        case 'GREEN / GREY':
+            color = 'серый'
+        case 'ECRU/WHITE':
+            color = 'белый'
+        case 'ECRU/KHAKI':
+            color = 'хаки'
+        case 'DARK MAROON':
+            color = 'коричневый'
+        case 'LILAC PINK':
+            color = 'розовый'
+        case 'WHITE/BLACK':
+            color = 'белый'
+        case 'ECRU/NAVY':
+            color = 'черный'
+        case 'WHITE/GREY':
+            color = 'белый'
+        case 'SAND/KHAKI':
+            color = 'хаки'
+        case 'BLUE/WHITE':
+            color = 'белый'
+        case 'SAND/BLUE':
+            color = 'голубой'
+        case 'WHITE/RED':
+            color = 'белый'
+        case 'ECRU/YELLOW':
+            color = 'желтый'
+        case 'BEIGE / GREEN':
+            color = 'зеленый'
+        case 'BROWN/WHITE':
+            color = 'коричневый'
+        case 'GREY/BLUE':
+            color = 'серый'
+        case 'ECRU/GREEN':
+            color = 'зеленый'
+        case 'GREEN/ECRU':
+            color = 'зеленый'
+        case 'ECRU/BLACK':
+            color = 'черный'
+        case 'ECRU/BLUE':
+            color = 'горлубой'
+        case 'BEIGE/BROWN':
+            color = 'коричневый'
+        case 'ECRU/BEIGE':
+            color = 'бежевый'
+        case 'RED/NAVY':
+            color = 'красный'
+        case 'WHITE/NAVY':
+            color = 'белый'
+        case 'NAVY/WHITE':
+            color = 'белый'
+        case 'BROWN/ORANGE':
+            color = 'коричневый'
+        case 'BLACK/ECRU':
+            color = 'черный'
+        case 'WATER GREEN':
+            color = 'зеленый'
+        case 'PALE BURGUNDY':
+            color = 'бордовый'
+        case 'ANTHRACITE/KHAKI':
+            color = 'хаки'
+        case 'MEDIUM CAMEL':
+            color = 'бежевый'
+        case 'MULBERRY':
+            color = 'серый'
         case _:
             color = value
 
