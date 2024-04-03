@@ -12,6 +12,7 @@ from pandas import read_excel
 from configs.config import headers
 from configs.config import params
 from data.data import id_category_list
+from data.data import id_region_dict
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
@@ -25,15 +26,15 @@ print(f'Курс EUR/RUB: {rub}')
 
 
 # Функция получения id категорий
-def get_id_categories(headers: dict) -> list:
+def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     id_categories_list = []
 
     with Session() as session:
         try:
             response = session.get(
-                'https://www.pullandbear.com/itxrest/2/catalog/store/24009400/20309422/category',
-                params=params,
+                f'https://www.pullandbear.com/itxrest/2/catalog/store/{id_region}/category',
                 headers=headers,
+                params=params,
                 timeout=60
             )
 
@@ -73,7 +74,7 @@ def get_id_categories(headers: dict) -> list:
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
     count_categories = len(id_categories_list)
 
     print(f'Всего: {count_categories} категорий!')
@@ -86,7 +87,7 @@ def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
                     params=params,
                     headers=headers,
                     timeout=60
@@ -128,7 +129,7 @@ def get_id_products(id_categories_list: list, headers: dict) -> list[dict]:
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict) -> None:
+def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
     # with open(file_path, 'r', encoding='utf-8') as file:
     #     id_products_list = json.load(file)
 
@@ -148,7 +149,7 @@ def get_products_array(products_data_list: list, headers: dict) -> None:
 
                 try:
                     response = session.get(
-                        'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
+                        f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
                         params=params,
                         headers=headers,
                         timeout=60
@@ -230,25 +231,31 @@ def get_products_data(products_data: dict, type_product: str) -> None:
         #     additional_images = None
 
         try:
+            flag = False
             additional_images_list = []
-            images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
-            for img_item in images_items:
-                color_code = img_item['colorCode']
+            xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
+            for xmedia_elem in xmedia_data:
+                color_code = xmedia_elem['colorCode']
                 if color_code == id_color:
-                    for img in img_item['xmediaItems'][0]['medias']:
-                        img_url = f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}"
-                        additional_images_list.append(img_url)
+                    xmedia_items = xmedia_elem['xmediaItems']
+                    for xmedia_item in xmedia_items:
+                        if len(additional_images_list) == 14:
+                            break
+                        for item in xmedia_item['medias']:
+                            if not item['extraInfo']:
+                                continue
+                            img_url = f"https://static.pullandbear.net/2/photos/{item['extraInfo']['url'].split('?')[0]}"
+                            if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or\
+                                    '3_1_0.jpg' in img_url or '02/' in img_url:
+                                continue
+                            additional_images_list.append(img_url)
+                            if len(additional_images_list) == 14:
+                                break
 
-            additional_images = '; '.join(additional_images_list[:14])
+            additional_images = '; '.join(additional_images_list)
 
         except Exception:
             additional_images = None
-
-        # try:
-        #     type_product = item['subFamilyNameEN']
-        #     type_product = translator(type_product)
-        # except Exception:
-        #     type_product = None
 
         try:
             gender_en = item['sectionNameEN']
@@ -450,9 +457,15 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    # id_categories_list = get_id_categories(headers=headers)
-    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers)
-    get_products_array(products_data_list=products_data_list, headers=headers)
+    region = 'Германия'
+    id_region = id_region_dict.get(region)
+    print(id_region)
+    if id_region is None:
+        id_region = '24009400/20309422'
+    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
+                                         id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
