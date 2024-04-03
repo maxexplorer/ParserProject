@@ -231,7 +231,6 @@ def get_products_data(products_data: dict, type_product: str) -> None:
         #     additional_images = None
 
         try:
-            flag = False
             additional_images_list = []
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
             for xmedia_elem in xmedia_data:
@@ -241,10 +240,13 @@ def get_products_data(products_data: dict, type_product: str) -> None:
                     for xmedia_item in xmedia_items:
                         if len(additional_images_list) == 14:
                             break
-                        for item in xmedia_item['medias']:
-                            if not item['extraInfo']:
+                        for media_item in xmedia_item['medias']:
+                            if not media_item['extraInfo']:
                                 continue
-                            img_url = f"https://static.pullandbear.net/2/photos/{item['extraInfo']['url'].split('?')[0]}"
+                            try:
+                                img_url = f"https://static.pullandbear.net/2/photos/{media_item['extraInfo']['url'].split('?')[0]}"
+                            except Exception:
+                                continue
                             if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or\
                                     '3_1_0.jpg' in img_url or '02/' in img_url:
                                 continue
