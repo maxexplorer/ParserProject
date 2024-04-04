@@ -498,7 +498,7 @@ def main():
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size')
 
     if products_new_data_list:
-        get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region,
+        get_products_array(products_data_list=products_new_data_list, headers=headers, id_region=id_region,
                            species='products')
 
     execution_time = datetime.now() - start_time
