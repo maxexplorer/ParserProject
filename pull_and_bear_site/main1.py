@@ -1,13 +1,18 @@
 import os
 import time
 from datetime import datetime
+from random import randint
 
-import requests
 from requests import Session
 
-from pandas import DataFrame, ExcelWriter
+from pandas import DataFrame
+from pandas import ExcelWriter
+from pandas import read_excel
 
-from configs.config import headers, params
+from configs.config import headers
+from configs.config import params
+from data.data import id_category_list
+from data.data import id_region_dict
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
@@ -21,28 +26,28 @@ print(f'Курс EUR/RUB: {rub}')
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list_path: str, id_products_list_path: str, headers: dict) -> list[dict]:
-    with open(id_categories_list_path, 'r', encoding='utf-8') as file:
-        id_categories_list = [line.strip() for line in file.readlines()]
-
-    with open(id_products_list_path, 'r', encoding='utf-8') as file:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
+    list[dict], list[dict]]:
+    with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
         id_products_list = [line.strip() for line in file.readlines()]
 
     count_categories = len(id_categories_list)
 
     print(f'Всего: {count_categories} категорий!')
 
-    new_id_list = []
-
+    products_data_list = []
+    products_new_data_list = []
     with Session() as session:
-        for i, id_category in enumerate(id_categories_list[1:2], 1):
-            time.sleep(3)
+        for name_category, id_category in id_categories_list[:1]:
+            new_id_list = []
+            time.sleep(randint(3, 5))
 
             try:
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/category/{id_category}/product',
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
                     params=params,
                     headers=headers,
+                    timeout=60
                 )
 
                 json_data = response.json()
@@ -61,13 +66,26 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
             except Exception:
                 product_ids = []
 
+            products_data_list.append(
+                {
+                    (name_category, id_category): product_ids
+                }
+            )
+
             for id_product in product_ids:
-                if id_product in id_products_list:
+                if str(id_product) in id_products_list:
                     continue
 
                 new_id_list.append(id_product)
 
-            print(f'Обработано: {i}/{count_categories}, получено {len(product_ids)} id товаров!')
+            if new_id_list:
+                products_new_data_list.append(
+                    {
+                        (name_category, id_category): new_id_list
+                    }
+                )
+
+            print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -75,71 +93,53 @@ def get_id_products(id_categories_list_path: str, id_products_list_path: str, he
     with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
         print(*new_id_list, file=file, sep='\n')
 
-    return new_id_list
+    return products_data_list, products_new_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict) -> None:
-    for item_dict in products_data_list:
-        for key in item_dict:
-            lst = item_dict[key]
-            id_products = ','.join(map(str, lst))
+def get_products_array(products_data_list: list, headers: dict, id_region: str, species: str) -> None:
+    with Session() as session:
+        for item_dict in products_data_list:
+            for key in item_dict:
+                type_product = key[0]
+                lst = item_dict[key]
+                id_products = ','.join(map(str, lst))
 
-            params = {
-                'languageId': '-1',
-                'productIds': id_products,
-                'categoryId': key,
-                'appId': '1',
-            }
+                params = {
+                    'languageId': '-1',
+                    'productIds': id_products,
+                    'categoryId': key[1],
+                    'appId': '1',
+                }
 
-            try:
-                response = requests.get(
-                    'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
-                    params=params,
-                    headers=headers,
-                )
+                try:
+                    response = session.get(
+                        f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
 
-                if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
 
-                json_data = response.json()
+                    json_data = response.json()
 
-                print(f'Сбор данных id категории: {key}')
-                get_products_data(products_data=json_data)
+                    if species == 'size':
+                        print('Сбор данных о наличии размеров!')
+                        print(f'Сбор данных категории: {key[0]}/{key[1]}')
+                        get_size_data(products_data=json_data)
+                    elif species == 'products':
+                        print('Появились новые товары!')
+                        print(f'Сбор данных категории: {key[0]}/{key[1]}')
+                        get_products_data(products_data=json_data, type_product=type_product)
 
-            except Exception as ex:
-                print(f'get_products_array: {ex}')
-
-
-# Функция получения json данных товаров
-def get_new_products_array(id_products_list: list, headers: dict) -> None:
-    params = {
-        'languageId': '-1',
-        'productIds': id_products_list,
-        'appId': '1',
-    }
-
-    try:
-        response = requests.get(
-            'https://www.pullandbear.com/itxrest/3/catalog/store/24009400/20309422/productsArray',
-            params=params,
-            headers=headers,
-        )
-
-        if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
-
-        json_data = response.json()
-
-        print(f'Сбор данных!')
-        get_size_data(products_data=json_data)
-
-    except Exception as ex:
-        print(f'get_products_array: {ex}')
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict) -> None:
+def get_products_data(products_data: dict, type_product: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -177,6 +177,7 @@ def get_products_data(products_data: dict) -> None:
         try:
             color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
             color_ru = colors_format(value=color_en)
+
         except Exception:
             color_en = None
             color_ru = None
@@ -193,37 +194,38 @@ def get_products_data(products_data: dict) -> None:
 
         try:
             additional_images_list = []
-            for i in range(2, 11):
-                additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
-                additional_images_list.append(additional_image)
+            xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
+            for xmedia_elem in xmedia_data:
+                color_code = xmedia_elem['colorCode']
+                if color_code == id_color:
+                    xmedia_items = xmedia_elem['xmediaItems']
+                    for xmedia_item in xmedia_items:
+                        if len(additional_images_list) == 14:
+                            break
+                        for media_item in xmedia_item['medias']:
+                            if not media_item['extraInfo']:
+                                continue
+                            try:
+                                img_url = f"https://static.pullandbear.net/2/photos/{media_item['extraInfo']['url'].split('?')[0]}"
+                            except Exception:
+                                continue
+                            if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or \
+                                    '3_1_0.jpg' in img_url or '02/' in img_url:
+                                continue
+                            additional_images_list.append(img_url)
+                            if len(additional_images_list) == 14:
+                                break
+
             additional_images = '; '.join(additional_images_list)
+
         except Exception:
             additional_images = None
-
-        # try:
-        #     additional_images_list = []
-        #     images_items = item['bundleProductSummaries'][0]['detail']['xmedia']
-        #     for img_item in images_items:
-        #         color_code = img_item['colorCode']
-        #         if color_code == id_color:
-        #             for img in img_item['xmediaItems'][0]['medias']:
-        #                 additional_images_list.append(f"https://static.pullandbear.net/2/photos/{img['extraInfo']['url'].split('?')[0]}")
-        #     additional_images = '; '.join(additional_images_list)
-        #
-        # except Exception:
-        #     additional_images = None
-
-        try:
-            type_product = item['subFamilyNameEN']
-            type_product = translator(type_product)
-        except Exception:
-            type_product = None
 
         try:
             gender_en = item['sectionNameEN']
             if gender_en == 'WOMEN':
                 gender = 'женский'
-            elif gender_en == 'MAN':
+            elif gender_en == 'MEN':
                 gender = 'мужской'
             else:
                 gender = gender_en
@@ -255,14 +257,9 @@ def get_products_data(products_data: dict) -> None:
             care = None
 
         try:
-            # composition = ''
             composition_items = item['bundleProductSummaries'][0]['detail']['composition']
             material = composition_items[0]['composition'][0]['name']
             material = translator(material)
-            # for item in composition_items:
-            #     for elem in item['composition']:
-            #         composition += f"{elem['name']}: {elem['description']} "
-            # is equivalent to
             composition = ' '.join(
                 f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
             composition = translator(composition)
@@ -389,10 +386,10 @@ def get_products_data(products_data: dict) -> None:
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    save_excel(data=result_data, flag='products')
+    save_excel(data=result_data, species='products')
 
 
-# Функция получения данных размеров товаров
+# Функция получения данных товаров
 def get_size_data(products_data: dict) -> None:
     result_data = []
 
@@ -401,11 +398,6 @@ def get_size_data(products_data: dict) -> None:
             id_product = item['id']
         except Exception:
             id_product = None
-
-        # try:
-        #     reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
-        # except Exception:
-        #     reference = None
 
         try:
             name = item['nameEn']
@@ -420,11 +412,6 @@ def get_size_data(products_data: dict) -> None:
             color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
         except Exception:
             color_en = None
-
-        try:
-            gender_en = item['sectionNameEN']
-        except Exception:
-            gender_en = None
 
         try:
             size = ''
@@ -455,15 +442,9 @@ def get_size_data(products_data: dict) -> None:
                 else:
                     status_size = status_dict.get(size_eur)[0]
 
-                if size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
-                elif not size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
-                else:
-                    size_rus = size_eur
-
                 result_data.append(
                     {
+                        '№': None,
                         'Артикул': id_product_size,
                         'Статус наличия': status_size,
                     }
@@ -471,27 +452,54 @@ def get_size_data(products_data: dict) -> None:
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    save_excel(data=result_data, flag='size')
+    save_excel(data=result_data, species='size')
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, flag: str) -> None:
-    if not os.path.exists('data'):
-        os.makedirs('data')
+def save_excel(data: list, species: str) -> None:
+    if not os.path.exists('results'):
+        os.makedirs('results')
 
+    if not os.path.exists(f'results/result_{species}_data.xlsx'):
+        # Если файл не существует, создаем его с пустым DataFrame
+        with ExcelWriter(f'results/result_{species}_data.xlsx', mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
+
+    # Загружаем данные из файла
+    df = read_excel(f'results/result_{species}_data.xlsx', sheet_name='ОЗОН')
+
+    # Определение количества уже записанных строк
+    num_existing_rows = len(df.index)
+
+    # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'data/result_{flag}_data.xlsx', mode='w') as writer:
-        dataframe.to_excel(writer, sheet_name='ОЗОН', index=False)
+    with ExcelWriter(f'results/result_{species}_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
+                           index=False)
 
-    print(f'Данные сохранены в файл "result_{flag}_data.xlsx"')
+    print(f'Данные сохранены в файл "result_{species}_data.xlsx"')
 
 
 def main():
-    new_id_list = get_id_products(id_categories_list_path='data/id_categories_list.txt',
-                                  id_products_list_path='data/id_products_list.txt', headers=headers)
-    if new_id_list:
-        get_new_products_array(id_products_list=new_id_list, headers=headers)
+    value = input('Введите значение:\n1 - Германия\n2 - Испания\n')
+    if value == '1':
+        region = 'Германия'
+    elif value == '2':
+        region = 'Испания'
+    else:
+        raise ValueError('Введено неправильное значение')
+    id_region = id_region_dict.get(region)
+    if id_region is None:
+        id_region = '24009400/20309422'
+
+    products_data_list, products_new_data_list = get_id_products(id_categories_list=id_category_list, headers=headers,
+                                                                 params=params, id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size')
+
+    if products_new_data_list:
+        get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region,
+                           species='products')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

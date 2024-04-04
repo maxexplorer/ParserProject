@@ -130,9 +130,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
-    # with open(file_path, 'r', encoding='utf-8') as file:
-    #     id_products_list = json.load(file)
-
     with Session() as session:
         for item_dict in products_data_list:
             for key in item_dict:
@@ -221,15 +218,6 @@ def get_products_data(products_data: dict, type_product: str) -> None:
         except Exception:
             main_image = None
 
-        # try:
-        #     additional_images_list = []
-        #     for i in range(2, 11):
-        #         additional_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_{i}_8.jpg"
-        #         additional_images_list.append(additional_image)
-        #     additional_images = '; '.join(additional_images_list)
-        # except Exception:
-        #     additional_images = None
-
         try:
             additional_images_list = []
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
@@ -295,14 +283,9 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             care = None
 
         try:
-            # composition = ''
             composition_items = item['bundleProductSummaries'][0]['detail']['composition']
             material = composition_items[0]['composition'][0]['name']
             material = translator(material)
-            # for item in composition_items:
-            #     for elem in item['composition']:
-            #         composition += f"{elem['name']}: {elem['description']} "
-            # is equivalent to
             composition = ' '.join(
                 f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
             composition = translator(composition)
