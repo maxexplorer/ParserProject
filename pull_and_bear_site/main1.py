@@ -38,7 +38,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     products_data_list = []
     products_new_data_list = []
     with Session() as session:
-        for name_category, id_category in id_categories_list[:1]:
+        for name_category, id_category in id_categories_list:
             new_id_list = []
             time.sleep(randint(3, 5))
 
