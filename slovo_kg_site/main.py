@@ -4,17 +4,13 @@ from datetime import datetime
 import os
 import random
 
-
 import requests
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 start_time = datetime.now()
-
-url = "https://sm-rus.ru/"
 
 headers = {
     'Accept': '*/*',
@@ -108,7 +104,8 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    category_title = soup.find('div', class_='center-author').find('p', class_='second-text-search').text.strip()
+                    category_title = soup.find('div', class_='center-author').find('p',
+                                                                                   class_='second-text-search').text.strip()
                 except Exception:
                     category_title = 'Общая'
 
@@ -154,9 +151,9 @@ def get_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with requests.Session() as session:
-        for i, article_url in enumerate(article_urls_list[:1], 1):
+        for i, article_url in enumerate(article_urls_list, 1):
             try:
-                time.sleep(random.randint(1, 3))
+                time.sleep(1)
                 html = get_html(url=article_url, headers=headers, session=session)
             except Exception as ex:
                 print(f"{article_url} - {ex}")
@@ -183,7 +180,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 date = ''
 
             try:
-                author =data.find('p', class_='author-post').text.strip()
+                author = data.find('p', class_='author-post').text.strip()
             except Exception:
                 author = ''
             try:
@@ -225,7 +222,6 @@ def save_excel(data: list, category_title: str) -> None:
 
 
 def main():
-
     # get_article_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data'
@@ -236,7 +232,6 @@ def main():
             print(f'Обрабатывается категория {category_title}')
             result_list = get_data(file_path=file_path, headers=headers)
     #         save_excel(data=result_list, category_title=category_title)
-
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

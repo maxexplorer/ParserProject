@@ -13,7 +13,6 @@ import openpyxl
 
 start_time = datetime.now()
 
-url = "https://sm-rus.ru/"
 
 headers = {
     'Accept': '*/*',
