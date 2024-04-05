@@ -22,10 +22,10 @@ headers = {
 }
 
 category_urls_list = [
-    "https://chyi.ru/?module=articles&action=list&rubrics=83",
-    "https://chyi.ru/?module=articles&action=list&rubrics=1",
-    "https://chyi.ru/?module=articles&action=list&rubrics=2",
-    "https://chyi.ru/?module=articles&action=list&rubrics=44"
+    "https://slovo.kg/?cat=2",
+    "https://slovo.kg/?cat=3",
+    "https://slovo.kg/?cat=4",
+    "https://slovo.kg/?cat=6"
 ]
 
 
@@ -60,7 +60,7 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
     try:
         pages = int(
-            soup.find('div', class_='paginator').find_all('a', class_='item-page')[-1].text.strip())
+            soup.find('div', class_='nav-links').find_all('a', class_='page-numbers')[-1].text.strip())
     except Exception as ex:
         print(ex)
         pages = 1
@@ -93,7 +93,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
             print(f'В категории {category_url}: {pages} страниц!')
 
             for page in range(1, pages + 1):
-                page_product_url = f"{category_url}&page={page}"
+                page_product_url = f"https://slovo.kg/?paged={page}&cat={category_url.split('=')[-1]}"
                 try:
                     time.sleep(random.randint(1, 3))
                     html = get_html(url=page_product_url, headers=headers, session=session)
@@ -107,16 +107,16 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    category_title = soup.find('div', class_='central-content').find('h1').text.strip()
+                    category_title = soup.find('div', class_='center-author').find('p', class_='second-text-search').text.strip()
                 except Exception:
                     category_title = 'Общая'
 
                 try:
-                    data = soup.find('div', class_='central-content').find_all('div', class_='item')
+                    data = soup.find('div', class_='Block-1').find_all('div', class_='child-block-1')
 
                     for item in data:
                         try:
-                            product_url = f"https://chyi.ru{item.find('a').get('href')}"
+                            product_url = item.find('a').get('href')
                         except Exception as ex:
                             print(f'product_url: {ex}')
                             continue
@@ -167,7 +167,7 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data = soup.find('div', class_='central-content')
+                data = soup.find('article', class_='Text_Main_Block')
             except Exception as ex:
                 print(f'data: {ex}')
                 continue
@@ -177,28 +177,25 @@ def get_data(file_path: str, headers: dict) -> list:
                 article_title = ''
 
             try:
-                date = data.find('div', class_='date').text.strip()
+                date = data.find('p', class_='author-post').find_next().text.strip()
             except Exception:
                 date = ''
 
             try:
-                statistic = data.find('div', class_='statistic').text.strip()
+                author =data.find('p', class_='author-post').text.strip()
             except Exception:
-                statistic = ''
+                author = ''
             try:
-                text = ' '.join(data.find('div', class_='f-text').text.split())
+                text = ' '.join(data.text.split())
             except Exception:
                 text = ''
-
-
-
 
             result_data.append(
                 {
                     'Ссылка': article_url,
                     'Название статьи': article_title,
                     'Дата издания': date,
-                    'Количество просмотров': statistic,
+                    'Автор': author,
                     'Текст': text,
                 }
             )
@@ -213,14 +210,14 @@ def save_excel(data: list, category_title: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/Чуйские известия.xlsx'):
+    if not os.path.exists('results/Слово Кыргызстана.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/Чуйские известия.xlsx', mode='w') as writer:
+        with ExcelWriter('results/Слово Кыргызстана.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name=category_title, index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/Чуйские известия.xlsx', if_sheet_exists='replace', mode='a') as writer:
+    with ExcelWriter('results/Слово Кыргызстана.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name=category_title, index=False)
 
     print(f'Данные сохранены в файл формата xlsx')
@@ -228,16 +225,16 @@ def save_excel(data: list, category_title: str) -> None:
 
 def main():
 
-    # get_article_urls(category_urls_list=category_urls_list, headers=headers)
-
-    directory = 'data'
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        if os.path.isfile(file_path):
-            category_title = file_path.split('\\')[-1].split('.')[0]
-            print(f'Обрабатывается категория {category_title}')
-            result_list = get_data(file_path=file_path, headers=headers)
-            save_excel(data=result_list, category_title=category_title)
+    get_article_urls(category_urls_list=category_urls_list, headers=headers)
+    #
+    # directory = 'data'
+    # for filename in os.listdir(directory):
+    #     file_path = os.path.join(directory, filename)
+    #     if os.path.isfile(file_path):
+    #         category_title = file_path.split('\\')[-1].split('.')[0]
+    #         print(f'Обрабатывается категория {category_title}')
+    #         result_list = get_data(file_path=file_path, headers=headers)
+    #         save_excel(data=result_list, category_title=category_title)
 
 
     execution_time = datetime.now() - start_time

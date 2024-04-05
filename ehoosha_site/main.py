@@ -168,7 +168,7 @@ def get_data(file_path: str, headers: dict) -> list:
             try:
                 data = soup.find('div', class_='content-details')
             except Exception as ex:
-                print(f'central-content: {ex}')
+                print(f'data: {ex}')
                 continue
             try:
                 article_title = data.find('h1', class_='head').text.strip()
