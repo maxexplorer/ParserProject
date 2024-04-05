@@ -1,10 +1,7 @@
-import json
-import random
-import re
 import time
 from datetime import datetime
 import os
-
+import random
 
 import requests
 from bs4 import BeautifulSoup
@@ -64,7 +61,7 @@ def get_pages(html: str) -> int:
         pages = int(
             soup.find('div', class_='paginator').find_all('a', class_='item-page')[-1].text.strip())
     except Exception as ex:
-        print(ex)
+        print(f'get_pages: {ex}')
         pages = 1
 
     return pages
@@ -114,7 +111,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                     category_title = 'Общая'
 
                 try:
-                    data = soup.find('div', class_='flex-news').find_all('div', class_='item')
+                    data = soup.find('div', class_='articles-block').find_all('div', class_='item')
 
                     for item in data:
                         try:
@@ -124,7 +121,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                             continue
                         article_urls_list.append(product_url)
                 except Exception as ex:
-                    print(ex)
+                    print(f'data: {ex}')
 
                 print(f'Обработано: {page}/{pages} страниц!')
 
@@ -169,7 +166,7 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data = soup.find('div', class_='content-details modarticles block')
+                data = soup.find('div', class_='content-details')
             except Exception as ex:
                 print(f'central-content: {ex}')
                 continue
@@ -212,14 +209,14 @@ def save_excel(data: list, category_title: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/Чуйские известия.xlsx'):
+    if not os.path.exists('results/Эхо Оша.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/Чуйские известия.xlsx', mode='w') as writer:
+        with ExcelWriter('results/Эхо Оша.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name=category_title, index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/Чуйские известия.xlsx', if_sheet_exists='replace', mode='a') as writer:
+    with ExcelWriter('results/Эхо Оша.xlsx', if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name=category_title, index=False)
 
     print(f'Данные сохранены в файл формата xlsx')
