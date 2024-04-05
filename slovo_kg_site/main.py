@@ -231,7 +231,7 @@ def main():
             category_title = file_path.split('\\')[-1].split('.')[0]
             print(f'Обрабатывается категория {category_title}')
             result_list = get_data(file_path=file_path, headers=headers)
-    #         save_excel(data=result_list, category_title=category_title)
+            save_excel(data=result_list, category_title=category_title)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

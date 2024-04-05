@@ -104,9 +104,8 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    category_title = \
-                    soup.find('div', class_='contentbox').find(string=re.compile('В рубрике:')).text.split('"')[
-                        1].strip()
+                    category_title = soup.find('div', class_='contentbox').find(string=re.compile(
+                        'В рубрике:')).text.split('"')[1].strip()
                 except Exception:
                     category_title = 'Общая'
 
@@ -115,7 +114,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
 
                     for item in data:
                         try:
-                            product_url = find('a').get('href')
+                            product_url = item.find('a').get('href')
                         except Exception as ex:
                             print(f'product_url: {ex}')
                             continue
