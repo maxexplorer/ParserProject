@@ -44,7 +44,7 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         html = response.text
         return html
     except Exception as ex:
-        print(ex)
+        print(f'get_html: {ex}')
 
 
 # Получаем количество страниц
@@ -56,10 +56,9 @@ def get_pages(html: str) -> int:
 
     soup = BeautifulSoup(html, 'lxml')
     try:
-        pages = int(
-            soup.find('div', class_='paginator').find_all('a', class_='item-page')[-1].text.strip())
+        pages = int(soup.find_all('table', align='center')[-1].find_all('a')[-2].text.strip())
     except Exception as ex:
-        print(ex)
+        print(f'get_pages: {ex}')
         pages = 1
 
     return pages
@@ -104,8 +103,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    category_title = soup.find('div', class_='contentbox').find(string=re.compile(
-                        'В рубрике:')).text.split('"')[1].strip()
+                    category_title = soup.find('div', class_='contentbox').find('table', align="center").text.split('"')[1].strip()
                 except Exception:
                     category_title = 'Общая'
 
@@ -114,13 +112,13 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
 
                     for item in data:
                         try:
-                            product_url = item.find('a').get('href')
+                            product_url = f"https:{item.find('a').get('href')}"
                         except Exception as ex:
                             print(f'product_url: {ex}')
                             continue
                         article_urls_list.append(product_url)
                 except Exception as ex:
-                    print(ex)
+                    print(f'data: {ex}')
 
                 print(f'Обработано: {page}/{pages} страниц!')
 
@@ -151,7 +149,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with requests.Session() as session:
-        for i, article_url in enumerate(article_urls_list, 1):
+        for i, article_url in enumerate(article_urls_list[1:2], 1):
             try:
                 time.sleep(random.randint(1, 3))
                 html = get_html(url=article_url, headers=headers, session=session)
@@ -175,7 +173,8 @@ def get_data(file_path: str, headers: dict) -> list:
                 article_title = ''
 
             try:
-                date = data.find('span', style='color').text.strip()
+                date = soup.find_all('span')[6].text.strip()
+
             except Exception:
                 date = ''
 
@@ -220,7 +219,7 @@ def main():
     # get_article_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data'
-    for filename in os.listdir(directory):
+    for filename in os.listdir(directory)[:1]:
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             category_title = file_path.split('\\')[-1].split('.')[0]
