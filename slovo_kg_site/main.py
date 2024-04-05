@@ -1,3 +1,4 @@
+import re
 import time
 from datetime import datetime
 import os
@@ -153,7 +154,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with requests.Session() as session:
-        for i, article_url in enumerate(article_urls_list, 1):
+        for i, article_url in enumerate(article_urls_list[:1], 1):
             try:
                 time.sleep(random.randint(1, 3))
                 html = get_html(url=article_url, headers=headers, session=session)
@@ -177,7 +178,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 article_title = ''
 
             try:
-                date = data.find('p', class_='author-post').find_next().text.strip()
+                date = data.find(string=re.compile('Дата публикации:')).text.split(':')[-1].strip()
             except Exception:
                 date = ''
 
@@ -225,15 +226,15 @@ def save_excel(data: list, category_title: str) -> None:
 
 def main():
 
-    get_article_urls(category_urls_list=category_urls_list, headers=headers)
-    #
-    # directory = 'data'
-    # for filename in os.listdir(directory):
-    #     file_path = os.path.join(directory, filename)
-    #     if os.path.isfile(file_path):
-    #         category_title = file_path.split('\\')[-1].split('.')[0]
-    #         print(f'Обрабатывается категория {category_title}')
-    #         result_list = get_data(file_path=file_path, headers=headers)
+    # get_article_urls(category_urls_list=category_urls_list, headers=headers)
+
+    directory = 'data'
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            category_title = file_path.split('\\')[-1].split('.')[0]
+            print(f'Обрабатывается категория {category_title}')
+            result_list = get_data(file_path=file_path, headers=headers)
     #         save_excel(data=result_list, category_title=category_title)
 
 
