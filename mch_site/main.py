@@ -149,7 +149,7 @@ def get_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with requests.Session() as session:
-        for i, article_url in enumerate(article_urls_list[1:2], 1):
+        for i, article_url in enumerate(article_urls_list, 1):
             try:
                 time.sleep(random.randint(1, 3))
                 html = get_html(url=article_url, headers=headers, session=session)
@@ -219,7 +219,7 @@ def main():
     # get_article_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data'
-    for filename in os.listdir(directory)[:1]:
+    for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         if os.path.isfile(file_path):
             category_title = file_path.split('\\')[-1].split('.')[0]
