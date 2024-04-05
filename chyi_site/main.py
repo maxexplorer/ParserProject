@@ -2,12 +2,16 @@ import json
 import random
 import re
 import time
+from datetime import datetime
+import os
+
 
 import requests
-import os
-import csv
 from bs4 import BeautifulSoup
-from datetime import datetime
+
+from pandas import DataFrame, ExcelWriter
+import openpyxl
+
 
 start_time = datetime.now()
 
@@ -37,7 +41,6 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
     """
 
     try:
-        time.sleep(3)
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
@@ -67,7 +70,7 @@ def get_pages(html: str) -> int:
     return pages
 
 
-# Получаем ссылки товаров
+# Получаем ссылки статей
 def get_article_urls(category_urls_list: list, headers: dict) -> None:
     """
     :param file_path: list
@@ -89,11 +92,12 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 continue
 
             pages = get_pages(html=html)
-            print(f'В категории {category_url}: {pages} страниц')
+            print(f'В категории {category_url}: {pages} страниц!')
 
             for page in range(1, pages + 1):
                 page_product_url = f"{category_url}&page={page}"
                 try:
+                    time.sleep(random.randint(1, 3))
                     html = get_html(url=page_product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{page_product_url} - {ex}")
@@ -107,7 +111,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 try:
                     category_title = soup.find('div', class_='central-content').find('h1').text.strip()
                 except Exception:
-                    category_title = category_url
+                    category_title = 'Общая'
 
                 try:
                     data = soup.find('div', class_='central-content').find_all('div', class_='item')
@@ -122,9 +126,9 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 except Exception as ex:
                     print(ex)
 
-                print(f'Обработано: {page}/{pages} страниц')
+                print(f'Обработано: {page}/{pages} страниц!')
 
-            print(f'Обработано: {i}/{count_urls} категорий')
+            print(f'Обработано: {i}/{count_urls} категорий!')
 
             if not os.path.exists('data'):
                 os.makedirs(f'data')
@@ -142,21 +146,21 @@ def get_data(file_path: str, headers: dict) -> list:
     """
 
     with open(file_path, 'r', encoding='utf-8') as file:
-        product_urls_list = [line.strip() for line in file.readlines()]
+        article_urls_list = [line.strip() for line in file.readlines()]
 
-    count = len(product_urls_list)
+    count = len(article_urls_list)
 
-    print(f'Всего {count} товаров')
+    print(f'Всего {count} статей!')
 
-    result_list = []
+    result_data = []
 
     with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list, 1):
+        for i, article_url in enumerate(article_urls_list, 1):
             try:
                 time.sleep(random.randint(1, 3))
-                html = get_html(url=product_url, headers=headers, session=session)
+                html = get_html(url=article_url, headers=headers, session=session)
             except Exception as ex:
-                print(f"{product_url} - {ex}")
+                print(f"{article_url} - {ex}")
                 continue
 
             if not html:
@@ -165,151 +169,78 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder_item = soup.find('ul', class_='breadcrumbs').find_all('li', class_='breadcrumbs__item')[
-                    1].text.strip()
+                data = soup.find('div', class_='central-content')
+            except Exception as ex:
+                print(f'central-content: {ex}')
+                continue
+            try:
+                article_title = data.find('h1').text.strip()
             except Exception:
-                folder_item = ''
-
-            # try:
-            #     characteristic_item = \
-            #         soup.find('span', string=re.compile('ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find_all('div',
-            #                                                                                                       class_='characteristics__row')[
-            #             0].find('span', class_='characteristics__property').text.strip()
-            # except Exception:
-            #     characteristic_item = ''
+                article_title = ''
 
             try:
-                characteristic_item1 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
-                    'span', string=re.compile('Способ установки')).find_next().find_next().text.strip()
+                date = data.find('div', class_='date').text.strip()
             except Exception:
-                characteristic_item1 = ''
+                date = ''
 
             try:
-                characteristic_item2 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
-                    'span', string=re.compile('Форм-фактор')).find_next().find_next().text.strip()
-                if 'классический' in characteristic_item2:
-                    characteristic_item2 = 'Классический'
-
+                statistic = data.find('div', class_='statistic').text.strip()
             except Exception:
-                characteristic_item2 = ''
-
+                statistic = ''
             try:
-                characteristic_item3 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find('span', string=re.compile(
-                    'Вид холодильника')).find_next().find_next().text.strip()
-                if 'Винный шкаф' in characteristic_item3:
-                    characteristic_item3 = 'Винный шкаф'
-
+                text = ' '.join(data.find('div', class_='f-text').text.split())
             except Exception:
-                characteristic_item3 = ''
+                text = ''
 
-            folder = f'{folder_item}/{characteristic_item1}/{characteristic_item2}/{characteristic_item3}'
 
-            try:
 
-                name = soup.find('h1', class_='page-title').text.strip()
-            except Exception:
-                name = ''
 
-            try:
-                article = soup.find('div',
-                                    class_='card-info__product-code js-card-info-product-code').find_next().find_next().text.strip()
-            except Exception:
-                article = ''
-
-            try:
-                price = ''.join(k for k in soup.find('span', class_='big-price__price').text.strip() if k.isdigit())
-            except Exception:
-                price = ''
-
-            try:
-                image_data = soup.find_all('a', class_='product-page-card__slider-link')
-                image = ''
-                for item in image_data:
-                    url = 'https://sm-rus.ru' + item.get('href')
-                    image += f'{url}, '
-            except Exception:
-                image = ''
-
-            try:
-                description = ' '.join(
-                    soup.find('div', class_='product-description _vr-m-s js-product-description').text.strip().split())
-            except Exception:
-                description = ''
-
-            try:
-                characteristics = ' '.join(item for item in
-                                           soup.find('section', class_='characteristics _vr-m-s').find('div',
-                                                                                                       class_='characteristics__wrap').text.split())
-            except Exception:
-                characteristics = ''
-
-            body = f"{description} {characteristics}"
-
-            vendor = 'Smeg'
-
-            amount = 1
-
-            result_list.append(
-                (
-                    vendor,
-                    f"Smeg/{folder}",
-                    article,
-                    name,
-                    price,
-                    image,
-                    body,
-                    amount,
-                )
+            result_data.append(
+                {
+                    'Ссылка': article_url,
+                    'Название статьи': article_title,
+                    'Дата издания': date,
+                    'Количество просмотров': statistic,
+                    'Текст': text,
+                }
             )
 
             print(f'Обработано товаров: {i}/{count}')
 
-    return result_list
+    return result_data
 
 
-def save_csv(name, data):
-    cur_date = datetime.now().strftime('%d-%m-%Y')
+# Функция для записи данных в формат xlsx
+def save_excel(data: list, category_title: str) -> None:
+    if not os.path.exists('results'):
+        os.makedirs('results')
 
-    if not os.path.exists('data/results'):
-        os.makedirs('data/results')
+    if not os.path.exists('results/Чуйские известия.xlsx'):
+        # Если файл не существует, создаем его с пустым DataFrame
+        with ExcelWriter('results/Чуйские известия.xlsx', mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name=category_title, index=False)
 
-    with open(f'data/results/{name}_{cur_date}.csv', 'w', encoding='utf-8') as file:
-        writer = csv.writer(file, delimiter=';')
-        writer.writerow(
-            ('vendor: Производитель',
-             'folder: Категория',
-             'article: Артикул',
-             'name: Название',
-             'price: Цена',
-             'image: Иллюстрация',
-             'body: Описание',
-             'amount : Количество'
-             )
-        )
+    dataframe = DataFrame(data)
 
-    with open(f'data/results/{name}_{cur_date}.csv', 'a', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file, delimiter=';')
-        writer.writerows(
-            data
-        )
-    print('Данные сохранены в файл "data.csv"')
+    with ExcelWriter('results/Чуйские известия.xlsx', if_sheet_exists='replace', mode='a') as writer:
+        dataframe.to_excel(writer, sheet_name=category_title, index=False)
+
+    print(f'Данные сохранены в файл формата xlsx')
 
 
 def main():
 
-    get_article_urls(category_urls_list=category_urls_list, headers=headers)
-    #
-    # directory = 'data'
-    # for filename in os.listdir(directory):
-    #     file_path = os.path.join(directory, filename)
-    #     if os.path.isfile(file_path):
-    #         name = file_path.split('\\')[-1].split('.')[0]
-    #         print(f'Обрабатывается категория {name}')
-    #         result_list = get_data(file_path=file_path, headers=headers)
-    #         save_csv(name=name, data=result_list)
+    # get_article_urls(category_urls_list=category_urls_list, headers=headers)
+
+    directory = 'data'
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            category_title = file_path.split('\\')[-1].split('.')[0]
+            print(f'Обрабатывается категория {category_title}')
+            result_list = get_data(file_path=file_path, headers=headers)
+            save_excel(data=result_list, category_title=category_title)
+
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
