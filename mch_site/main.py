@@ -103,7 +103,8 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    category_title = soup.find('div', class_='contentbox').find('table', align="center").text.split('"')[1].strip()
+                    category_title = \
+                    soup.find('div', class_='contentbox').find('table', align="center").text.split('"')[1].strip()
                 except Exception:
                     category_title = 'Общая'
 
