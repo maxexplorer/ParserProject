@@ -134,7 +134,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 print(*article_urls_list, file=file, sep='\n')
 
 
-# Получаем данные о товарах
+# Получаем данные о статьях
 def get_data(file_path: str, headers: dict) -> list:
     """
     :param file_path: str

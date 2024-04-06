@@ -131,7 +131,7 @@ def get_article_urls(category_urls_list: list, headers: dict) -> None:
                 print(*article_urls_list, file=file, sep='\n')
 
 
-# Получаем данные о товарах
+# Получаем данные о статьях
 def get_data(file_path: str, headers: dict) -> list:
     """
     :param file_path: str
@@ -179,7 +179,12 @@ def get_data(file_path: str, headers: dict) -> list:
                 date = ''
 
             try:
-                text = ' '.join(data.find('p', class_='text').text.split())
+                author = data.find_all('p')[-2].text.strip()
+            except Exception:
+                author = ''
+
+            try:
+                text = ' '.join(data.text.split())
             except Exception:
                 text = ''
 
@@ -188,6 +193,7 @@ def get_data(file_path: str, headers: dict) -> list:
                     'Ссылка': article_url,
                     'Название статьи': article_title,
                     'Дата издания': date,
+                    'Автор': author,
                     'Текст': text,
                 }
             )
