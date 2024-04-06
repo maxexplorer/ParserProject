@@ -175,7 +175,7 @@ def get_data(file_path: str, headers: dict) -> list:
                 article_title = ''
 
             try:
-                date = data.find(string=re.compile('Дата публикации:')).text.split(':')[-1].strip()
+                date = data.find(string=re.compile('Дата публикации:')).text.split(',')[-1].strip()
             except Exception:
                 date = ''
 
