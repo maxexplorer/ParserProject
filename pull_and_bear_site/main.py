@@ -67,7 +67,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/data.py', 'w', encoding='utf-8') as file:
+    with open('data/data.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
