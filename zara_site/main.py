@@ -76,9 +76,6 @@ def get_id_categories(headers: dict, params: dict) -> None:
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-    count_categories = len(id_categories_list)
-
-    print(f'Всего: {count_categories} категорий!')
 
     products_data_list = []
     id_products_list = []
@@ -86,7 +83,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
         for category_dict in id_categories_list:
             for category, products_list in category_dict.items():
                 for product_tuple in products_list:
-                    type_category, id_category = product_tuple
+                    product_ids = []
+                    name_category, id_category = product_tuple
 
                     time.sleep(randint(3, 5))
 
@@ -98,7 +96,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                             timeout=60
                         )
 
-
                         if response.status_code != 200:
                             print(f'id_category: {id_category} status_code: {response.status_code}')
                             continue
@@ -108,21 +105,47 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                     except Exception as ex:
                         print(f'get_id_products: {ex}')
 
-                        # try:
-                        #     product_ids = json_data.get('productIds')
-                        # except Exception:
-                        #     product_ids = []
-                        #
-                        # products_data_list.append(
-                        #     {
-                        #         (name_category, id_category): product_ids
-                        #     }
-                        # )
-                        #
-                        # id_products_list.extend(product_ids)
-                        #
-                        # print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
+                    try:
+                        product_data = json_data['productGroups']
+                    except Exception:
+                        product_ids = []
 
+                    try:
+                        for group_item in product_data:
+                            elements = group_item['elements']
+                            for element in elements:
+                                try:
+                                    commercial_components = element['commercialComponents']
+                                except Exception:
+                                    continue
+                                for component in commercial_components:
+                                    try:
+                                        id_product = component['id']
+                                    except Exception:
+                                        id_product = None
+                                    product_ids.append(id_product)
+                                    id_products_list.append(id_product)
+                    except Exception as ex:
+                        print(f'id_poducts: {ex}')
+
+                    products_data_list.append(
+                        {
+                            (name_category, id_category): product_ids
+                        }
+                    )
+
+                    print(f'Обработано: категория {category}/{name_category}/{id_category} - {len(product_ids)} товаров!')
+
+
+    if not os.path.exists('data'):
+        os.makedirs('data')
+
+    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+        print(*id_products_list, file=file, sep='\n')
+
+    print(products_data_list)
+
+    return products_data_list
 
 
 def main():

@@ -75,9 +75,6 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-    count_categories = len(id_categories_list)
-
-    print(f'Всего: {count_categories} категорий!')
 
     products_data_list = []
     id_products_list = []
