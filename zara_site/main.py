@@ -1,10 +1,29 @@
 import os
+import time
+from datetime import datetime
+from random import randint
 import json
 
 from requests import Session
 
+from pandas import DataFrame
+from pandas import ExcelWriter
+from pandas import read_excel
+
 from configs.config import headers
 from configs.config import params
+from data.data import id_categories_list
+from data.data import id_region_dict
+# from functions import colors_format
+# from functions import sizes_format
+from functions import translator
+from functions import get_exchange_rate
+
+start_time = datetime.now()
+
+rub = get_exchange_rate()
+
+print(f'Курс EUR/RUB: {rub}')
 
 
 # Функция получения id категорий
@@ -14,7 +33,7 @@ def get_id_categories(headers: dict, params: dict) -> None:
     with Session() as session:
         try:
             response = session.get(
-                'https://www.zara.com/es/en/categories',
+                'https://www.zara.com/kz/ru/categories',
                 headers=headers,
                 params=params,
                 timeout=60
@@ -51,52 +70,67 @@ def get_id_categories(headers: dict, params: dict) -> None:
                     category_kid_id = redirect_category_kid_id if redirect_category_kid_id else subcategory_kid_id
                     id_categories_data.append((subcategory_kid_name, category_kid_id))
 
-
-    with open('data/id_categories_list_1.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_rus.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
 
-def get_products_data(headers: dict):
 
-    #
-    # headers = {
-    #     'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-    #     'X-KL-kfa-Ajax-Request': 'Ajax_Request',
-    #     'Referer': 'https://www.zara.com/es/en/woman-blazers-l1055.html?v1=2352684',
-    #     'sec-ch-ua-mobile': '?0',
-    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    #     'sec-ch-ua-platform': '"Windows"',
-    # }
-    #
-    # params = {
-    #     'productIds': ['348188026', '348201363'],
-    #     'ajax': 'true',
-    # }
-    #
-    # response = requests.get('https://www.zara.com/es/en/products-details', params=params, headers=headers)
-    #
-    # with open('data/products-details.json', 'w', encoding='utf-8') as file:
-    #     json.dump(response.json(), file, indent=4, ensure_ascii=False)
+# Функция получения id товаров
+def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
+    count_categories = len(id_categories_list)
 
-    with open('data/products-details.json', 'r', encoding='utf-8') as file:
-        json_data = json.load(file)
+    print(f'Всего: {count_categories} категорий!')
 
-    name = json_data[1]['name']
+    products_data_list = []
+    id_products_list = []
+    with Session() as session:
+        for category_dict in id_categories_list:
+            for category, products_list in category_dict.items():
+                for product_tuple in products_list:
+                    type_category, id_category = product_tuple
 
-    print(name)
+                    time.sleep(randint(3, 5))
 
-    # try:
-    #     products_data = json_data['productGroups'][0]['elements']
-    # except Exception:
-    #     products_data = []
-    #
-    # for item in products_data:
-    #     id_product = item['commercialComponents'][0]['id']
-    #     reference = item['commercialComponents'][0]['reference']
-    #     print(reference)
+                    try:
+                        response = session.get(
+                            f'https://www.zara.com/{id_region}/category/{id_category}/products',
+                            params=params,
+                            headers=headers,
+                            timeout=60
+                        )
+
+
+                        if response.status_code != 200:
+                            print(f'id_category: {id_category} status_code: {response.status_code}')
+                            continue
+
+                        json_data = response.json()
+
+                    except Exception as ex:
+                        print(f'get_id_products: {ex}')
+
+                        # try:
+                        #     product_ids = json_data.get('productIds')
+                        # except Exception:
+                        #     product_ids = []
+                        #
+                        # products_data_list.append(
+                        #     {
+                        #         (name_category, id_category): product_ids
+                        #     }
+                        # )
+                        #
+                        # id_products_list.extend(product_ids)
+                        #
+                        # print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
+
 
 
 def main():
-    get_id_categories(headers=headers, params=params)
+    region = 'Испания'
+    id_region = id_region_dict.get(region)
+    # get_id_categories(headers=headers, params=params)
+    get_id_products(id_categories_list=id_categories_list, headers=headers, params=params, id_region=id_region)
+
 
 if __name__ == '__main__':
     main()
