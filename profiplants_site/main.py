@@ -14,9 +14,9 @@ start_time = datetime.now()
 
 
 # Получаем данные о продуктах
-def get_data(headers: dict, json_data: dict) -> tuple[set, list]:
+def get_data(headers: dict, json_data: dict) -> tuple[list, list]:
     title_plants_data = set()
-    contacts_data = []
+    contacts_data = set()
 
     with requests.Session() as session:
         for page in range(1, 385):
@@ -54,7 +54,7 @@ def get_data(headers: dict, json_data: dict) -> tuple[set, list]:
                     except Exception:
                         ru_title = None
 
-                    title_plants_data.add(ru_title)
+                    title_plants_data.add((ru_title, lat_title))
 
                     try:
                         organization = item['organization']['title']
@@ -86,14 +86,14 @@ def get_data(headers: dict, json_data: dict) -> tuple[set, list]:
                     except Exception:
                         site = None
 
-                    contacts_data.append(
-                        {
-                            'Название организации': organization,
-                            'Адрес': address,
-                            'Email': email,
-                            'Телефон': phone,
-                            'Сайт': site
-                        }
+                    contacts_data.add(
+                        (
+                            organization,
+                            address,
+                            email,
+                            phone,
+                            site
+                        )
                     )
 
             except Exception as ex:
@@ -102,11 +102,14 @@ def get_data(headers: dict, json_data: dict) -> tuple[set, list]:
 
             print(f'Обработано товаров: {page}/{385}')
 
+    title_plants_data = sorted(title_plants_data)
+    contacts_data = sorted(contacts_data)
+
     return title_plants_data, contacts_data
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: set | list, sheet_name: str) -> None:
+def save_excel(data: list, sheet_name: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
