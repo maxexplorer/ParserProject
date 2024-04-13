@@ -441,7 +441,6 @@ def save_excel(data: list) -> None:
 def main():
     region = 'Германия'
     id_region = id_region_dict.get(region)
-    print(id_region)
     if id_region is None:
         id_region = '24009400/20309422'
     # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
