@@ -1,20 +1,16 @@
 import time
 import os
-import random
 import re
+from random import randint
 from datetime import datetime
 
-import requests
-from requests import Session
-
+from undetected_chromedriver import Chrome
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 start_time = datetime.now()
-
 
 headers = {
     'Accept': '*/*',
@@ -22,26 +18,9 @@ headers = {
                   ' Chrome/123.0.0.0 Safari/537.36'
 }
 
-
-# Получаем html разметку страницы
-def get_html(url: str, headers: dict, session: Session) -> str:
-    """
-    :param url: str
-    :param headers: dict
-    :param session: requests.sessions.Session
-    :return: str
-    """
-
-    try:
-        response = session.get(url=url, headers=headers, timeout=60)
-
-        if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
-
-        html = response.text
-        return html
-    except Exception as ex:
-        print(ex)
+district_urls = [
+    "https://www.ddproperty.com/en/property-for-sale/1?district_code%5B0%5D=TH8404&freetext=Ko+Samui&search=true"
+]
 
 
 # Получаем количество страниц
@@ -62,33 +41,42 @@ def get_pages(html: str) -> int:
     return pages
 
 
+# Функция получения ссылокб рейтинга, количества отзывов всех продуктов продавца
+def get_property_urls(district_urls: list) -> list[dict]:
+    driver = Chrome()
+    driver.maximize_window()
+    driver.implicitly_wait(15)
 
-# Получаем ссылки товаров
-def get_property_urls(headers: dict) -> None:
-    """
-    :param headers: dict
-    :return: None
-    """
+    property_urls_list = []
 
-    district_url = "https://www.ddproperty.com/en/property-for-sale/1?district_code%5B0%5D=TH8404&freetext=Ko+Samui&search=true"
+    try:
+        for district_url in district_urls:
 
-    with Session() as session:
+            print(f'Обрабатывается: {district_url}')
+
             try:
-                html = get_html(url=district_url, headers=headers, session=session)
+                driver.get(url=district_url)
+                time.sleep(randint(3, 5))
             except Exception as ex:
-                print(f"{district_url} - {ex}")
-                raise requests.RequestException('Ссылка недоступна')
+                print(f'{district_url}: {ex}')
+                continue
+
+            html = driver.page_source
 
             pages = get_pages(html=html)
+
             print(f'Всего: {pages} страниц!')
 
             for page in range(1, pages + 1):
-                page_district_url = f"https://www.ddproperty.com/en/property-for-sale/{page}?district_code%5B0%5D=TH8404&freetext=Ko+Samui&search=true"
                 try:
-                    html = get_html(url=page_district_url, headers=headers, session=session)
+                    driver.get(
+                        url=f"https://www.ddproperty.com/en/property-for-sale/{page}?district_code%5B0%5D=TH8404&freetext=Ko+Samui&search=true")
+                    time.sleep(randint(3, 5))
                 except Exception as ex:
-                    print(f"{page_district_url} - {ex}")
+                    print(f'page: {page} - {ex}')
                     continue
+
+                html = driver.page_source
 
                 if not html:
                     continue
@@ -96,54 +84,54 @@ def get_property_urls(headers: dict) -> None:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    property_data = soup.find_all('div', class_='listing-card listing-id')
-
-                    for item in property_data:
-                        try:
-                            product_url = f"https://sm-rus.ru{item.find('a', class_='card-type-and-title catalog-card__type-and-title').get('href')}"
-                        except Exception as ex:
-                            print(ex)
-                            continue
-                        product_urls_list.append(product_url)
+                    property_items = soup.find_all('div', class_='row listing-card__action-item')
+                    for property_item in property_items:
+                        property_url = property_item.find('a').get('href')
+                        property_urls_list.append(property_url)
                 except Exception as ex:
-                    print(ex)
+                    print(f'property_items: {ex}')
+                    continue
 
-                print(f'Обработано: {page}/{pages} страниц')
+                print(f'Обработано: {page}/{pages} страниц!')
 
-            print(f'Обработано: {i}/{count_urls} категорий')
+        if not os.path.exists('data'):
+            os.makedirs(f'data')
 
-            if not os.path.exists('data/products'):
-                os.makedirs(f'data/products')
+        with open(f'data/property_urls_list.txt', 'w', encoding='utf-8') as file:
+            print(*property_urls_list, file=file, sep='\n')
 
-            with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
-                print(*product_urls_list, file=file, sep='\n')
+        return property_urls_list
+
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
 
-# Получаем данные о товарах
-def get_data(file_path: str, headers: dict) -> list:
-    """
-    :param file_path: str
-    :param headers: dict
-    :return: list
-    """
-
+# Функция получения данных с карточки продукта
+def get_property_data(file_path: str) -> list[dict]:
+    # Открываем файл в формате .txt
     with open(file_path, 'r', encoding='utf-8') as file:
-        product_urls_list = [line.strip() for line in file.readlines()]
+        property_urls_list = [line.strip() for line in file.readlines()]
 
-    count = len(product_urls_list)
-
-    print(f'Всего {count} товаров')
+    driver = Chrome()
+    driver.maximize_window()
+    driver.implicitly_wait(15)
 
     result_list = []
 
-    with requests.Session() as session:
-        for i, product_url in enumerate(product_urls_list, 1):
+    try:
+        for property_url in property_urls_list:
             try:
-                time.sleep(random.randint(1, 3))
-                html = get_html(url=product_url, headers=headers, session=session)
+                driver.get(url=property_url)
+                time.sleep(randint(3, 5))
+
             except Exception as ex:
-                print(f"{product_url} - {ex}")
+                print(f"property_url: {property_url} - {ex}")
                 continue
+
+            html = driver.page_source
 
             if not html:
                 continue
@@ -151,109 +139,23 @@ def get_data(file_path: str, headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                folder_item = soup.find('ul', class_='breadcrumbs').find_all('li', class_='breadcrumbs__item')[
-                    1].text.strip()
+                id_property = ''
             except Exception:
-                folder_item = ''
-
-            # try:
-            #     characteristic_item = \
-            #         soup.find('span', string=re.compile('ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find_all('div',
-            #                                                                                                       class_='characteristics__row')[
-            #             0].find('span', class_='characteristics__property').text.strip()
-            # except Exception:
-            #     characteristic_item = ''
-
-            try:
-                characteristic_item1 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
-                    'span', string=re.compile('Способ установки')).find_next().find_next().text.strip()
-            except Exception:
-                characteristic_item1 = ''
-
-            try:
-                characteristic_item2 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find(
-                    'span', string=re.compile('Форм-фактор')).find_next().find_next().text.strip()
-                if 'классический' in characteristic_item2:
-                    characteristic_item2 = 'Классический'
-
-            except Exception:
-                characteristic_item2 = ''
-
-            try:
-                characteristic_item3 = soup.find('span', string=re.compile(
-                    'ОБЩИЕ ХАРАКТЕРИСТИКИ')).find_next().find_next().find('span', string=re.compile(
-                    'Вид холодильника')).find_next().find_next().text.strip()
-                if 'Винный шкаф' in characteristic_item3:
-                    characteristic_item3 = 'Винный шкаф'
-
-            except Exception:
-                characteristic_item3 = ''
-
-            folder = f'{folder_item}/{characteristic_item1}/{characteristic_item2}/{characteristic_item3}'
-
-            try:
-
-                name = soup.find('h1', class_='page-title').text.strip()
-            except Exception:
-                name = ''
-
-            try:
-                article = soup.find('div',
-                                    class_='card-info__product-code js-card-info-product-code').find_next().find_next().text.strip()
-            except Exception:
-                article = ''
-
-            try:
-                price = ''.join(k for k in soup.find('span', class_='big-price__price').text.strip() if k.isdigit())
-            except Exception:
-                price = ''
-
-            try:
-                image_data = soup.find_all('a', class_='product-page-card__slider-link')
-                image = ''
-                for item in image_data:
-                    url = 'https://sm-rus.ru' + item.get('href')
-                    image += f'{url}, '
-            except Exception:
-                image = ''
-
-            try:
-                description = ' '.join(
-                    soup.find('div', class_='product-description _vr-m-s js-product-description').text.strip().split())
-            except Exception:
-                description = ''
-
-            try:
-                characteristics = ' '.join(item for item in
-                                           soup.find('section', class_='characteristics _vr-m-s').find('div',
-                                                                                                       class_='characteristics__wrap').text.split())
-            except Exception:
-                characteristics = ''
-
-            body = f"{description} {characteristics}"
-
-            vendor = 'Smeg'
-
-            amount = 1
+                id_property = ''
 
             result_list.append(
-                (
-                    vendor,
-                    f"Smeg/{folder}",
-                    article,
-                    name,
-                    price,
-                    image,
-                    body,
-                    amount,
-                )
+                {
+
+                }
             )
 
-            print(f'Обработано товаров: {i}/{count}')
+        return result_list
 
-    return result_list
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
 
 # Функция для записи данных в формат xlsx
@@ -275,11 +177,9 @@ def save_excel(data: list, category_title: str) -> None:
 
 
 def main():
-
-
-    get_property_urls(headers=headers)
-
-
+    # get_property_urls(district_urls=district_urls)
+    with open('data/property_urls_list.txt', 'r', encoding='utf-8') as file:
+        urls_list = [line.strip() for line in file.readlines()]
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

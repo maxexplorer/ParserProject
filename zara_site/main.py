@@ -14,6 +14,7 @@ from configs.config import headers
 from configs.config import params
 from data.data import id_categories_list
 from data.data import id_region_dict
+from data.data import products_data_list
 # from functions import colors_format
 # from functions import sizes_format
 from functions import translator
@@ -76,7 +77,6 @@ def get_id_categories(headers: dict, params: dict) -> None:
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-
     products_data_list = []
     id_products_list = []
     with Session() as session:
@@ -143,16 +143,52 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
         print(*id_products_list, file=file, sep='\n')
 
-    print(products_data_list)
-
     return products_data_list
+
+# Функция получения json данных товаров
+def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+    with Session() as session:
+        for item_dict in products_data_list:
+            for key in item_dict:
+                type_product = key[0]
+                id_products = item_dict[key][:10]
+
+                params = {
+                    'productIds': id_products,
+                    'ajax': 'true',
+                }
+
+                try:
+                    response = session.get(
+                        f'https://www.zara.com/kz/ru/products-details',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
+
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
+
+                    json_data = response.json()
+
+                    with open('data/json_data.json', 'w', encoding='utf-8') as file:
+                        json.dump(json_data, file, indent=4, ensure_ascii=False)
+
+                    # print(f'Сбор данных категории: {key[0]}/{key[1]}')
+                    # get_products_data(products_data=json_data, type_product=type_product)
+
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
 
 
 def main():
-    region = 'Испания'
+    region = 'Казахстан'
     id_region = id_region_dict.get(region)
     # get_id_categories(headers=headers, params=params)
-    get_id_products(id_categories_list=id_categories_list, headers=headers, params=params, id_region=id_region)
+    # get_id_products(id_categories_list=id_categories_list, headers=headers, params=params, id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+
+
 
 
 if __name__ == '__main__':
