@@ -1,9 +1,9 @@
 import json
+import re
 import time
 from datetime import datetime
 import os
 import random
-
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,9 +11,7 @@ from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 start_time = datetime.now()
-
 
 headers = {
     'Accept': '*/*',
@@ -40,7 +38,6 @@ def get_html(url: str, headers: dict, session: requests.sessions.Session) -> str
         return html
     except Exception as ex:
         print(ex)
-
 
 
 # Получаем ссылки статей
@@ -72,11 +69,11 @@ def get_product_urls(headers: dict) -> list:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                production_items = soup.find('div', id='catalog-production-section').find_all('div', class_='plant-item')
+                production_items = soup.find('div', id='catalog-production-section').find_all('div',
+                                                                                              class_='plant-item')
             except Exception as ex:
                 print(f'catalog_productions: {url} - {ex}')
                 continue
-
 
             try:
                 for item in production_items:
@@ -103,7 +100,6 @@ def get_product_urls(headers: dict) -> list:
 
             print(f'Обработано: {page}/{pages} страниц!')
 
-
         if not os.path.exists('data'):
             os.makedirs(f'data')
 
@@ -111,6 +107,76 @@ def get_product_urls(headers: dict) -> list:
             json.dump(product_urls_data, file, indent=4, ensure_ascii=False)
 
         return plant_names_list
+
+
+# Получаем ссылки статей
+def get_contacts(headers: dict) -> list:
+    """
+    :param file_path: list
+    :param headers: dict
+    :return: None
+    """
+
+    contacts_data = []
+    pages = 61
+
+    with requests.Session() as session:
+        for page in range(1, pages + 1):
+
+            try:
+                time.sleep(1)
+                url = f"https://plodovnik.ru/catalog/?PAGEN_1={page}"
+                html = get_html(url=url, headers=headers, session=session)
+            except Exception as ex:
+                print(f"{url} - {ex}")
+                continue
+
+            if not html:
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                pitomnik_items = soup.find_all('div', class_='pitomnik-card')
+            except Exception as ex:
+                print(f'catalog_productions: {url} - {ex}')
+                continue
+
+            try:
+                for item in pitomnik_items:
+                    try:
+                        organization = item.find('h2').text.strip()
+                    except Exception:
+                        organization = None
+
+                    try:
+                        contacts_items = item.find_all('p')
+                    except Exception:
+                        contacts_items = None
+
+                    try:
+                        address = ''.join(i.text.strip() for i in contacts_items if 'Адрес' in i.text)
+                    except Exception:
+                        address = None
+
+                    try:
+                        phone = ''.join(i.text.strip() for i in contacts_items if 'Телефон' in i.text)
+                    except Exception:
+                        phone = None
+
+                    contacts_data.append(
+                        {
+                            'Название': organization,
+                            'Адрес': address,
+                            'Телефон': phone
+                        }
+                    )
+            except Exception as ex:
+                print(ex)
+
+            print(f'Обработано: {page}/{pages} страниц!')
+
+        return contacts_data
 
 
 # Получаем данные о статьях
@@ -157,7 +223,6 @@ def get_data(file_path: str, headers: dict) -> list:
                 except Exception:
                     description = None
 
-
                 result_data.append(
                     {
                         'Ссылка': product_url,
@@ -194,10 +259,11 @@ def save_excel(data: list, category_title: str) -> None:
 def main():
     # plant_names_list = get_product_urls(headers=headers)
 
-    result_data = get_data('data/product_urls_data.json', headers=headers)
+    # result_data = get_data('data/product_urls_data.json', headers=headers)
 
-    save_excel(data=result_data, category_title='Description')
+    contacts_data = get_contacts(headers=headers)
 
+    save_excel(data=contacts_data, category_title='Contacts')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
