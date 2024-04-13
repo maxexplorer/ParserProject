@@ -5,10 +5,14 @@ from random import randint
 from datetime import datetime
 
 from undetected_chromedriver import Chrome
+from undetected_chromedriver import ChromeOptions
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
 import openpyxl
+
+import pickle
 
 start_time = datetime.now()
 
@@ -115,6 +119,11 @@ def get_property_data(file_path: str) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         property_urls_list = [line.strip() for line in file.readlines()]
 
+    # options = ChromeOptions()
+    # options.add_argument('--headless')
+    #
+    # driver = Chrome(options=options)
+
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -122,16 +131,24 @@ def get_property_data(file_path: str) -> list[dict]:
     result_list = []
 
     try:
-        for property_url in property_urls_list:
+        for property_url in property_urls_list[:1]:
             try:
                 driver.get(url=property_url)
                 time.sleep(randint(3, 5))
+
+                input = driver.find_element(By.CSS_SELECTOR, 'input[type="checkbox"]')
+                print(input)
+
+                input.click()
 
             except Exception as ex:
                 print(f"property_url: {property_url} - {ex}")
                 continue
 
             html = driver.page_source
+
+            with open('data/index.html', 'w', encoding='utf-8') as file:
+                file.write(html)
 
             if not html:
                 continue
@@ -178,8 +195,9 @@ def save_excel(data: list, category_title: str) -> None:
 
 def main():
     # get_property_urls(district_urls=district_urls)
-    with open('data/property_urls_list.txt', 'r', encoding='utf-8') as file:
-        urls_list = [line.strip() for line in file.readlines()]
+    result_data = get_property_data(file_path='data/property_urls_list.txt')
+
+
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
