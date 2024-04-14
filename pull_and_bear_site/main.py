@@ -128,10 +128,10 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
     with Session() as session:
-        for item_dict in products_data_list:
-            for key in item_dict:
+        for dict_item in products_data_list:
+            for key in dict_item:
                 type_product = key[0]
-                lst = item_dict[key]
+                lst = dict_item[key]
                 id_products = ','.join(map(str, lst))
 
                 params = {
