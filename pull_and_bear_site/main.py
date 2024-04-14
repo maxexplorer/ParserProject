@@ -284,7 +284,7 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             material = composition_items[0]['composition'][0]['name']
             material = translator(material)
             composition = ' '.join(
-                f"{elem['name']}: {elem['description']}" for item in composition_items for elem in item['composition'])
+                f"{elem['name']}: {elem['percentage']}" for item in composition_items for elem in item['composition'])
             composition = translator(composition)
         except Exception:
             composition = None
@@ -297,9 +297,9 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
 
-            for i in sizes_items:
-                size_eur = i.get('name')
-                size_value = i.get('visibilityValue')
+            for size_item in sizes_items:
+                size_eur = size_item.get('name')
+                size_value = size_item.get('visibilityValue')
 
                 if size == size_eur:
                     if size_value in status_dict.get(size_eur):
