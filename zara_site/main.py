@@ -15,6 +15,7 @@ from data.data import id_categories_list_rus
 from data.data import id_region_dict
 # from data.data import products_data_list
 
+from functions import colors_format
 from functions import sizes_format
 from functions import get_exchange_rate
 from functions import chunks
@@ -84,7 +85,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     products_data_list = []
     id_products_set = set()
     with Session() as session:
-        for category_dict in id_categories_list:
+        for category_dict in id_categories_list[:1]:
             for main_category, products_list in category_dict.items():
                 for product_tuple in products_list:
                     product_ids = []
@@ -164,7 +165,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
             main_category = key[0]
             type_product = key[1]
 
-            print(f'Сбор данных категории: {key[0]}/{key[1]} / {key[2]}')
+            print(f'Сбор данных категории: {key[0]}/{key[1]}/{key[2]}')
 
             for chunk_ids in chunks(id_products, 10):
                 params = {
@@ -208,7 +209,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
             reference = None
 
         try:
-            name_product = item['name']
+            name_product = f"ZARA {item['name']}"
         except Exception:
             name_product = None
 
@@ -223,6 +224,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
 
         try:
             color = item['detail']['colors'][0]['name']
+            color = colors_format(value=color)
         except Exception:
             color = None
 
@@ -254,13 +256,27 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
             main_image = None
             additional_images = None
 
+
         try:
-            gender = main_category
+            if main_category == 'Женщины':
+                gender = 'женский'
+            elif main_category == 'Мужчины':
+                gender = 'мужской'
+            else:
+                gender = main_category
         except Exception:
             gender = None
 
         try:
-            description = ' '.join(item['detail']['colors'][0]['description'].split())
+            raw_description = ' '.join(item['detail']['colors'][0]['rawDescription'].split())
+            description = f"🚚 ДОСТАВКА ИЗ ЕВРОПЫ 🌍✈️<br/>"\
+            f"✅ Регулярное обновление коллекций.<br/>"\
+            f"✅ Полный ассортимент брендa Zara. Более 10 000 товаров ждут вас в профиле нашего магазина! 🏷️<br/>"\
+            f"✅ Более простой поиск нужных вещей внутри нашего магазина. Подписывайтесь, чтобы всегда быть в курсе последних поступлений и акций! 🔍📲<br/>"\
+
+            f" {raw_description}<br/>"\
+
+            f"📣 При выборе товара ориентируйтесь на ЕВРОПЕЙСКИЙ размер!"
         except Exception:
             description = None
 
@@ -316,16 +332,38 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
 
-                id_product_size = f"{id_product}/{color.replace(' ', '-')}/{size_eur}"
+                id_product_size = f"{id_product}/{color.replace(' ', '-')}/{size_eur}/{reference}"
 
-                if main_category == 'ДЕВОЧКИ' or main_category == 'МАЛЬЧИКИ':
+                if main_category == 'Девочки' or main_category == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
                     if not size_rus:
                         size_rus = size_eur
                 else:
-                    size_rus = sizes_format(gender=gender, size_eur=size_eur)
+                    if size_eur.isdigit():
+                        size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
+                    elif not size_eur.isdigit():
+                        size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
+                    else:
+                        size_rus = size_eur
 
                 brand = 'Zara'
+
+                care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
+                       "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
+
+                if main_category == 'Женщины':
+                    model_height = '175'
+                elif main_category == 'Мужчины':
+                    model_height = '180'
+                else:
+                    model_height = None
+
+                if main_category == 'Женщины':
+                    model_size = '44'
+                elif main_category == 'Мужчины':
+                    model_size = '48'
+                else:
+                    model_size = None
 
                 result_data.append(
                     {
@@ -359,14 +397,14 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                         'ТН ВЭД коды ЕАЭС': None,
                         'Ключевые слова': None,
                         'Сезон': None,
-                        'Рост модели на фото': None,
+                        'Рост модели на фото': model_height,
                         'Параметры модели на фото': None,
-                        'Размер товара на фото': None,
+                        'Размер товара на фото': model_size,
                         'Коллекция': None,
                         'Страна-изготовитель': None,
                         'Вид принта': None,
                         'Аннотация': description,
-                        'Инструкция по уходу': None,
+                        'Инструкция по уходу': care,
                         'Серия в одежде и обуви': None,
                         'Материал': material,
                         'Состав материала': composition_outer_shell,

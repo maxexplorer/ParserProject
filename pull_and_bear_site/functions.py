@@ -1336,7 +1336,6 @@ def colors_format(value: str) -> str:
         color = 'серый'
     else:
         color = value
-
     return color
 
 
