@@ -85,7 +85,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     products_data_list = []
     id_products_set = set()
     with Session() as session:
-        for category_dict in id_categories_list[:1]:
+        for category_dict in id_categories_list:
             for main_category, products_list in category_dict.items():
                 for product_tuple in products_list:
                     product_ids = []
@@ -175,17 +175,34 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                 try:
                     time.sleep(1)
-                    response = session.get(
-                        f'https://www.zara.com/kz/ru/products-details',
-                        params=params,
-                        headers=headers,
-                        timeout=60
-                    )
 
-                    if response.status_code != 200:
-                        print(f'status_code: {response.status_code}')
+                    try:
+                        response = session.get(
+                            f'https://www.zara.com/kz/ru/products-details',
+                            params=params,
+                            headers=headers,
+                            timeout=60
+                        )
 
-                    json_data = response.json()
+                        if response.status_code != 200:
+                            print(f'status_code: {response.status_code}')
+
+                        json_data = response.json()
+                    except Exception as ex:
+                        f'response: {ex}'
+
+                        response = session.get(
+                            f'https://www.zara.com/kz/ru/products-details',
+                            params=params,
+                            headers=headers,
+                            timeout=60
+                        )
+
+                        if response.status_code != 200:
+                            print(f'status_code: {response.status_code}')
+
+                        json_data = response.json()
+
 
                     get_products_data(products_data=json_data, main_category=main_category, type_product=type_product)
 
@@ -223,10 +240,10 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
             price = 0
 
         try:
-            color = item['detail']['colors'][0]['name']
-            color = colors_format(value=color)
+            color_original = item['detail']['colors'][0]['name']
+            color_ru = colors_format(value=color_original)
         except Exception:
-            color = None
+            color_ru = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
@@ -269,14 +286,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
 
         try:
             raw_description = ' '.join(item['detail']['colors'][0]['rawDescription'].split())
-            description = f"🚚 ДОСТАВКА ИЗ ЕВРОПЫ 🌍✈️<br/>"\
-            f"✅ Регулярное обновление коллекций.<br/>"\
-            f"✅ Полный ассортимент брендa Zara. Более 10 000 товаров ждут вас в профиле нашего магазина! 🏷️<br/>"\
-            f"✅ Более простой поиск нужных вещей внутри нашего магазина. Подписывайтесь, чтобы всегда быть в курсе последних поступлений и акций! 🔍📲<br/>"\
-
-            f" {raw_description}<br/>"\
-
-            f"📣 При выборе товара ориентируйтесь на ЕВРОПЕЙСКИЙ размер!"
+            description = f"🚚 ДОСТАВКА ИЗ ЕВРОПЫ 🌍✈️<br/>✅ Регулярное обновление коллекций.<br/>✅ Полный ассортимент брендa Zara. Более 10 000 товаров ждут вас в профиле нашего магазина! 🏷️<br/>✅ Более простой поиск нужных вещей внутри нашего магазина. Подписывайтесь, чтобы всегда быть в курсе последних поступлений и акций! 🔍📲<br/>{raw_description}<br/>📣 При выборе товара ориентируйтесь на ЕВРОПЕЙСКИЙ размер!"
         except Exception:
             description = None
 
@@ -332,7 +342,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
 
-                id_product_size = f"{id_product}/{color.replace(' ', '-')}/{size_eur}/{reference}"
+                id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
 
                 if main_category == 'Девочки' or main_category == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
@@ -340,9 +350,9 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                         size_rus = size_eur
                 else:
                     if size_eur.isdigit():
-                        size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
+                        size_rus = sizes_format(format='digit', gender=main_category, size_eur=size_eur)
                     elif not size_eur.isdigit():
-                        size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
+                        size_rus = sizes_format(format='alpha', gender=main_category, size_eur=size_eur)
                     else:
                         size_rus = size_eur
 
@@ -386,11 +396,11 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
-                        'Цвет товара*': color,
+                        'Цвет товара*': color_ru,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color,
+                        'Название цвета': color_original,
                         'Тип*': type_product,
                         'Пол*': gender,
                         'Размер пеленки': None,
