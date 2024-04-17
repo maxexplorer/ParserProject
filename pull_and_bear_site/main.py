@@ -100,6 +100,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             except Exception as ex:
                 print(f'get_id_products: {ex}')
+                continue
 
             try:
                 product_ids = json_data.get('productIds')
@@ -151,6 +152,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                     if response.status_code != 200:
                         print(f'status_code: {response.status_code}')
+                        continue
 
                     json_data = response.json()
 
@@ -159,6 +161,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
+                    continue
 
 
 # Функция получения данных товаров

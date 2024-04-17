@@ -109,6 +109,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                     except Exception as ex:
                         print(f'get_id_products: {ex}')
+                        continue
 
                     try:
                         product_data = json_data['productGroups']
@@ -154,10 +155,13 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
     processed_ids = []
+
     with Session() as session:
         for dict_item in products_data_list:
+            count = 0
             id_products = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+
             for id_product in values:
                 if id_product not in processed_ids:
                     processed_ids.append(id_product)
@@ -176,38 +180,29 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 try:
                     time.sleep(1)
 
-                    try:
-                        response = session.get(
-                            f'https://www.zara.com/kz/ru/products-details',
-                            params=params,
-                            headers=headers,
-                            timeout=60
-                        )
+                    response = session.get(
+                        f'https://www.zara.com/{id_region}/products-details',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
 
-                        if response.status_code != 200:
-                            print(f'status_code: {response.status_code}')
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
+                        continue
 
-                        json_data = response.json()
-                    except Exception as ex:
-                        f'response: {ex}'
-
-                        response = session.get(
-                            f'https://www.zara.com/kz/ru/products-details',
-                            params=params,
-                            headers=headers,
-                            timeout=60
-                        )
-
-                        if response.status_code != 200:
-                            print(f'status_code: {response.status_code}')
-
-                        json_data = response.json()
+                    json_data = response.json()
 
 
                     get_products_data(products_data=json_data, main_category=main_category, type_product=type_product)
 
+                    count += len(chunk_ids)
+
+                    print(f'В категории {key[0]}/{key[1]}/{key[2]} обработано: {count} товаров!')
+
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
+                    continue
 
 
 # Функция получения данных товаров
@@ -243,6 +238,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
             color_original = item['detail']['colors'][0]['name']
             color_ru = colors_format(value=color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
@@ -342,7 +338,10 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
 
-                id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                if color_original is not None:
+                    id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                else:
+                    id_product_size = None
 
                 if main_category == 'Девочки' or main_category == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
@@ -481,6 +480,8 @@ def save_excel(data: list) -> None:
     with ExcelWriter('results/result_data_zara.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
+
+    print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
