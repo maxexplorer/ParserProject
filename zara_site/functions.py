@@ -443,313 +443,311 @@ def colors_format_ru(value: str) -> str:
 
 # Функция для перевода формата цветов Pull and Bear в Ozone
 def colors_format_en(value: str) -> str:
-    if value == 'WHITE':
+    if value == 'White':
         color = 'белый'
-    elif value == 'KHAKI':
+    elif value == 'Khaki':
         color = 'хаки'
-    elif value == 'BLACK':
+    elif value == 'Black':
         color = 'черный'
-    elif value == 'BROWN_TAUPE':
+    elif value == 'Brown_taupe':
         color = 'серый'
-    elif value == 'NAVYBLUE':
+    elif value == 'Navy blue':
         color = 'темно-синий'
-    elif value == 'BLUE':
+    elif value == 'Blue':
         color = 'голубой'
-    elif value == 'BRIGHTRED':
+    elif value == 'Bright red':
         color = 'красный'
-    elif value == 'BLUE_WHITE':
+    elif value == 'Blue_white':
         color = 'синий'
-    elif value == 'PEARLGREY':
+    elif value == 'Pearl grey':
         color = 'светло-серый'
-    elif value == 'ANTHRACITEGREY':
+    elif value == 'Anthracite grey':
         color = 'светло-серый'
-    elif value == 'ECRU':
+    elif value == 'Ecru':
         color = 'бежевый'
-    elif value == 'FUCHSIA':
+    elif value == 'Fuchsia':
         color = 'перламутровый'
-    elif value == 'GREYMARL':
+    elif value == 'Grey marl':
         color = 'серый'
-    elif value == 'BLUE':
+    elif value == 'Blue':
         color = 'синий'
-    elif value == 'STONE':
+    elif value == 'Stone':
         color = 'серый'
-    elif value == 'MID-GREY':
+    elif value == 'Mid-grey':
         color = 'серый'
-    elif value == 'ECRU':
+    elif value == 'Ecru':
         color = 'светло-бежевый'
-    elif value == 'GREY':
+    elif value == 'Grey':
         color = 'серый'
-    elif value == 'LIGHTBROWN':
+    elif value == 'Light brown':
         color = 'коричневый'
-    elif value == 'LIGHTKHAKI':
+    elif value == 'Light khaki':
         color = 'хаки'
-    elif value == 'SAND':
+    elif value == 'Sand':
         color = 'коричневый'
-    elif value == 'LIGHTBLUE':
+    elif value == 'Light blue':
         color = 'синий'
-    elif value == 'BLUEGREY':
+    elif value == 'Blue grey':
         color = 'серый'
-    elif value == 'ICE':
+    elif value == 'Ice':
         color = 'светло-синий'
-    elif value == 'BLACK_SILVER':
+    elif value == 'Black_silver':
         color = 'серебристый'
-    elif value == 'LIGHTBEIGE':
+    elif value == 'Light beige':
         color = 'светло-бежевый'
-    elif value == 'BEIGE-PINK':
+    elif value == 'Beige-pink':
         color = 'розовый'
-    elif value == 'CAMEL':
+    elif value == 'camel':
         color = 'желтый'
-    elif value == 'CAMEL':
+    elif value == 'Camel':
         color = 'светло-бежевый'
-    elif value == 'MID-BLUE':
+    elif value == 'Mid-blue':
         color = 'светло-синий'
-    elif value == 'GREY_BEIGE':
+    elif value == 'Grey_beige':
         color = 'серый'
-    elif value == 'DARKRED':
+    elif value == 'Darkred':
         color = 'красный'
-    elif value == 'RED':
+    elif value == 'Red':
         color = 'красный'
-    elif value == 'SAND':
+    elif value == 'Sand':
         color = 'светло-бежевый'
-    elif value == 'MULTICOLOURED':
+    elif value == 'Multicoloured':
         color = 'разноцветный'
-    elif value == 'ECRU_BLACK':
+    elif value == 'Ecru_black':
         color = 'черный'
-    elif value == 'CHOCOLATE':
+    elif value == 'Chocolate':
         color = 'коричневый'
-    elif value == 'BEIGE':
+    elif value == 'Beige':
         color = 'светло-бежевый'
-    elif value == 'CAMEL_WHITE':
+    elif value == 'Camel_white':
         color = 'белый'
-    elif value == 'ECRU_BLUE':
+    elif value == 'Ecru_blue':
         color = 'голубой'
-    elif value == 'BLUES':
+    elif value == 'Blues':
         color = 'синий'
-    elif value == 'BEIGEMARL':
+    elif value == 'Beige marl':
         color = 'бежевый'
-    elif value == 'LIGHTECRU':
+    elif value == 'Light ecru':
         color = 'светло-бежевый'
-    elif value == 'BLUE_NAVY':
+    elif value == 'Blue_navy':
         color = 'синий'
-    elif value == 'DARKANTHRACITE':
+    elif value == 'Dark anthracite':
         color = 'светло-серый'
-    elif value == 'DARKBROWN':
+    elif value == 'Dark brown':
         color = 'коричневый'
-    elif value == 'SILVER':
+    elif value == 'Silver':
         color = 'серебристый'
-    elif value == 'GREENISH':
+    elif value == 'Greenish':
         color = 'зеленый'
-    elif value == 'MIDKHAKI':
+    elif value == 'Mid khaki':
         color = 'хаки'
-    elif value == 'SKYBLUE':
+    elif value == 'Skyblue':
         color = 'голубой'
-    elif value == 'MOSSGREEN':
+    elif value == 'Moss green':
         color = 'зеленый'
-    elif value == 'DARKKHAKI':
+    elif value == 'Darkkhaki':
         color = 'хаки'
-    elif value == 'BRONZE':
+    elif value == 'Bronze':
         color = 'светло-коричневый'
-    elif value == 'MINK':
+    elif value == 'Mink':
         color = 'белый'
-    elif value == 'GREEN':
-        color = 'светло-синий'
-    elif value == 'GREEN':
+    elif value == 'Green':
         color = 'зеленый'
-    elif value == 'DARKCAMEL':
+    elif value == 'Dark camel':
         color = 'желтый'
-    elif value == 'DARKGREY':
+    elif value == 'Darkgrey':
         color = 'серый'
-    elif value == 'BLUISH':
+    elif value == 'Bluish':
         color = 'серый'
-    elif value == 'LILAC_WHITE':
+    elif value == 'Lilac_white':
         color = 'белый'
-    elif value == 'TANMARL':
+    elif value == 'Tan marl':
         color = 'белый'
-    elif value == 'SAND_BROWN':
+    elif value == 'Sand_brown':
         color = 'коричневый'
-    elif value == 'CHARCOALGREY':
+    elif value == 'Charcoal grey':
         color = 'серый'
-    elif value == 'TOBACCO':
+    elif value == 'Tobacco':
         color = 'коричневый'
-    elif value == 'BLACK_ECRU':
+    elif value == 'Black_ecru':
         color = 'бежевый'
-    elif value == 'WINE':
+    elif value == 'Wine':
         color = 'бордовый'
-    elif value == 'LIGHTCAMEL':
+    elif value == 'Light camel':
         color = 'желтый'
-    elif value == 'BLACKGOLD':
+    elif value == 'Black gold':
         color = 'золотой'
-    elif value == 'BROWN':
+    elif value == 'Brown':
         color = 'коричневый'
-    elif value == 'ECRU_MAROON':
+    elif value == 'Ecru_maroon':
         color = 'бежевый'
-    elif value == 'DARKGREEN':
+    elif value == 'Darkgreen':
         color = 'зеленый'
-    elif value == 'CREAM':
+    elif value == 'Cream':
         color = 'бежевый'
-    elif value == 'MINK':
+    elif value == 'Mink':
         color = 'бежевый'
-    elif value == 'LIGHTGREY':
+    elif value == 'Lightgrey':
         color = 'светло-серый'
-    elif value == 'STRIPED':
+    elif value == 'Striped':
         color = 'белый'
-    elif value == 'CAVA':
+    elif value == 'Cava':
         color = 'белый'
-    elif value == 'TAUPEGREY':
+    elif value == 'Taupe grey':
         color = 'серый'
-    elif value == 'BEIGE':
+    elif value == 'Beige':
         color = 'бежевый'
-    elif value == 'NAVY_WHITE':
+    elif value == 'Navy_white':
         color = 'белый'
-    elif value == 'BLACK_GREEN':
+    elif value == 'Black_green':
         color = 'зеленый'
-    elif value == 'GOLDEN':
+    elif value == 'Golden':
         color = 'золотой'
-    elif value == 'PETROLBLUE':
+    elif value == 'Petrol blue':
         color = 'голубой'
-    elif value == 'OLIVEGREEN':
+    elif value == 'Olive green':
         color = 'оливковый'
-    elif value == 'INKBLUE':
+    elif value == 'Ink blue':
         color = 'синий'
-    elif value == 'PINK_LILAC':
+    elif value == 'Pink_lilac':
         color = 'розовый'
-    elif value == 'EMERALD':
+    elif value == 'Emerald':
         color = 'зеленый'
-    elif value == 'DARKBEIGE':
+    elif value == 'Dark beige':
         color = 'бежевый'
-    elif value == 'DARKGREYMARL':
+    elif value == 'Dark grey marl':
         color = 'серый'
-    elif value == 'BLACK_WHITE':
+    elif value == 'Black_white':
         color = 'белый'
-    elif value == 'CHOCOLATEBROWN':
+    elif value == 'Chocolate brown':
         color = 'коричневый'
-    elif value == 'BLUE_INDIGO':
+    elif value == 'Blue_indigo':
         color = 'синий'
     elif value == 'Charcoal':
         color = 'серый'
-    elif value == 'BLUE_GREY':
+    elif value == 'Blue_grey':
         color = 'серый'
-    elif value == 'INDIGO':
+    elif value == 'Indigo':
         color = 'синий'
-    elif value == 'WASHEDPETROL':
+    elif value == 'Washed petrol':
         color = 'белый'
-    elif value == 'SAND_MARL':
+    elif value == 'Sand_marl':
         color = 'бежевый'
-    elif value == 'GOLD':
+    elif value == 'Gold':
         color = 'золотой'
-    elif value == 'INDIGO':
+    elif value == 'Indigo':
         color = 'светло-синий'
-    elif value == 'BOTTLEGREEN':
+    elif value == 'Bottle green':
         color = 'разноцветный'
-    elif value == 'CHARCOAL':
+    elif value == 'Charcoal':
         color = 'белый'
-    elif value == 'GREY_NATURAL':
+    elif value == 'Grey_natural':
         color = 'серый'
-    elif value == 'STRIPES':
+    elif value == 'Stripes':
         color = 'белый'
-    elif value == 'LIGHTGREEN':
+    elif value == 'Lightgreen':
         color = 'светло-зеленый'
-    elif value == 'DIRTY-MAUVE':
+    elif value == 'Dirty-mauve':
         color = 'разноцветный'
-    elif value == 'ECRU_BEIGE':
+    elif value == 'Ecru_beige':
         color = 'бежевый'
-    elif value == 'MIDNIGHTBLUE':
+    elif value == 'Midnigh tblue':
         color = 'голубой'
-    elif value == 'BLUISH':
+    elif value == 'Bluish':
         color = 'синий'
-    elif value == 'APPLEGREEN':
-        color = 'applegreen'
-    elif value == 'PINK_WHITE':
+    elif value == 'Apple green':
+        color = 'зеленый'
+    elif value == 'Pink_white':
         color = 'pink_white'
-    elif value == 'Red/White':
+    elif value == 'Red/white':
         color = 'red/white'
     elif value == 'Светло-бежевый':
         color = 'светло-бежевый'
-    elif value == 'PINK':
+    elif value == 'Pink':
         color = 'розовый'
-    elif value == 'MID-CAMEL':
+    elif value == 'Mid-camel':
         color = 'желтый'
-    elif value == 'MID-PINK':
+    elif value == 'Mid-pink':
         color = 'розовый'
-    elif value == 'INTENSERED':
+    elif value == 'Intense red':
         color = 'красный'
-    elif value == 'GREY_BLUE':
+    elif value == 'Grey_blue':
         color = 'серый'
-    elif value == 'LIGHTYELLOW':
+    elif value == 'Light yellow':
         color = 'желтый'
-    elif value == 'MID-MINK':
+    elif value == 'Mid-mink':
         color = 'mid-mink'
-    elif value == 'BONE':
+    elif value == 'Bone':
         color = 'белый'
-    elif value == 'BRICK':
+    elif value == 'Brick':
         color = 'белый'
-    elif value == 'MID-GREEN':
+    elif value == 'Mid-green':
         color = 'зеленый'
-    elif value == 'DUSTYPINK':
+    elif value == 'Dusty pink':
         color = 'розовый'
-    elif value == 'GREEN_ECRU':
+    elif value == 'Green_ecru':
         color = 'бежевый'
-    elif value == 'MAROON':
+    elif value == 'Maroon':
         color = 'бордовый'
-    elif value == 'DUCKGREEN':
+    elif value == 'Duck green':
         color = 'зеленый'
-    elif value == 'MID-TURQUOISE':
+    elif value == 'Mid-turquoise':
         color = 'голубой'
-    elif value == 'GREEN_BLUE':
+    elif value == 'Green_blue':
         color = 'голубой'
-    elif value == 'DARKMAUVE':
+    elif value == 'Dark mauve':
         color = 'белый'
-    elif value == 'FADEDPINK':
+    elif value == 'Faded pink':
         color = 'розовый'
-    elif value == 'MAROONGREY':
+    elif value == 'Maroon grey':
         color = 'серый'
-    elif value == 'REDDISH':
+    elif value == 'Reddish':
         color = 'красный'
-    elif value == 'ORANGE':
+    elif value == 'Orange':
         color = 'оранжевый'
-    elif value == 'MID-ECRU':
+    elif value == 'Mid-ecru':
         color = 'бежевый'
-    elif value == 'PALEPINK':
+    elif value == 'Pale pink':
         color = 'розовый'
-    elif value == 'SEAGREEN':
+    elif value == 'Seagreen':
         color = 'светло-синий'
-    elif value == 'BLUE_GREEN':
+    elif value == 'Blue_green':
         color = 'зеленый'
-    elif value == 'ECRU_MARL':
+    elif value == 'Ecru_marl':
         color = 'бежевый'
-    elif value == 'PRINTED':
+    elif value == 'Printed':
         color = 'белый'
-    elif value == 'APRICOT':
+    elif value == 'Apricot':
         color = 'оранжевый'
-    elif value == 'MAUVE':
+    elif value == 'Mauve':
         color = 'сиреневый'
-    elif value == 'MINKMARL':
+    elif value == 'Mink marl':
         color = 'белый'
-    elif value == 'TERRACOTTA':
+    elif value == 'Terracotta':
         color = 'белый'
-    elif value == 'GREYISH':
+    elif value == 'Grey ish':
         color = 'серый'
-    elif value == 'DARKNAVY':
+    elif value == 'Dark navy':
         color = 'синий'
-    elif value == 'OCHRE':
+    elif value == 'Ochre':
         color = 'оранжевый'
-    elif value == 'ECRU_GREEN':
+    elif value == 'Ecru_green':
         color = 'зеленый'
-    elif value == 'OCHRE':
+    elif value == 'Ochre':
         color = 'коричневый'
-    elif value == 'ONLYONE':
+    elif value == 'Only one':
         color = 'розовый'
-    elif value == 'GREENMARL':
+    elif value == 'Green marl':
         color = 'разноцветный'
-    elif value == 'TAUPE':
+    elif value == 'Taupe':
         color = 'белый'
-    elif value == 'PINKMARL':
+    elif value == 'Pink marl':
         color = 'розовый'
-    elif value == 'LIGHTGREYMARL':
+    elif value == 'Light grey marl':
         color = 'разноцветный'
-    elif value == 'STRAWBERRY':
+    elif value == 'Strawberry':
         color = 'разноцветный'
-    elif value == 'RASPBERRY':
+    elif value == 'Raspberry':
         color = 'малиновый'
     else:
         color = value
