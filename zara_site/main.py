@@ -31,6 +31,8 @@ rub = get_exchange_rate(base_currency=base_currency, target_currency=target_curr
 # print(f'Курс EUR/RUB: {rub}')
 print(f'Курс KZT/RUB: {rub}')
 
+result_data = []
+
 
 # Функция получения id категорий
 def get_id_categories(headers: dict, params: dict) -> None:
@@ -154,6 +156,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+    global result_data
+
     processed_ids = []
 
     with Session() as session:
@@ -178,6 +182,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 }
 
                 try:
+                    time.sleep(1)
                     response = session.get(
                         f'https://www.zara.com/{id_region}/products-details',
                         params=params,
@@ -192,7 +197,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     json_data = response.json()
 
 
-                    get_products_data(products_data=json_data, main_category=main_category, type_product=type_product)
+                    result_data = get_products_data(products_data=json_data, main_category=main_category, type_product=type_product)
 
                     count += len(chunk_ids)
 
@@ -202,10 +207,13 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     print(f'get_products_array: {ex}')
                     continue
 
+            save_excel(data=result_data)
+
+            result_data = []
+
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict, main_category: str, type_product: str) -> None:
-    result_data = []
+def get_products_data(products_data: dict, main_category: str, type_product: str) -> list:
 
     for item in products_data:
         try:
@@ -453,7 +461,7 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    save_excel(data=result_data)
+    return result_data
 
 
 # Функция для записи данных в формат xlsx
