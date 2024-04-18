@@ -178,8 +178,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 }
 
                 try:
-                    time.sleep(1)
-
                     response = session.get(
                         f'https://www.zara.com/{id_region}/products-details',
                         params=params,
@@ -286,6 +284,25 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
         except Exception:
             description = None
 
+        brand = 'Zara'
+
+        care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
+               "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
+
+        if main_category == 'Женщины':
+            model_height = '175'
+        elif main_category == 'Мужчины':
+            model_height = '180'
+        else:
+            model_height = None
+
+        if main_category == 'Женщины':
+            model_size = '44'
+        elif main_category == 'Мужчины':
+            model_size = '48'
+        else:
+            model_size = None
+
         try:
             composition_items = item['detail']['detailedComposition']['parts']
 
@@ -354,25 +371,6 @@ def get_products_data(products_data: dict, main_category: str, type_product: str
                         size_rus = sizes_format(format='alpha', gender=main_category, size_eur=size_eur)
                     else:
                         size_rus = size_eur
-
-                brand = 'Zara'
-
-                care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
-                       "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
-
-                if main_category == 'Женщины':
-                    model_height = '175'
-                elif main_category == 'Мужчины':
-                    model_height = '180'
-                else:
-                    model_height = None
-
-                if main_category == 'Женщины':
-                    model_size = '44'
-                elif main_category == 'Мужчины':
-                    model_size = '48'
-                else:
-                    model_size = None
 
                 result_data.append(
                     {
