@@ -26,7 +26,7 @@ def get_pages(html: str = None) -> int:
     return pages
 
 
-# Функция получения ссылокб рейтинга, количества отзывов всех продуктов продавца
+# Функция получения ссылок рейтинга, количества отзывов всех продуктов продавца
 def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
     # Открываем файл в формате .txt
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -197,4 +197,7 @@ def save_excel_ozone(data: list) -> None:
         dataframe.to_excel(writer, sheet_name='Ozone', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
+
+
+
 
