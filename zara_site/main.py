@@ -378,6 +378,12 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
 
                     if not size_rus:
                         size_rus = size_eur
+
+                    if color_original is not None:
+                        id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
+                    else:
+                        id_product_size = None
+
                 else:
                     if size_eur.isdigit():
                         size_rus = sizes_format(format='digit', gender=main_category, size_eur=size_eur)
@@ -386,10 +392,10 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
                     else:
                         size_rus = size_eur
 
-                if color_original is not None:
-                    id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
-                else:
-                    id_product_size = None
+                    if color_original is not None:
+                        id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                    else:
+                        id_product_size = None
 
                 result_data.append(
                     {
@@ -638,6 +644,12 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
 
                     if not size_rus:
                         size_rus = size_eur
+
+                    if color_original is not None:
+                        id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
+                    else:
+                        id_product_size = None
+
                 else:
                     if size_eur.isdigit():
                         size_rus = sizes_format(format='digit', gender=main_category, size_eur=size_eur)
@@ -646,10 +658,10 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
                     else:
                         size_rus = size_eur
 
-                if color_original is not None:
-                    id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
-                else:
-                    id_product_size = None
+                    if color_original is not None:
+                        id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                    else:
+                        id_product_size = None
 
                 result_data.append(
                     {
@@ -733,8 +745,6 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
             print(f'sizes: {ex}')
 
     return result_data
-
-
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
