@@ -169,7 +169,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     json_data = response.json()
 
                     result_data = get_size_data(products_data=json_data, main_category=main_category,
-                                                    type_product=type_product)
+                                                type_product=type_product)
                     count += len(chunk_ids)
 
                     print(f'Обработано: {count} товаров!')
@@ -289,8 +289,8 @@ def main():
     region = 'Германия'
     id_region = id_region_dict.get(region)
     products_data_list = get_id_products(id_categories_list=id_categories_list_rus,
-                                                                 headers=headers, params=params,
-                                                                 id_region=id_region)
+                                         headers=headers, params=params,
+                                         id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
