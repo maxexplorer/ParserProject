@@ -37,59 +37,17 @@ print(f'Курс EUR/RUB: {rub}')
 result_data = []
 
 
-# Функция получения id категорий
-def get_id_categories(headers: dict, params: dict) -> None:
-    id_categories_data = []
-    with Session() as session:
-        try:
-            response = session.get(
-                'https://www.zara.com/kz/ru/categories',
-                headers=headers,
-                params=params,
-                timeout=60
-            )
-
-            if response.status_code != 200:
-                print(f'status_code: {response.status_code}')
-
-            json_data = response.json()
-        except Exception as ex:
-            print(f'get_id_categories: {ex}')
-
-    try:
-        category_items = json_data['categories']
-    except Exception:
-        category_items = []
-
-    for category_item in category_items[:3]:
-        category_name = category_item.get('sectionName')
-        subcategory_items = category_item.get('subcategories')
-        for subcategory_item in subcategory_items:
-            subcategory_name = subcategory_item.get('name')
-            subcategory_id = subcategory_item.get('id')
-            redirect_category_id = subcategory_item.get('redirectCategoryId')
-            category_id = redirect_category_id if redirect_category_id else subcategory_id
-            id_categories_data.append((subcategory_name, category_id))
-            # print(f"('{subcategory_name}', {category_id}),")
-            if category_name == 'KID':
-                subcategory_kid_items = subcategory_item.get('subcategories')
-                for subcategory_kid_item in subcategory_kid_items:
-                    subcategory_kid_name = subcategory_kid_item.get('name')
-                    subcategory_kid_id = subcategory_kid_item.get('id')
-                    redirect_category_kid_id = subcategory_kid_item.get('redirectCategoryId')
-                    category_kid_id = redirect_category_kid_id if redirect_category_kid_id else subcategory_kid_id
-                    id_categories_data.append((subcategory_kid_name, category_kid_id))
-
-    with open('data/id_categories_list_rus.txt', 'w', encoding='utf-8') as file:
-        print(*id_categories_data, file=file, sep=',\n')
-
-
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
+    with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
+        id_products_list = [line.strip() for line in file.readlines()]
+
     products_data_list = []
-    id_products_set = set()
+    products_new_data_list = []
+
     with Session() as session:
         for category_dict in id_categories_list:
+            new_id_list = []
             for main_category, products_list in category_dict.items():
                 for product_tuple in products_list:
                     product_ids = []
@@ -133,6 +91,10 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                                         id_product = component['id']
                                     except Exception:
                                         id_product = None
+
+                                    if str(id_product) in id_products_list:
+                                        continue
+
                                     product_ids.append(id_product)
                                     id_products_set.add(id_product)
                     except Exception as ex:
@@ -213,7 +175,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     print(f'get_products_array: {ex}')
                     continue
 
-
             save_excel(data=result_data)
 
             result_data = []
@@ -221,7 +182,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
 # Функция получения данных товаров
 def get_products_data_ru(products_data: dict, main_category: str, type_product: str) -> list:
-
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -281,7 +241,6 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
         except Exception:
             main_image = None
             additional_images = None
-
 
         try:
             if main_category == 'Женщины':
@@ -370,6 +329,11 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
 
+                if color_original is not None:
+                    id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                else:
+                    id_product_size = None
+
                 if main_category == 'Девочки' or main_category == 'Мальчики':
                     try:
                         size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
@@ -385,11 +349,6 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
                         size_rus = sizes_format(format='alpha', gender=main_category, size_eur=size_eur)
                     else:
                         size_rus = size_eur
-
-                if color_original is not None:
-                    id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
-                else:
-                    id_product_size = None
 
                 result_data.append(
                     {
@@ -538,7 +497,6 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
             main_image = None
             additional_images = None
 
-
         try:
             if main_category == 'Женщины':
                 gender = 'женский'
@@ -630,6 +588,11 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
 
+                if color_original is not None:
+                    id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
+                else:
+                    id_product_size = None
+
                 if main_category == 'Девочки' or main_category == 'Мальчики' or main_category == 'Девочки;Мальчики':
                     try:
                         size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
@@ -645,11 +608,6 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
                         size_rus = sizes_format(format='alpha', gender=main_category, size_eur=size_eur)
                     else:
                         size_rus = size_eur
-
-                if color_original is not None:
-                    id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
-                else:
-                    id_product_size = None
 
                 result_data.append(
                     {
@@ -733,7 +691,6 @@ def get_products_data_en(products_data: dict, main_category: str, type_product: 
             print(f'sizes: {ex}')
 
     return result_data
-
 
 
 # Функция для записи данных в формат xlsx

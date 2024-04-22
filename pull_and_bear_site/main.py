@@ -75,7 +75,6 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-
     products_data_list = []
     id_products_list = []
     with Session() as session:
@@ -89,8 +88,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                     headers=headers,
                     timeout=60
                 )
-
-                json_data = response.json()
 
                 if response.status_code != 200:
                     print(f'id_category: {id_category} status_code: {response.status_code}')
