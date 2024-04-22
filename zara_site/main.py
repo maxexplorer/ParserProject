@@ -150,7 +150,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_products_list_kz.txt', 'a', encoding='utf-8') as file:
+    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
@@ -221,7 +221,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
 # Функция получения данных товаров
 def get_products_data_ru(products_data: dict, main_category: str, type_product: str) -> list:
-
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
