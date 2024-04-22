@@ -11,14 +11,11 @@ from pandas import read_excel
 from configs.config import headers
 from configs.config import params
 from data.data import id_categories_list_rus
-from data.data import id_categories_list_baby
 
 from data.data import id_region_dict
-# from data.data import products_data_list
 
-from functions import colors_format_ru
+
 from functions import colors_format_en
-from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
 from functions import chunks
@@ -39,11 +36,11 @@ result_data = []
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-    with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
-        id_products_list = [line.strip() for line in file.readlines()]
+    # with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
+    #     id_products_list = [line.strip() for line in file.readlines()]
 
     products_data_list = []
-    products_new_data_list = []
+    # products_new_data_list = []
 
     with Session() as session:
         for category_dict in id_categories_list:
