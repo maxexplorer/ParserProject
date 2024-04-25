@@ -10,7 +10,7 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list_rus
+from data.data import id_categories_list_ru
 
 from data.data import id_region_dict
 
@@ -285,7 +285,7 @@ def save_excel(data: list) -> None:
 def main():
     region = 'Германия'
     id_region = id_region_dict.get(region)
-    products_data_list = get_id_products(id_categories_list=id_categories_list_rus,
+    products_data_list = get_id_products(id_categories_list=id_categories_list_ru,
                                          headers=headers, params=params,
                                          id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)

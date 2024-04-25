@@ -10,7 +10,7 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list_rus
+from data.data import id_categories_list_ru
 from data.data import id_categories_list_baby
 
 from data.data import id_region_dict
@@ -80,7 +80,7 @@ def get_id_categories(headers: dict, params: dict) -> None:
                     category_kid_id = redirect_category_kid_id if redirect_category_kid_id else subcategory_kid_id
                     id_categories_data.append((subcategory_kid_name, category_kid_id))
 
-    with open('data/id_categories_list_rus.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_ru.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
 
 
@@ -750,13 +750,13 @@ def save_excel(data: list) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data_zara_baby.xlsx'):
+    if not os.path.exists('results/result_data_zara_en.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data_zara_baby.xlsx', mode='w') as writer:
+        with ExcelWriter('results/result_data_zara_en.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data_zara_baby.xlsx', sheet_name='ОЗОН')
+    df = read_excel('results/result_data_zara_en.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -764,7 +764,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data_zara_baby.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter('results/result_data_zara_en.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
@@ -775,7 +775,7 @@ def main():
     region = 'Германия'
     id_region = id_region_dict.get(region)
     # get_id_categories(headers=headers, params=params)
-    products_data_list = get_id_products(id_categories_list=id_categories_list_baby, headers=headers, params=params,
+    products_data_list = get_id_products(id_categories_list=id_categories_list_ru, headers=headers, params=params,
                                          id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
