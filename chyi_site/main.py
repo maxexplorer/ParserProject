@@ -3,16 +3,13 @@ from datetime import datetime
 import os
 import random
 
-
 import requests
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
 import openpyxl
 
-
 start_time = datetime.now()
-
 
 headers = {
     'Accept': '*/*',
@@ -189,9 +186,6 @@ def get_data(file_path: str, headers: dict) -> list:
             except Exception:
                 text = ''
 
-
-
-
             result_data.append(
                 {
                     'Ссылка': article_url,
@@ -226,8 +220,7 @@ def save_excel(data: list, category_title: str) -> None:
 
 
 def main():
-
-    # get_article_urls(category_urls_list=category_urls_list, headers=headers)
+    get_article_urls(category_urls_list=category_urls_list, headers=headers)
 
     directory = 'data'
     for filename in os.listdir(directory):
@@ -237,7 +230,6 @@ def main():
             print(f'Обрабатывается категория {category_title}')
             result_list = get_data(file_path=file_path, headers=headers)
             save_excel(data=result_list, category_title=category_title)
-
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
