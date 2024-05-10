@@ -93,16 +93,16 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict) -> None:
+def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
     products_data_list = []
     id_products_set = set()
 
     with Session() as session:
         for category_dict in category_data_list:
-            for main_category, category_list in category_dict.items():
+            for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     product_ids = []
-                    category_name, category_url = product_tuple
+                    subcategory_name, category_url = product_tuple
 
                     time.sleep(1)
 
@@ -111,6 +111,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> None:
                     except Exception as ex:
                         print(f"{category_url} - {ex}")
                         continue
+
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}: {pages} страниц')
 
@@ -128,27 +129,37 @@ def get_product_urls(category_data_list: list, headers: dict) -> None:
                         soup = BeautifulSoup(html, 'lxml')
 
                         try:
-                            data = soup.find_all('div', class_='catalog-card__text-content')
-
-                            for item in data:
+                            product_data = soup.find_all('div', class_='catalog-card__text-content')
+                            for item in product_data:
                                 try:
                                     product_url = f"https://sm-rus.ru{item.find('a', class_='card-type-and-title catalog-card__type-and-title').get('href')}"
+                                    category_id = ''
                                 except Exception as ex:
                                     print(ex)
                                     continue
-                                product_urls_list.append(product_url)
+                                product_ids.append(product_url)
+                                id_products_set.add(product_url)
                         except Exception as ex:
                             print(ex)
 
+                        products_data_list.append(
+                            {
+                                (category_name, subcategory_name, category_id): product_ids
+                            }
+                        )
+
                         print(f'Обработано: {page}/{pages} страниц')
 
-                    print(f'Обработано: {i}/{count_urls} категорий')
+                    print(f'Обработано: категория {category_name}/{subcategory_name}/{category_id} - '
+                          f'{len(product_ids)} товаров!')
 
-            if not os.path.exists('data/products'):
-                os.makedirs(f'data/products')
+    if not os.path.exists('data/products'):
+        os.makedirs(f'data/products')
 
-            with open(f'data/products/{name_category}.txt', 'w', encoding='utf-8') as file:
-                print(*product_urls_list, file=file, sep='\n')
+    with open(f'data/{products_data_list}.txt', 'w', encoding='utf-8') as file:
+        print(*products_data_list, file=file, sep='\n')
+
+    return products_data_list
 
 
 # Функция получения данных товаров
