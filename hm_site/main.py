@@ -35,7 +35,6 @@ headers = {
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
-
     try:
         response = session.get(url=url, headers=headers, timeout=60)
 
@@ -53,8 +52,7 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(
-            soup.find('div', class_='paginator').find_all('a', class_='item-page')[-1].text.strip())
+        pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
     except Exception as ex:
         print(ex)
         pages = 1
@@ -100,7 +98,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
     with Session() as session:
         for category_dict in category_data_list:
             for category_name, category_list in category_dict.items():
-                for product_tuple in category_list:
+                for product_tuple in category_list[:1]:
                     product_ids = []
                     subcategory_name, category_url = product_tuple
 
@@ -115,8 +113,9 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}: {pages} страниц')
 
-                    for page in range(1, pages + 1):
-                        page_product_url = f"{category_url}/?PAGEN_7={page}"
+                    # for page in range(1, pages + 1):
+                    for page in range(1, 2):
+                        page_product_url = f"{category_url}?page={page}"
                         try:
                             html = get_html(url=page_product_url, headers=headers, session=session)
                         except Exception as ex:
@@ -129,11 +128,13 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                         soup = BeautifulSoup(html, 'lxml')
 
                         try:
-                            product_data = soup.find_all('div', class_='catalog-card__text-content')
-                            for item in product_data:
+                            product_items = soup.find('div',
+                                                      id='products-listing-section').find_next().find_next_sibling()
+                            for product_item in product_items:
                                 try:
-                                    product_url = f"https://sm-rus.ru{item.find('a', class_='card-type-and-title catalog-card__type-and-title').get('href')}"
+                                    product_url = product_item.find('a').get('href')
                                     category_id = ''
+                                    print(product_url)
                                 except Exception as ex:
                                     print(ex)
                                     continue
@@ -156,7 +157,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
     if not os.path.exists('data/products'):
         os.makedirs(f'data/products')
 
-    with open(f'data/{products_data_list}.txt', 'w', encoding='utf-8') as file:
+    with open(f'data/url_products_list.txt', 'w', encoding='utf-8') as file:
         print(*products_data_list, file=file, sep='\n')
 
     return products_data_list
@@ -440,7 +441,8 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    get_category_urls(url=url, headers=headers)
+    # get_category_urls(url=url, headers=headers)
+    get_product_urls(category_data_list=category_data_list, headers=headers)
     # region = 'Германия'
     # id_region = id_region_dict.get(region)
     # if id_region is None:
