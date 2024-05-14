@@ -6,6 +6,9 @@ from random import randint
 
 from requests import Session
 
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame
@@ -14,10 +17,13 @@ from pandas import read_excel
 
 from data.data import category_data_list
 # from data.data import id_region_dict
-# from functions import colors_format
-# from functions import sizes_format
-# from functions import translator
+from data.products_data_list import products_data_list
+# from functions import get_colors_format
+# from functions import get_sizes_format
+from functions import translator
 from functions import get_exchange_rate
+from functions import get_model_height
+from functions import get_model_size
 
 start_time = datetime.now()
 
@@ -161,11 +167,20 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: dict, type_product: str) -> None:
+def get_products_data(products_data_list: dict, headers: dict) -> None:
     result_data = []
     processed_urls = []
 
-    with Session() as session:
+    options = Options()
+
+    options.add_argument(
+        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--headless=new")
+
+    driver = Chrome(options=options)
+
+    try:
         for dict_item in products_data_list:
             product_urls = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
@@ -178,17 +193,23 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
             subcategory_name = key[1]
 
             print(f'Сбор данных категории: {category_name}/{subcategory_name}')
-
             for i, product_url in enumerate(product_urls, 1):
-                try:
-                    time.sleep(1)
-                    html = get_html(url=product_url, headers=headers, session=session)
-                except Exception as ex:
-                    print(f"{product_url} - {ex}")
-                    continue
+                # try:
+                #     time.sleep(1)
+                #     driver.get(product_url)
+                #     html = driver.page_source
+                # except Exception as ex:
+                #     print(f"{product_url} - {ex}")
+                #     continue
+                #
+                # if not html:
+                #     continue
 
-                if not html:
-                    continue
+                # with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
+                #     file.write(html)
+                #
+                with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
+                    html = file.read()
 
                 soup = BeautifulSoup(html, 'lxml')
 
@@ -198,40 +219,54 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
                     id_product = None
 
                 try:
-                    reference = ''
-                except Exception:
-                    reference = None
+                    inner_data = soup.find('div', class_='inner')
+                except Exception as ex:
+                    print(f'inner: {product_url} - {ex}')
+                    continue
 
                 try:
-                    name_product = f"H&M {}"
+                    name_product_original = inner_data.find('hm-product-name').text.strip()
+                    name_product_ru = translator(name_product_original)
+                    name_product = f'H&M {name_product_ru}'
                 except Exception:
                     name_product = None
 
                 try:
-                    price = 0
+                    price = int(''.join(
+                        i for i in inner_data.find('div', class_='price parbase').text.strip() if i.isdigit())) / 100
                     price = round(price * rub)
                 except Exception:
                     price = 0
 
                 try:
-                    color_original = ''
-                    color_ru = colors_format_ru(value=color_original)
+                    color_items = inner_data.find('div', class_='mini-slider').find_all('li')
+                    for color_item in color_items:
+                        if color_item.find('a').get('aria-checked') == 'true':
+                            color_original = color_item.find('a').get('title')
+                    color_ru = translator(color_original)
                 except Exception:
                     color_original = None
                     color_ru = None
 
                 try:
-                    id_color = ''
+                    main_image = soup.find('figure',
+                                           class_='pdp-image product-detail-images product-detail-main-image').find(
+                        'img').get('src')
+                    main_image_url = 'https:' + main_image
                 except Exception:
-                    id_color = ''
+                    main_image_url = None
 
                 try:
-                    image_urls_list = []
-                    main_image = ''
-                    additional_images = []
+                    additional_images_list = []
+                    additional_images_items = soup.find_all('figure', class_='pdp-secondary-image pdp-image')
+
+                    for additional_item in additional_images_items:
+                        additional_image = additional_item.find('img').get('src')
+                        additional_image_url = 'https:' + additional_image
+                        additional_images_list.append(additional_image_url)
+                    additional_images = '; '.join(additional_images_list)
                 except Exception:
-                    main_image = None
-                    additional_images = None
+                    additional_images = []
 
                 try:
                     if category_name == 'Женщины':
@@ -244,43 +279,57 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
                     gender = None
 
                 try:
-                    raw_description = ''
-                    description = f"🚚 ДОСТАВКА ИЗ ЕВРОПЫ 🌍✈️<br/>✅ Регулярное обновление коллекций.<br/>✅ Полный ассортимент брендa Zara. Более 10 000 товаров ждут вас в профиле нашего магазина! 🏷️<br/>✅ Более простой поиск нужных вещей внутри нашего магазина. Подписывайтесь, чтобы всегда быть в курсе последних поступлений и акций! 🔍📲<br/>{raw_description}<br/>📣 При выборе товара ориентируйтесь на ЕВРОПЕЙСКИЙ размер!"
+                    raw_description = inner_data.find('div', class_='details parbase').find_all('div', class_='af08f4')
+                except Exception:
+                    raw_description = []
+
+                try:
+                    description = raw_description[0].find('p').text
                 except Exception:
                     description = None
 
-                brand = 'Zara'
-
-                care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
-                       "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
-
-                if category_name == 'Женщины':
-                    model_height = '175'
-                elif category_name == 'Мужчины':
-                    model_height = '180'
-                else:
-                    model_height = None
-
-                if category_name == 'Женщины':
-                    model_size = '44'
-                elif category_name == 'Мужчины':
-                    model_size = '48'
-                else:
-                    model_size = None
+                try:
+                    model_height = ''.join(raw_description[0].find('dl').find_all('div')[0].text.split('cm')[0]).split()[-1]
+                except Exception:
+                    model_height = get_model_height(category_name=category_name)
 
                 try:
-                    composition = ''
-                    material = ''
+                    model_size = raw_description[0].find('dl').find_all('div')[0].text.split()[-1].strip('.')
                 except Exception:
-                    material = None
-                    composition = None
+                    model_size = get_model_size(category_name=category_name)
+
+                try:
+                    composition_items = raw_description[1].find('ul').find_all('li')
+                except Exception:
+                    composition_items = []
+
+                try:
+                    composition_outer_shell = composition_items[0].find('p').text
+                except Exception:
+                    composition_outer_shell = None
+
+                try:
+                    composition_lining = composition_items[1].find('p').text
+                except Exception:
+                    composition_lining = None
+
+                try:
+                    material_outer_shell = composition_outer_shell.split()[0]
+                except Exception:
+                    material_outer_shell = None
+
+                try:
+                    material_lining = composition_lining.split()[0]
+                except Exception:
+                    material_lining = None
+
+                brand = 'H&M'
 
                 try:
                     sizes_items = []
 
                     for size_item in sizes_items:
                         size_eur = size_item.get('name')
-
 
                         if category_name == 'Девочки' or category_name == 'Мальчики':
                             try:
@@ -313,7 +362,7 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
                             {
                                 '№': None,
                                 'Артикул': id_product_size,
-                                'Название товара': name_product,
+                                'Название товара': name_product_ru,
                                 'Цена, руб.*': price,
                                 'Цена до скидки, руб.': None,
                                 'НДС, %*': None,
@@ -329,7 +378,7 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
                                 'Ссылки на фото 360': None,
                                 'Артикул фото': None,
                                 'Бренд в одежде и обуви*': brand,
-                                'Объединить на одной карточке*': reference,
+                                'Объединить на одной карточке*': id_product,
                                 'Цвет товара*': color_ru,
                                 'Российский размер*': size_rus,
                                 'Размер производителя': size_eur,
@@ -392,6 +441,12 @@ def get_products_data(products_data_list: dict, type_product: str) -> None:
 
             save_excel(data=result_data)
 
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
+
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
@@ -421,7 +476,9 @@ def save_excel(data: list) -> None:
 
 def main():
     # get_category_urls(url=url, headers=headers)
-    get_product_urls(category_data_list=category_data_list, headers=headers)
+    # get_product_urls(category_data_list=category_data_list, headers=headers)
+    get_products_data(products_data_list=products_data_list, headers=headers)
+
     # region = 'Германия'
     # id_region = id_region_dict.get(region)
     # if id_region is None:

@@ -331,7 +331,6 @@ def get_products_data_ru(products_data: dict, main_category: str, type_product: 
                 if composition == 'ВНЕШНЯЯ ЧАСТЬ':
                     try:
                         material_outer_shell = components_items[0]['material']
-
                     except Exception:
                         material_outer_shell = None
 

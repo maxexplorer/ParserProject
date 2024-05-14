@@ -4,7 +4,7 @@ from googletrans import Translator
 
 
 # Функция для перевода формата цветов Pull and Bear в Ozone
-def colors_format_match(value: str) -> str:
+def get_colors_format_match(value: str) -> str:
     match value:
         case 'ANTHRACITE GREY':
             color = 'светло-серый'
@@ -1340,7 +1340,7 @@ def colors_format(value: str) -> str:
 
 
 # Функция для перевода европейских размеров в российские
-def sizes_format(format: str, gender: str, size_eur: str) -> str:
+def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
             'WOMEN': {
@@ -1397,6 +1397,26 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
     return size_rus
 
 
+def get_model_height(category_name: str) -> str:
+    if category_name == 'Женщины':
+        model_height = '175'
+    elif category_name == 'Мужчины':
+        model_height = '180'
+    else:
+        model_height = None
+
+
+def get_model_size(category_name: str) -> str:
+    if category_name == 'Женщины':
+        model_size = '44'
+    elif category_name == 'Мужчины':
+        model_size = '48'
+    else:
+        model_size = None
+
+    return model_size
+
+
 # Функция перевода текста
 def translator(text: str) -> str:
     try:
@@ -1424,5 +1444,3 @@ def get_exchange_rate() -> int:
         exchange_rate = 0
 
     return exchange_rate
-
-
