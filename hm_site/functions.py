@@ -1343,7 +1343,7 @@ def colors_format(value: str) -> str:
 def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
-            'WOMEN': {
+            'Женщины': {
                 'XXS': '40',
                 'XS': '42',
                 'S': '44',
@@ -1352,7 +1352,7 @@ def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'M-L': '46;50',
                 'XL': '50;52'
             },
-            'MEN': {
+            'Мужчины': {
                 'XS': '44',
                 'S': '46',
                 'M': '48',
@@ -1364,7 +1364,7 @@ def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
             }
         },
         'digit': {
-            'WOMEN': {
+            'Женщины': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -1375,7 +1375,7 @@ def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '46': '52',
                 '48': '54'
             },
-            'MEN': {
+            'Мужчины': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -1404,6 +1404,8 @@ def get_model_height(category_name: str) -> str:
         model_height = '180'
     else:
         model_height = None
+
+    return model_height
 
 
 def get_model_size(category_name: str) -> str:

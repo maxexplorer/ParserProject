@@ -19,7 +19,7 @@ from data.data import category_data_list
 # from data.data import id_region_dict
 from data.products_data_list import products_data_list
 # from functions import get_colors_format
-# from functions import get_sizes_format
+from functions import get_sizes_format
 from functions import translator
 from functions import get_exchange_rate
 from functions import get_model_height
@@ -168,7 +168,6 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
 # Функция получения данных товаров
 def get_products_data(products_data_list: dict, headers: dict) -> None:
-    result_data = []
     processed_urls = []
 
     options = Options()
@@ -182,6 +181,7 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
 
     try:
         for dict_item in products_data_list:
+            result_data = []
             product_urls = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
@@ -192,24 +192,26 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
             category_name = key[0]
             subcategory_name = key[1]
 
-            print(f'Сбор данных категории: {category_name}/{subcategory_name}')
+            count_products = len(product_urls)
+
+            print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
-                # try:
-                #     time.sleep(1)
-                #     driver.get(product_url)
-                #     html = driver.page_source
-                # except Exception as ex:
-                #     print(f"{product_url} - {ex}")
-                #     continue
-                #
-                # if not html:
-                #     continue
+                try:
+                    time.sleep(1)
+                    driver.get(product_url)
+                    html = driver.page_source
+                except Exception as ex:
+                    print(f"{product_url} - {ex}")
+                    continue
+
+                if not html:
+                    continue
 
                 # with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
                 #     file.write(html)
                 #
-                with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
-                    html = file.read()
+                # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
+                #     html = file.read()
 
                 soup = BeautifulSoup(html, 'lxml')
 
@@ -229,7 +231,7 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                     name_product_ru = translator(name_product_original)
                     name_product = f'H&M {name_product_ru}'
                 except Exception:
-                    name_product = None
+                    name_product_ru = None
 
                 try:
                     price = int(''.join(
@@ -239,6 +241,7 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                     price = 0
 
                 try:
+                    color_original = None
                     color_items = inner_data.find('div', class_='mini-slider').find_all('li')
                     for color_item in color_items:
                         if color_item.find('a').get('aria-checked') == 'true':
@@ -285,18 +288,25 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
 
                 try:
                     description = raw_description[0].find('p').text
+                    description = translator(description)
                 except Exception:
                     description = None
 
                 try:
-                    model_height = ''.join(raw_description[0].find('dl').find_all('div')[0].text.split('cm')[0]).split()[-1]
+                    model_size_description = raw_description[0].find('dl').find(text=re.compile('Größe des Models')).find_next().text.split('cm')
                 except Exception:
-                    model_height = get_model_height(category_name=category_name)
+                    model_size_description = None
 
-                try:
-                    model_size = raw_description[0].find('dl').find_all('div')[0].text.split()[-1].strip('.')
-                except Exception:
-                    model_size = get_model_size(category_name=category_name)
+                if model_size_description:
+                    try:
+                        model_height = model_size_description[0].split()[-1]
+                    except Exception:
+                        model_height = get_model_height(category_name=category_name)
+
+                    try:
+                        model_size = model_size_description[-1].split()[-1].replace('.', '').replace(')', '')
+                    except Exception:
+                        model_size = get_model_size(category_name=category_name)
 
                 try:
                     composition_items = raw_description[1].find('ul').find_all('li')
@@ -305,58 +315,58 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
 
                 try:
                     composition_outer_shell = composition_items[0].find('p').text
-                except Exception:
-                    composition_outer_shell = None
-
-                try:
-                    composition_lining = composition_items[1].find('p').text
-                except Exception:
-                    composition_lining = None
-
-                try:
+                    composition = translator(composition_outer_shell)
                     material_outer_shell = composition_outer_shell.split()[0]
+                    material = translator(material_outer_shell)
                 except Exception:
-                    material_outer_shell = None
+                    composition = None
+                    material = None
+
+                # try:
+                #     composition_lining = composition_items[1].find('p').text
+                #     material_lining = composition_lining.split()[0]
+                # except Exception:
+                #     composition_lining = None
+                #     material_lining = None
 
                 try:
-                    material_lining = composition_lining.split()[0]
+                    care = raw_description[2].find('ul').text.strip()
+                    care = translator(care)
                 except Exception:
-                    material_lining = None
+                    care = None
 
                 brand = 'H&M'
 
                 try:
-                    sizes_items = []
+                    sizes_items = inner_data.find('hm-size-selector', class_='size-selector').find_all('li')
 
                     for size_item in sizes_items:
-                        size_eur = size_item.get('name')
+                        size_eur = size_item.find('input').get('id')
 
-                        if category_name == 'Девочки' or category_name == 'Мальчики':
-                            try:
-                                size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                            except Exception:
+                        if size_item.find('div').get('aria-disabled') == 'true':
+                            status_size = 'нет в наличии'
+                        else:
+                            status_size = 'в наличии'
+
+                        if category_name == 'Женщины' or category_name == 'Мужчины':
+                            if subcategory_name == 'Обувь':
                                 size_rus = size_eur
-
-                            if not size_rus:
-                                size_rus = size_eur
-
-                            if color_original is not None:
-                                id_product_size = f"{reference}/{color_original.replace(' ', '-')}/{size_rus}"
+                            elif size_eur.isdigit():
+                                size_rus = get_sizes_format(format='digit', gender=category_name, size_eur=size_eur)
+                            elif not size_eur.isdigit():
+                                size_rus = get_sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
                             else:
-                                id_product_size = None
-
+                                size_rus = size_eur
                         else:
                             if size_eur.isdigit():
-                                size_rus = sizes_format(format='digit', gender=main_category, size_eur=size_eur)
-                            elif not size_eur.isdigit():
-                                size_rus = sizes_format(format='alpha', gender=main_category, size_eur=size_eur)
-                            else:
                                 size_rus = size_eur
-
-                            if color_original is not None:
-                                id_product_size = f"{id_product}/{color_original.replace(' ', '-')}/{size_eur}/{reference}"
                             else:
-                                id_product_size = None
+                                try:
+                                    size_rus = size_eur.split()[0]
+                                except Exception:
+                                    size_rus = size_eur
+
+                        id_product_size = f"{id_product}/{size_eur}"
 
                         result_data.append(
                             {
@@ -373,7 +383,7 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                                 'Ширина упаковки, мм*': None,
                                 'Высота упаковки, мм*': None,
                                 'Длина упаковки, мм*': None,
-                                'Ссылка на главное фото*': main_image,
+                                'Ссылка на главное фото*': main_image_url,
                                 'Ссылки на дополнительные фото': additional_images,
                                 'Ссылки на фото 360': None,
                                 'Артикул фото': None,
@@ -384,7 +394,7 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                                 'Размер производителя': size_eur,
                                 'Статус наличия': status_size,
                                 'Название цвета': color_original,
-                                'Тип*': type_product,
+                                'Тип*': subcategory_name,
                                 'Пол*': gender,
                                 'Размер пеленки': None,
                                 'ТН ВЭД коды ЕАЭС': None,
@@ -400,8 +410,8 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                                 'Инструкция по уходу': care,
                                 'Серия в одежде и обуви': None,
                                 'Материал': material,
-                                'Состав материала': composition_outer_shell,
-                                'Материал подклада/внутренней отделки': composition_lining,
+                                'Состав материала': composition,
+                                # 'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
                                 'Диапазон температур, °С': None,
@@ -438,6 +448,8 @@ def get_products_data(products_data_list: dict, headers: dict) -> None:
                         )
                 except Exception as ex:
                     print(f'sizes: {ex}')
+
+                print(f'Обработано: {i}/{count_products} товаров!')
 
             save_excel(data=result_data)
 
@@ -478,15 +490,6 @@ def main():
     # get_category_urls(url=url, headers=headers)
     # get_product_urls(category_data_list=category_data_list, headers=headers)
     get_products_data(products_data_list=products_data_list, headers=headers)
-
-    # region = 'Германия'
-    # id_region = id_region_dict.get(region)
-    # if id_region is None:
-    #     id_region = '24009400/20309422'
-    # # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-    # products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
-    #                                      id_region=id_region)
-    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
