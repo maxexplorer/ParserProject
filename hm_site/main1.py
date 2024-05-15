@@ -16,7 +16,7 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list
-from data.products.products_data_list_Женщины import products_data_list
+# from data.products.products_data_list_Женщины import products_data_list
 # from functions import get_colors_format
 from functions import get_sizes_format
 from functions import translator
@@ -65,43 +65,17 @@ def get_pages(html: str) -> int:
     return pages
 
 
-# Получаем ссылки всех категорий товаров
-def get_category_urls(url: str, headers: dict) -> None:
-    category_data_list = []
-
-    with Session() as session:
-        html = get_html(url=url, headers=headers, session=session)
-
-        soup = BeautifulSoup(html, 'lxml')
-
-        try:
-            data = soup.find('ul', class_='MLEL').find_all('li')
-
-            for item in data:
-                category_name = item.text
-                category_url = f"https://www2.hm.com{item.find('a').get('href')}"
-
-                category_data_list.append(
-                    (category_name, category_url)
-                )
-
-        except Exception as ex:
-            print(ex)
-
-        if not os.path.exists('data'):
-            os.makedirs('data')
-
-        with open(f'data/category_data_list.txt', 'w', encoding='utf-8') as file:
-            print(*category_data_list, file=file, sep='\n')
-
-
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
-    url_products_set = set()
+def get_product_urls(category_data_list: list, headers: dict) -> tuple[list[dict], list[dict]]:
+    with open('data/url_products_list.txt', 'r', encoding='utf-8') as file:
+        url_products_list = [line.strip() for line in file.readlines()]
+
+    products_data_list = []
+    products_new_data_list = []
 
     with Session() as session:
         for category_dict in category_data_list:
-            products_data_list = []
+            new_url_list = []
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     product_urls = []
@@ -118,7 +92,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
-                    # for page in range(1, 2):
+                        # for page in range(1, 2):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -142,11 +116,16 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                                     print(ex)
                                     continue
                                 product_urls.append(product_url)
-                                url_products_set.add(product_url)
+
+                                if product_url in url_products_list:
+                                    continue
+                                new_url_list.append(product_url)
+
                         except Exception as ex:
                             print(ex)
 
                         print(f'Обработано: {page}/{pages} страниц')
+
 
                     products_data_list.append(
                         {
@@ -154,22 +133,29 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                         }
                     )
 
+                    if new_url_list:
+                        products_new_data_list.append(
+                            {
+                                (category_name, subcategory_name): new_url_list
+                            }
+                        )
+
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-            if not os.path.exists('data/products'):
-                os.makedirs(f'data/products')
-
-            with open(f'data/products/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-                print(products_data_list, file=file, sep='\n')
+            # if not os.path.exists('data/products'):
+            #     os.makedirs(f'data/products')
+            #
+            # with open(f'data/products/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
+            #     print(products_data_list, file=file, sep='\n')
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
-        print(*url_products_set, file=file, sep='\n')
+        print(*new_url_list, file=file, sep='\n')
 
-    return products_data_list
+    return products_data_list, products_new_data_list
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: dict,) -> None:
+def get_products_data(products_new_data_list: list) -> None:
     processed_urls = []
 
     options = Options()
@@ -182,7 +168,7 @@ def get_products_data(products_data_list: dict,) -> None:
     driver = Chrome(options=options)
 
     try:
-        for dict_item in products_data_list:
+        for dict_item in products_new_data_list:
             result_data = []
             product_urls = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
@@ -298,7 +284,8 @@ def get_products_data(products_data_list: dict,) -> None:
                 model_size = None
 
                 try:
-                    model_size_description = raw_description[0].find('dl').find(string=re.compile('Größe des Models')).find_next().text.split('cm')
+                    model_size_description = raw_description[0].find('dl').find(
+                        string=re.compile('Größe des Models')).find_next().text.split('cm')
                 except Exception:
                     model_size_description = None
 
@@ -464,19 +451,101 @@ def get_products_data(products_data_list: dict,) -> None:
         driver.close()
         driver.quit()
 
+# Функция получения данных товаров
+def get_size_data(products_data_list: list, ) -> None:
+    processed_urls = []
+
+    with Session() as session:
+
+        for dict_item in products_data_list:
+            result_data = []
+            product_urls = []
+            key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+
+            for product_url in values:
+                if product_url not in processed_urls:
+                    processed_urls.append(product_url)
+                    product_urls.append(product_url)
+            category_name = key[0]
+            subcategory_name = key[1]
+
+            count_products = len(product_urls)
+
+            print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
+
+            for i, product_url in enumerate(product_urls, 1):
+                try:
+                    time.sleep(1)
+                    html = get_html(url=product_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{product_url} - {ex}")
+                    continue
+
+                if not html:
+                    continue
+
+                soup = BeautifulSoup(html, 'lxml')
+
+                try:
+                    id_product = product_url.split('.')[-2]
+                except Exception:
+                    id_product = None
+
+                try:
+                    inner_data = soup.find('div', class_='inner')
+                except Exception as ex:
+                    print(f'inner: {product_url} - {ex}')
+                    continue
+
+                try:
+                    price = int(''.join(
+                        i for i in inner_data.find('div', class_='price parbase').text.strip() if i.isdigit())) / 100
+                    price = round(price * rub)
+                except Exception:
+                    price = 0
+
+                try:
+                    sizes_items = inner_data.find('hm-size-selector', class_='size-selector').find_all('li')
+
+                    for size_item in sizes_items:
+                        size_eur = size_item.find('input').get('id')
+
+                        if size_item.find('div').get('aria-disabled') == 'true':
+                            status_size = 'нет в наличии'
+                        else:
+                            status_size = 'в наличии'
+
+                        id_product_size = f"{id_product}/{size_eur}"
+
+                        result_data.append(
+                            {
+                                '№': None,
+                                'Артикул': id_product_size,
+                                'Цена': price,
+                                'Статус наличия': status_size,
+                            }
+                        )
+
+                except Exception as ex:
+                    print(f'sizes: {ex}')
+
+            print(f'Обработано: {i}/{count_products} товаров!')
+
+            save_excel(data=result_data)
+
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data.xlsx'):
+    if not os.path.exists('results/result_data_size.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
         with ExcelWriter('results/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data.xlsx', sheet_name='ОЗОН')
+    df = read_excel('results/result_data_size.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -484,7 +553,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter('results/result_data_size.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
@@ -492,9 +561,10 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    # get_category_urls(url=url, headers=headers)
-    # get_product_urls(category_data_list=category_data_list, headers=headers)
-    get_products_data(products_data_list=products_data_list)
+
+    products_data_list, products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers)
+    get_size_data(products_data_list=products_data_list)
+    # get_products_data(products_data_list=products_data_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
