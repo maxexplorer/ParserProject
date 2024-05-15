@@ -564,7 +564,11 @@ def main():
 
     products_data_list, products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers)
     get_size_data(products_data_list=products_data_list)
-    # get_products_data(products_data_list=products_data_list)
+
+    if products_new_data_list:
+        get_products_data(products_new_data_list=products_new_data_list)
+
+
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
