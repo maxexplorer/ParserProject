@@ -499,7 +499,8 @@ def get_size_data(products_data_list: list, ) -> None:
 
                 try:
                     price = int(''.join(
-                        i for i in inner_data.find('div', class_='price parbase').text.strip() if i.isdigit())) / 100
+                        i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
+                        i.isdigit())) / 100
                     price = round(price * rub)
                 except Exception:
                     price = 0
