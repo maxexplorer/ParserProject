@@ -118,7 +118,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
-                    # for page in range(1, 2):
+                        # for page in range(1, 2):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -169,7 +169,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: dict,) -> None:
+def get_products_data(products_data_list: dict, ) -> None:
     processed_urls = []
 
     options = Options()
@@ -233,11 +233,12 @@ def get_products_data(products_data_list: dict,) -> None:
                     name_product_ru = translator(name_product_original)
                     name_product = f'H&M {name_product_ru}'
                 except Exception:
-                    name_product_ru = None
+                    name_product = None
 
                 try:
                     price = int(''.join(
-                        i for i in inner_data.find('div', class_='price parbase').text.strip() if i.isdigit())) / 100
+                        i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
+                        i.isdigit())) / 100
                     price = round(price * rub)
                 except Exception:
                     price = 0
@@ -298,20 +299,23 @@ def get_products_data(products_data_list: dict,) -> None:
                 model_size = None
 
                 try:
-                    model_size_description = raw_description[0].find('dl').find(string=re.compile('Größe des Models')).find_next().text.split('cm')
+                    model_size_description = raw_description[0].find('dl').find(
+                        string=re.compile('Größe des Models')).find_next().text.split('cm')
                 except Exception:
+                    model_height = get_model_height(category_name=category_name)
+                    model_size = get_model_size(category_name=category_name)
                     model_size_description = None
 
                 if model_size_description:
                     try:
                         model_height = model_size_description[0].split()[-1]
                     except Exception:
-                        model_height = get_model_height(category_name=category_name)
+                        model_height = None
 
                     try:
                         model_size = model_size_description[-1].split()[-1].replace('.', '').replace(')', '')
                     except Exception:
-                        model_size = get_model_size(category_name=category_name)
+                        model_size = None
 
                 try:
                     composition_items = raw_description[1].find('ul').find_all('li')
@@ -377,7 +381,7 @@ def get_products_data(products_data_list: dict,) -> None:
                             {
                                 '№': None,
                                 'Артикул': id_product_size,
-                                'Название товара': name_product_ru,
+                                'Название товара': name_product,
                                 'Цена, руб.*': price,
                                 'Цена до скидки, руб.': None,
                                 'НДС, %*': None,
@@ -452,7 +456,7 @@ def get_products_data(products_data_list: dict,) -> None:
                             }
                         )
                 except Exception as ex:
-                    print(f'sizes: {ex}')
+                    print(f'sizes: {product_url} - {ex}')
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 

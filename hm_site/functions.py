@@ -1410,9 +1410,9 @@ def get_model_height(category_name: str) -> str:
 
 def get_model_size(category_name: str) -> str:
     if category_name == 'Женщины':
-        model_size = '44'
+        model_size = 'S'
     elif category_name == 'Мужчины':
-        model_size = '48'
+        model_size = 'M'
     else:
         model_size = None
 
