@@ -156,10 +156,10 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-            if not os.path.exists('data/products'):
-                os.makedirs(f'data/products')
+            if not os.path.exists('data/products1'):
+                os.makedirs(f'data/products1')
 
-            with open(f'data/products/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
+            with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
                 print(products_data_list, file=file, sep='\n')
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
@@ -497,8 +497,8 @@ def save_excel(data: list) -> None:
 
 def main():
     # get_category_urls(url=url, headers=headers)
-    # get_product_urls(category_data_list=category_data_list, headers=headers)
-    get_products_data(products_data_list=products_data_list)
+    get_product_urls(category_data_list=category_data_list, headers=headers)
+    # get_products_data(products_data_list=products_data_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
