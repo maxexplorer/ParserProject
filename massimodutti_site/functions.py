@@ -85,3 +85,9 @@ def get_exchange_rate(base_currency: str, target_currency: str) -> int:
         exchange_rate = 0
 
     return exchange_rate
+
+
+# Функция для разделения списка на части по n элементов
+def chunks(lst: list, n: int):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]

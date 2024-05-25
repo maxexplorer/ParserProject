@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from datetime import datetime
@@ -11,11 +12,12 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import category_ids_list
+from data.data import id_categories_list
 from data.data import id_region_dict
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
+from functions import chunks
 
 start_time = datetime.now()
 
@@ -79,7 +81,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
     products_data_list = []
-    id_products_set = set()
+    id_products_list = []
     with Session() as session:
         for category_dict in id_categories_list:
             for name_category, products_list in category_dict.items():
@@ -116,9 +118,11 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                 }
             )
 
-            id_products_set.add(product_ids)
+            id_products_list.extend(product_ids)
 
             print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+
+    id_products_set = set(id_products_list)
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -144,6 +148,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     id_products_list.append(id_product)
             name_category = key[0]
             name_subcategory = key[1]
+
             id_products_str = ','.join(map(str, id_products_list))
 
             print(f'Сбор данных категории: {name_category}/{name_subcategory}')
@@ -152,15 +157,14 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 'languageId': '-20',
                 'appId': '1',
                 'productIds': id_products_str,
-
             }
 
             try:
+                time.sleep(1)
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                    f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/productsArray',
                     params=params,
                     headers=headers,
-                    timeout=60
                 )
 
                 if response.status_code != 200:
@@ -168,6 +172,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     continue
 
                 json_data = response.json()
+
                 get_products_data(products_data=json_data, name_category=name_category, name_subcategory=name_subcategory)
 
             except Exception as ex:
@@ -273,7 +278,8 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             model_size = None
 
         try:
-            description = item['detail']['longDescription']
+            attributes = item['attributes']
+            description = '. '.join(attr['value'] for attr in attributes)
         except Exception:
             description = None
 
@@ -298,7 +304,6 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
         brand = 'Massimodutti'
 
         try:
-            size = ''
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
 
             for size_item in sizes_items:
@@ -429,10 +434,10 @@ def main():
     id_region = id_region_dict.get(region)
     if id_region is None:
         id_region = '35009503/30359534'
-    category_ids_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-    # products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
-    #                                      id_region=id_region)
-    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+                                         id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
