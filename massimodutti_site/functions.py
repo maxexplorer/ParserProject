@@ -72,10 +72,7 @@ def translator(text: str) -> str:
 
 
 # Функция получения курса валют
-def get_exchange_rate() -> int:
-    base_currency = 'EUR'
-    target_currency = 'RUB'
-
+def get_exchange_rate(base_currency: str, target_currency: str) -> int:
     url = f'https://api.exchangerate-api.com/v4/latest/{base_currency}'
 
     try:

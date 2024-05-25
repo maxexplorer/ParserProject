@@ -19,9 +19,14 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-rub = get_exchange_rate()
+# base_currency = 'EUR'
+base_currency = 'KZT'
+target_currency = 'RUB'
 
-print(f'Курс EUR/RUB: {rub}')
+rub = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+
+# print(f'Курс EUR/RUB: {rub}')
+print(f'Курс KZT/RUB: {rub}')
 
 
 # Функция получения id категорий
@@ -84,7 +89,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
             try:
                 time.sleep(1)
                 response = session.get(
-                    f'https://www.massimodutti.com/itxrest/3/catalog/store/35009503/30359534/category/{id_category}/product',
+                    f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
                     params=params,
                     headers=headers,
                     timeout=60
@@ -107,13 +112,13 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             products_data_list.append(
                 {
-                    (name_subcategory, id_category): product_ids
+                    (name_category, name_subcategory): product_ids
                 }
             )
 
             id_products_set.add(product_ids)
 
-            print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
+            print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -126,44 +131,52 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+    processed_ids = []
+
     with Session() as session:
         for dict_item in products_data_list:
-            for key in dict_item:
-                type_product = key[0]
-                lst = dict_item[key]
-                id_products = ','.join(map(str, lst))
+            id_products_list = []
+            key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
-                params = {
-                    'languageId': '-1',
-                    'productIds': id_products,
-                    'categoryId': key[1],
-                    'appId': '1',
-                }
+            for id_product in values:
+                if id_product not in processed_ids:
+                    processed_ids.append(id_product)
+                    id_products_list.append(id_product)
+            name_category = key[0]
+            name_subcategory = key[1]
+            id_products_str = ','.join(map(str, id_products_list))
 
-                try:
-                    response = session.get(
-                        f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
-                        params=params,
-                        headers=headers,
-                        timeout=60
-                    )
+            print(f'Сбор данных категории: {name_category}/{name_subcategory}')
 
-                    if response.status_code != 200:
-                        print(f'status_code: {response.status_code}')
-                        continue
+            params = {
+                'languageId': '-20',
+                'appId': '1',
+                'productIds': id_products_str,
 
-                    json_data = response.json()
+            }
 
-                    print(f'Сбор данных категории: {key[0]}/{key[1]}')
-                    get_products_data(products_data=json_data, type_product=type_product)
+            try:
+                response = session.get(
+                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                    params=params,
+                    headers=headers,
+                    timeout=60
+                )
 
-                except Exception as ex:
-                    print(f'get_products_array: {ex}')
+                if response.status_code != 200:
+                    print(f'status_code: {response.status_code}')
                     continue
+
+                json_data = response.json()
+                get_products_data(products_data=json_data, name_category=name_category, name_subcategory=name_subcategory)
+
+            except Exception as ex:
+                print(f'get_products_array: {ex}')
+                continue
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict, type_product: str) -> None:
+def get_products_data(products_data: dict, name_category: str, name_subcategory: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -173,13 +186,12 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             id_product = None
 
         try:
-            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
+            reference = item['bundleProductSummaries'][0]['detail']['displayReference']
         except Exception:
             reference = None
 
         try:
-            name = item['nameEn']
-            name = translator(name)
+            name = item['name']
         except Exception:
             name = None
 
@@ -199,11 +211,9 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             price = 0
 
         try:
-            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-            # color_ru = colors_format(value=color_en)
+            color_ru = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
 
         except Exception:
-            color_en = None
             color_ru = None
 
         try:
