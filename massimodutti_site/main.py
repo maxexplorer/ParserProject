@@ -191,7 +191,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             reference = None
 
         try:
-            name = item['name']
+            name = f"MASSIMODUTTI {item['name']}"
         except Exception:
             name = None
 
@@ -212,7 +212,6 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
 
         try:
             color_ru = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-
         except Exception:
             color_ru = None
 
@@ -222,7 +221,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             id_color = ''
 
         try:
-            main_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
+            main_image = f"https://static.massimodutti.net/3/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_5_16.jpg"
         except Exception:
             main_image = None
 
@@ -240,31 +239,27 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                             if not media_item['extraInfo']:
                                 continue
                             try:
-                                img_url = f"https://static.pullandbear.net/2/photos/{media_item['extraInfo']['url'].split('?')[0]}"
+                                img_url = f"https://static.massimodutti.net/3/photos/{media_item['extraInfo']['url'].split('?')[0]}"
                             except Exception:
                                 continue
-                            if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or\
-                                    '3_1_0.jpg' in img_url or '02/' in img_url:
+                            if '.jpg' not in img_url:
                                 continue
                             additional_images_list.append(img_url)
                             if len(additional_images_list) == 14:
                                 break
 
             additional_images = '; '.join(additional_images_list)
-
         except Exception:
             additional_images = None
 
         try:
-            gender_en = item['sectionNameEN']
-            if gender_en == 'WOMEN':
+            if name_category == 'Женщины':
                 gender = 'женский'
-            elif gender_en == 'MEN':
+            elif name_category == 'Мужчины':
                 gender = 'мужской'
             else:
-                gender = gender_en
+                gender = name_subcategory
         except Exception:
-            gender_en = None
             gender = None
 
         try:
@@ -279,7 +274,6 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
 
         try:
             description = item['detail']['longDescription']
-            description = translator(description)
         except Exception:
             description = None
 
@@ -301,41 +295,22 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             composition = None
             material = None
 
-        brand = 'Pull&Bear'
+        brand = 'Massimodutti'
 
         try:
             size = ''
-            status_dict = {}
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
-                size_value = size_item.get('visibilityValue')
+                status_size = size_item.get('visibilityValue')
 
-                if size == size_eur:
-                    if size_value in status_dict.get(size_eur):
-                        continue
-                status_dict.setdefault(size_eur, []).append(size_value)
-                size = size_eur
+                id_product_size = f"{id_product}/{size_eur}"
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-
-                id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
-
-                if size == size_eur:
-                    continue
-                size = size_eur
-
-                if 'SHOW' in status_dict.get(size_eur):
-                    status_size = 'SHOW'
-                else:
-                    status_size = status_dict.get(size_eur)[0]
-
-                if size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
-                elif not size_eur.isdigit() and gender_en:
-                    size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
+                if size_eur.isdigit():
+                    size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
+                elif not size_eur.isdigit():
+                    size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
                 else:
                     size_rus = size_eur
 
@@ -364,8 +339,8 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color_en,
-                        'Тип*': type_product,
+                        'Название цвета': color_ru,
+                        'Тип*': name_subcategory,
                         'Пол*': gender,
                         'Размер пеленки': None,
                         'ТН ВЭД коды ЕАЭС': None,

@@ -7,7 +7,7 @@ from googletrans import Translator
 def sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
-            'WOMEN': {
+            'Женский': {
                 'XXS': '40',
                 'XS': '42',
                 'S': '44',
@@ -16,7 +16,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'M-L': '46;50',
                 'XL': '50;52'
             },
-            'MEN': {
+            'Мужской': {
                 'XS': '44',
                 'S': '46',
                 'M': '48',
@@ -28,7 +28,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
             }
         },
         'digit': {
-            'WOMEN': {
+            'Женский': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -39,7 +39,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '46': '52',
                 '48': '54'
             },
-            'MEN': {
+            'Мужской': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
