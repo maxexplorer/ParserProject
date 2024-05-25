@@ -26,7 +26,7 @@ print(f'Курс EUR/RUB: {rub}')
 
 # Функция получения id категорий
 def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
-    category_ids_list = []
+    id_categories_list = []
 
     with Session() as session:
         try:
@@ -56,32 +56,35 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
             if subcategory_item.get('nameEn') == 'COLLECTION':
                 collection_subcategory_items = subcategory_item.get('subcategories')
                 for collection_subcategory_item in collection_subcategory_items:
-                    category_id = collection_subcategory_item.get('viewCategoryId')
-                    if not category_id:
-                        category_id = category_item.get('id')
-                    subcategory_name = collection_subcategory_item.get('name').capitalize()
-                    category_ids_list.append((subcategory_name, category_id))
+                    id_category = collection_subcategory_item.get('viewCategoryId')
+                    if not id_category:
+                        id_category = category_item.get('id')
+                    name_subcategory = collection_subcategory_item.get('name').capitalize()
+                    id_categories_list.append((name_subcategory, id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/category_ids_list.txt', 'w', encoding='utf-8') as file:
-        print(*category_ids_list, file=file, sep='\n')
+    with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
+        print(*id_categories_list, file=file, sep='\n')
 
-    return category_ids_list
+    return id_categories_list
 
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
     products_data_list = []
-    id_products_list = []
+    id_products_set = set()
     with Session() as session:
-        for name_category, id_category in id_categories_list:
-            time.sleep(randint(3, 5))
+        for category_dict in id_categories_list:
+            for name_category, products_list in category_dict.items():
+                for product_tuple in products_list:
+                    name_subcategory, id_category = product_tuple
 
             try:
+                time.sleep(1)
                 response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
+                    f'https://www.massimodutti.com/itxrest/3/catalog/store/35009503/30359534/category/{id_category}/product',
                     params=params,
                     headers=headers,
                     timeout=60
@@ -104,11 +107,11 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             products_data_list.append(
                 {
-                    (name_category, id_category): product_ids
+                    (name_subcategory, id_category): product_ids
                 }
             )
 
-            id_products_list.extend(product_ids)
+            id_products_set.add(product_ids)
 
             print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
 
@@ -116,7 +119,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
         os.makedirs('data')
 
     with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
-        print(*id_products_list, file=file, sep='\n')
+        print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
 
