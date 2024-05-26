@@ -14,6 +14,7 @@ from configs.config import headers
 from configs.config import params
 from data.data import id_categories_list
 from data.data import id_region_dict
+from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
@@ -216,7 +217,8 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             price = 0
 
         try:
-            color_ru = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_ru = colors_format_ru(value=color_original)
         except Exception:
             color_ru = None
 
@@ -247,7 +249,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                                 img_url = f"https://static.massimodutti.net/3/photos/{media_item['extraInfo']['url'].split('?')[0]}"
                             except Exception:
                                 continue
-                            if '.jpg' not in img_url:
+                            if '.jpg' not in img_url or '3_1_0.jpg' in img_url:
                                 continue
                             additional_images_list.append(img_url)
                             if len(additional_images_list) == 14:
