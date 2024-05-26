@@ -165,8 +165,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                     json_data = response.json()
 
-                    result_data = get_size_data(products_data=json_data, main_category=main_category,
-                                                type_product=type_product)
+                    result_data = get_size_data(products_data=json_data, main_category=main_category)
                     count += len(chunk_ids)
 
                     print(f'Обработано: {count} товаров!')
@@ -181,7 +180,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
 
 # Функция получения данных товаров
-def get_size_data(products_data: dict, main_category: str, type_product: str) -> list:
+def get_size_data(products_data: dict, main_category: str) -> list:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
