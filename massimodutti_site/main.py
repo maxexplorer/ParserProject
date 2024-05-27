@@ -65,7 +65,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
                 for collection_subcategory_item in collection_subcategory_items:
                     id_category = collection_subcategory_item.get('viewCategoryId')
                     if not id_category:
-                        id_category = category_item.get('id')
+                        id_category = collection_subcategory_item.get('id')
                     name_subcategory = collection_subcategory_item.get('name').capitalize()
                     id_categories_list.append((name_subcategory, id_category))
 
@@ -88,39 +88,39 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                 for product_tuple in products_list:
                     name_subcategory, id_category = product_tuple
 
-                try:
-                    time.sleep(1)
-                    response = session.get(
-                        f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
-                        params=params,
-                        headers=headers,
-                        timeout=60
-                    )
+                    try:
+                        time.sleep(1)
+                        response = session.get(
+                            f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
+                            params=params,
+                            headers=headers,
+                            timeout=60
+                        )
 
-                    if response.status_code != 200:
-                        print(f'id_category: {id_category} status_code: {response.status_code}')
+                        if response.status_code != 200:
+                            print(f'id_category: {id_category} status_code: {response.status_code}')
+                            continue
+
+                        json_data = response.json()
+
+                    except Exception as ex:
+                        print(f'get_id_products: {ex}')
                         continue
 
-                    json_data = response.json()
+                    try:
+                        product_ids = json_data.get('productIds')
+                    except Exception:
+                        product_ids = []
 
-                except Exception as ex:
-                    print(f'get_id_products: {ex}')
-                    continue
+                    products_data_list.append(
+                        {
+                            (name_category, name_subcategory): product_ids
+                        }
+                    )
 
-                try:
-                    product_ids = json_data.get('productIds')
-                except Exception:
-                    product_ids = []
+                    id_products_list.extend(product_ids)
 
-                products_data_list.append(
-                    {
-                        (name_category, name_subcategory): product_ids
-                    }
-                )
-
-                id_products_list.extend(product_ids)
-
-                print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+                    print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
 
     id_products_set = set(id_products_list)
 
@@ -309,7 +309,6 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             except Exception as ex:
                 sizes_items = ['']
-                print(f'sizes_items: {ex}')
 
             for size_item in sizes_items:
                 try:

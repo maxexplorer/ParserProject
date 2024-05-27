@@ -446,6 +446,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
             'женский': {
                 'XXS': '40',
                 'XS': '42',
+                'XS-S': '42;44',
                 'S': '44',
                 'M': '46;48',
                 'L': '48;50',

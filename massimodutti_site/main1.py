@@ -17,7 +17,6 @@ from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
-from functions import chunks
 
 start_time = datetime.now()
 cur_time = start_time.strftime('%d.%m.%Y %H:%M')
@@ -47,50 +46,50 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                 for product_tuple in products_list:
                     name_subcategory, id_category = product_tuple
 
-            try:
-                time.sleep(1)
-                response = session.get(
-                    f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+                    try:
+                        time.sleep(1)
+                        response = session.get(
+                            f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
+                            params=params,
+                            headers=headers,
+                            timeout=60
+                        )
 
-                if response.status_code != 200:
-                    print(f'id_category: {id_category} status_code: {response.status_code}')
-                    continue
+                        if response.status_code != 200:
+                            print(f'id_category: {id_category} status_code: {response.status_code}')
+                            continue
 
-                json_data = response.json()
+                        json_data = response.json()
 
-            except Exception as ex:
-                print(f'get_id_products: {ex}')
-                continue
+                    except Exception as ex:
+                        print(f'get_id_products: {ex}')
+                        continue
 
-            try:
-                product_ids = json_data.get('productIds')
-            except Exception:
-                product_ids = []
+                    try:
+                        product_ids = json_data.get('productIds')
+                    except Exception:
+                        product_ids = []
 
-            products_data_list.append(
-                {
-                    (name_category, name_subcategory): product_ids
-                }
-            )
+                    products_data_list.append(
+                        {
+                            (name_category, name_subcategory): product_ids
+                        }
+                    )
 
-            for id_product in product_ids:
-                if str(id_product) in id_products_list:
-                    continue
+                    for id_product in product_ids:
+                        if str(id_product) in id_products_list:
+                            continue
 
-                new_id_products_list.append(id_product)
+                        new_id_products_list.append(id_product)
 
-            if new_id_products_list:
-                new_products_data_list.append(
-                    {
-                        (name_category, id_category): new_id_products_list
-                    }
-                )
+                    if new_id_products_list:
+                        new_products_data_list.append(
+                            {
+                                (name_category, id_category): new_id_products_list
+                            }
+                        )
 
-            print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+                    print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
 
     new_id_products_set = set(new_id_products_list)
 
