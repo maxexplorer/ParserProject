@@ -19,7 +19,6 @@ from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
 
-
 start_time = datetime.now()
 
 # base_currency = 'EUR'
@@ -89,39 +88,39 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                 for product_tuple in products_list:
                     name_subcategory, id_category = product_tuple
 
-            try:
-                time.sleep(1)
-                response = session.get(
-                    f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+                try:
+                    time.sleep(1)
+                    response = session.get(
+                        f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
 
-                if response.status_code != 200:
-                    print(f'id_category: {id_category} status_code: {response.status_code}')
+                    if response.status_code != 200:
+                        print(f'id_category: {id_category} status_code: {response.status_code}')
+                        continue
+
+                    json_data = response.json()
+
+                except Exception as ex:
+                    print(f'get_id_products: {ex}')
                     continue
 
-                json_data = response.json()
+                try:
+                    product_ids = json_data.get('productIds')
+                except Exception:
+                    product_ids = []
 
-            except Exception as ex:
-                print(f'get_id_products: {ex}')
-                continue
+                products_data_list.append(
+                    {
+                        (name_category, name_subcategory): product_ids
+                    }
+                )
 
-            try:
-                product_ids = json_data.get('productIds')
-            except Exception:
-                product_ids = []
+                id_products_list.extend(product_ids)
 
-            products_data_list.append(
-                {
-                    (name_category, name_subcategory): product_ids
-                }
-            )
-
-            id_products_list.extend(product_ids)
-
-            print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+                print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
 
     id_products_set = set(id_products_list)
 
@@ -174,7 +173,8 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                 json_data = response.json()
 
-                get_products_data(products_data=json_data, name_category=name_category, name_subcategory=name_subcategory)
+                get_products_data(products_data=json_data, name_category=name_category,
+                                  name_subcategory=name_subcategory)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
@@ -238,7 +238,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
             for xmedia_elem in xmedia_data:
                 color_code = xmedia_elem['colorCode']
-                if color_code == id_color:
+                if color_code == id_color or name_subcategory == 'Духи и средства для ухода за кожей тела':
                     xmedia_items = xmedia_elem['xmediaItems']
                     for xmedia_item in xmedia_items:
                         if len(additional_images_list) == 14:
@@ -305,15 +305,31 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
         brand = 'Massimo Dutti'
 
         try:
-            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            try:
+                sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            except Exception as ex:
+                sizes_items = ['']
+                print(f'sizes_items: {ex}')
 
             for size_item in sizes_items:
-                size_eur = size_item.get('name')
-                status_size = size_item.get('visibilityValue')
+                try:
+                    size_eur = size_item.get('name')
+                except Exception:
+                    size_eur = ''
+                try:
+                    status_size = size_item.get('visibilityValue')
+                except Exception:
+                    status_size = ''
 
-                id_product_size = f"{reference}/{color_original}/{size_eur}"
+                if not size_eur:
+                    id_product_size = reference
+                else:
+                    id_product_size = f"{reference}/{color_original}/{size_eur}"
 
-                if size_eur.isdigit():
+                if (name_subcategory == 'Обувь' or name_subcategory == 'Сумки' or name_subcategory == 'Украшения' or
+                        name_subcategory == 'Аксессуары' or name_subcategory == 'Духи и средства для ухода за кожей тела'):
+                    size_rus = size_eur
+                elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
                 elif not size_eur.isdigit():
                     size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
