@@ -456,7 +456,6 @@ def save_excel(data: list, species: str) -> None:
 
 
 def main():
-
     region = 'Казахстан'
     id_region = id_region_dict.get(region)
     if id_region is None:

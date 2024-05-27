@@ -2,7 +2,7 @@ import requests
 
 from googletrans import Translator
 
-# Функция для перевода формата цветов Pull and Bear в Ozone
+# Функция для перевода формата цветов Massimo Dutti в Ozone
 def colors_format_ru(value: str) -> str:
     if value == 'АНТРАЦИТОВО-СЕРЫЙ':
         color = 'серый'
@@ -443,7 +443,7 @@ def colors_format_ru(value: str) -> str:
 def sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
-            'Женский': {
+            'женский': {
                 'XXS': '40',
                 'XS': '42',
                 'S': '44',
@@ -452,7 +452,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'M-L': '46;50',
                 'XL': '50;52'
             },
-            'Мужской': {
+            'мужской': {
                 'XS': '44',
                 'S': '46',
                 'M': '48',
@@ -464,7 +464,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
             }
         },
         'digit': {
-            'Женский': {
+            'женский': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -475,7 +475,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '46': '52',
                 '48': '54'
             },
-            'Мужской': {
+            'мужской': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -522,8 +522,3 @@ def get_exchange_rate(base_currency: str, target_currency: str) -> int:
 
     return exchange_rate
 
-
-# Функция для разделения списка на части по n элементов
-def chunks(lst: list, n: int):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]

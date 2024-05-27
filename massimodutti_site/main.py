@@ -18,7 +18,7 @@ from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
-from functions import chunks
+
 
 start_time = datetime.now()
 
@@ -197,7 +197,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             reference = None
 
         try:
-            name = f"MASSIMODUTTI {item['name']}"
+            name = f"Massimo Dutti {item['name']}"
         except Exception:
             name = None
 
@@ -220,6 +220,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
             color_ru = colors_format_ru(value=color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
@@ -288,14 +289,12 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
         try:
             care_items = item['bundleProductSummaries'][0]['detail']['care']
             care = ', '.join(item['description'] for item in care_items)
-            care = translator(care)
         except Exception:
             care = None
 
         try:
             composition_items = item['bundleProductSummaries'][0]['detail']['composition']
             material = composition_items[0]['composition'][0]['name']
-            material = translator(material)
             composition = ' '.join(
                 f"{elem['name']}: {elem['percentage']}" for item in composition_items for elem in item['composition'])
             composition = translator(composition)
@@ -303,7 +302,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             composition = None
             material = None
 
-        brand = 'Massimodutti'
+        brand = 'Massimo Dutti'
 
         try:
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
@@ -312,7 +311,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                 size_eur = size_item.get('name')
                 status_size = size_item.get('visibilityValue')
 
-                id_product_size = f"{id_product}/{size_eur}"
+                id_product_size = f"{reference}/{color_original}/{size_eur}"
 
                 if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
