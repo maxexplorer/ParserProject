@@ -20,13 +20,13 @@ from functions import get_exchange_rate
 from functions import chunks
 
 start_time = datetime.now()
+cur_time = start_time.strftime('%d.%m.%Y %H:%M')
+print(f'Дата и время сбора данных: {cur_time}')
 
 # base_currency = 'EUR'
 base_currency = 'KZT'
 target_currency = 'RUB'
-
 rub = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-
 # print(f'Курс EUR/RUB: {rub}')
 print(f'Курс KZT/RUB: {rub}')
 
@@ -148,9 +148,9 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
                     print(f'Сбор данных категории: {name_category}/{name_subcategory}')
                     get_size_data(products_data=json_data)
                 elif species == 'products':
-                    print('Появились новые товары!')
                     print(f'Сбор данных категории: {name_category}/{name_subcategory}')
-                    get_products_data(products_data=json_data, name_category=name_category, name_subcategory=name_subcategory)
+                    get_products_data(products_data=json_data, name_category=name_category,
+                                      name_subcategory=name_subcategory)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
@@ -382,7 +382,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
 
 
 # Функция получения данных товаров
-def get_size_data(products_data: dict, name_category: str, name_subcategory: str) -> None:
+def get_size_data(products_data: dict) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -404,7 +404,6 @@ def get_size_data(products_data: dict, name_category: str, name_subcategory: str
             price = round(price * rub)
         except Exception:
             price = 0
-
 
         try:
             sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
@@ -428,7 +427,6 @@ def get_size_data(products_data: dict, name_category: str, name_subcategory: str
             print(f'sizes: {ex}')
 
     save_excel(data=result_data, species='size')
-
 
 
 # Функция для записи данных в формат xlsx
@@ -458,17 +456,24 @@ def save_excel(data: list, species: str) -> None:
 
 
 def main():
+
     region = 'Казахстан'
     id_region = id_region_dict.get(region)
     if id_region is None:
         id_region = '35009503/30359534'
 
+    print(f'Сбор данных в регионе: {region}!')
+
     products_data_list, products_new_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers,
                                                                  params=params, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size')
 
-    if products_new_data_list:
-        get_products_array(products_data_list=products_new_data_list, headers=headers, id_region=id_region,
+    count_new_products = len(products_new_data_list)
+    if count_new_products:
+        print(f'Появились  новые товары: {count_new_products} шт.!')
+        value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
+        if value == '1':
+            get_products_array(products_data_list=products_new_data_list, headers=headers, id_region=id_region,
                            species='products')
 
     execution_time = datetime.now() - start_time
