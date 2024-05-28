@@ -2,8 +2,6 @@ import json
 import os
 import time
 from datetime import datetime
-from random import randint
-
 from requests import Session
 
 from pandas import DataFrame
@@ -60,14 +58,16 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     for category_item in category_items:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
-            if subcategory_item.get('nameEn') == 'COLLECTION':
-                collection_subcategory_items = subcategory_item.get('subcategories')
-                for collection_subcategory_item in collection_subcategory_items:
-                    id_category = collection_subcategory_item.get('viewCategoryId')
-                    if not id_category:
-                        id_category = collection_subcategory_item.get('id')
-                    name_subcategory = collection_subcategory_item.get('name').capitalize()
-                    id_categories_list.append((name_subcategory, id_category))
+            if subcategory_item.get('nameEn') == 'Clothing':
+                clothing_subcategory_items = subcategory_item.get('subcategories')
+                for clothing_subcategory_item in clothing_subcategory_items:
+                    collection_subcategory_items = clothing_subcategory_item.get('subcategories')
+                    for collection_subcategory_item in collection_subcategory_items:
+                        id_category = collection_subcategory_item.get('viewCategoryId')
+                        if not id_category:
+                            id_category = collection_subcategory_item.get('id')
+                        name_subcategory = collection_subcategory_item.get('name').capitalize()
+                        id_categories_list.append((name_subcategory, id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -83,44 +83,40 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     products_data_list = []
     id_products_list = []
     with Session() as session:
-        for category_dict in id_categories_list:
-            for name_category, products_list in category_dict.items():
-                for product_tuple in products_list:
-                    name_subcategory, id_category = product_tuple
+        for name_subcategory, id_category in id_categories_list:
+            try:
+                time.sleep(1)
+                response = session.get(
+                    f'https://www.stradivarius.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
+                    params=params,
+                    headers=headers,
+                    timeout=60
+                )
 
-                    try:
-                        time.sleep(1)
-                        response = session.get(
-                            f'https://www.stradivarius.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
-                            params=params,
-                            headers=headers,
-                            timeout=60
-                        )
+                if response.status_code != 200:
+                    print(f'id_category: {id_category} status_code: {response.status_code}')
+                    continue
 
-                        if response.status_code != 200:
-                            print(f'id_category: {id_category} status_code: {response.status_code}')
-                            continue
+                json_data = response.json()
 
-                        json_data = response.json()
+            except Exception as ex:
+                print(f'get_id_products: {ex}')
+                continue
 
-                    except Exception as ex:
-                        print(f'get_id_products: {ex}')
-                        continue
+            try:
+                product_ids = json_data.get('productIds')
+            except Exception:
+                product_ids = []
 
-                    try:
-                        product_ids = json_data.get('productIds')
-                    except Exception:
-                        product_ids = []
+            products_data_list.append(
+                {
+                    (name_subcategory, id_category): product_ids
+                }
+            )
 
-                    products_data_list.append(
-                        {
-                            (name_category, name_subcategory, id_category): product_ids
-                        }
-                    )
+            id_products_list.extend(product_ids)
 
-                    id_products_list.extend(product_ids)
-
-                    print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+            print(f'Обработано: категория {name_subcategory} - {len(product_ids)} товаров!')
 
     id_products_set = set(id_products_list)
 
@@ -146,13 +142,12 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 if id_product not in processed_ids:
                     processed_ids.append(id_product)
                     id_products_list.append(id_product)
-            name_category = key[0]
-            name_subcategory = key[1]
-            id_category = key[2]
+            name_subcategory = key[0]
+            id_category = key[1]
 
             id_products_str = ','.join(map(str, id_products_list))
 
-            print(f'Сбор данных категории: {name_category}/{name_subcategory}')
+            print(f'Сбор данных категории: {name_subcategory}')
 
             params = {
                 'languageId': '-20',
@@ -166,6 +161,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     f'https://www.stradivarius.com/itxrest/3/catalog/store/{id_region}/productsArray',
                     params=params,
                     headers=headers,
+                    timeout=60
                 )
 
                 if response.status_code != 200:
@@ -174,8 +170,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                 json_data = response.json()
 
-                get_products_data(products_data=json_data, name_category=name_category,
-                                  name_subcategory=name_subcategory)
+                get_products_data(products_data=json_data, name_subcategory=name_subcategory)
 
             except Exception as ex:
                 print(f'get_products_array: {ex}')
@@ -183,7 +178,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict, name_category: str, name_subcategory: str) -> None:
+def get_products_data(products_data: dict, name_subcategory: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -230,7 +225,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             id_color = ''
 
         try:
-            main_image = f"https://static.massimodutti.net/3/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_1_1_1.jpg"
+            main_image = f"https://static.e-stradivarius.net/5/photos4/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_1_1_1.jpg"
         except Exception:
             main_image = None
 
@@ -248,7 +243,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                             if not media_item['extraInfo']:
                                 continue
                             try:
-                                img_url = f"https://static.massimodutti.net/3/photos/{media_item['extraInfo']['url'].split('?')[0]}"
+                                img_url = f"https://static.e-stradivarius.net/5/photos4/{media_item['extraInfo']['url'].split('?')[0]}"
                             except Exception:
                                 continue
                             if '.jpg' not in img_url or '3_1_0.jpg' in img_url:
@@ -262,16 +257,6 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             additional_images = None
 
         try:
-            if name_category == 'Женщины':
-                gender = 'женский'
-            elif name_category == 'Мужчины':
-                gender = 'мужской'
-            else:
-                gender = name_subcategory
-        except Exception:
-            gender = None
-
-        try:
             model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh'].replace('cm', 'см')
         except Exception:
             model_height = None
@@ -282,8 +267,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             model_size = None
 
         try:
-            attributes = item['attributes']
-            description = '. '.join(attr['value'] for attr in attributes)
+            description = item['detail']['longDescription']
         except Exception:
             description = None
 
@@ -303,36 +287,51 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             composition = None
             material = None
 
-        brand = 'Massimo Dutti'
+        brand = 'Stradivarius'
+        gender = 'женский'
 
         try:
+            size = ''
+            status_dict = {}
+
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             except Exception as ex:
                 sizes_items = ['']
 
             for size_item in sizes_items:
-                try:
-                    size_eur = size_item.get('name')
-                except Exception:
-                    size_eur = ''
-                try:
-                    status_size = size_item.get('visibilityValue')
-                except Exception:
-                    status_size = ''
+                size_eur = size_item.get('name')
+                size_value = size_item.get('visibilityValue')
+
+                if size == size_eur:
+                    if size_value in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(size_value)
+                size = size_eur
+
+            for c in sizes_items:
+                size_eur = c.get('name')
+
+                if size == size_eur:
+                    continue
+                size = size_eur
+
+                if 'SHOW' in status_dict.get(size_eur):
+                    status_size = 'SHOW'
+                else:
+                    status_size = status_dict.get(size_eur)[0]
 
                 if not size_eur:
                     id_product_size = reference
                 else:
                     id_product_size = f"{reference}/{color_original}/{size_eur}"
 
-                if (name_subcategory == 'Обувь' or name_subcategory == 'Сумки' or name_subcategory == 'Украшения' or
-                        name_subcategory == 'Аксессуары' or name_subcategory == 'Духи и средства для ухода за кожей тела'):
+                if name_subcategory == 'Обувь' or name_subcategory == 'Сумки':
                     size_rus = size_eur
                 elif size_eur.isdigit():
-                    size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
+                    size_rus = sizes_format(format='digit', size_eur=size_eur)
                 elif not size_eur.isdigit():
-                    size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
+                    size_rus = sizes_format(format='alpha', size_eur=size_eur)
                 else:
                     size_rus = size_eur
 
