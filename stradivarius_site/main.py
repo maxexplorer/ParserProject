@@ -58,7 +58,10 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     for category_item in category_items:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
-            if subcategory_item.get('nameEn') == 'Clothing':
+            if subcategory_item.get('nameEn') == 'Clothing' or subcategory_item.get(
+                    'nameEn') == 'STR Teen' or subcategory_item.get('nameEn') == 'Casual Sport' or subcategory_item.get(
+                    'nameEn') == 'Shoes' or subcategory_item.get('nameEn') == 'Bags' or subcategory_item.get(
+                    'nameEn') == 'Accessories':
                 clothing_subcategory_items = subcategory_item.get('subcategories')
                 for clothing_subcategory_item in clothing_subcategory_items:
                     collection_subcategory_items = clothing_subcategory_item.get('subcategories')
@@ -300,7 +303,7 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                 sizes_items = ['']
 
             for size_item in sizes_items:
-                size_eur = size_item.get('name')
+                size_eur = size_item.get('name', '')
                 size_value = size_item.get('visibilityValue')
 
                 if size == size_eur:
@@ -310,7 +313,7 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                 size = size_eur
 
             for c in sizes_items:
-                size_eur = c.get('name')
+                size_eur = c.get('name', '')
 
                 if size == size_eur:
                     continue
@@ -326,7 +329,7 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                 else:
                     id_product_size = f"{reference}/{color_original}/{size_eur}"
 
-                if name_subcategory == 'Обувь' or name_subcategory == 'Сумки':
+                if name_subcategory == 'Обувь' or name_subcategory == 'Сумки' or name_subcategory == 'Аксессуары':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', size_eur=size_eur)
@@ -414,7 +417,8 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                     }
                 )
         except Exception as ex:
-            print(f'sizes: {ex}')
+
+            print(f'{id_product} - sizes: {ex}')
 
     save_excel(data=result_data)
 
@@ -424,13 +428,13 @@ def save_excel(data: list) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data.xlsx'):
+    if not os.path.exists('results/result_data_stradivarius.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data.xlsx', mode='w') as writer:
+        with ExcelWriter('results/result_data_stradivarius.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data.xlsx', sheet_name='ОЗОН')
+    df = read_excel('results/result_data_stradivarius.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -438,11 +442,11 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter('results/result_data_stradivarius.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "result_data_stradivarius.xlsx"')
 
 
 def main():

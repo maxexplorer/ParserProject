@@ -437,7 +437,7 @@ def get_size_data(products_data: dict) -> None:
                 sizes_items = ['']
 
             for size_item in sizes_items:
-                size_eur = size_item.get('name')
+                size_eur = size_item.get('name', '')
                 size_value = size_item.get('visibilityValue')
 
                 if size == size_eur:
@@ -447,7 +447,7 @@ def get_size_data(products_data: dict) -> None:
                 size = size_eur
 
             for c in sizes_items:
-                size_eur = c.get('name')
+                size_eur = c.get('name', '')
 
                 if size == size_eur:
                     continue
