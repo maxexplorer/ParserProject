@@ -16,6 +16,7 @@ from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
+from functions import chunks
 
 start_time = datetime.now()
 
@@ -27,6 +28,8 @@ rub = get_exchange_rate(base_currency=base_currency, target_currency=target_curr
 
 # print(f'Курс EUR/RUB: {rub}')
 print(f'Курс KZT/RUB: {rub}')
+
+result_data = []
 
 
 # Функция получения id категорий
@@ -134,10 +137,13 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+    global result_data
+
     processed_ids = []
 
     with Session() as session:
         for dict_item in products_data_list:
+            count = 0
             id_products_list = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
@@ -148,40 +154,49 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
             name_subcategory = key[0]
             id_category = key[1]
 
-            id_products_str = ','.join(map(str, id_products_list))
-
             print(f'Сбор данных категории: {name_subcategory}')
 
-            params = {
-                'languageId': '-20',
-                'categoryId': id_category,
-                'productIds': id_products_str,
-                'appId': '1',
-            }
-            try:
-                time.sleep(1)
-                response = session.get(
-                    f'https://www.stradivarius.com/itxrest/3/catalog/store/{id_region}/productsArray',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+            for chunk_ids in chunks(id_products_list, 300):
+                id_products_str = ','.join(map(str, chunk_ids))
 
-                if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                params = {
+                    'languageId': '-20',
+                    'categoryId': id_category,
+                    'productIds': id_products_str,
+                    'appId': '1',
+                }
+                try:
+                    time.sleep(1)
+                    response = session.get(
+                        f'https://www.stradivarius.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
+
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
+                        continue
+
+                    json_data = response.json()
+
+                    result_data = get_products_data(products_data=json_data, name_subcategory=name_subcategory)
+
+                    count += len(chunk_ids)
+
+                    print(f'В категории {name_subcategory} обработано: {count} товаров!')
+
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
                     continue
 
-                json_data = response.json()
+            save_excel(data=result_data)
 
-                get_products_data(products_data=json_data, name_subcategory=name_subcategory)
-
-            except Exception as ex:
-                print(f'get_products_array: {ex}')
-                continue
+            result_data = []
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict, name_subcategory: str) -> None:
+def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
     result_data = []
 
     for item in products_data['products']:
@@ -299,13 +314,14 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
 
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            except Exception as ex:
+            except Exception:
                 sizes_items = ['']
 
             for size_item in sizes_items:
-                size_eur = size_item.get('name', '')
+                size_eur = size_item.get('name')
+                if not size_eur:
+                    continue
                 size_value = size_item.get('visibilityValue')
-
                 if size == size_eur:
                     if size_value in status_dict.get(size_eur):
                         continue
@@ -313,8 +329,9 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                 size = size_eur
 
             for c in sizes_items:
-                size_eur = c.get('name', '')
-
+                size_eur = c.get('name')
+                if not size_eur:
+                    continue
                 if size == size_eur:
                     continue
                 size = size_eur
@@ -329,7 +346,7 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                 else:
                     id_product_size = f"{reference}/{color_original}/{size_eur}"
 
-                if name_subcategory == 'Обувь' or name_subcategory == 'Сумки' or name_subcategory == 'Аксессуары':
+                if name_subcategory == 'Обувь' or name_subcategory == 'Аксессуары':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', size_eur=size_eur)
@@ -417,10 +434,11 @@ def get_products_data(products_data: dict, name_subcategory: str) -> None:
                     }
                 )
         except Exception as ex:
-
             print(f'{id_product} - sizes: {ex}')
 
-    save_excel(data=result_data)
+    return result_data
+
+
 
 
 # Функция для записи данных в формат xlsx

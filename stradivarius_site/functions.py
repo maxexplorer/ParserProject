@@ -453,7 +453,7 @@ def sizes_format(format: str, size_eur: str) -> str:
             'L': '48;50',
             'M-L': '46;50',
             'XL': '50;52'
-            },
+        },
         'digit': {
             '32': '38',
             '34': '40',
@@ -464,8 +464,8 @@ def sizes_format(format: str, size_eur: str) -> str:
             '44': '50',
             '46': '52',
             '48': '54'
-            }
         }
+    }
 
     try:
         size_rus = sizes_dict[format][size_eur]
@@ -499,3 +499,9 @@ def get_exchange_rate(base_currency: str, target_currency: str) -> int:
         exchange_rate = 0
 
     return exchange_rate
+
+
+# Функция для разделения списка на части по n элементов
+def chunks(lst: list, n: int):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
