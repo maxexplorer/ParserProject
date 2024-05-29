@@ -63,8 +63,8 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
         for subcategory_item in subcategory_items:
             if subcategory_item.get('nameEn') == 'Clothing' or subcategory_item.get(
                     'nameEn') == 'STR Teen' or subcategory_item.get('nameEn') == 'Casual Sport' or subcategory_item.get(
-                    'nameEn') == 'Shoes' or subcategory_item.get('nameEn') == 'Bags' or subcategory_item.get(
-                    'nameEn') == 'Accessories':
+                'nameEn') == 'Shoes' or subcategory_item.get('nameEn') == 'Bags' or subcategory_item.get(
+                'nameEn') == 'Accessories':
                 clothing_subcategory_items = subcategory_item.get('subcategories')
                 for clothing_subcategory_item in clothing_subcategory_items:
                     collection_subcategory_items = clothing_subcategory_item.get('subcategories')
@@ -197,8 +197,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
 # Функция получения данных товаров
 def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
-    result_data = []
-
     for item in products_data['products']:
         try:
             id_product = item['id']
@@ -310,17 +308,17 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
 
         try:
             size = ''
+            size_eur = ''
             status_dict = {}
 
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             except Exception:
-                sizes_items = ['']
+                sizes_items = {}
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
-                if not size_eur:
-                    continue
+
                 size_value = size_item.get('visibilityValue')
                 if size == size_eur:
                     if size_value in status_dict.get(size_eur):
@@ -328,23 +326,13 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
                 status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-                if not size_eur:
-                    continue
-                if size == size_eur:
-                    continue
-                size = size_eur
-
-                if 'SHOW' in status_dict.get(size_eur):
+            for key, value in status_dict.items():
+                if 'SHOW' in status_dict.get(key):
                     status_size = 'SHOW'
                 else:
-                    status_size = status_dict.get(size_eur)[0]
+                    status_size = status_dict.get(key)[0]
 
-                if not size_eur:
-                    id_product_size = reference
-                else:
-                    id_product_size = f"{reference}/{color_original}/{size_eur}"
+                id_product_size = f"{reference}/{color_original}/{size_eur}"
 
                 if name_subcategory == 'Обувь' or name_subcategory == 'Аксессуары':
                     size_rus = size_eur
@@ -433,12 +421,11 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
                         'Предупреждение': None,
                     }
                 )
+
         except Exception as ex:
             print(f'{id_product} - sizes: {ex}')
 
     return result_data
-
-
 
 
 # Функция для записи данных в формат xlsx

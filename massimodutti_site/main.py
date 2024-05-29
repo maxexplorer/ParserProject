@@ -307,8 +307,8 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
         try:
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            except Exception as ex:
-                sizes_items = ['']
+            except Exception:
+                sizes_items = {}
 
             for size_item in sizes_items:
                 try:

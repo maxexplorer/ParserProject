@@ -283,39 +283,32 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
 
         try:
             size = ''
+            size_eur = ''
             status_dict = {}
 
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
-            except Exception as ex:
+            except Exception:
                 sizes_items = ['']
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
+                if not size_eur:
+                    size_eur = ''
                 size_value = size_item.get('visibilityValue')
-
                 if size == size_eur:
                     if size_value in status_dict.get(size_eur):
                         continue
                 status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-
-                if size == size_eur:
-                    continue
-                size = size_eur
-
-                if 'SHOW' in status_dict.get(size_eur):
+            for key, value in status_dict.items():
+                if 'SHOW' in status_dict.get(key):
                     status_size = 'SHOW'
                 else:
-                    status_size = status_dict.get(size_eur)[0]
+                    status_size = status_dict.get(value)[0]
 
-                if not size_eur:
-                    id_product_size = reference
-                else:
-                    id_product_size = f"{reference}/{color_original}/{size_eur}"
+                id_product_size = f"{reference}/{color_original}/{size_eur}"
 
                 if name_subcategory == 'Обувь' or name_subcategory == 'Сумки':
                     size_rus = size_eur
@@ -412,7 +405,6 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
 
 # Функция получения данных товаров
 def get_size_data(products_data: dict) -> list[dict]:
-    result_data = []
 
     for item in products_data['products']:
         try:
@@ -446,42 +438,31 @@ def get_size_data(products_data: dict) -> list[dict]:
 
         try:
             size = ''
+            size_eur = ''
             status_dict = {}
 
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
             except Exception:
-                sizes_items = ['']
+                sizes_items = {}
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
-                if not size_eur:
-                    continue
-                size_value = size_item.get('visibilityValue')
 
+                size_value = size_item.get('visibilityValue')
                 if size == size_eur:
                     if size_value in status_dict.get(size_eur):
                         continue
                 status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-                if not size_eur:
-                    continue
-                if size == size_eur:
-                    continue
-                size = size_eur
-
-                if 'SHOW' in status_dict.get(size_eur):
+            for key, value in status_dict.items():
+                if 'SHOW' in status_dict.get(key):
                     status_size = 'SHOW'
                 else:
-                    status_size = status_dict.get(size_eur)[0]
+                    status_size = status_dict.get(key)[0]
 
-                if not size_eur:
-                    id_product_size = reference
-                else:
-                    id_product_size = f"{reference}/{color_original}/{size_eur}"
+                id_product_size = f"{reference}/{color_original}/{size_eur}"
 
                 result_data.append(
                     {

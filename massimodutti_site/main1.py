@@ -416,7 +416,10 @@ def get_size_data(products_data: dict) -> None:
 
 
         try:
-            sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            try:
+                sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            except Exception:
+                sizes_items = {}
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
