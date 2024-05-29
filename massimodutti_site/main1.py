@@ -414,7 +414,6 @@ def get_size_data(products_data: dict) -> None:
         except Exception:
             color_original = None
 
-
         try:
             try:
                 sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
@@ -486,7 +485,7 @@ def main():
         value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
         if value == '1':
             get_products_array(products_data_list=products_new_data_list, headers=headers, id_region=id_region,
-                           species='products')
+                               species='products')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
