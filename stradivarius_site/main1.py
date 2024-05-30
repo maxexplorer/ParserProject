@@ -162,16 +162,15 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
 
             if species == 'size':
                 save_excel(data=result_data, species='size')
-                result_data = []
+
             if species == 'products':
                 save_excel(data=result_data, species='products')
-                result_data = []
+
+            result_data = []
 
 
 # Функция получения данных товаров
 def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
-    result_data = []
-
     for item in products_data['products']:
         try:
             id_product = item['id']
@@ -405,7 +404,6 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
 
 # Функция получения данных товаров
 def get_size_data(products_data: dict) -> list[dict]:
-
     for item in products_data['products']:
         try:
             id_product = item['id']
