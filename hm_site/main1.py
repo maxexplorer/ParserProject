@@ -90,8 +90,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> tuple[list[dict
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    # for page in range(1, pages + 1):
-                    for page in range(1, 2):
+                    for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -160,7 +159,9 @@ def get_products_data(products_new_data_list: list) -> None:
     options = Options()
 
     options.add_argument(
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/125.0.0.0 Safari/537.36'
+    )
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless=new")
 
@@ -193,12 +194,6 @@ def get_products_data(products_new_data_list: list) -> None:
 
                 if not html:
                     continue
-
-                # with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
-                #     file.write(html)
-                #
-                # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
-                #     html = file.read()
 
                 soup = BeautifulSoup(html, 'lxml')
 
@@ -363,7 +358,7 @@ def get_products_data(products_new_data_list: list) -> None:
                             {
                                 '№': None,
                                 'Артикул': id_product_size,
-                                'Название товара': name_product_ru,
+                                'Название товара': name_product,
                                 'Цена, руб.*': price,
                                 'Цена до скидки, руб.': None,
                                 'НДС, %*': None,
@@ -454,8 +449,18 @@ def get_products_data(products_new_data_list: list) -> None:
 def get_size_data(products_data_list: list, ) -> None:
     processed_urls = []
 
-    with Session() as session:
+    options = Options()
 
+    options.add_argument(
+        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/125.0.0.0 Safari/537.36'
+    )
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--headless=new")
+
+    driver = Chrome(options=options)
+
+    try:
         for dict_item in products_data_list:
             result_data = []
             product_urls = []
@@ -471,15 +476,14 @@ def get_size_data(products_data_list: list, ) -> None:
             count_products = len(product_urls)
 
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
-
             for i, product_url in enumerate(product_urls, 1):
                 try:
                     time.sleep(1)
-                    html = get_html(url=product_url, headers=headers, session=session)
+                    driver.get(product_url)
+                    html = driver.page_source
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
                     continue
-
                 if not html:
                     continue
 
@@ -498,7 +502,7 @@ def get_size_data(products_data_list: list, ) -> None:
 
                 try:
                     price = int(''.join(
-                        i for i in inner_data.find('span', class_='price-value').text.split()[0] if
+                        i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
                         i.isdigit())) / 100
                     price = round(price * rub)
                 except Exception:
@@ -529,9 +533,15 @@ def get_size_data(products_data_list: list, ) -> None:
                 except Exception as ex:
                     print(f'{product_url} sizes: {ex}')
 
-            print(f'Обработано: {i}/{count_products} товаров!')
+                print(f'Обработано: {i}/{count_products} товаров!')
 
             save_excel(data=result_data, species='size')
+
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
 
 
 # Функция для записи данных в формат xlsx
@@ -557,7 +567,7 @@ def save_excel(data: list, species: str) -> None:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "result_data_{species}.xlsx"')
 
 
 def main():

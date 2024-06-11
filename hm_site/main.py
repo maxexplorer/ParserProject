@@ -173,7 +173,9 @@ def get_products_data(products_data_list: dict, ) -> None:
     options = Options()
 
     options.add_argument(
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/125.0.0.0 Safari/537.36'
+    )
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless=new")
 
@@ -206,12 +208,6 @@ def get_products_data(products_data_list: dict, ) -> None:
 
                 if not html:
                     continue
-
-                # with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
-                #     file.write(html)
-                #
-                # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
-                #     html = file.read()
 
                 soup = BeautifulSoup(html, 'lxml')
 
@@ -418,7 +414,7 @@ def get_products_data(products_data_list: dict, ) -> None:
                                 'Серия в одежде и обуви': None,
                                 'Материал': material,
                                 'Состав материала': composition,
-                                # 'Материал подклада/внутренней отделки': None,
+                                'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
                                 'Диапазон температур, °С': None,
