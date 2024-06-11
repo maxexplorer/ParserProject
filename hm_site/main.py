@@ -33,7 +33,7 @@ url = "https://www2.hm.com/de_de/index.html"
 
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/124.0.0.0 Safari/537.36',
+                  'Chrome/125.0.0.0 Safari/537.36'
 }
 
 
@@ -117,7 +117,6 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
-                        # for page in range(1, 2):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -155,11 +154,11 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-            if not os.path.exists('data/products1'):
-                os.makedirs(f'data/products1')
-
-            with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-                print(products_data_list, file=file, sep='\n')
+            # if not os.path.exists('data/products1'):
+            #     os.makedirs(f'data/products1')
+            #
+            # with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
+            #     print(products_data_list, file=file, sep='\n')
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')

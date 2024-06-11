@@ -33,7 +33,7 @@ url = "https://www2.hm.com/de_de/index.html"
 
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/124.0.0.0 Safari/537.36',
+                  'Chrome/125.0.0.0 Safari/537.36'
 }
 
 
@@ -90,8 +90,8 @@ def get_product_urls(category_data_list: list, headers: dict) -> tuple[list[dict
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    for page in range(1, pages + 1):
-                        # for page in range(1, 2):
+                    # for page in range(1, pages + 1):
+                    for page in range(1, 2):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -402,7 +402,7 @@ def get_products_data(products_new_data_list: list) -> None:
                                 'Серия в одежде и обуви': None,
                                 'Материал': material,
                                 'Состав материала': composition,
-                                # 'Материал подклада/внутренней отделки': None,
+                                'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
                                 'Диапазон температур, °С': None,
@@ -498,7 +498,7 @@ def get_size_data(products_data_list: list, ) -> None:
 
                 try:
                     price = int(''.join(
-                        i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
+                        i for i in inner_data.find('span', class_='price-value').text.split()[0] if
                         i.isdigit())) / 100
                     price = round(price * rub)
                 except Exception:
@@ -527,7 +527,7 @@ def get_size_data(products_data_list: list, ) -> None:
                         )
 
                 except Exception as ex:
-                    print(f'sizes: {ex}')
+                    print(f'{product_url} sizes: {ex}')
 
             print(f'Обработано: {i}/{count_products} товаров!')
 
@@ -561,12 +561,16 @@ def save_excel(data: list, species: str) -> None:
 
 
 def main():
-
     products_data_list, products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers)
     get_size_data(products_data_list=products_data_list)
 
-    if products_new_data_list:
-        get_products_data(products_new_data_list=products_new_data_list)
+    count_new_products = len(products_new_data_list)
+
+    if count_new_products:
+        print(f'Появились  новые товары: {count_new_products} шт.!')
+        value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
+        if value == '1':
+            get_products_data(products_new_data_list=products_new_data_list)
 
 
 
