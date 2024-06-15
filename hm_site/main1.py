@@ -90,7 +90,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> tuple[list[dict
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    for page in range(1, pages + 1):
+                    for page in range(1, 2):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -115,9 +115,8 @@ def get_product_urls(category_data_list: list, headers: dict) -> tuple[list[dict
                                     continue
                                 product_urls.append(product_url)
 
-                                if product_url in url_products_list:
-                                    continue
-                                new_url_list.append(product_url)
+                                if product_url not in url_products_list:
+                                    new_url_list.append(product_url)
 
                         except Exception as ex:
                             print(ex)
