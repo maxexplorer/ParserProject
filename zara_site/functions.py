@@ -3,7 +3,7 @@ import requests
 from googletrans import Translator
 
 
-# Функция для перевода формата цветов Pull and Bear в Ozone
+# Функция для перевода формата цветов Zara в Ozone
 def colors_format_ru(value: str) -> str:
     if value == 'АНТРАЦИТОВО-СЕРЫЙ':
         color = 'серый'

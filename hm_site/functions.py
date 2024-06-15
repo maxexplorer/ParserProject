@@ -3,7 +3,7 @@ import requests
 from googletrans import Translator
 
 
-# Функция для перевода формата цветов Pull and Bear в Ozone
+# Функция для перевода формата цветов H&M в Ozone
 def get_colors_format_match(value: str) -> str:
     match value:
         case 'ANTHRACITE GREY':
@@ -672,7 +672,7 @@ def get_colors_format_match(value: str) -> str:
     return color
 
 
-# Функция для перевода формата цветов Pull and Bear в Ozone
+# Функция для перевода формата цветов H&M в Ozone
 def colors_format(value: str) -> str:
     if value == 'ANTHRACITE GREY':
         color = 'светло-серый'

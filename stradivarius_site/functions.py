@@ -3,7 +3,7 @@ import requests
 from googletrans import Translator
 
 
-# Функция для перевода формата цветов Massimo Dutti в Ozone
+# Функция для перевода формата цветов Stradivarius в Ozone
 def colors_format_ru(value: str) -> str:
     if value == 'АНТРАЦИТОВО-СЕРЫЙ':
         color = 'серый'
