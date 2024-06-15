@@ -671,7 +671,7 @@ def colors_format(value: str) -> str:
 
 
 # Функция для перевода европейских размеров в российские
-def get_sizes_format(format: str, gender: str, size_eur: str) -> str:
+def sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
             'Женщины': {
