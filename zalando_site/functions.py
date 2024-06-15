@@ -1,6 +1,42 @@
+import time
+
 import requests
 
 from googletrans import Translator
+
+
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
+from undetected_chromedriver import Chrome as undetectedChrome
+from undetected_chromedriver import ChromeOptions
+
+def init_chromdriver(headless_mode=False):
+    if headless_mode:
+        options = Options()
+        options.add_argument(
+            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--headless=new")
+        driver = Chrome(options=options)
+        driver.implicitly_wait(15)
+    else:
+        driver = Chrome()
+        driver.maximize_window()
+        driver.implicitly_wait(15)
+    return driver
+
+def init_undetected_chromdriver(headless_mode=False):
+    if headless_mode:
+        options = ChromeOptions()
+        options.add_argument('--headless')
+        driver = undetectedChrome(options=options)
+        driver.implicitly_wait(15)
+    else:
+        driver = undetectedChrome()
+        driver.maximize_window()
+        driver.implicitly_wait(15)
+    return driver
 
 
 # Функция для перевода формата цветов Zalando в Ozone
