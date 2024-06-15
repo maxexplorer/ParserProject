@@ -2,16 +2,23 @@ import time
 from random import randint
 import re
 
-from selenium import webdriver
+from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
+from undetected_chromedriver import Chrome as undetectedChrome
+from undetected_chromedriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from undetected_chromedriver import Chrome
+
 from fake_useragent import UserAgent
+
+
+
+
+
 
 from bs4 import BeautifulSoup
 
@@ -23,7 +30,7 @@ def chromdriver():
     options.add_argument(f"User-Agent={useragent}")
     options.add_argument("--disable-blink-features=AutomationControlled")
 
-    driver = webdriver.Chrome(options=options)
+    driver = Chrome(options=options)
     driver.maximize_window()
     # driver.set_page_load_timeout(15)
 
@@ -37,7 +44,7 @@ def chromdriver():
         driver.quit()
 
 def undetected_chromdriver():
-    driver = Chrome()
+    driver = undetectedChrome()
     driver.maximize_window()
 
     try:
@@ -88,7 +95,7 @@ def undetected_chromdriver_cloudflare():
     # options.add_experimental_option('useAutomationExtension', False)
 
     service = Service()
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = Chrome(service=service, options=options)
 
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
         'source': '''
@@ -110,6 +117,32 @@ def undetected_chromdriver_cloudflare():
         driver.close()
         driver.quit()
 
+def init_chromdriver(headless_mode=False):
+    if headless_mode:
+        options = Options()
+        options.add_argument(
+            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--headless=new")
+        driver = Chrome(options=options)
+        driver.implicitly_wait(15)
+    else:
+        driver = Chrome()
+        driver.maximize_window()
+        driver.implicitly_wait(15)
+    return driver
+
+def init_undetected_chromdriver(headless_mode=False):
+    if headless_mode:
+        options = ChromeOptions()
+        options.add_argument('--headless')
+        driver = undetectedChrome(options=options)
+        driver.implicitly_wait(15)
+    else:
+        driver = undetectedChrome()
+        driver.maximize_window()
+        driver.implicitly_wait(15)
+    return driver
 
 def main():
     # chromdriver()
