@@ -16,8 +16,8 @@ from pandas import read_excel
 
 from data.data import category_data_list
 # from data.products.products_data_list_Женщины import products_data_list
-# from functions import get_colors_format
-from functions import get_sizes_format
+# from functions import colors_format
+from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
 from functions import get_model_height
@@ -337,9 +337,9 @@ def get_products_data(products_new_data_list: list) -> None:
                             if subcategory_name == 'Обувь':
                                 size_rus = size_eur
                             elif size_eur.isdigit():
-                                size_rus = get_sizes_format(format='digit', gender=category_name, size_eur=size_eur)
+                                size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
                             elif not size_eur.isdigit():
-                                size_rus = get_sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
+                                size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
                             else:
                                 size_rus = size_eur
                         else:

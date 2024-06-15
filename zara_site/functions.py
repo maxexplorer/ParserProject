@@ -751,7 +751,6 @@ def colors_format_en(value: str) -> str:
         color = 'малиновый'
     else:
         color = value
-
     return color
 
 
