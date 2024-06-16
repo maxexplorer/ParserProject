@@ -167,7 +167,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: dict, ) -> None:
+def get_products_data(products_data_list: list[dict]) -> None:
     processed_urls = []
 
     options = Options()
@@ -492,7 +492,7 @@ def save_excel(data: list) -> None:
 def main():
     # get_category_urls(url=url, headers=headers)
     get_product_urls(category_data_list=category_data_list, headers=headers)
-    # get_products_data(products_data_list=products_data_list)
+    get_products_data(products_data_list=products_data_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

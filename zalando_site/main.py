@@ -21,7 +21,6 @@ from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
 
-
 start_time = datetime.now()
 
 rub = get_exchange_rate()
@@ -33,7 +32,8 @@ headers = {
                   '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 }
 
-def init_chromedriver(headless_mode=False):
+
+def init_chromedriver(headless_mode: bool = False) -> Chrome:
     if headless_mode:
         options = Options()
         options.add_argument(
@@ -47,6 +47,7 @@ def init_chromedriver(headless_mode=False):
         driver.maximize_window()
         driver.implicitly_wait(15)
     return driver
+
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
@@ -136,11 +137,12 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                         print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                         for page in range(1, pages + 1):
-                            # for page in range(1, 2):
+                        # for page in range(1, 2):
                             page_product_url = f"{category_url}?p={page}"
                             try:
-                                time.sleep(1)
                                 driver.get(url=page_product_url)
+                                driver.execute_script("window.scrollTo(0, 4000);")
+                                time.sleep(1)
                                 html = driver.page_source
                             except Exception as ex:
                                 print(f"{page_product_url} - {ex}")
@@ -152,7 +154,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                             soup = BeautifulSoup(html, 'lxml')
 
                             try:
-                                product_items = soup.find_all('div', class_='_5qdMrS w8MdNG cYylcv BaerYO _75qWlu iOzucJ JT3_zV _Qe9k6')
+                                product_items = soup.find_all('div',
+                                                              class_='_5qdMrS w8MdNG cYylcv BaerYO _75qWlu iOzucJ JT3_zV _Qe9k6')
                                 for product_item in product_items:
                                     try:
                                         product_url = product_item.find('a').get('href')
@@ -164,7 +167,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                             except Exception as ex:
                                 print(ex)
 
-                            print(f'Обработано: {page}/{pages} страниц')
+
+                            print(f'Обработано: {page}/{pages} страниц!')
 
                         products_data_list.append(
                             {
@@ -172,13 +176,14 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                             }
                         )
 
-                        print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
+                        print(
+                            f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-                if not os.path.exists('data/products1'):
-                    os.makedirs(f'data/products1')
-
-                with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-                    print(products_data_list, file=file, sep='\n')
+                # if not os.path.exists('data'):
+                #     os.makedirs(f'data')
+                #
+                # with open(f'data/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
+                #     print(products_data_list, file=file, sep='\n')
 
             with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
                 print(*url_products_set, file=file, sep='\n')
@@ -193,10 +198,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: dict, ) -> None:
+def get_products_data(products_data_list: list[dict]) -> None:
     processed_urls = []
-
-
 
     with Session() as session:
         for dict_item in products_data_list:
@@ -441,7 +444,7 @@ def get_products_data(products_data_list: dict, ) -> None:
                                 'Серия в одежде и обуви': None,
                                 'Материал': material,
                                 'Состав материала': composition,
-                                # 'Материал подклада/внутренней отделки': None,
+                                'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
                                 'Диапазон температур, °С': None,
@@ -483,12 +486,6 @@ def get_products_data(products_data_list: dict, ) -> None:
 
             save_excel(data=result_data)
 
-    except Exception as ex:
-        print(ex)
-    finally:
-        driver.close()
-        driver.quit()
-
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
@@ -519,7 +516,7 @@ def save_excel(data: list) -> None:
 def main():
     brand = 'GAP'
     # get_category_urls(url="https://en.zalando.de/mens-clothing/gap/", headers=headers)
-    get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand)
+    products_data_list = get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand)
     # get_products_data(products_data_list=products_data_list)
 
     execution_time = datetime.now() - start_time
