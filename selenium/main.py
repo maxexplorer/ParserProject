@@ -16,16 +16,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 
 
-
-
-
-
-from bs4 import BeautifulSoup
-
-
 useragent = UserAgent().random
 
-def chromdriver():
+def chromedriver():
     options = Options()
     options.add_argument(f"User-Agent={useragent}")
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -43,7 +36,7 @@ def chromdriver():
         driver.close()
         driver.quit()
 
-def undetected_chromdriver():
+def undetected_chromedriver():
     driver = undetectedChrome()
     driver.maximize_window()
 
@@ -82,7 +75,7 @@ def undetected_chromdriver():
         driver.quit()
 
 
-def undetected_chromdriver_cloudflare():
+def undetected_chromedriver_cloudflare():
     # options = webdriver.ChromeOptions()
     # is equivalent to
     options = Options()
@@ -117,7 +110,7 @@ def undetected_chromdriver_cloudflare():
         driver.close()
         driver.quit()
 
-def init_chromdriver(headless_mode=False):
+def init_chromedriver(headless_mode=False):
     if headless_mode:
         options = Options()
         options.add_argument(
@@ -132,7 +125,7 @@ def init_chromdriver(headless_mode=False):
         driver.implicitly_wait(15)
     return driver
 
-def init_undetected_chromdriver(headless_mode=False):
+def init_undetected_chromedriver(headless_mode=False):
     if headless_mode:
         options = ChromeOptions()
         options.add_argument('--headless')
@@ -146,7 +139,7 @@ def init_undetected_chromdriver(headless_mode=False):
 
 def main():
     # chromdriver()
-    undetected_chromdriver()
+    undetected_chromedriver()
 
 
 if __name__ == '__main__':

@@ -20,7 +20,7 @@ from functions import colors_format
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
-from functions import init_chromdriver
+
 
 start_time = datetime.now()
 
@@ -33,7 +33,7 @@ headers = {
                   '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 }
 
-def init_chromdriver(headless_mode=False):
+def init_chromedriver(headless_mode=False):
     if headless_mode:
         options = Options()
         options.add_argument(
