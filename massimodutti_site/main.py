@@ -165,6 +165,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                     f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/productsArray',
                     params=params,
                     headers=headers,
+                    timeout=60
                 )
 
                 if response.status_code != 200:

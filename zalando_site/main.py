@@ -113,7 +113,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 def get_product_urls(category_data_list: list, headers: dict, brand: str) -> list[dict]:
     url_products_set = set()
 
-    driver = init_chromdriver(headless_mode=True)
+    driver = init_chromedriver(headless_mode=True)
 
     try:
         with Session() as session:
@@ -150,9 +150,6 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                                 continue
 
                             soup = BeautifulSoup(html, 'lxml')
-
-                            # with open('data/index.html', 'w', encoding='utf-8') as file:
-                            #     file.write(soup.prettify())
 
                             try:
                                 product_items = soup.find_all('div', class_='_5qdMrS w8MdNG cYylcv BaerYO _75qWlu iOzucJ JT3_zV _Qe9k6')
@@ -199,16 +196,9 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
 def get_products_data(products_data_list: dict, ) -> None:
     processed_urls = []
 
-    options = Options()
 
-    options.add_argument(
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless=new")
 
-    driver = Chrome(options=options)
-
-    try:
+    with Session() as session:
         for dict_item in products_data_list:
             result_data = []
             product_urls = []
@@ -227,8 +217,12 @@ def get_products_data(products_data_list: dict, ) -> None:
             for i, product_url in enumerate(product_urls, 1):
                 try:
                     time.sleep(1)
-                    driver.get(product_url)
-                    html = driver.page_source
+                    response = session.get(url=product_url, timeout=60)
+                    if response.status_code != 200:
+                        print(f'product_url: {product_url} status_code: {response.status_code}')
+                        continue
+                    html = response.text
+
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
                     continue
@@ -236,9 +230,9 @@ def get_products_data(products_data_list: dict, ) -> None:
                 if not html:
                     continue
 
-                # with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
-                #     file.write(html)
-                #
+                with open('data/index.html', 'w', encoding='utf-8') as file:
+                    file.write(html)
+
                 # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
                 #     html = file.read()
 
