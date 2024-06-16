@@ -33,6 +33,20 @@ headers = {
                   '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
 }
 
+def init_chromdriver(headless_mode=False):
+    if headless_mode:
+        options = Options()
+        options.add_argument(
+            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--headless=new")
+        driver = Chrome(options=options)
+        driver.implicitly_wait(15)
+    else:
+        driver = Chrome()
+        driver.maximize_window()
+        driver.implicitly_wait(15)
+    return driver
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
@@ -126,7 +140,7 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str) -> lis
                             page_product_url = f"{category_url}?p={page}"
                             try:
                                 time.sleep(1)
-                                driver.get(page_product_url)
+                                driver.get(url=page_product_url)
                                 html = driver.page_source
                             except Exception as ex:
                                 print(f"{page_product_url} - {ex}")
