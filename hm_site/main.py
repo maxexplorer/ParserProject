@@ -456,7 +456,7 @@ def get_products_data(products_data_list: list[dict]) -> None:
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 
-            save_excel(data=result_data)
+            save_excel(data=result_data, brand=brand, category_name=category_name)
 
     except Exception as ex:
         print(ex)
@@ -466,17 +466,17 @@ def get_products_data(products_data_list: list[dict]) -> None:
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
+def save_excel(data: list, brand: str, category_name: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data.xlsx'):
+    if not os.path.exists(f'results/result_data_{brand}_{category_name}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{brand}_{category_name}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -484,7 +484,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
