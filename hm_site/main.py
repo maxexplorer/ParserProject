@@ -15,7 +15,6 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list
-from data.products.products_data_list_Женщины import products_data_list
 from functions import colors_format
 from functions import sizes_format
 from functions import translator
