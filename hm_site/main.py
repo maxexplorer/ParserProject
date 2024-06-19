@@ -16,7 +16,7 @@ from pandas import read_excel
 
 from data.data import category_data_list
 from data.products.products_data_list_Женщины import products_data_list
-# from functions import get_colors_format
+from functions import colors_format
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
@@ -95,7 +95,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
+def get_product_urls(category_data_list: list, headers: dict) -> None:
     url_products_set = set()
 
     with Session() as session:
@@ -160,10 +160,12 @@ def get_product_urls(category_data_list: list, headers: dict) -> list[dict]:
             # with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
             #     print(products_data_list, file=file, sep='\n')
 
+            get_products_data(products_data_list=products_data_list)
+
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')
 
-    return products_data_list
+
 
 
 # Функция получения данных товаров
@@ -243,7 +245,7 @@ def get_products_data(products_data_list: list[dict]) -> None:
                     for color_item in color_items:
                         if color_item.find('a').get('aria-checked') == 'true':
                             color_original = color_item.find('a').get('title')
-                    color_ru = translator(color_original)
+                    color_ru = colors_format(value=color_original)
                 except Exception:
                     color_original = None
                     color_ru = None
@@ -492,7 +494,6 @@ def save_excel(data: list) -> None:
 def main():
     # get_category_urls(url=url, headers=headers)
     get_product_urls(category_data_list=category_data_list, headers=headers)
-    get_products_data(products_data_list=products_data_list)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
