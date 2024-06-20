@@ -19,8 +19,7 @@ from functions import colors_format
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
-from functions import get_model_height
-from functions import get_model_size
+
 
 start_time = datetime.now()
 
@@ -297,8 +296,6 @@ def get_products_data(products_data_list: list[dict]) -> None:
                     model_size_description = raw_description[0].find('dl').find(
                         string=re.compile('Größe des Models')).find_next().text.split('cm')
                 except Exception:
-                    model_height = get_model_height(category_name=category_name)
-                    model_size = get_model_size(category_name=category_name)
                     model_size_description = None
 
                 if model_size_description:

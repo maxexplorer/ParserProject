@@ -466,28 +466,6 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
     return size_rus
 
 
-def get_model_height(category_name: str) -> str:
-    if category_name == 'Женщины':
-        model_height = '175'
-    elif category_name == 'Мужчины':
-        model_height = '180'
-    else:
-        model_height = None
-
-    return model_height
-
-
-def get_model_size(category_name: str) -> str:
-    if category_name == 'Женщины':
-        model_size = 'S'
-    elif category_name == 'Мужчины':
-        model_size = 'M'
-    else:
-        model_size = None
-
-    return model_size
-
-
 # Функция перевода текста
 def translator(text: str) -> str:
     try:
