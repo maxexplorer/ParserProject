@@ -166,6 +166,7 @@ def get_product_urls(category_data_list: list, headers: dict) -> None:
 
 # Функция получения данных товаров
 def get_products_data(products_data_list: list[dict]) -> None:
+    result_data = []
     processed_urls = []
 
     options = Options()
@@ -181,7 +182,6 @@ def get_products_data(products_data_list: list[dict]) -> None:
 
     try:
         for dict_item in products_data_list:
-            result_data = []
             product_urls = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
