@@ -153,18 +153,16 @@ def get_product_urls(category_data_list: list, headers: dict) -> None:
 
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-            # if not os.path.exists('data/products1'):
-            #     os.makedirs(f'data/products1')
-            #
-            # with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-            #     print(products_data_list, file=file, sep='\n')
+                    # if not os.path.exists('data/products1'):
+                    #     os.makedirs(f'data/products1')
+                    #
+                    # with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
+                    #     print(products_data_list, file=file, sep='\n')
 
-            get_products_data(products_data_list=products_data_list)
+                    get_products_data(products_data_list=products_data_list)
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')
-
-
 
 
 # Функция получения данных товаров
@@ -196,6 +194,8 @@ def get_products_data(products_data_list: list[dict]) -> None:
             subcategory_name = key[1]
 
             count_products = len(product_urls)
+
+            brand = 'H&M'
 
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
@@ -339,8 +339,6 @@ def get_products_data(products_data_list: list[dict]) -> None:
                 except Exception:
                     care = None
 
-                brand = 'H&M'
-
                 try:
                     sizes_items = inner_data.find('hm-size-selector', class_='size-selector').find_all('li')
 
@@ -483,7 +481,8 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='a',
+                     if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
