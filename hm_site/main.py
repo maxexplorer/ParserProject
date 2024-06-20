@@ -99,8 +99,8 @@ def get_product_urls(category_data_list: list, headers: dict) -> None:
     with Session() as session:
         for category_dict in category_data_list:
             for category_name, category_list in category_dict.items():
-                products_data_list = []
                 for product_tuple in category_list:
+                    products_data_list = []
                     product_urls = []
                     subcategory_name, category_url = product_tuple
 
