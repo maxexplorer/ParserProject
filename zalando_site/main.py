@@ -34,20 +34,18 @@ headers = {
 
 
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
+    options = Options()
+    options.add_argument(
+        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+    options.add_argument("--disable-blink-features=AutomationControlled")
     if headless_mode:
-        options = Options()
-        options.add_argument(
-            'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
-        options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--headless=new")
-        driver = Chrome(options=options)
-        driver.implicitly_wait(15)
-    else:
-        driver = Chrome()
+    driver = Chrome(options=options)
+    if not headless_mode:
         driver.maximize_window()
-        driver.implicitly_wait(15)
-    return driver
+    driver.implicitly_wait(15)
 
+    return driver
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
