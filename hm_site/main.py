@@ -495,8 +495,6 @@ def main():
         driver.close()
         driver.quit()
 
-
-
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
