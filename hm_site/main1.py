@@ -36,6 +36,7 @@ headers = {
                   'Chrome/125.0.0.0 Safari/537.36'
 }
 
+
 # Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
     options = Options()
@@ -137,7 +138,6 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
                             print(ex)
 
                         print(f'Обработано: {page}/{pages} страниц')
-
 
                     products_data_list.append(
                         {
@@ -437,10 +437,10 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
 
         save_excel(data=result_data, brand=brand, category_name=category_name, species='products')
 
+
 # Функция получения данных товаров
 def get_size_data(products_data_list: list, driver: Chrome) -> None:
     processed_urls = []
-
 
     for dict_item in products_data_list:
         result_data = []
@@ -539,7 +539,8 @@ def save_excel(data: list, brand: str, category_name: str, species: str) -> None
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{brand}_{category_name}_{species}.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter(f'results/result_data_{brand}_{category_name}_{species}.xlsx', mode='a',
+                     if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
@@ -551,9 +552,8 @@ def main():
     try:
         products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers, driver=driver)
 
-        count_new_products = len(products_new_data_list)
-        if count_new_products:
-            print(f'Появились  новые товары: {count_new_products} шт.!')
+        if products_new_data_list:
+            print(f'Появились  новые товары!')
             value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
             if value == '1':
                 get_products_data(products_data_list=products_new_data_list, driver=driver)
@@ -562,8 +562,6 @@ def main():
     finally:
         driver.close()
         driver.quit()
-
-
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

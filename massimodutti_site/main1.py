@@ -479,9 +479,8 @@ def main():
                                                                  params=params, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size')
 
-    count_new_products = len(products_new_data_list)
-    if count_new_products:
-        print(f'Появились  новые товары: {count_new_products} шт.!')
+    if products_new_data_list:
+        print(f'Появились  новые товары!')
         value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
         if value == '1':
             get_products_array(products_data_list=products_new_data_list, headers=headers, id_region=id_region,
