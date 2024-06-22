@@ -34,6 +34,7 @@ headers = {
                   'Chrome/125.0.0.0 Safari/537.36'
 }
 
+# Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
     options = Options()
     options.add_argument(
@@ -195,10 +196,9 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
         subcategory_name = key[1]
 
         count_products = len(product_urls)
+        print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
 
         brand = 'H&M'
-
-        print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
         for i, product_url in enumerate(product_urls, 1):
             try:
                 time.sleep(1)
@@ -455,8 +455,6 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
         save_excel(data=result_data, brand=brand, category_name=category_name)
 
 
-
-
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, brand: str, category_name: str) -> None:
     if not os.path.exists('results'):
@@ -486,11 +484,11 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
 
 def main():
     # get_category_urls(url=url, headers=headers)
-    driver = Chrome()
+    driver = init_chromedriver(headless_mode=True)
     try:
         get_product_urls(category_data_list=category_data_list, headers=headers, driver=driver)
     except Exception as ex:
-        print(ex)
+        print(f'main: {ex}')
     finally:
         driver.close()
         driver.quit()
