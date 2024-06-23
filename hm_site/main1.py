@@ -97,7 +97,6 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
                     subcategory_name, category_url = product_tuple
 
                     try:
-                        time.sleep(1)
                         html = get_html(url=category_url, headers=headers, session=session)
                     except Exception as ex:
                         print(f"{category_url} - {ex}")
@@ -106,7 +105,7 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    for page in range(1, 2):
+                    for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -184,8 +183,8 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
         brand = 'H&M'
         for i, product_url in enumerate(product_urls, 1):
             try:
-                time.sleep(1)
                 driver.get(product_url)
+                time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
