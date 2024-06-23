@@ -226,15 +226,13 @@ def get_products_data(products_data_list: list[dict], brand: str, driver: Chrome
             if not html:
                 continue
 
-
-
             soup = BeautifulSoup(html, 'lxml')
 
             with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
                 file.write(soup.prettify())
 
-            # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
-            #     html = file.read()
+            with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
+                html = file.read()
 
             try:
                 id_product = product_url.split('.')[-2]
