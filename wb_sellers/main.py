@@ -91,8 +91,8 @@ def get_data_products_wb() -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
-    if not os.path.exists('results_wb'):
-        os.makedirs('results_wb')
+    if not os.path.exists('results'):
+        os.makedirs('results')
 
     if not os.path.exists(f'results/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
