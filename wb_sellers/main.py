@@ -15,9 +15,7 @@ start_time = datetime.now()
 # Функция для получения данных о наличии товаров у продавца
 def get_data_products_wb() -> None:
     result_list = []
-    exception_list = []
     batch_size = 100
-    batch_exception = 10
     # Размер пакета для записи
     processed_count = 0  # Счетчик обработанных URL
 
@@ -57,9 +55,9 @@ def get_data_products_wb() -> None:
 
                 if response.status_code != 200:
                     print(f'status_code: {response.status_code}')
-                    if not os.path.exists('data_wb'):
-                        os.makedirs('data_wb')
-                    with open('data_wb/exceptions_list.txt', 'a', encoding='utf-8') as file:
+                    if not os.path.exists('data'):
+                        os.makedirs('data')
+                    with open('data/exceptions_list.txt', 'a', encoding='utf-8') as file:
                         file.write(f'{url}\n')
                     continue
 
@@ -96,13 +94,13 @@ def save_excel(data: list) -> None:
     if not os.path.exists('results_wb'):
         os.makedirs('results_wb')
 
-    if not os.path.exists(f'results_wb/result_data.xlsx'):
+    if not os.path.exists(f'results/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results_wb/result_data.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results_wb/result_data.xlsx', sheet_name='Sellers')
+    df = read_excel(f'results/result_data.xlsx', sheet_name='Sellers')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -110,7 +108,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results_wb/result_data.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
                            sheet_name='Sellers',
