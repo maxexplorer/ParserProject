@@ -25,7 +25,6 @@ def get_data_products_wb() -> None:
     with Session() as session:
         for i in range(1, 4_000_001):
             url = f"https://www.wildberries.ru/seller/{i}"
-            id_seller = url.split('/')[-1]
             # time.sleep(1)
 
             headers = {
@@ -49,7 +48,7 @@ def get_data_products_wb() -> None:
                 'dest': '-5551776',
                 'sort': 'popular',
                 'spp': '30',
-                'supplier': id_seller,
+                'supplier': i,
             }
 
             try:
@@ -58,7 +57,10 @@ def get_data_products_wb() -> None:
 
                 if response.status_code != 200:
                     print(f'status_code: {response.status_code}')
-                    exception_list.append(url)
+                    if not os.path.exists('data_wb'):
+                        os.makedirs('data_wb')
+                    with open('data_wb/exceptions_list.txt', 'a', encoding='utf-8') as file:
+                        file.write(f'{url}\n')
                     continue
 
                 json_data = response.json()
@@ -84,11 +86,6 @@ def get_data_products_wb() -> None:
                 save_excel(result_list)
                 result_list = []  # Очищаем список для следующей партии
 
-            if len(exception_list) >= batch_exception:
-                with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
-                    print(*exception_list, file=file, sep='\n')
-                exception_list = []
-
     # Записываем оставшиеся данные в Excel
     if result_list:
         save_excel(result_list)
@@ -96,16 +93,16 @@ def get_data_products_wb() -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    if not os.path.exists('results_wb'):
+        os.makedirs('results_wb')
 
-    if not os.path.exists(f'results/result_data.xlsx'):
+    if not os.path.exists(f'results_wb/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results_wb/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data.xlsx', sheet_name='Sellers')
+    df = read_excel(f'results_wb/result_data.xlsx', sheet_name='Sellers')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -113,7 +110,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data.xlsx', mode='a',
+    with ExcelWriter(f'results_wb/result_data.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
                            sheet_name='Sellers',
