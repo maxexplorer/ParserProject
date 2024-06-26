@@ -2,6 +2,7 @@ import os
 import re
 import time
 from datetime import datetime
+import json
 
 from requests import Session
 
@@ -188,36 +189,52 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict], brand: str, driver: Chrome) -> None:
+def get_products_data(products_data_list: list[dict]=None, brand: str=None, driver: Chrome=None) -> None:
     result_data = []
     processed_urls = []
 
 
-    for dict_item in products_data_list:
-        product_urls = []
-        key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+    # for dict_item in products_data_list:
+    for dict_item in range(1):
+        # product_urls = []
+        # key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+        #
+        # for product_url in values:
+        #     if product_url not in processed_urls:
+        #         processed_urls.append(product_url)
+        #         product_urls.append(product_url)
+        # category_name = key[0]
+        # subcategory_name = key[1]
+        #
+        # count_products = len(product_urls)
 
-        for product_url in values:
-            if product_url not in processed_urls:
-                processed_urls.append(product_url)
-                product_urls.append(product_url)
-        category_name = key[0]
-        subcategory_name = key[1]
-
-        count_products = len(product_urls)
-
-        print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
-        for i, product_url in enumerate(product_urls, 1):
+        # print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
+        # for i, product_url in enumerate(product_urls, 1):
+        for i, product_url in enumerate(["https://en.zalando.de/gap-logo-dress-jersey-dress-cabana-blue-gp021c0qs-k11.html"], 1):
             try:
-                driver.get(product_url)
-                time.sleep(1)
-                button_size = driver.find_element(By.ID, 'picker-trigger')
 
-                button_size.click()
+                with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
+                    html = file.read()
 
-                WebDriverWait(driver, 5).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name="size-picker"]')))
-                html = driver.page_source
+                # with Session() as session:
+                #     html = get_html(url=product_url, headers=headers, session=session)
+                #
+                #     soup = BeautifulSoup(html, 'lxml')
+                #
+                #     with open('data/index_selenium.html', 'w', encoding='utf-8') as file:
+                #         file.write(soup.prettify())
+                # driver.get(product_url)
+                # time.sleep(1)
+                # button_size = driver.find_element(By.ID, 'picker-trigger')
+                #
+                # button_size.click()
+                #
+                # WebDriverWait(driver, 5).until(
+                #     EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name="size-picker"]')))
+                #
+                # driver.execute_script("window.scrollTo(0, 4000);")
+                #
+                # html = driver.page_source
 
             except Exception as ex:
                 print(f"{product_url} - {ex}")
@@ -228,22 +245,34 @@ def get_products_data(products_data_list: list[dict], brand: str, driver: Chrome
 
             soup = BeautifulSoup(html, 'lxml')
 
-            with open('../test/data/index_selenium.html', 'w', encoding='utf-8') as file:
-                file.write(soup.prettify())
+            try:
+                # json_data = soup.find('script', id='re-ph-b8wuw').text
+                # Регулярное выражение для извлечения текста, начиная с {"cache"
+                pattern = r'{"cache".*'
 
-            # with open('data/index_selenium.html', 'r', encoding='utf-8') as file:
-            #     html = file.read()
+                # Найти совпадение в тексте
+                match = re.search(pattern, html)
+
+                if match:
+                    extracted_text = match.group(0).rstrip(');')
+                    print(extracted_text)
+
+                    try:
+                        # Преобразуем строку JSON в словарь
+                        data_dict = json.loads(extracted_text)
+                        print("Data dictionary:", data_dict)
+                    except json.JSONDecodeError as ex:
+                        print("Ошибка декодирования JSON:", ex)
+
+                else:
+                    print("Совпадение не найдено")
+            except Exception as ex:
+                print(ex)
 
             try:
                 id_product = product_url.split('.')[-2]
             except Exception:
                 id_product = None
-
-            try:
-                inner_data = soup.find('div', class_='inner')
-            except Exception as ex:
-                print(f'inner: {product_url} - {ex}')
-                continue
 
             try:
                 name_product_original = inner_data.find('hm-product-name').text.strip()
@@ -319,8 +348,6 @@ def get_products_data(products_data_list: list[dict], brand: str, driver: Chrome
                 model_size_description = raw_description[0].find('dl').find(
                     string=re.compile('Größe des Models')).find_next().text.split('cm')
             except Exception:
-                model_height = get_model_height(category_name=category_name)
-                model_size = get_model_size(category_name=category_name)
                 model_size_description = None
 
             if model_size_description:
@@ -510,14 +537,16 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
 def main():
     brand = 'GAP'
     # get_category_urls(url="https://en.zalando.de/mens-clothing/gap/", headers=headers)
-    driver = init_chromedriver(headless_mode=True)
+    # driver = init_chromedriver(headless_mode=True)
     try:
-        get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
+        # get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
+        get_products_data()
     except Exception as ex:
         print(f'main: {ex}')
     finally:
-        driver.close()
-        driver.quit()
+        pass
+        # driver.close()
+        # driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
