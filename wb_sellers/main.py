@@ -1,11 +1,8 @@
 import os
-import time
 from datetime import datetime
-from random import randint
 
 from requests import Session
 
-import pandas as pd
 from pandas import DataFrame, ExcelWriter
 from pandas import read_excel
 
