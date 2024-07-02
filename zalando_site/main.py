@@ -8,9 +8,6 @@ from requests import Session
 
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 from bs4 import BeautifulSoup
 
@@ -120,6 +117,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
     with Session() as session:
         for brand_dict in category_data_list:
             category_dict = brand_dict.get(brand)
+            if category_dict is None:
+                continue
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
@@ -135,8 +134,7 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                     pages = get_pages(html=html)
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    # for page in range(1, pages + 1):
-                    for page in range(1, 2):
+                    for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?p={page}"
                         try:
                             driver.get(url=page_product_url)
@@ -182,35 +180,34 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                     # with open(f'data/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
                     #     print(products_data_list, file=file, sep='\n')
 
-                    get_products_data(products_data_list=products_data_list, brand=brand, driver=driver)
+                    get_products_data(products_data_list=products_data_list)
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict]=None, brand: str=None, driver: Chrome=None) -> None:
+def get_products_data(products_data_list: list[dict] = None) -> None:
     result_data = []
     processed_urls = []
 
     with Session() as session:
-        # for dict_item in products_data_list:
-        for dict_item in range(1):
-            # product_urls = []
-            # key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
-            #
-            # for product_url in values:
-            #     if product_url not in processed_urls:
-            #         processed_urls.append(product_url)
-            #         product_urls.append(product_url)
-            # category_name = key[0]
-            # subcategory_name = key[1]
-            #
-            # count_products = len(product_urls)
-            #
-            # print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
-            # for i, product_url in enumerate(product_urls, 1):
-            for i, product_url in enumerate(["https://en.zalando.de/gap-logo-dress-jersey-dress-cabana-blue-gp021c0qs-k11.html"], 1):
+        for dict_item in products_data_list:
+            product_urls = []
+            key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+
+            for product_url in values:
+                if product_url not in processed_urls:
+                    processed_urls.append(product_url)
+                    product_urls.append(product_url)
+            category_name = key[0]
+            subcategory_name = key[1]
+
+            count_products = len(product_urls)
+
+            print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
+            for i, product_url in enumerate(product_urls, 1):
+                image_urls_list = []
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -219,8 +216,6 @@ def get_products_data(products_data_list: list[dict]=None, brand: str=None, driv
 
                 if not html:
                     continue
-
-                soup = BeautifulSoup(html, 'lxml')
 
                 try:
                     # Регулярное выражение для извлечения текста
@@ -242,322 +237,266 @@ def get_products_data(products_data_list: list[dict]=None, brand: str=None, driv
                 except Exception as ex:
                     print(f'regular expression: {ex}')
 
-                data_dict = data_dict['cache']
-
                 try:
-                    for key_detail in data_dict:
-                        # Обработка detail_items
-                        try:
-                            product_data = data_dict[key_detail]['data']['product']
-                            name_product = product_data['name']
-                            sku = product_data['sku']
-
-                            attribute_items = product_data['attributeSuperClusters']
-                            for attribute_item in attribute_items:
-                                try:
-                                    if attribute_item['label'] == 'Details':
-                                        detail_items = attribute_item['clusters']
-
-                                        for detail_item in detail_items:
-                                            attribute_details = detail_item['attributes']
-                                            for detail in attribute_details:
-                                                print(f"{detail['key']}: {detail['value']}")
-
-                                except Exception:
-                                    continue
-                        except Exception:
-                            continue
-
-                #     for key_size in data_dict:
-                #         # Обработка size_items
-                #         try:
-                #             size_items = data_dict[key_size]['data']['context']['simples']
-                #             for size_item in size_items:
-                #                 try:
-                #                     size = size_item['size']
-                #                 except KeyError:
-                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'size'
-                #
-                #                 try:
-                #                     status_size = size_item['offer']['stock']['quantity']
-                #                     print(f'{size}: {status_size}')
-                #                 except KeyError:
-                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'quantity'
-                #
-                #         except (KeyError, TypeError):
-                #             continue  # Пропускаем текущую итерацию, если нет ключа 'simples'
-                #
-                #     for key_media in data_dict:
-                #         image_urls_list = []
-                #         # Обработка media_items
-                #         try:
-                #             media_items = data_dict[key_media]['data']['product']['media']
-                #             for media_item in media_items:
-                #                 try:
-                #                     image_url = media_item['uri'].split('?')[0]
-                #                     if image_url not in image_urls_list:
-                #                         image_urls_list.append(image_url)
-                #                 except KeyError:
-                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'uri'
-                #                 except AttributeError:
-                #                     continue  # Пропускаем текущую итерацию, если нет атрибута 'split'
-                #         except (KeyError, TypeError):
-                            continue  # Пропускаем текущую итерацию, если нет ключа 'media'
+                    data_dict = data_dict['cache']
                 except Exception as ex:
-                    print(f'data_dict: {product_url}: {ex}')
+                    print(f'data_dict: {ex}')
+                    continue
 
-                # print(image_urls_list)
+                if category_name == 'Женщины':
+                    gender = 'женский'
+                elif category_name == 'Мужчины':
+                    gender = 'мужской'
+                else:
+                    gender = category_name
 
-                # try:
-                #     id_product = product_url.split('.')[-2]
-                # except Exception:
-                #     id_product = None
-        #
-        #     try:
-        #         name_product_original = inner_data.find('hm-product-name').text.strip()
-        #         name_product_ru = translator(name_product_original)
-        #         name_product = f'H&M {name_product_ru}'
-        #     except Exception:
-        #         name_product = None
-        #
-        #     try:
-        #         price = int(''.join(
-        #             i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
-        #             i.isdigit())) / 100
-        #         price = round(price * rub)
-        #     except Exception:
-        #         price = 0
-        #
-        #     try:
-        #         color_original = None
-        #         color_items = inner_data.find('div', class_='mini-slider').find_all('li')
-        #         for color_item in color_items:
-        #             if color_item.find('a').get('aria-checked') == 'true':
-        #                 color_original = color_item.find('a').get('title')
-        #         color_ru = translator(color_original)
-        #     except Exception:
-        #         color_original = None
-        #         color_ru = None
-        #
-        #     try:
-        #         main_image = soup.find('figure',
-        #                                class_='pdp-image product-detail-images product-detail-main-image').find(
-        #             'img').get('src')
-        #         main_image_url = 'https:' + main_image
-        #     except Exception:
-        #         main_image_url = None
-        #
-        #     try:
-        #         additional_images_list = []
-        #         additional_images_items = soup.find_all('figure', class_='pdp-secondary-image pdp-image')
-        #
-        #         for additional_item in additional_images_items:
-        #             additional_image = additional_item.find('img').get('src')
-        #             additional_image_url = 'https:' + additional_image
-        #             additional_images_list.append(additional_image_url)
-        #         additional_images = '; '.join(additional_images_list)
-        #     except Exception:
-        #         additional_images = []
-        #
-        #     try:
-        #         if category_name == 'Женщины':
-        #             gender = 'женский'
-        #         elif category_name == 'Мужчины':
-        #             gender = 'мужской'
-        #         else:
-        #             gender = category_name
-        #     except Exception:
-        #         gender = None
-        #
-        #     try:
-        #         raw_description = inner_data.find('div', class_='details parbase').find_all('div', class_='af08f4')
-        #     except Exception:
-        #         raw_description = []
-        #
-        #     try:
-        #         description = raw_description[0].find('p').text
-        #         description = translator(description)
-        #     except Exception:
-        #         description = None
-        #
-        #     model_height = None
-        #     model_size = None
-        #
-        #     try:
-        #         model_size_description = raw_description[0].find('dl').find(
-        #             string=re.compile('Größe des Models')).find_next().text.split('cm')
-        #     except Exception:
-        #         model_size_description = None
-        #
-        #     if model_size_description:
-        #         try:
-        #             model_height = model_size_description[0].split()[-1]
-        #         except Exception:
-        #             model_height = None
-        #
-        #         try:
-        #             model_size = model_size_description[-1].split()[-1].replace('.', '').replace(')', '')
-        #         except Exception:
-        #             model_size = None
-        #
-        #     try:
-        #         composition_items = raw_description[1].find('ul').find_all('li')
-        #     except Exception:
-        #         composition_items = []
-        #
-        #     try:
-        #         composition_outer_shell = composition_items[0].find('p').text
-        #         composition = translator(composition_outer_shell)
-        #         material_outer_shell = composition_outer_shell.split()[0]
-        #         material = translator(material_outer_shell)
-        #     except Exception:
-        #         composition = None
-        #         material = None
-        #
-        #     # try:
-        #     #     composition_lining = composition_items[1].find('p').text
-        #     #     material_lining = composition_lining.split()[0]
-        #     # except Exception:
-        #     #     composition_lining = None
-        #     #     material_lining = None
-        #
-        #     try:
-        #         care = raw_description[2].find('ul').text.strip()
-        #         care = translator(care)
-        #     except Exception:
-        #         care = None
-        #
-        #     brand = 'H&M'
-        #
-        #     try:
-        #         sizes_items = inner_data.find('hm-size-selector', class_='size-selector').find_all('li')
-        #
-        #         for size_item in sizes_items:
-        #             size_eur = size_item.find('input').get('id')
-        #
-        #             if size_item.find('div').get('aria-disabled') == 'true':
-        #                 status_size = 'нет в наличии'
-        #             else:
-        #                 status_size = 'в наличии'
-        #
-        #             if category_name == 'Женщины' or category_name == 'Мужчины':
-        #                 if subcategory_name == 'Обувь':
-        #                     size_rus = size_eur
-        #                 elif size_eur.isdigit():
-        #                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
-        #                 elif not size_eur.isdigit():
-        #                     size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
-        #                 else:
-        #                     size_rus = size_eur
-        #             else:
-        #                 if size_eur.isdigit():
-        #                     size_rus = size_eur
-        #                 else:
-        #                     try:
-        #                         size_rus = size_eur.split()[0]
-        #                     except Exception:
-        #                         size_rus = size_eur
-        #
-        #             id_product_size = f"{id_product}/{size_eur}"
-        #
-        #             result_data.append(
-        #                 {
-        #                     '№': None,
-        #                     'Артикул': id_product_size,
-        #                     'Название товара': name_product,
-        #                     'Цена, руб.*': price,
-        #                     'Цена до скидки, руб.': None,
-        #                     'НДС, %*': None,
-        #                     'Включить продвижение': None,
-        #                     'Ozon ID': id_product_size,
-        #                     'Штрихкод (Серийный номер / EAN)': None,
-        #                     'Вес в упаковке, г*': None,
-        #                     'Ширина упаковки, мм*': None,
-        #                     'Высота упаковки, мм*': None,
-        #                     'Длина упаковки, мм*': None,
-        #                     'Ссылка на главное фото*': main_image_url,
-        #                     'Ссылки на дополнительные фото': additional_images,
-        #                     'Ссылки на фото 360': None,
-        #                     'Артикул фото': None,
-        #                     'Бренд в одежде и обуви*': brand,
-        #                     'Объединить на одной карточке*': id_product,
-        #                     'Цвет товара*': color_ru,
-        #                     'Российский размер*': size_rus,
-        #                     'Размер производителя': size_eur,
-        #                     'Статус наличия': status_size,
-        #                     'Название цвета': color_original,
-        #                     'Тип*': subcategory_name,
-        #                     'Пол*': gender,
-        #                     'Размер пеленки': None,
-        #                     'ТН ВЭД коды ЕАЭС': None,
-        #                     'Ключевые слова': None,
-        #                     'Сезон': None,
-        #                     'Рост модели на фото': model_height,
-        #                     'Параметры модели на фото': None,
-        #                     'Размер товара на фото': model_size,
-        #                     'Коллекция': None,
-        #                     'Страна-изготовитель': None,
-        #                     'Вид принта': None,
-        #                     'Аннотация': description,
-        #                     'Инструкция по уходу': care,
-        #                     'Серия в одежде и обуви': None,
-        #                     'Материал': material,
-        #                     'Состав материала': composition,
-        #                     'Материал подклада/внутренней отделки': None,
-        #                     'Материал наполнителя': None,
-        #                     'Утеплитель, гр': None,
-        #                     'Диапазон температур, °С': None,
-        #                     'Стиль': None,
-        #                     'Вид спорта': None,
-        #                     'Вид одежды': None,
-        #                     'Тип застежки': None,
-        #                     'Длина рукава': None,
-        #                     'Талия': None,
-        #                     'Для беременных или новорожденных': None,
-        #                     'Тип упаковки одежды': None,
-        #                     'Количество в упаковке': None,
-        #                     'Состав комплекта': None,
-        #                     'Рост': None,
-        #                     'Длина изделия, см': None,
-        #                     'Длина подола': None,
-        #                     'Форма воротника/горловины': None,
-        #                     'Детали': None,
-        #                     'Таблица размеров JSON': None,
-        #                     'Rich-контент JSON': None,
-        #                     'Плотность, DEN': None,
-        #                     'Количество пар в упаковке': None,
-        #                     'Класс компрессии': None,
-        #                     'Персонаж': None,
-        #                     'Праздник': None,
-        #                     'Тематика карнавальных костюмов': None,
-        #                     'Признак 18+': None,
-        #                     'Назначение спецодежды': None,
-        #                     'HS-код': None,
-        #                     'Количество заводских упаковок': None,
-        #                     'Ошибка': None,
-        #                     'Предупреждение': None,
-        #                 }
-        #             )
-        #     except Exception as ex:
-        #         print(f'sizes: {product_url} - {ex}')
-        #
-        #     print(f'Обработано: {i}/{count_products} товаров!')
-        #
-        # save_excel(data=result_data, brand=brand, category_name=category_name)
+                for key_attribute in data_dict:
+                    # Обработка detail_items
+                    try:
+                        attribute_items = data_dict[key_attribute]['data']['product']['attributeSuperClusters']
+                    except Exception:
+                        continue
+                    for attribute_item in attribute_items:
+                        try:
+                            if attribute_item['id'] == 'material_care':
+                                clusters = attribute_item['clusters']
+                                for cluster in clusters:
+                                    attributes = cluster['attributes']
+                                    for attribute in attributes:
+                                        if attribute['key'] == 'Outer fabric material':
+                                            composition = attribute['value']
+                                            composition = translator(composition)
+                                            material = composition.split()[1]
+                                            material = translator(material)
+                                        if attribute['key'] == 'Care instructions':
+                                            care = attribute['value']
+                                            care = translator(care)
+                        except Exception:
+                            composition = ''
+                            material = ''
+                            care = ''
+
+                        try:
+                            if attribute_item['id'] == 'details':
+                                clusters = attribute_item['clusters']
+                                for cluster in clusters:
+                                    attributes = cluster['attributes']
+                                    description1 = '<br/> <br/>'.join(
+                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes if
+                                        attribute['key'] != 'Article number')
+                                    description1 = translator(description1)
+                        except Exception:
+                            description1 = ''
+                        try:
+                            if attribute_item['id'] == 'size_fit':
+                                clusters = attribute_item['clusters']
+                                for cluste in clusters:
+                                    attributes = cluste['attributes']
+                                    description2 = '<br/> <br/>'.join(
+                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes)
+                                    description2 = translator(description2)
+                        except Exception:
+                            description2 = ''
+
+                description = f"{description1} '<br/> <br/>' {description2}"
+
+                for key_product in data_dict:
+                    # Обработка product_items
+                    try:
+                        product_data = data_dict[key_product]['data']['product']
+                    except Exception:
+                        continue
+
+                    try:
+                        media_items = product_data['media']
+                        for media_item in media_items:
+                            image_url = media_item['uri'].split('?')[0]
+                            if image_url not in image_urls_list:
+                                image_urls_list.append(image_url)
+                        main_image = image_urls_list[0]
+                        additional_images = '; '.join(image_urls_list[1:])
+                    except Exception:
+                        continue
+                    try:
+                        name_product = product_data['name']
+                        name_product = translator(name_product)
+                    except Exception:
+                        name_product = ''
+                    try:
+                        sku = product_data['sku']
+                    except Exception:
+                        sku = ''
+                    try:
+                        brand = product_data['brand']['name']
+                    except Exception:
+                        brand = ''
+                    try:
+                        color_data = product_data['color']
+                    except Exception:
+                        color_data = {}
+                    try:
+                        color_name = color_data['name']
+                    except Exception:
+                        color_name = ''
+                    try:
+                        color_label = color_data['label']
+                        color_ru = translator(color_label)
+                    except Exception:
+                        color_ru = ''
+                    try:
+                        size_items = product_data['simples']
+                    except Exception as ex:
+                        continue
+                    for size_item in size_items:
+                        try:
+                            size_eur = size_item['size']
+                        except Exception:
+                            size_eur = ''
+                        try:
+                            status_size = size_item['offer']['stock']['quantity']
+                        except Exception:
+                            status_size = ''
+                        try:
+                            price_data = size_item['offer']['price']
+                        except Exception:
+                            price_data = {}
+                        try:
+                            price_original = int(price_data['original']) / 100
+                            price_original = round(price_original * rub)
+                        except Exception:
+                            price_original = ''
+                        try:
+                            price_discount = (price_data['promotional']) / 100
+                            price_discount = round(price_discount * rub)
+                        except Exception:
+                            price_discount = ''
+
+                        if category_name == 'Девочки;Мальчики':
+                            size_rus = size_eur
+                        elif size_eur.isdigit():
+                            size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
+                        elif not size_eur.isdigit():
+                            size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
+                        else:
+                            size_rus = size_eur
+
+                        #
+                        # for key_size in data_dict:
+                        #     # Обработка size_items
+                        #     try:
+                        #         context_data = data_dict[key_size]['data']['context']
+                        #         color = context_data['color']
+                        #         size_items = context_data['simples']
+                        #         for size_item in size_items:
+                        #             try:
+                        #                 size = size_item['size']
+                        #             except KeyError:
+                        #                 continue  # Пропускаем текущую итерацию, если нет ключа 'size'
+                        #
+                        #             try:
+                        #                 status_size = size_item['offer']['stock']['quantity']
+                        #                 print(f'{size}: {status_size}')
+                        #             except KeyError:
+                        #                 continue  # Пропускаем текущую итерацию, если нет ключа 'quantity'
+
+                        id_product_size = f"{sku}/{size_eur}/{color_name}"
+
+                        result_data.append(
+                            {
+                                '№': None,
+                                'Артикул': id_product_size,
+                                'Название товара': name_product,
+                                'Цена, руб.*': price_discount,
+                                'Цена до скидки, руб.': price_original,
+                                'НДС, %*': None,
+                                'Включить продвижение': None,
+                                'Ozon ID': id_product_size,
+                                'Штрихкод (Серийный номер / EAN)': None,
+                                'Вес в упаковке, г*': None,
+                                'Ширина упаковки, мм*': None,
+                                'Высота упаковки, мм*': None,
+                                'Длина упаковки, мм*': None,
+                                'Ссылка на главное фото*': main_image,
+                                'Ссылки на дополнительные фото': additional_images,
+                                'Ссылки на фото 360': None,
+                                'Артикул фото': None,
+                                'Бренд в одежде и обуви*': brand,
+                                'Объединить на одной карточке*': sku,
+                                'Цвет товара*': color_ru,
+                                'Российский размер*': size_rus,
+                                'Размер производителя': size_eur,
+                                'Статус наличия': status_size,
+                                'Название цвета': color_name,
+                                'Тип*': subcategory_name,
+                                'Пол*': gender,
+                                'Размер пеленки': None,
+                                'ТН ВЭД коды ЕАЭС': None,
+                                'Ключевые слова': None,
+                                'Сезон': None,
+                                'Рост модели на фото': None,
+                                'Параметры модели на фото': None,
+                                'Размер товара на фото': None,
+                                'Коллекция': None,
+                                'Страна-изготовитель': None,
+                                'Вид принта': None,
+                                'Аннотация': description,
+                                'Инструкция по уходу': care,
+                                'Серия в одежде и обуви': None,
+                                'Материал': material,
+                                'Состав материала': composition,
+                                # 'Материал подклада/внутренней отделки': None,
+                                'Материал наполнителя': None,
+                                'Утеплитель, гр': None,
+                                'Диапазон температур, °С': None,
+                                'Стиль': None,
+                                'Вид спорта': None,
+                                'Вид одежды': None,
+                                'Тип застежки': None,
+                                'Длина рукава': None,
+                                'Талия': None,
+                                'Для беременных или новорожденных': None,
+                                'Тип упаковки одежды': None,
+                                'Количество в упаковке': None,
+                                'Состав комплекта': None,
+                                'Рост': None,
+                                'Длина изделия, см': None,
+                                'Длина подола': None,
+                                'Форма воротника/горловины': None,
+                                'Детали': None,
+                                'Таблица размеров JSON': None,
+                                'Rich-контент JSON': None,
+                                'Плотность, DEN': None,
+                                'Количество пар в упаковке': None,
+                                'Класс компрессии': None,
+                                'Персонаж': None,
+                                'Праздник': None,
+                                'Тематика карнавальных костюмов': None,
+                                'Признак 18+': None,
+                                'Назначение спецодежды': None,
+                                'HS-код': None,
+                                'Количество заводских упаковок': None,
+                                'Ошибка': None,
+                                'Предупреждение': None
+                            }
+                        )
+
+                print(f'Обработано: {i}/{count_products} товаров!')
+
+        save_excel(data=result_data, brand=brand)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, category_name: str) -> None:
+def save_excel(data: list, brand: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{brand}_{category_name}.xlsx'):
+    if not os.path.exists(f'results/result_data_{brand}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{brand}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{brand}_{category_name}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{brand}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -565,7 +504,7 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{brand}_{category_name}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{brand}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
@@ -574,19 +513,19 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
 
 
 def main():
-    brand = 'GAP'
+    brand = 'Tommy Hilfiger'
 
-    # get_category_urls(url="https://en.zalando.de/mens-clothing/gap/", headers=headers)
-    # driver = init_chromedriver(headless_mode=True)
+    # get_category_urls(url="https://en.zalando.de/kids-clothing/tommy-hilfiger/", headers=headers)
+    driver = init_chromedriver(headless_mode=True)
     try:
-        # get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
-        get_products_data()
+        get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
-        pass
-        # driver.close()
-        # driver.quit()
+        driver.close()
+        driver.quit()
+
+    get_products_data()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
