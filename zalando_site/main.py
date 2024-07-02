@@ -258,6 +258,9 @@ def get_products_data(products_data_list: list[dict] = None) -> None:
                         continue
                     for attribute_item in attribute_items:
                         try:
+                            composition = ''
+                            material = ''
+                            care = ''
                             if attribute_item['id'] == 'material_care':
                                 clusters = attribute_item['clusters']
                                 for cluster in clusters:
