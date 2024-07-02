@@ -244,47 +244,69 @@ def get_products_data(products_data_list: list[dict]=None, brand: str=None, driv
 
                 data_dict = data_dict['cache']
 
-                image_urls_list = []
-
                 try:
-                    for key in data_dict:
-                        # Обработка size_items
+                    for key_detail in data_dict:
+                        # Обработка detail_items
                         try:
-                            size_items = data_dict[key]['data']['context']['simples']
-                            for size_item in size_items:
-                                try:
-                                    size = size_item['size']
-                                except KeyError:
-                                    continue  # Пропускаем текущую итерацию, если нет ключа 'size'
+                            product_data = data_dict[key_detail]['data']['product']
+                            name_product = product_data['name']
+                            sku = product_data['sku']
 
+                            attribute_items = product_data['attributeSuperClusters']
+                            for attribute_item in attribute_items:
                                 try:
-                                    status_size = size_item['offer']['stock']['quantity']
-                                    print(f'{size}: {status_size}')
-                                except KeyError:
-                                    continue  # Пропускаем текущую итерацию, если нет ключа 'quantity'
+                                    if attribute_item['label'] == 'Details':
+                                        detail_items = attribute_item['clusters']
 
-                        except (KeyError, TypeError):
-                            continue  # Пропускаем текущую итерацию, если нет ключа 'simples'
+                                        for detail_item in detail_items:
+                                            attribute_details = detail_item['attributes']
+                                            for detail in attribute_details:
+                                                print(f"{detail['key']}: {detail['value']}")
 
-                    for key in data_dict:
-                        # Обработка media_items
-                        try:
-                            media_items = data_dict[key]['data']['product']['media']
-                            for media_item in media_items:
-                                try:
-                                    image_url = media_item['uri'].split('?')[0]
-                                    if image_url not in image_urls_list:
-                                        image_urls_list.append(image_url)
-                                except KeyError:
-                                    continue  # Пропускаем текущую итерацию, если нет ключа 'uri'
-                                except AttributeError:
-                                    continue  # Пропускаем текущую итерацию, если нет атрибута 'split'
-                        except (KeyError, TypeError):
+                                except Exception:
+                                    continue
+                        except Exception:
+                            continue
+
+                #     for key_size in data_dict:
+                #         # Обработка size_items
+                #         try:
+                #             size_items = data_dict[key_size]['data']['context']['simples']
+                #             for size_item in size_items:
+                #                 try:
+                #                     size = size_item['size']
+                #                 except KeyError:
+                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'size'
+                #
+                #                 try:
+                #                     status_size = size_item['offer']['stock']['quantity']
+                #                     print(f'{size}: {status_size}')
+                #                 except KeyError:
+                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'quantity'
+                #
+                #         except (KeyError, TypeError):
+                #             continue  # Пропускаем текущую итерацию, если нет ключа 'simples'
+                #
+                #     for key_media in data_dict:
+                #         image_urls_list = []
+                #         # Обработка media_items
+                #         try:
+                #             media_items = data_dict[key_media]['data']['product']['media']
+                #             for media_item in media_items:
+                #                 try:
+                #                     image_url = media_item['uri'].split('?')[0]
+                #                     if image_url not in image_urls_list:
+                #                         image_urls_list.append(image_url)
+                #                 except KeyError:
+                #                     continue  # Пропускаем текущую итерацию, если нет ключа 'uri'
+                #                 except AttributeError:
+                #                     continue  # Пропускаем текущую итерацию, если нет атрибута 'split'
+                #         except (KeyError, TypeError):
                             continue  # Пропускаем текущую итерацию, если нет ключа 'media'
                 except Exception as ex:
                     print(f'data_dict: {product_url}: {ex}')
 
-                print(image_urls_list)
+                # print(image_urls_list)
 
                 # try:
                 #     id_product = product_url.split('.')[-2]
@@ -553,6 +575,7 @@ def save_excel(data: list, brand: str, category_name: str) -> None:
 
 def main():
     brand = 'GAP'
+
     # get_category_urls(url="https://en.zalando.de/mens-clothing/gap/", headers=headers)
     # driver = init_chromedriver(headless_mode=True)
     try:
