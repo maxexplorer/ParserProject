@@ -187,7 +187,7 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict] = None) -> None:
+def get_products_data(products_data_list: list[dict]) -> None:
     result_data = []
     processed_urls = []
 
@@ -208,6 +208,11 @@ def get_products_data(products_data_list: list[dict] = None) -> None:
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
+                composition = ''
+                material = ''
+                care = ''
+                description1 = ''
+                description2 = ''
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -258,9 +263,6 @@ def get_products_data(products_data_list: list[dict] = None) -> None:
                         continue
                     for attribute_item in attribute_items:
                         try:
-                            composition = ''
-                            material = ''
-                            care = ''
                             if attribute_item['id'] == 'material_care':
                                 clusters = attribute_item['clusters']
                                 for cluster in clusters:
@@ -527,8 +529,6 @@ def main():
     finally:
         driver.close()
         driver.quit()
-
-    get_products_data()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
