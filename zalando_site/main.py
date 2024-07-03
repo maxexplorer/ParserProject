@@ -180,14 +180,14 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                     # with open(f'data/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
                     #     print(products_data_list, file=file, sep='\n')
 
-                    get_products_data(products_data_list=products_data_list)
+                    get_products_data(products_data_list=products_data_list, brand=brand)
 
     with open('data/url_products_list.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict]) -> None:
+def get_products_data(products_data_list: list[dict], brand: str) -> None:
     result_data = []
     processed_urls = []
 
@@ -208,11 +208,6 @@ def get_products_data(products_data_list: list[dict]) -> None:
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
-                # composition = ''
-                # material = ''
-                # care = ''
-                # description1 = ''
-                # description2 = ''
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -281,10 +276,10 @@ def get_products_data(products_data_list: list[dict]) -> None:
                         sku = product_data['sku']
                     except Exception:
                         sku = ''
-                    try:
-                        brand = product_data['brand']['name']
-                    except Exception:
-                        brand = ''
+                    # try:
+                    #     brand = product_data['brand']['name']
+                    # except Exception:
+                    #     brand = ''
                     try:
                         color_data = product_data['color']
                     except Exception:
@@ -315,6 +310,21 @@ def get_products_data(products_data_list: list[dict]) -> None:
                         attribute_items = data_dict[key_attribute]['data']['product']['attributeSuperClusters']
                     except Exception:
                         continue
+                    if not name_product or not sku:
+                        try:
+                            product_data = data_dict[key_attribute]['data']['product']
+                        except Exception:
+                            pass
+                        try:
+                            name_product = product_data['name']
+                            name_product = translator(name_product)
+                        except Exception:
+                            name_product = ''
+                        try:
+                            sku = product_data['sku']
+                        except Exception:
+                            sku = ''
+
                     for attribute_item in attribute_items:
                         try:
                             if attribute_item['id'] == 'material_care':
