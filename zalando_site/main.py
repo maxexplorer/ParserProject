@@ -208,11 +208,11 @@ def get_products_data(products_data_list: list[dict]) -> None:
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
-                composition = ''
-                material = ''
-                care = ''
-                description1 = ''
-                description2 = ''
+                # composition = ''
+                # material = ''
+                # care = ''
+                # description1 = ''
+                # description2 = ''
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
@@ -255,65 +255,15 @@ def get_products_data(products_data_list: list[dict]) -> None:
                 else:
                     gender = category_name
 
-                for key_attribute in data_dict:
-                    # Обработка detail_items
-                    try:
-                        attribute_items = data_dict[key_attribute]['data']['product']['attributeSuperClusters']
-                    except Exception:
-                        continue
-                    for attribute_item in attribute_items:
-                        try:
-                            if attribute_item['id'] == 'material_care':
-                                clusters = attribute_item['clusters']
-                                for cluster in clusters:
-                                    attributes = cluster['attributes']
-                                    for attribute in attributes:
-                                        if attribute['key'] == 'Outer fabric material':
-                                            composition = attribute['value']
-                                            composition = translator(composition)
-                                            material = composition.split()[1]
-                                            material = translator(material)
-                                        if attribute['key'] == 'Care instructions':
-                                            care = attribute['value']
-                                            care = translator(care)
-                        except Exception:
-                            composition = ''
-                            material = ''
-                            care = ''
-
-                        try:
-                            if attribute_item['id'] == 'details':
-                                clusters = attribute_item['clusters']
-                                for cluster in clusters:
-                                    attributes = cluster['attributes']
-                                    description1 = '<br/> <br/>'.join(
-                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes if
-                                        attribute['key'] != 'Article number')
-                                    description1 = translator(description1)
-                        except Exception:
-                            description1 = ''
-                        try:
-                            if attribute_item['id'] == 'size_fit':
-                                clusters = attribute_item['clusters']
-                                for cluste in clusters:
-                                    attributes = cluste['attributes']
-                                    description2 = '<br/> <br/>'.join(
-                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes)
-                                    description2 = translator(description2)
-                        except Exception:
-                            description2 = ''
-
-                description = f"{description1} '<br/> <br/>' {description2}"
-
                 for key_product in data_dict:
                     # Обработка product_items
                     try:
                         product_data = data_dict[key_product]['data']['product']
+                        media_items = product_data['media']
                     except Exception:
                         continue
 
                     try:
-                        media_items = product_data['media']
                         for media_item in media_items:
                             image_url = media_item['uri'].split('?')[0]
                             if image_url not in image_urls_list:
@@ -348,9 +298,77 @@ def get_products_data(products_data_list: list[dict]) -> None:
                         color_ru = translator(color_label)
                     except Exception:
                         color_ru = ''
+
+                    if len(additional_images) > 1 and name_product and sku and brand and color_name:
+                        break
+
+
+                composition = ''
+                material = ''
+                care = ''
+                description1 = ''
+                description2 = ''
+
+                for key_attribute in data_dict:
+                    # Обработка detail_items
                     try:
-                        size_items = product_data['simples']
-                    except Exception as ex:
+                        attribute_items = data_dict[key_attribute]['data']['product']['attributeSuperClusters']
+                    except Exception:
+                        continue
+                    for attribute_item in attribute_items:
+                        try:
+                            if attribute_item['id'] == 'material_care':
+                                clusters = attribute_item['clusters']
+                                for cluster in clusters:
+                                    attributes = cluster['attributes']
+                                    for attribute in attributes:
+                                        if attribute['key'] == 'Outer fabric material':
+                                            composition = attribute['value']
+                                            composition = translator(composition)
+                                            material_items = composition.split()
+                                            material = material_items[1]
+                                            if material == '%':
+                                                material = material_items[2]
+                                            material = translator(material)
+                                        if attribute['key'] == 'Care instructions':
+                                            care = attribute['value']
+                                            care = translator(care)
+                        except Exception:
+                            composition = ''
+                            material = ''
+                            care = ''
+
+                        try:
+                            if attribute_item['id'] == 'details':
+                                clusters = attribute_item['clusters']
+                                for cluster in clusters:
+                                    attributes = cluster['attributes']
+                                    description1 = '<br/> <br/>'.join(
+                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes if
+                                        attribute['key'] != 'Article number')
+                                    description1 = translator(description1)
+                        except Exception:
+                            description1 = ''
+                        try:
+                            if attribute_item['id'] == 'size_fit':
+                                clusters = attribute_item['clusters']
+                                for cluste in clusters:
+                                    attributes = cluste['attributes']
+                                    description2 = '<br/> <br/>'.join(
+                                        f"{attribute['key']}: {attribute['value']}" for attribute in attributes)
+                                    description2 = translator(description2)
+                        except Exception:
+                            description2 = ''
+
+                description = f"{description1} '<br/> <br/>' {description2}"
+
+
+                for key_size in data_dict:
+                    # Обработка size_items
+                    try:
+                        context_data = data_dict[key_size]['data']['context']
+                        size_items = context_data['simples']
+                    except Exception:
                         continue
                     for size_item in size_items:
                         try:
@@ -366,12 +384,12 @@ def get_products_data(products_data_list: list[dict]) -> None:
                         except Exception:
                             price_data = {}
                         try:
-                            price_original = int(price_data['original']) / 100
+                            price_original = int(price_data['original']['amount']) / 100
                             price_original = round(price_original * rub)
                         except Exception:
                             price_original = ''
                         try:
-                            price_discount = (price_data['promotional']) / 100
+                            price_discount = (price_data['promotional']['amount']) / 100
                             price_discount = round(price_discount * rub)
                         except Exception:
                             price_discount = ''
@@ -384,25 +402,6 @@ def get_products_data(products_data_list: list[dict]) -> None:
                             size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
                         else:
                             size_rus = size_eur
-
-                        #
-                        # for key_size in data_dict:
-                        #     # Обработка size_items
-                        #     try:
-                        #         context_data = data_dict[key_size]['data']['context']
-                        #         color = context_data['color']
-                        #         size_items = context_data['simples']
-                        #         for size_item in size_items:
-                        #             try:
-                        #                 size = size_item['size']
-                        #             except KeyError:
-                        #                 continue  # Пропускаем текущую итерацию, если нет ключа 'size'
-                        #
-                        #             try:
-                        #                 status_size = size_item['offer']['stock']['quantity']
-                        #                 print(f'{size}: {status_size}')
-                        #             except KeyError:
-                        #                 continue  # Пропускаем текущую итерацию, если нет ключа 'quantity'
 
                         id_product_size = f"{sku}/{size_eur}/{color_name}"
 
