@@ -294,7 +294,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                     except Exception:
                         color_ru = ''
 
-                    if len(additional_images) > 1 and name_product and sku and brand and color_name:
+                    if len(additional_images) > 1 and name_product and sku and color_name:
                         break
 
 
@@ -380,6 +380,13 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                         size_items = context_data['simples']
                     except Exception:
                         continue
+                    if not color_name:
+                        try:
+                            color_name = context_data['color']['name']
+                        except Exception:
+                            color_name = ''
+                        color_ru = color_name
+
                     for size_item in size_items:
                         try:
                             size_eur = size_item['size']
