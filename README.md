@@ -37,13 +37,13 @@ Unified Web Scrapers is a non-commercial open-source project aimed at combining 
    python app.py
    
 ## Libraries Used
-- requests == 2.31.0
-- selenium == 4.20.0
-- beautifulsoup4 == 4.12.0
-- lxml == 4.9.2
-- pandas == 1.5.2
-- googletrans == 3.1.0a0
-- numpy == 1.24.2
+- requests
+- selenium
+- beautifulsoup4
+- lxml
+- pandas
+- googletrans
+- numpy
 - asyncio
 - aiogra
   
