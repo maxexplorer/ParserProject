@@ -51,3 +51,18 @@ Unified Web Scrapers is a non-commercial open-source project aimed at combining 
 - **Configure the Scraper:** Adjust parameters and settings for each scraper according to your needs.
 - **Run the Scraper:** Use the interface to initiate scraping tasks and collect data from specified websites.
 - **Manage Data:** Organize, filter, and export the collected data as needed.
+
+  ## Contributions
+
+We welcome community contributions!  
+
+## License
+
+This project is licensed under the MIT License.  
+
+## Contact
+
+If you have any questions or suggestions, please open an issue or contact us directly.
+
+Thank you for your interest in the Unified Web Scrapers project! Together, we can create a more efficient and convenient way to gather information from the internet.
+
