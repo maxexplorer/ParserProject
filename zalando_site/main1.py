@@ -111,18 +111,24 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> None:
+def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> list[dict]:
     url_products_set = set()
 
     with Session() as session:
         for brand_dict in category_data_list:
             category_dict = brand_dict.get(brand)
+
+            with open(f'data/url_products_list.txt_{brand}', 'r', encoding='utf-8') as file:
+                url_products_list = [line.strip() for line in file.readlines()]
+
             if category_dict is None:
                 continue
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
+                    products_new_data_list = []
                     product_urls = []
+                    new_url_list = []
                     subcategory_name, category_url = product_tuple
 
                     try:
@@ -159,8 +165,12 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                                 except Exception as ex:
                                     print(ex)
                                     continue
+
                                 product_urls.append(product_url)
-                                url_products_set.add(product_url)
+
+                                if product_url not in url_products_list:
+                                    new_url_list.append(product_url)
+
                         except Exception as ex:
                             print(ex)
 
@@ -172,18 +182,21 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                         }
                     )
 
+                    if new_url_list:
+                        products_new_data_list.append(
+                            {
+                                (category_name, subcategory_name): new_url_list
+                            }
+                        )
+
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-                    # if not os.path.exists('data'):
-                    #     os.makedirs(f'data')
-                    #
-                    # with open(f'data/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-                    #     print(products_data_list, file=file, sep='\n')
-
-                    get_products_data(products_data_list=products_data_list, brand=brand)
+                    get_size_data(products_data_list=products_data_list, brand=brand)
 
     with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-        print(*url_products_set, file=file, sep='\n')
+        print(*new_url_list, file=file, sep='\n')
+
+    return products_new_data_list
 
 
 # Функция получения данных товаров
@@ -297,7 +310,6 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                     if len(additional_images) > 1 and name_product and sku and color_name:
                         break
 
-
                 composition = ''
                 material = ''
                 care = ''
@@ -371,7 +383,6 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                             description2 = ''
 
                 description = f"{description1} '<br/> <br/>' {description2}"
-
 
                 for key_size in data_dict:
                     # Обработка size_items
@@ -503,15 +514,131 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, brand=brand)
+        save_excel(data=result_data, brand=brand, species='products')
+
+
+# Функция получения данных о наличии размеров
+def get_size_data(products_data_list: list[dict], brand: str) -> None:
+    result_data = []
+    processed_urls = []
+
+    with Session() as session:
+        for dict_item in products_data_list:
+            product_urls = []
+            key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+
+            for product_url in values:
+                if product_url not in processed_urls:
+                    processed_urls.append(product_url)
+                    product_urls.append(product_url)
+            category_name = key[0]
+            subcategory_name = key[1]
+
+            count_products = len(product_urls)
+
+            print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
+            for i, product_url in enumerate(product_urls, 1):
+                image_urls_list = []
+                try:
+                    html = get_html(url=product_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{product_url} - {ex}")
+                    continue
+
+                if not html:
+                    continue
+
+                try:
+                    # Регулярное выражение для извлечения текста
+                    pattern = r'{"cache".*'
+
+                    # Найти совпадение в тексте
+                    match = re.search(pattern, html)
+
+                    if match:
+                        extracted_text = match.group(0).rstrip(');')
+                        # print(extracted_text)
+                        try:
+                            # Преобразуем строку JSON в словарь
+                            data_dict = json.loads(extracted_text)
+                        except json.JSONDecodeError as ex:
+                            print("Ошибка декодирования JSON:", ex)
+                    else:
+                        print("Совпадение не найдено")
+                except Exception as ex:
+                    print(f'regular expression: {ex}')
+
+                try:
+                    data_dict = data_dict['cache']
+                except Exception as ex:
+                    print(f'data_dict: {ex}')
+                    continue
+
+                for key_size in data_dict:
+                    # Обработка size_items
+                    try:
+                        context_data = data_dict[key_size]['data']['context']
+                        size_items = context_data['simples']
+                    except Exception:
+                        continue
+
+                    try:
+                        sku = context_data['entity_id'].split(':')[-1]
+                    except Exception:
+                        sku = ''
+
+                    try:
+                        color_name = context_data['color']['name']
+                    except Exception:
+                        color_name = ''
+
+                    for size_item in size_items:
+                        try:
+                            size_eur = size_item['size']
+                        except Exception:
+                            size_eur = ''
+                        try:
+                            status_size = size_item['offer']['stock']['quantity']
+                        except Exception:
+                            status_size = ''
+                        try:
+                            price_data = size_item['offer']['price']
+                        except Exception:
+                            price_data = {}
+                        try:
+                            price_original = int(price_data['original']['amount']) / 100
+                            price_original = round(price_original * rub)
+                        except Exception:
+                            price_original = ''
+                        try:
+                            price_discount = (price_data['promotional']['amount']) / 100
+                            price_discount = round(price_discount * rub)
+                        except Exception:
+                            price_discount = ''
+
+                        price = price_discount if price_discount else price_original
+
+                        id_product_size = f"{sku}/{size_eur}/{color_name}"
+
+                    result_data.append(
+                        {
+                            '№': None,
+                            'Артикул': id_product_size,
+                            'Цена': price,
+                            'Статус наличия': status_size,
+                        }
+                    )
+                print(f'Обработано: {i}/{count_products} товаров!')
+
+        save_excel(data=result_data, brand=brand, species='size')
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str) -> None:
+def save_excel(data: list, brand: str, species: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{brand}.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_{brand}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
         with ExcelWriter(f'results/result_data_{brand}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
@@ -536,10 +663,15 @@ def save_excel(data: list, brand: str) -> None:
 def main():
     brand = 'Tommy Hilfiger'
 
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/tommy-hilfiger/", headers=headers)
     driver = init_chromedriver(headless_mode=True)
     try:
-        get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
+        products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand,
+                                                  driver=driver)
+        if products_new_data_list:
+            print(f'Появились  новые товары!')
+            value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
+            if value == '1':
+                get_products_data(products_data_list=products_new_data_list, brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
