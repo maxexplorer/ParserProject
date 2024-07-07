@@ -52,6 +52,8 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
     try:
+        time.sleep(1)
+
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
@@ -112,23 +114,24 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 # Получаем ссылки товаров
 def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> list[dict]:
-    url_products_set = set()
 
     with Session() as session:
         for brand_dict in category_data_list:
+            new_url_list = []
             category_dict = brand_dict.get(brand)
-
-            with open(f'data/url_products_list.txt_{brand}', 'r', encoding='utf-8') as file:
-                url_products_list = [line.strip() for line in file.readlines()]
 
             if category_dict is None:
                 continue
+
+            with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
+                url_products_list = [line.strip() for line in file.readlines()]
+
+
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
                     products_new_data_list = []
                     product_urls = []
-                    new_url_list = []
                     subcategory_name, category_url = product_tuple
 
                     try:
@@ -193,10 +196,10 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                     get_size_data(products_data_list=products_data_list, brand=brand)
 
-    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-        print(*new_url_list, file=file, sep='\n')
+            with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                print(*new_url_list, file=file, sep='\n')
 
-    return products_new_data_list
+            return products_new_data_list
 
 
 # Функция получения данных товаров
@@ -620,14 +623,14 @@ def get_size_data(products_data_list: list[dict], brand: str) -> None:
 
                         id_product_size = f"{sku}/{size_eur}/{color_name}"
 
-                    result_data.append(
-                        {
-                            '№': None,
-                            'Артикул': id_product_size,
-                            'Цена': price,
-                            'Статус наличия': status_size,
-                        }
-                    )
+                        result_data.append(
+                            {
+                                '№': None,
+                                'Артикул': id_product_size,
+                                'Цена': price,
+                                'Статус наличия': status_size,
+                            }
+                        )
                 print(f'Обработано: {i}/{count_products} товаров!')
 
         save_excel(data=result_data, brand=brand, species='size')
@@ -640,11 +643,11 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
     if not os.path.exists(f'results/result_data_{species}_{brand}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{brand}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{brand}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_{brand}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -652,7 +655,7 @@ def save_excel(data: list, brand: str, species: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{brand}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)

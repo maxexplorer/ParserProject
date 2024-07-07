@@ -52,6 +52,8 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
     try:
+        time.sleep(1)
+
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
@@ -182,8 +184,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                     get_products_data(products_data_list=products_data_list, brand=brand)
 
-    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-        print(*url_products_set, file=file, sep='\n')
+            with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
