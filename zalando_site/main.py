@@ -185,8 +185,8 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                     get_products_data(products_data_list=products_data_list, brand=brand)
 
-            with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                print(*url_products_set, file=file, sep='\n')
+                    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                        print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
@@ -539,9 +539,9 @@ def save_excel(data: list, brand: str, species: str) -> None:
 def main():
     # get_category_urls(url="https://en.zalando.de/kids-clothing/jack-and-jones/", headers=headers)
     value = input(
-        'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - PEPE JEANS\n4 - CALVIN KLEIN\n5 - Scotch & Soda\n'
-        '6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - TOM TAILOR\n10 - s.Oliver\n11 - G-Star\n12 - Esprit\n'
-        '13 - Guess\n14 - MANGO\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
+        'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - PEPE JEANS\n4 - CALVIN KLEIN\n'
+        '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - TOM TAILOR\n10 - s.Oliver\n11 - G-Star\n'
+        '12 - Esprit\n13 - Guess\n14 - MANGO\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
         '21 - Reebok\n22 - COLUMBIA\n')
     brand = brand_dict.get(value)
 
@@ -559,11 +559,10 @@ def main():
     else:
         print('Введено некорректное значение!')
 
-
-
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
+
 
 if __name__ == '__main__':
     main()
