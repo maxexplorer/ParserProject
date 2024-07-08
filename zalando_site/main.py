@@ -235,6 +235,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                             print("Ошибка декодирования JSON:", ex)
                     else:
                         print("Совпадение не найдено")
+                        continue
                 except Exception as ex:
                     print(f'regular expression: {ex}')
 
