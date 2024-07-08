@@ -53,8 +53,6 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
     try:
-        time.sleep(1)
-
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
