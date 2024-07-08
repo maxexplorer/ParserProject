@@ -16,6 +16,7 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list
+from data.data import brand_dict
 
 from functions import colors_format
 from functions import sizes_format
@@ -299,7 +300,6 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                     if len(additional_images) > 1 and name_product and sku and color_name:
                         break
 
-
                 composition = ''
                 material = ''
                 care = ''
@@ -374,7 +374,6 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
 
                 description = f"{description1} '<br/> <br/>' {description2}"
 
-
                 for key_size in data_dict:
                     # Обработка size_items
                     try:
@@ -414,6 +413,8 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                             price_discount = ''
 
                         if category_name == 'Девочки;Мальчики':
+                            size_rus = size_eur
+                        elif subcategory_name == 'Обувь':
                             size_rus = size_eur
                         elif size_eur.isdigit():
                             size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -536,22 +537,28 @@ def save_excel(data: list, brand: str) -> None:
 
 
 def main():
-    brand = 'Tommy Hilfiger'
+    get_category_urls(url="https://en.zalando.de/kids-clothing/jack-and-jones/", headers=headers)
+    # value = input(
+    #     'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - PEPE JEANS\n4 - CALVIN KLEIN\n5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - TOM TAILOR\n10 - s.Oliver\n11 - G-Star\n12 - Esprit\n13 - Guess\n14 - MANGO\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n21 - Reebok\n22 - COLUMBIA')
+    # brand = brand_dict.get(value)
+    #
+    # if brand:
+    #     driver = init_chromedriver(headless_mode=True)
+    #     try:
+    #         get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
+    #     except Exception as ex:
+    #         print(f'main: {ex}')
+    #     finally:
+    #         driver.close()
+    #         driver.quit()
+    # else:
+    #     print('Введено некорректное значение!')
+    #
 
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/tommy-hilfiger/", headers=headers)
-    driver = init_chromedriver(headless_mode=True)
-    try:
-        get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
-    except Exception as ex:
-        print(f'main: {ex}')
-    finally:
-        driver.close()
-        driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
-
 
 if __name__ == '__main__':
     main()
