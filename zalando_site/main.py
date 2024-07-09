@@ -536,7 +536,7 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 
 def main():
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/pepe-jeans/", headers=headers)
+    # get_category_urls(url="https://en.zalando.de/kids-clothing/gap/", headers=headers)
     value = input(
         'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
         '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
