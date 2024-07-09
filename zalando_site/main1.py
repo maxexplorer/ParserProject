@@ -16,6 +16,7 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list
+from data.data import brand_dict
 
 from functions import colors_format
 from functions import sizes_format
@@ -114,7 +115,6 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 # Получаем ссылки товаров
 def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> list[dict]:
-
     with Session() as session:
         for brand_dict in category_data_list:
             new_url_list = []
@@ -125,7 +125,6 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
             with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
                 url_products_list = [line.strip() for line in file.readlines()]
-
 
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
@@ -664,9 +663,22 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 
 def main():
-    brand = 'Tommy Hilfiger'
+    try:
+        value = input(
+            'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
+            '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
+            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
+            '21 - Reebok\n22 - Columbia\n')
+        brand = brand_dict.get(value)
+    except KeyError:
+        raise 'Такой бренд отсутствует в словаре!'
 
-    driver = init_chromedriver(headless_mode=True)
+    print(f'Сбор данных бренда: {brand}')
+
+    try:
+        driver = init_chromedriver(headless_mode=True)
+    except Exception as ex:
+        raise f'driver: {ex}'
     try:
         products_new_data_list = get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand,
                                                   driver=driver)

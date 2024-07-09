@@ -537,17 +537,23 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 def main():
     # get_category_urls(url="https://en.zalando.de/kids-clothing/gap/", headers=headers)
-    value = input(
-        'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
-        '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
-        '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
-        '21 - Reebok\n22 - Columbia\n')
-    brand = brand_dict.get(value)
+    try:
+        value = input(
+            'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
+            '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
+            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
+            '21 - Reebok\n22 - Columbia\n')
+        brand = brand_dict.get(value)
+    except KeyError:
+        raise 'Такой бренд отсутствует в словаре!'
 
     print(f'Сбор данных бренда: {brand}')
 
     if brand:
-        driver = init_chromedriver(headless_mode=True)
+        try:
+            driver = init_chromedriver(headless_mode=True)
+        except Exception as ex:
+            raise f'driver: {ex}'
         try:
             get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
         except Exception as ex:
