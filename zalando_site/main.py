@@ -337,9 +337,9 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                                             composition = attribute['value']
                                             composition = translator(composition)
                                             material_items = composition.split()
-                                            material = material_items[1]
+                                            material = material_items[1].rstrip(',')
                                             if material == '%':
-                                                material = material_items[2]
+                                                material = material_items[2].rstrip(',')
                                             material = translator(material)
                                         if attribute['key'] == 'Care instructions':
                                             care = attribute['value']
@@ -536,12 +536,12 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 
 def main():
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/jack-and-jones/", headers=headers)
+    # get_category_urls(url="https://en.zalando.de/kids-clothing/pepe-jeans/", headers=headers)
     value = input(
-        'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - PEPE JEANS\n4 - CALVIN KLEIN\n'
-        '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - TOM TAILOR\n10 - s.Oliver\n11 - G-Star\n'
-        '12 - Esprit\n13 - Guess\n14 - MANGO\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
-        '21 - Reebok\n22 - COLUMBIA\n')
+        'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
+        '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
+        '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
+        '21 - Reebok\n22 - Columbia\n')
     brand = brand_dict.get(value)
 
     print(f'Сбор данных бренда: {brand}')
