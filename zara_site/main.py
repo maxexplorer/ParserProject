@@ -151,7 +151,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                     )
 
                     print(
-                        f'Обработано: категория {category_name}/{subcategory_name}/{id_category} - {len(product_ids)} товаров!')
+                        f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
 
     region = id_region.split('/')[0]
 
@@ -192,7 +192,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
                 }
 
                 try:
-                    time.sleep(1)
                     response = session.get(
                         f'https://www.zara.com/{id_region}/products-details',
                         params=params,
