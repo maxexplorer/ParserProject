@@ -22,15 +22,6 @@ from functions import chunks
 
 start_time = datetime.now()
 
-base_currency = 'EUR'
-# base_currency = 'KZT'
-target_currency = 'RUB'
-
-rub = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-
-print(f'Курс EUR/RUB: {rub}')
-# print(f'Курс KZT/RUB: {rub}')
-
 result_data = []
 
 
@@ -89,8 +80,6 @@ def get_id_categories(headers: dict, params: dict) -> None:
                             category_id = redirect_kid_category_id if redirect_kid_category_id else kid_subcategory_id
                             id_categories_data.append((kid_subcategory_name, kid_subcategory_name1, category_id))
 
-
-
     with open('data/id_categories_list_kz.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
 
@@ -101,12 +90,12 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     id_products_set = set()
     with Session() as session:
         for category_dict in id_categories_list:
-            for name_category, products_list in category_dict.items():
+            for category_name, products_list in category_dict.items():
                 for product_tuple in products_list:
                     product_ids = []
-                    name_subcategory, id_category = product_tuple
+                    subcategory_name, id_category = product_tuple
 
-                    if id_region == 'kz/ru' and name_category == 'Девочки;Мальчики':
+                    if id_region == 'kz/ru' and category_name == 'Девочки;Мальчики':
                         continue
 
                     time.sleep(1)
@@ -157,24 +146,26 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                     products_data_list.append(
                         {
-                            (name_category, name_subcategory, id_category): product_ids
+                            (category_name, subcategory_name): product_ids
                         }
                     )
 
                     print(
-                        f'Обработано: категория {name_category}/{name_subcategory}/{id_category} - {len(product_ids)} товаров!')
+                        f'Обработано: категория {category_name}/{subcategory_name}/{id_category} - {len(product_ids)} товаров!')
+
+    region = id_region.split('/')[0]
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open(f'data/id_products_list_{id_region}.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+def get_products_array(products_data_list: list, headers: dict, id_region: str, currency: int) -> None:
     global result_data
 
     processed_ids = []
@@ -192,7 +183,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
             category_name = key[0]
             subcategory_name = key[1]
 
-            print(f'Сбор данных категории: {key[0]}/{key[1]}/{key[2]}')
+            print(f'Сбор данных категории: {category_name}/{subcategory_name}')
 
             for chunk_ids in chunks(id_products, 10):
                 params = {
@@ -217,27 +208,26 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                     if id_region == 'kz/ru':
                         result_data = get_products_data_ru(products_data=json_data, category_name=category_name,
-                                                           subcategory_name=subcategory_name)
+                                                           subcategory_name=subcategory_name, currency=currency)
                     else:
                         result_data = get_products_data_en(products_data=json_data, category_name=category_name,
-                                                           subcategory_name=subcategory_name)
+                                                           subcategory_name=subcategory_name, currency=currency)
 
                     count += len(chunk_ids)
 
-                    print(f'В категории {key[0]}/{key[1]}/{key[2]} обработано: {count} товаров!')
+                    print(f'В категории {category_name}/{subcategory_name} обработано: {count} товаров!')
 
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
                     continue
 
-
-            save_excel(data=result_data)
+            save_excel(data=result_data, species='products', region=id_region.split('/')[0])
 
             result_data = []
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str) -> list:
+def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -259,13 +249,13 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * rub)
+            old_price = round(old_price * currency)
         except Exception:
             old_price = 0
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * rub)
+            price = round(price * currency)
         except Exception:
             price = 0
 
@@ -303,7 +293,6 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception:
             main_image = None
             additional_images = None
-
 
         try:
             if category_name == 'Женщины':
@@ -388,10 +377,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
                 else:
                     size_rus = size_eur
 
-                if color_original is not None:
-                    id_product_size = f"{reference}/{id_color}/{size_eur}"
-                else:
-                    id_product_size = None
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
 
                 result_data.append(
                     {
@@ -478,7 +464,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str) -> list:
+def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -501,13 +487,13 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * rub)
+            old_price = round(old_price * currency)
         except Exception:
             old_price = 0
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * rub)
+            price = round(price * currency)
         except Exception:
             price = 0
 
@@ -546,7 +532,6 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
             main_image = None
             additional_images = None
 
-
         try:
             if category_name == 'Женщины':
                 gender = 'женский'
@@ -567,7 +552,6 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
-
 
         try:
             composition_items = item['detail']['detailedComposition']['parts']
@@ -635,11 +619,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
                 else:
                     size_rus = size_eur
 
-                if color_original is not None:
-                    id_product_size = f"{reference}/{id_color}/{size_eur}"
-                else:
-                    id_product_size = None
-
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
 
                 result_data.append(
                     {
@@ -724,18 +704,19 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
     return result_data
 
+
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
+def save_excel(data: list, species: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data_zara_en.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data_zara_en.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data_zara_en.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -743,7 +724,8 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data_zara_en.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter(f'results/result_data_{species}_{region}.xlsx', mode='a',
+                     if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
@@ -756,14 +738,24 @@ def main():
     value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
     if value == '1':
         region = 'Германия'
+        base_currency = 'EUR'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс EUR/RUB: {currency}')
     elif value == '2':
         region = 'Казахстан'
+        base_currency = 'KZT'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс KZT/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
+
     id_region = id_region_dict.get(region)
+
     products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
                                          id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
