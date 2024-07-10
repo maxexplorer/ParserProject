@@ -15,8 +15,8 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_data_list
-from data.data import brand_dict
+# from data.data import category_data_list
+# from data.data import brand_dict
 
 from functions import colors_format
 from functions import sizes_format
@@ -91,6 +91,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 
             for item in data:
                 category_name = item.text
+                category_name = translator(category_name)
                 try:
                     category_url = item.find('a').get('href')
                 except Exception as ex:
@@ -536,12 +537,12 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 
 def main():
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/gap/", headers=headers)
+    # get_category_urls(url="https://en.zalando.de/kids-clothing/columbia/", headers=headers)
     try:
         value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
             '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
-            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
+            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
             '21 - Reebok\n22 - Columbia\n')
         brand = brand_dict.get(value)
     except KeyError:
