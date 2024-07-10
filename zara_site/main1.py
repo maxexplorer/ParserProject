@@ -10,7 +10,7 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list_ru
+from data.data import id_categories_list
 
 from data.data import id_region_dict
 
@@ -36,11 +36,11 @@ result_data = []
 
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
-    # with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
-    #     id_products_list = [line.strip() for line in file.readlines()]
+    with open(f'data/id_products_list_{id_region}.txt', 'r', encoding='utf-8') as file:
+        id_products_list = [line.strip() for line in file.readlines()]
 
     products_data_list = []
-    # products_new_data_list = []
+    products_new_data_list = []
 
     with Session() as session:
         for category_dict in id_categories_list:
@@ -91,9 +91,9 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                                     product_ids.append(id_product)
 
-                                    # if str(id_product) in id_products_list:
-                                    #     continue
-                                    # new_id_list.append(id_product)
+                                    if str(id_product) in id_products_list:
+                                        continue
+                                    new_id_list.append(id_product)
 
                     except Exception as ex:
                         print(f'id_poducts: {ex}')
@@ -104,21 +104,21 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                         }
                     )
 
-                    # if new_id_list:
-                    #     products_new_data_list.append(
-                    #         {
-                    #             (name_category, id_category): new_id_list
-                    #         }
-                    #     )
+                    if new_id_list:
+                        products_new_data_list.append(
+                            {
+                                (name_category, id_category): new_id_list
+                            }
+                        )
 
                     print(
                         f'Обработано: категория {main_category}/{name_category}/{id_category} - {len(product_ids)} товаров!')
 
-    # if not os.path.exists('data'):
-    #     os.makedirs('data')
-    #
-    # with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
-    #     print(*new_id_list, file=file, sep='\n')
+    if not os.path.exists('data'):
+        os.makedirs('data')
+
+    with open(f'data/id_products_list_{id_region}.txt', 'a', encoding='utf-8') as file:
+        print(*new_id_list, file=file, sep='\n')
 
     return products_data_list
 
@@ -284,7 +284,7 @@ def save_excel(data: list) -> None:
 def main():
     region = 'Германия'
     id_region = id_region_dict.get(region)
-    products_data_list = get_id_products(id_categories_list=id_categories_list_ru,
+    products_data_list = get_id_products(id_categories_list=id_categories_list,
                                          headers=headers, params=params,
                                          id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
