@@ -15,8 +15,8 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-# from data.data import category_data_list
-# from data.data import brand_dict
+from data.data import category_data_list
+from data.data import brand_dict
 
 from functions import colors_format
 from functions import sizes_format
