@@ -276,7 +276,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'Zara'
+        brand = 'ZARA'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -517,7 +517,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'Zara'
+        brand = 'ZARA'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -743,13 +743,13 @@ def save_excel(data: list, species: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{species}_{region}.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_ZARA_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_{region}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_ZARA_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -757,7 +757,7 @@ def save_excel(data: list, species: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_{region}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
