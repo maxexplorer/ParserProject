@@ -31,7 +31,7 @@ def get_id_categories(headers: dict, params: dict) -> None:
     with Session() as session:
         try:
             response = session.get(
-                'https://www.zara.com/kz/ru/categories',
+                'https://www.zara.com/de/en/categories',
                 headers=headers,
                 params=params,
                 timeout=60
@@ -54,19 +54,19 @@ def get_id_categories(headers: dict, params: dict) -> None:
         category_items = main_category_item.get('subcategories')
         for category_item in category_items:
             category_name = category_item.get('name')
-            if category_name == 'SALE' or category_name == 'РАСПРОДАЖА' or category_name == 'Распродажа':
+            if category_name == 'NEW COLLECTION':
                 subcategory_items = category_item.get('subcategories')
                 for subcategory_item in subcategory_items:
                     subcategory_name = subcategory_item.get('name')
                     subcategory_id = subcategory_item.get('id')
                     redirect_category_id = subcategory_item.get('redirectCategoryId')
                     category_id = redirect_category_id if redirect_category_id else subcategory_id
-                    id_categories_data.append((main_category_name, subcategory_name, category_id))
+                    id_categories_data.append((main_category_name, translator(subcategory_name).capitalize(), category_id))
         if main_category_name == 'KID':
             kid_category_items = main_category_item.get('subcategories')
             for kid_category_item in kid_category_items:
                 kid_category_name = kid_category_item.get('name')
-                if kid_category_name == 'SALE' or kid_category_name == 'РАСПРОДАЖА':
+                if kid_category_name == 'NEW COLLECTION':
                     kid_subcategory_items = kid_category_item.get('subcategories')
                     for kid_subcategory_item in kid_subcategory_items:
                         kid_subcategory_name = kid_subcategory_item.get('name')
@@ -78,9 +78,9 @@ def get_id_categories(headers: dict, params: dict) -> None:
                             kid_subcategory_id = kid_subcategory_item1.get('id')
                             redirect_kid_category_id = kid_subcategory_item1.get('redirectCategoryId')
                             category_id = redirect_kid_category_id if redirect_kid_category_id else kid_subcategory_id
-                            id_categories_data.append((kid_subcategory_name, kid_subcategory_name1, category_id))
+                            id_categories_data.append((kid_subcategory_name, translator(kid_subcategory_name1).capitalize(), category_id))
 
-    with open('data/id_categories_list_kz.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_new_de.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
 
 
@@ -158,7 +158,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open(f'data/id_products_list_ZARA_{region}.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_Zara_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
@@ -241,7 +241,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
             reference = None
 
         try:
-            name_product = f"ZARA {item['name']}"
+            name_product = f"Zara {item['name'].lower()}"
         except Exception:
             name_product = None
 
@@ -311,7 +311,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'ZARA'
+        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -369,7 +369,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -479,7 +479,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
         try:
             name_product = item['name']
-            name_product = f'ZARA {translator(name_product)}'
+            name_product = f'Zara {translator(name_product).lower()}'
         except Exception:
             name_product = None
 
@@ -549,7 +549,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'ZARA'
+        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -611,7 +611,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики' or category_name == 'Девочки;Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -711,13 +711,13 @@ def save_excel(data: list, species: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{species}_ZARA_{region}.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_Zara_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_ZARA_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_Zara_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -725,7 +725,7 @@ def save_excel(data: list, species: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
@@ -734,29 +734,29 @@ def save_excel(data: list, species: str, region: str) -> None:
 
 
 def main():
-    # get_id_categories(headers=headers, params=params)
+    get_id_categories(headers=headers, params=params)
 
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
-    if value == '1':
-        region = 'Германия'
-        base_currency = 'EUR'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс EUR/RUB: {currency}')
-    elif value == '2':
-        region = 'Казахстан'
-        base_currency = 'KZT'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс KZT/RUB: {currency}')
-    else:
-        raise ValueError('Введено неправильное значение')
-
-    id_region = id_region_dict.get(region)
-
-    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-                                         id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
+    # value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    # if value == '1':
+    #     region = 'Германия'
+    #     base_currency = 'EUR'
+    #     target_currency = 'RUB'
+    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+    #     print(f'Курс EUR/RUB: {currency}')
+    # elif value == '2':
+    #     region = 'Казахстан'
+    #     base_currency = 'KZT'
+    #     target_currency = 'RUB'
+    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+    #     print(f'Курс KZT/RUB: {currency}')
+    # else:
+    #     raise ValueError('Введено неправильное значение')
+    #
+    # id_region = id_region_dict.get(region)
+    #
+    # products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+    #                                      id_region=id_region)
+    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

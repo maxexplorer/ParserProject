@@ -29,7 +29,7 @@ result_data = []
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
     list[dict], list[dict]]:
-    with open(f'data/id_products_list_ZARA_{id_region}.txt', 'r', encoding='utf-8') as file:
+    with open(f'data/id_products_list_Zara_{id_region}.txt', 'r', encoding='utf-8') as file:
         id_products_list = [line.strip() for line in file.readlines()]
 
     products_data_list = []
@@ -117,7 +117,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open(f'data/id_products_list_ZARA_{region}.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_Zara_{region}.txt', 'a', encoding='utf-8') as file:
         print(*new_id_list, file=file, sep='\n')
 
     return products_data_list, products_new_data_list
@@ -206,7 +206,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
             reference = None
 
         try:
-            name_product = f"ZARA {item['name']}"
+            name_product = f"Zara {item['name'].lower()}"
         except Exception:
             name_product = None
 
@@ -276,7 +276,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'ZARA'
+        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -447,7 +447,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
         try:
             name_product = item['name']
-            name_product = f'ZARA {translator(name_product)}'
+            name_product = f'Zara {translator(name_product).lower()}'
         except Exception:
             name_product = None
 
@@ -517,7 +517,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
         except Exception:
             description = None
 
-        brand = 'ZARA'
+        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -686,11 +686,11 @@ def get_size_data(products_data: dict, id_region: str, currency: int) -> list[di
             reference = None
 
         try:
-            name_product = item['name']
+            name_product = item['name'].lower()
             if id_region == 'de/en':
-                name_product = f'ZARA {translator(name_product)}'
+                name_product = f'Zara {translator(name_product)}'
             else:
-                name_product = f'ZARA {name_product}'
+                name_product = f'Zara {name_product}'
         except Exception:
             name_product = None
 
@@ -743,13 +743,13 @@ def save_excel(data: list, species: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{species}_ZARA_{region}.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_Zara_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_ZARA_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_Zara_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -757,7 +757,7 @@ def save_excel(data: list, species: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_ZARA_{region}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
