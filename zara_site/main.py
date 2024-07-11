@@ -158,7 +158,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open(f'data/id_products_list_{region}.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_ZARA_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
