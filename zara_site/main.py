@@ -734,29 +734,29 @@ def save_excel(data: list, species: str, region: str) -> None:
 
 
 def main():
-    get_id_categories(headers=headers, params=params)
+    # get_id_categories(headers=headers, params=params)
 
-    # value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
-    # if value == '1':
-    #     region = 'Германия'
-    #     base_currency = 'EUR'
-    #     target_currency = 'RUB'
-    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-    #     print(f'Курс EUR/RUB: {currency}')
-    # elif value == '2':
-    #     region = 'Казахстан'
-    #     base_currency = 'KZT'
-    #     target_currency = 'RUB'
-    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-    #     print(f'Курс KZT/RUB: {currency}')
-    # else:
-    #     raise ValueError('Введено неправильное значение')
-    #
-    # id_region = id_region_dict.get(region)
-    #
-    # products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-    #                                      id_region=id_region)
-    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    if value == '1':
+        region = 'Германия'
+        base_currency = 'EUR'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс EUR/RUB: {currency}')
+    elif value == '2':
+        region = 'Казахстан'
+        base_currency = 'KZT'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс KZT/RUB: {currency}')
+    else:
+        raise ValueError('Введено неправильное значение')
+
+    id_region = id_region_dict.get(region)
+
+    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+                                         id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
