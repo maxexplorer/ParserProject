@@ -369,7 +369,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -611,7 +611,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики' or category_name == 'Девочки;Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
