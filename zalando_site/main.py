@@ -269,7 +269,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                         continue
                     try:
                         name_product = product_data['name']
-                        name_product = translator(name_product)
+                        name_product = f'{brand} {translator(name_product).lower()}'
                     except Exception:
                         name_product = ''
                     try:
@@ -316,7 +316,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                             pass
                         try:
                             name_product = product_data['name']
-                            name_product = translator(name_product)
+                            name_product = f'{brand} {translator(name_product).lower()}'
                         except Exception:
                             name_product = ''
                         try:
