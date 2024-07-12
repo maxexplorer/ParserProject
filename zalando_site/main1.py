@@ -667,7 +667,7 @@ def main():
         value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
             '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
-            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas\n16 - Nike\n17 - Puma\n18 - Vans\n19 - Asics\n20 - Under Armour\n'
+            '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas Originals\n16 - Nike Sportswear\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
             '21 - Reebok\n22 - Columbia\n')
         brand = brand_dict.get(value)
     except KeyError:
