@@ -29,7 +29,10 @@ result_data = []
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
     list[dict], list[dict]]:
-    with open(f'data/id_products_list_Zara_{id_region}.txt', 'r', encoding='utf-8') as file:
+
+    region = id_region.split('/')[0]
+
+    with open(f'data/id_products_list_Zara_{region}.txt', 'r', encoding='utf-8') as file:
         id_products_list = [line.strip() for line in file.readlines()]
 
     products_data_list = []
@@ -111,8 +114,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                     print(
                         f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
-
-    region = id_region.split('/')[0]
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -334,7 +335,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -579,7 +580,7 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
                 if category_name == 'Девочки' or category_name == 'Мальчики' or category_name == 'Девочки;Мальчики':
                     size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
-                elif subcategory_name == 'Обувь':
+                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
                     size_rus = size_eur
                 elif size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
