@@ -208,7 +208,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
 
             try:
                 name_product_original = inner_data.find('hm-product-name').text.strip()
-                name_product_ru = translator(name_product_original)
+                name_product_ru = translator(name_product_original).lower()
                 name_product = f'H&M {name_product_ru}'
             except Exception:
                 name_product = None
@@ -520,7 +520,7 @@ def get_size_data(products_data_list: list, driver: Chrome) -> None:
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, species: str) -> None:
+def save_excel(data: list, species: str, brand: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
