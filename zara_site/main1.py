@@ -143,8 +143,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
             category_name = key[0]
             subcategory_name = key[1]
 
-            print(f'Сбор данных о наличии размеров в категории {category_name}/{subcategory_name}')
-
             for chunk_ids in chunks(id_products, 10):
                 params = {
                     'productIds': chunk_ids,
@@ -167,7 +165,6 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
                     json_data = response.json()
 
                     if species == 'size':
-                        print('Сбор данных о наличии размеров!')
                         print(f'Сбор данных категории: {category_name}/{subcategory_name}')
                         get_size_data(products_data=json_data, id_region=id_region, currency=currency)
                     elif species == 'products' and id_region == 'kz/ru':
@@ -786,6 +783,7 @@ def main():
     id_region = id_region_dict.get(region)
     products_data_list, products_new_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers,
                                                                  params=params, id_region=id_region)
+    print('Сбор данных о наличии размеров!')
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size',
                        currency=currency)
 
