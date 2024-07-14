@@ -198,7 +198,7 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
             with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
                 print(*new_url_list, file=file, sep='\n')
 
-            return products_new_data_list
+    return products_new_data_list
 
 
 # Функция получения данных товаров
