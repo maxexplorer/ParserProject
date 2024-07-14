@@ -87,8 +87,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
 
-    new_id_list = set(new_id_list)
-
     if not os.path.exists('data'):
         os.makedirs('data')
 

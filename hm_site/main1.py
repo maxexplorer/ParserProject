@@ -154,6 +154,8 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
 
                     get_size_data(products_data_list=products_data_list, driver=driver)
 
+            if not os.path.exists('data'):
+                os.makedirs('data')
 
             with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
                 print(*new_url_list, file=file, sep='\n')
