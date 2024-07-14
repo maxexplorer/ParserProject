@@ -40,7 +40,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
     with Session() as session:
         for category_dict in id_categories_list:
-            new_id_products_list = []
+            new_id_list = []
             for name_category, products_list in category_dict.items():
                 for product_tuple in products_list:
                     name_subcategory, id_category = product_tuple
@@ -79,18 +79,18 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                         if str(id_product) in id_products_list:
                             continue
 
-                        new_id_products_list.append(id_product)
+                        new_id_list.append(id_product)
 
-                    if new_id_products_list:
+                    if new_id_list:
                         new_products_data_list.append(
                             {
-                                (name_category, id_category): new_id_products_list
+                                (name_category, id_category): new_id_list
                             }
                         )
 
                     print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
 
-    new_id_products_set = set(new_id_products_list)
+    new_id_products_set = set(new_id_list)
 
     if not os.path.exists('data'):
         os.makedirs('data')

@@ -82,17 +82,16 @@ def get_pages(html: str) -> int:
 
 # Получаем ссылки товаров
 def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) -> list[dict]:
-    with open('data/url_products_list_H&M.txt', 'r', encoding='utf-8') as file:
-        url_products_list = [line.strip() for line in file.readlines()]
-
+    products_new_data_list = []
 
     with Session() as session:
         for category_dict in category_data_list:
+            with open('data/url_products_list_H&M.txt', 'r', encoding='utf-8') as file:
+                url_products_list = [line.strip() for line in file.readlines()]
             new_url_list = []
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
-                    products_new_data_list = []
                     product_urls = []
                     subcategory_name, category_url = product_tuple
 

@@ -166,12 +166,6 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
 
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-                    # if not os.path.exists('data/products1'):
-                    #     os.makedirs(f'data/products1')
-                    #
-                    # with open(f'data/products1/products_data_list_{category_name}.py', 'w', encoding='utf-8') as file:
-                    #     print(products_data_list, file=file, sep='\n')
-
                     get_products_data(products_data_list=products_data_list, driver=driver)
 
     with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
