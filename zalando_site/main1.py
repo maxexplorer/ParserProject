@@ -117,6 +117,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> list[dict]:
     with Session() as session:
         for brand_dict in category_data_list:
+            products_new_data_list = []
             new_url_list = []
             category_dict = brand_dict.get(brand)
 
@@ -129,7 +130,6 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
-                    products_new_data_list = []
                     product_urls = []
                     subcategory_name, category_url = product_tuple
 
@@ -194,6 +194,11 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
                     get_size_data(products_data_list=products_data_list, brand=brand)
+
+            new_url_list = set(new_url_list)
+
+            if not os.path.exists('data'):
+                os.makedirs('data')
 
             with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
                 print(*new_url_list, file=file, sep='\n')
