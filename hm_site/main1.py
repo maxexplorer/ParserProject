@@ -85,7 +85,6 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
     with open('data/url_products_list_H&M.txt', 'r', encoding='utf-8') as file:
         url_products_list = [line.strip() for line in file.readlines()]
 
-    products_new_data_list = []
 
     with Session() as session:
         for category_dict in category_data_list:
@@ -93,6 +92,7 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
+                    products_new_data_list = []
                     product_urls = []
                     subcategory_name, category_url = product_tuple
 
@@ -154,6 +154,7 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
                     get_size_data(products_data_list=products_data_list, driver=driver)
+
 
     with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
         print(*new_url_list, file=file, sep='\n')
@@ -543,7 +544,7 @@ def save_excel(data: list, species: str, brand: str) -> None:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл' f'result_data_{species}_{brand}.xlsx')
+    print(f'Данные сохранены в файл result_data_{species}_{brand}.xlsx')
 
 
 def main():
