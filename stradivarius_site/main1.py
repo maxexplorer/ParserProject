@@ -35,15 +35,17 @@ result_data = []
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
     list[dict], list[dict]]:
-    with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
-        id_products_list = [line.strip() for line in file.readlines()]
 
     products_data_list = []
     new_products_data_list = []
 
     with Session() as session:
         for name_subcategory, id_category in id_categories_list:
+            with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
+                id_products_list = [line.strip() for line in file.readlines()]
+
             new_id_list = []
+
             try:
                 time.sleep(1)
                 response = session.get(
@@ -89,13 +91,12 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             print(f'Обработано: категория {name_subcategory} - {len(product_ids)} товаров!')
 
-    new_id_products_set = set(new_id_list)
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+            if not os.path.exists('data'):
+                os.makedirs('data')
 
-    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
-        print(*new_id_products_set, file=file, sep='\n')
+            with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+                print(*new_id_list, file=file, sep='\n')
 
     return products_data_list, new_products_data_list
 
