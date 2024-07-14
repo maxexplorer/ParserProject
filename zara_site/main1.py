@@ -32,18 +32,17 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
     region = id_region.split('/')[0]
 
-    with open(f'data/id_products_list_Zara_{region}.txt', 'r', encoding='utf-8') as file:
-        id_products_list = [line.strip() for line in file.readlines()]
-
     products_data_list = []
     products_new_data_list = []
 
     with Session() as session:
         for category_dict in id_categories_list:
-            new_id_list = []
             for category_name, products_list in category_dict.items():
                 for product_tuple in products_list:
+                    with open(f'data/id_products_list_Zara_{region}.txt', 'r', encoding='utf-8') as file:
+                        id_products_list = [line.strip() for line in file.readlines()]
                     product_ids = []
+                    new_id_list = []
                     subcategory_name, id_category = product_tuple
 
                     if id_region == 'kz/ru' and category_name == 'Девочки;Мальчики':
@@ -115,11 +114,11 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
                     print(
                         f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+                    if not os.path.exists('data'):
+                        os.makedirs('data')
 
-    with open(f'data/id_products_list_Zara_{region}.txt', 'a', encoding='utf-8') as file:
-        print(*new_id_list, file=file, sep='\n')
+                    with open(f'data/id_products_list_Zara_{region}.txt', 'a', encoding='utf-8') as file:
+                        print(*new_id_list, file=file, sep='\n')
 
     return products_data_list, products_new_data_list
 
