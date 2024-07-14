@@ -88,7 +88,9 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
         for category_dict in category_data_list:
             with open('data/url_products_list_H&M.txt', 'r', encoding='utf-8') as file:
                 url_products_list = [line.strip() for line in file.readlines()]
+
             new_url_list = []
+
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
@@ -154,11 +156,11 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
 
                     get_size_data(products_data_list=products_data_list, driver=driver)
 
-            if not os.path.exists('data'):
-                os.makedirs('data')
+                    if not os.path.exists('data'):
+                        os.makedirs('data')
 
-            with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
-                print(*new_url_list, file=file, sep='\n')
+                    with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
+                        print(*new_url_list, file=file, sep='\n')
 
     return products_new_data_list
 
