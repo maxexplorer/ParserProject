@@ -129,8 +129,9 @@ def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) ->
                                     continue
                                 product_urls.append(product_url)
 
-                                if product_url not in url_products_list:
-                                    new_url_list.append(product_url)
+                                if product_url in url_products_list:
+                                    continue
+                                new_url_list.append(product_url)
 
                         except Exception as ex:
                             print(ex)
