@@ -28,8 +28,6 @@ print(f'Курс EUR/RUB: {rub}')
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
     list[dict], list[dict]]:
-    with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
-        id_products_list = [line.strip() for line in file.readlines()]
 
     count_categories = len(id_categories_list)
 
@@ -39,6 +37,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     products_new_data_list = []
     with Session() as session:
         for name_category, id_category in id_categories_list:
+            with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
+                id_products_list = [line.strip() for line in file.readlines()]
             new_id_list = []
             time.sleep(randint(3, 5))
 
@@ -87,11 +87,11 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
             print(f'Обработано: категория {name_category}/{id_category} - {len(product_ids)} товаров!')
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+            if not os.path.exists('data'):
+                os.makedirs('data')
 
-    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
-        print(*new_id_list, file=file, sep='\n')
+            with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+                print(*new_id_list, file=file, sep='\n')
 
     return products_data_list, products_new_data_list
 
