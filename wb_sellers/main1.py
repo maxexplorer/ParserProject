@@ -6,16 +6,15 @@ from requests import Session
 from pandas import DataFrame, ExcelWriter
 from pandas import read_excel
 
-
-
 start_time = datetime.now()
 
 df = read_excel("D:\\PycharmProjects\\ParserProject\\wb_sellers\\results\\result_data.xlsx", sheet_name='Sellers')
 
+
 # Функция для получения данных о наличии товаров у продавца
 def get_data_products_wb() -> None:
     result_list = []
-    batch_size = 100
+    batch_size = 5
     # Размер пакета для записи
     processed_count = 0  # Счетчик обработанных URL
 
@@ -23,7 +22,7 @@ def get_data_products_wb() -> None:
     with Session() as session:
         for index, row in df.iterrows():
             url = row[0]
-            # time.sleep(1)
+            id_seller = row[0].split('/')[-1]
 
             headers = {
                 'accept': '*/*',
@@ -41,12 +40,9 @@ def get_data_products_wb() -> None:
                 'x-client-name': 'site',
             }
 
-
-
-
             try:
-                response = session.get('https://suppliers-shipment.wildberries.ru/api/v1/suppliers/3999481',
-                                        headers=headers, timeout=60)
+                response = session.get(f'https://suppliers-shipment.wildberries.ru/api/v1/suppliers/{id_seller}',
+                                       headers=headers, timeout=60)
 
                 if response.status_code != 200:
                     print(f'status_code: {response.status_code}')
