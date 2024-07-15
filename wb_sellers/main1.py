@@ -14,7 +14,7 @@ df = read_excel("D:\\PycharmProjects\\ParserProject\\wb_sellers\\results\\result
 # Функция для получения данных о наличии товаров у продавца
 def get_data_products_wb() -> None:
     result_list = []
-    batch_size = 5
+    batch_size = 100
     # Размер пакета для записи
     processed_count = 0  # Счетчик обработанных URL
 
