@@ -21,8 +21,8 @@ def get_data_products_wb() -> None:
     # Создаем сессию
     with Session() as session:
         for index, row in df.iterrows():
-            url = row[0]
-            id_seller = row[0].split('/')[-1]
+            url = row.iloc[0]
+            id_seller = row.iloc[0].split('/')[-1]
 
             headers = {
                 'accept': '*/*',
