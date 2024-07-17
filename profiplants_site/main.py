@@ -5,7 +5,6 @@ import os
 import requests
 
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 from configs import headers
 from configs import json_data

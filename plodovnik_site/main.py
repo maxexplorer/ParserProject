@@ -9,7 +9,6 @@ import requests
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 
