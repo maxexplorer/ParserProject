@@ -44,7 +44,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
             with open('data/id_products_list.txt', 'r', encoding='utf-8') as file:
                 id_products_list = [line.strip() for line in file.readlines()]
             new_id_list = []
-
             try:
                 time.sleep(1)
                 response = session.get(

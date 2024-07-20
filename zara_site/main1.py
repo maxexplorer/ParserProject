@@ -29,7 +29,6 @@ result_data = []
 # Функция получения id товаров
 def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> tuple[
     list[dict], list[dict]]:
-
     region = id_region.split('/')[0]
 
     products_data_list = []
@@ -190,7 +189,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
+def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -426,11 +425,9 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    return result_data
-
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
+def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -671,8 +668,6 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    return result_data
-
 
 # Функция получения данных о размерах товаров
 def get_size_data(products_data: dict, id_region: str, currency: int) -> list[dict]:
@@ -731,8 +726,6 @@ def get_size_data(products_data: dict, id_region: str, currency: int) -> list[di
                 )
         except Exception as ex:
             print(f'sizes: {ex}')
-
-    return result_data
 
 
 # Функция для записи данных в формат xlsx
