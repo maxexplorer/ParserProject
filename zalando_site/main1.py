@@ -118,19 +118,18 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
     with Session() as session:
         for brand_dict in category_data_list:
             products_new_data_list = []
-            new_url_list = []
             category_dict = brand_dict.get(brand)
 
             if category_dict is None:
                 continue
 
-            with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
-                url_products_list = [line.strip() for line in file.readlines()]
-
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
+                    with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
+                        url_products_list = [line.strip() for line in file.readlines()]
                     products_data_list = []
                     product_urls = []
+                    new_url_list = []
                     subcategory_name, category_url = product_tuple
 
                     try:
@@ -170,8 +169,10 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                                 product_urls.append(product_url)
 
-                                if product_url not in url_products_list:
-                                    new_url_list.append(product_url)
+                                if product_url in url_products_list:
+                                    continue
+
+                                new_url_list.append(product_url)
 
                         except Exception as ex:
                             print(ex)
@@ -195,13 +196,12 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                     get_size_data(products_data_list=products_data_list, brand=brand)
 
-            new_url_list = set(new_url_list)
 
-            if not os.path.exists('data'):
-                os.makedirs('data')
+                    if not os.path.exists('data'):
+                        os.makedirs('data')
 
-            with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                print(*new_url_list, file=file, sep='\n')
+                    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                        print(*new_url_list, file=file, sep='\n')
 
     return products_new_data_list
 
@@ -545,7 +545,6 @@ def get_size_data(products_data_list: list[dict], brand: str) -> None:
 
             print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
             for i, product_url in enumerate(product_urls, 1):
-                image_urls_list = []
                 try:
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
