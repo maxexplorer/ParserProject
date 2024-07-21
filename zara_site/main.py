@@ -206,10 +206,10 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
                     json_data = response.json()
 
                     if id_region == 'kz/ru':
-                        result_data = get_products_data_ru(products_data=json_data, category_name=category_name,
+                        get_products_data_ru(products_data=json_data, category_name=category_name,
                                                            subcategory_name=subcategory_name, currency=currency)
                     else:
-                        result_data = get_products_data_en(products_data=json_data, category_name=category_name,
+                        get_products_data_en(products_data=json_data, category_name=category_name,
                                                            subcategory_name=subcategory_name, currency=currency)
 
                     count += len(chunk_ids)
@@ -461,8 +461,6 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
         except Exception as ex:
             print(f'sizes: {ex}')
 
-    return result_data
-
 
 # Функция получения данных товаров
 def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
@@ -702,8 +700,6 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
                 )
         except Exception as ex:
             print(f'sizes: {ex}')
-
-    return result_data
 
 
 # Функция для записи данных в формат xlsx

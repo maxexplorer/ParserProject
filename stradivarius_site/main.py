@@ -180,7 +180,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
 
                     json_data = response.json()
 
-                    result_data = get_products_data(products_data=json_data, name_subcategory=name_subcategory)
+                    get_products_data(products_data=json_data, name_subcategory=name_subcategory)
 
                     count += len(chunk_ids)
 
