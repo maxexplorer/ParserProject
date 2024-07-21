@@ -228,7 +228,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
+def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -463,7 +463,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> list:
+def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
