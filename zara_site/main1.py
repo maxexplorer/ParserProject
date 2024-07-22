@@ -183,7 +183,7 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
 
             region = id_region.split('/')[0]
 
-            save_excel(data=result_data, species='products', region=region)
+            save_excel(data=result_data, species=species, region=region)
 
             result_data = []
 
