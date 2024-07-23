@@ -100,6 +100,9 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
             except Exception:
                 product_ids = []
 
+            if not product_ids:
+                continue
+
             products_data_list.append(
                 {
                     (subcategory_name, id_category): product_ids
@@ -138,8 +141,6 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                     id_products_list.append(id_product)
             subcategory_name = key[0]
             id_category = key[1]
-
-            id_products_str = ','.join(map(str, id_products_list))
 
             print(f'Сбор данных категории: {subcategory_name}')
 
