@@ -167,7 +167,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, brand: str, id_region: str, species: str, currency: int) -> None:
+def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, id_region: str, currency: int) -> None:
     global result_data
 
     processed_ids = []
@@ -210,9 +210,11 @@ def get_products_array(products_data_list: list, headers: dict, brand: str, id_r
                     if id_region == 'kz/ru':
                         get_products_data_ru(products_data=json_data, brand=brand, category_name=category_name,
                                              subcategory_name=subcategory_name, currency=currency)
-                    else:
+                    elif id_region == 'de/en':
                         get_products_data_en(products_data=json_data, brand=brand, category_name=category_name,
                                              subcategory_name=subcategory_name, currency=currency)
+                    else:
+                        raise 'Регион не найден!'
 
                     count += len(chunk_ids)
 
@@ -244,11 +246,12 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
             reference = None
 
         try:
-            name_product = f"Zara {item['name'].lower()}"
+            name = item['name']
+            product_name = f"Zara {name.lower()}"
         except Exception:
-            name_product = None
+            product_name = None
 
-        if not name_product:
+        if not product_name:
             continue
 
         try:
@@ -385,7 +388,7 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
                     {
                         '№': None,
                         'Артикул': id_product_size,
-                        'Название товара': name_product,
+                        'Название товара': product_name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
@@ -479,12 +482,12 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             reference = None
 
         try:
-            name_product = item['name']
-            name_product = f'Zara {translator(name_product).lower()}'
+            name = item['name']
+            product_name = f'Zara {translator(name).lower()}'
         except Exception:
-            name_product = None
+            product_name = None
 
-        if not name_product:
+        if not product_name:
             continue
 
         try:
@@ -625,7 +628,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                     {
                         '№': None,
                         'Артикул': id_product_size,
-                        'Название товара': name_product,
+                        'Название товара': product_name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
@@ -754,8 +757,8 @@ def main():
 
     products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
                                          brand=brand, id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, brand=brand, id_region=id_region,
-                       species='products', currency=currency)
+    get_products_array(products_data_list=products_data_list, headers=headers,  species='products', brand=brand,
+                       id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
