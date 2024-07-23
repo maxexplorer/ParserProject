@@ -75,9 +75,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
     id_products_list = []
     with Session() as session:
         for subcategory_name, id_category in id_categories_list:
-            time.sleep(randint(1, 2))
-
             try:
+                time.sleep(randint(1, 2))
                 response = session.get(
                     f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
                     params=params,
@@ -157,6 +156,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
             }
 
             try:
+                time.sleep(randint(1, 2))
                 response = session.get(
                     f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
                     params=params,
