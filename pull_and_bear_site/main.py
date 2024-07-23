@@ -20,10 +20,6 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-rub = get_exchange_rate()
-
-print(f'Курс EUR/RUB: {rub}')
-
 
 # Функция получения id категорий
 def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
@@ -53,21 +49,21 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     for category_item in category_items[:2]:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
-            if subcategory_item.get('name') == 'Clothing':
+            if subcategory_item.get('nameEn') == 'Clothing':
                 clothing_subcategory_items = subcategory_item.get('subcategories')
                 for clothing_subcategory_item in clothing_subcategory_items:
                     id_category = clothing_subcategory_item.get('id')
-                    subcategory_name = clothing_subcategory_item.get('name')
+                    subcategory_name = clothing_subcategory_item.get('nameEn')
                     if subcategory_name == '-':
                         continue
                     if 'Best sellers' in subcategory_name:
                         break
-                    id_categories_list.append((subcategory_name, id_category))
+                    id_categories_list.append((translator(subcategory_name), id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/data.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_de.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
@@ -710,31 +706,33 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 
 def main():
     brand = 'Pull&Bear'
-
-    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
-    if value == '1':
-        region = 'Германия'
-        base_currency = 'EUR'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс EUR/RUB: {currency}')
-    elif value == '2':
-        region = 'Казахстан'
-        base_currency = 'KZT'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс KZT/RUB: {currency}')
-    else:
-        raise ValueError('Введено неправильное значение')
-
+    region = 'Германия'
     id_region = id_region_dict.get(region)
 
-    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
-                                         brand=brand, id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
-                       region=region, id_region=id_region, currency=currency)
+    id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+
+    # value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    # if value == '1':
+    #     region = 'Германия'
+    #     base_currency = 'EUR'
+    #     target_currency = 'RUB'
+    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+    #     print(f'Курс EUR/RUB: {currency}')
+    # elif value == '2':
+    #     region = 'Казахстан'
+    #     base_currency = 'KZT'
+    #     target_currency = 'RUB'
+    #     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+    #     print(f'Курс KZT/RUB: {currency}')
+    # else:
+    #     raise ValueError('Введено неправильное значение')
+    #
+    # id_region = id_region_dict.get(region)
+    #
+    # products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
+    #                                      brand=brand, id_region=id_region)
+    # get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
+    #                    region=region, id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
