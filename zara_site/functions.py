@@ -761,8 +761,8 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
             'Женщины': {
                 'XXS': '38',
                 'XS-S': '40;44',
-                'XS': '40',
-                'S': '42;44',
+                'XS': '42',
+                'S': '44',
                 'S-M': '44;50',
                 'M': '44;46',
                 'M-L': '46;50',
@@ -770,7 +770,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'L-XL': '48;52',
                 'XL': '50;52',
                 'XL-XXL': '50;54',
-                'XXL': '54',
+                'XXL': '54'
             },
             'Мужчины': {
                 'XS': '44',
@@ -780,7 +780,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'L': '50;52',
                 'L-XL': '50;54',
                 'XL': '52;54',
-                'XXl': '56;58'
+                'XXl': '56'
             }
         },
         'digit': {

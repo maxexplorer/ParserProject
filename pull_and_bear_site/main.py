@@ -310,7 +310,7 @@ def get_products_data(products_data: dict, type_product: str) -> None:
             for c in sizes_items:
                 size_eur = c.get('name')
 
-                id_product_size = f"{id_product}/{color_en.replace(' ', '-')}/{size_eur}"
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
 
                 if size == size_eur:
                     continue
@@ -350,6 +350,7 @@ def get_products_data(products_data: dict, type_product: str) -> None:
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,

@@ -61,7 +61,8 @@ def get_id_categories(headers: dict, params: dict) -> None:
                     subcategory_id = subcategory_item.get('id')
                     redirect_category_id = subcategory_item.get('redirectCategoryId')
                     category_id = redirect_category_id if redirect_category_id else subcategory_id
-                    id_categories_data.append((main_category_name, translator(subcategory_name).capitalize(), category_id))
+                    id_categories_data.append(
+                        (main_category_name, translator(subcategory_name).capitalize(), category_id))
         if main_category_name == 'KID':
             kid_category_items = main_category_item.get('subcategories')
             for kid_category_item in kid_category_items:
@@ -78,14 +79,15 @@ def get_id_categories(headers: dict, params: dict) -> None:
                             kid_subcategory_id = kid_subcategory_item1.get('id')
                             redirect_kid_category_id = kid_subcategory_item1.get('redirectCategoryId')
                             category_id = redirect_kid_category_id if redirect_kid_category_id else kid_subcategory_id
-                            id_categories_data.append((kid_subcategory_name, translator(kid_subcategory_name1).capitalize(), category_id))
+                            id_categories_data.append(
+                                (kid_subcategory_name, translator(kid_subcategory_name1).capitalize(), category_id))
 
     with open('data/id_categories_list_new_de.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, id_region: str) -> list[dict]:
     products_data_list = []
     id_products_set = set()
     with Session() as session:
@@ -158,14 +160,14 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open(f'data/id_products_list_Zara_{region}.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_{brand}_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, id_region: str, currency: int) -> None:
+def get_products_array(products_data_list: list, headers: dict, brand: str, id_region: str, species: str, currency: int) -> None:
     global result_data
 
     processed_ids = []
@@ -206,11 +208,11 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
                     json_data = response.json()
 
                     if id_region == 'kz/ru':
-                        get_products_data_ru(products_data=json_data, category_name=category_name,
-                                                           subcategory_name=subcategory_name, currency=currency)
+                        get_products_data_ru(products_data=json_data, brand=brand, category_name=category_name,
+                                             subcategory_name=subcategory_name, currency=currency)
                     else:
-                        get_products_data_en(products_data=json_data, category_name=category_name,
-                                                           subcategory_name=subcategory_name, currency=currency)
+                        get_products_data_en(products_data=json_data, brand=brand, category_name=category_name,
+                                             subcategory_name=subcategory_name, currency=currency)
 
                     count += len(chunk_ids)
 
@@ -222,13 +224,14 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str, 
 
             region = id_region.split('/')[0]
 
-            save_excel(data=result_data, species='products', region=region)
+            save_excel(data=result_data, species=species, brand=brand, region=region)
 
             result_data = []
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
+def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str,
+                         currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -310,8 +313,6 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
             description = raw_description
         except Exception:
             description = None
-
-        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -402,6 +403,7 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
@@ -463,7 +465,8 @@ def get_products_data_ru(products_data: dict, category_name: str, subcategory_na
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, category_name: str, subcategory_name: str, currency: int) -> None:
+def get_products_data_en(products_data: dict, brand: str, category_name: str, subcategory_name: str,
+                         currency: int) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -546,8 +549,6 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
             description = translator(raw_description)
         except Exception:
             description = None
-
-        brand = 'Zara'
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -703,17 +704,17 @@ def get_products_data_en(products_data: dict, category_name: str, subcategory_na
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, species: str, region: str) -> None:
+def save_excel(data: list, species: str, brand: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists(f'results/result_data_{species}_Zara_{region}.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_{brand}_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_Zara_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_{brand}_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -721,7 +722,7 @@ def save_excel(data: list, species: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_Zara_{region}.xlsx', mode='a',
+    with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
@@ -730,6 +731,7 @@ def save_excel(data: list, species: str, region: str) -> None:
 
 
 def main():
+    brand = 'Zara'
     # get_id_categories(headers=headers, params=params)
 
     value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
@@ -751,8 +753,9 @@ def main():
     id_region = id_region_dict.get(region)
 
     products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-                                         id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, currency=currency)
+                                         brand=brand, id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, brand=brand, id_region=id_region,
+                       species='products', currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
