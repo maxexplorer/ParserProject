@@ -17,6 +17,7 @@ from functions import colors_format
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
+from functions import chunks
 
 start_time = datetime.now()
 
@@ -127,6 +128,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
     with Session() as session:
         for dict_item in products_data_list:
+            count = 0
             id_products_list = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
@@ -148,44 +150,47 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
             else:
                 id_language = '-1'
 
-            params = {
-                'languageId': id_language,
-                'productIds': id_products_str,
-                'categoryId': id_category,
-                'appId': '1',
-            }
+            for chunk_ids in chunks(id_products_list, 300):
+                id_products_str = ','.join(map(str, chunk_ids))
 
-            try:
-                time.sleep(randint(1, 2))
-                response = session.get(
-                    f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+                params = {
+                    'languageId': id_language,
+                    'productIds': id_products_str,
+                    'categoryId': id_category,
+                    'appId': '1',
+                }
 
-                if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                try:
+                    time.sleep(randint(1, 2))
+                    response = session.get(
+                        f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
+
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
+                        continue
+
+                    json_data = response.json()
+
+                    if region == 'Германия':
+                        get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
+                                             subcategory_name=subcategory_name, currency=currency)
+                    elif region == 'Казахстан':
+                        get_products_data_ru(products_data=json_data, species=species, brand=brand, region=region,
+                                             subcategory_name=subcategory_name, currency=currency)
+                    else:
+                        raise 'Регион не найден!'
+
+                    count += len(chunk_ids)
+
+                    print(f'В категории {subcategory_name} обработано: {count} товаров!')
+
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
                     continue
-
-                json_data = response.json()
-
-                if region == 'Германия':
-                    get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
-                                         subcategory_name=subcategory_name, currency=currency)
-                elif region == 'Казахстан':
-                    get_products_data_ru(products_data=json_data, species=species, brand=brand, region=region,
-                                         subcategory_name=subcategory_name, currency=currency)
-                else:
-                    raise 'Регион не найден!'
-
-                count = len(id_products_list)
-
-                print(f'В категории {subcategory_name} обработано: {count} товаров!')
-
-            except Exception as ex:
-                print(f'get_products_array: {ex}')
-                continue
 
 
 # Функция получения данных товаров
