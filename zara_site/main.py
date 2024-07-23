@@ -377,7 +377,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                 status_size = size_item.get('availability')
 
                 if category_name == 'Девочки' or category_name == 'Мальчики' or category_name == 'Девочки;Мальчики':
-                    size_rus = ''.join(i for i in size_eur.split()[-2] if i.isdigit())
+                    size_rus = ''.join(i for i in size_eur.split()[-1].lstrip('(').rstrip('cm)').strip().replace('-', ';'))
                 elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
                     size_rus = size_eur
                 elif size_eur.isdigit():

@@ -352,7 +352,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                 elif not size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
                 else:
-                    size_rus = size_eur
+                    size_rus = size_eur.replace('-', ';')
 
                 result_data.append(
                     {
@@ -599,7 +599,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                 elif not size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)
                 else:
-                    size_rus = size_eur
+                    size_rus = size_eur.replace('-', ';')
 
                 result_data.append(
                     {
