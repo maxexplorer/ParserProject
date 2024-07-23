@@ -74,7 +74,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
     products_data_list = []
     id_products_list = []
     with Session() as session:
-        for subcategory_name, id_category in id_categories_list[:1]:
+        for subcategory_name, id_category in id_categories_list:
             time.sleep(randint(1, 2))
 
             try:
@@ -108,7 +108,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
             id_products_list.extend(product_ids)
 
-            print(f'Обработано: категория {subcategory_name}/{id_category} - {len(product_ids)} товаров!')
+            print(f'Обработано: категория {subcategory_name} - {len(product_ids)} товаров!')
 
     id_products_set = set(id_products_list)
 
