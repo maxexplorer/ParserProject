@@ -206,7 +206,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             id_product = None
 
         try:
-            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
+            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0].lstrip('0')
         except Exception:
             reference = None
 
@@ -457,7 +457,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             id_product = None
 
         try:
-            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0]
+            reference = item['bundleProductSummaries'][0]['detail']['reference'].split('-')[0].lstrip('0')
         except Exception:
             reference = None
 
