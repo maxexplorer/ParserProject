@@ -10,7 +10,7 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list
+from data.data import id_categories_list_de
 from data.data import id_region_dict
 from functions import colors_format_ru
 from functions import sizes_format
@@ -62,9 +62,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
             if subcategory_item.get('nameEn') == 'Clothing' or subcategory_item.get(
-                    'nameEn') == 'STR Teen' or subcategory_item.get('nameEn') == 'Casual Sport' or subcategory_item.get(
-                'nameEn') == 'Shoes' or subcategory_item.get('nameEn') == 'Bags' or subcategory_item.get(
-                'nameEn') == 'Accessories':
+                    'nameEn') == 'STR Teen' or subcategory_item.get('name') == 'Casual Sport':
                 clothing_subcategory_items = subcategory_item.get('subcategories')
                 for clothing_subcategory_item in clothing_subcategory_items:
                     collection_subcategory_items = clothing_subcategory_item.get('subcategories')
@@ -78,7 +76,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_kz.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
@@ -366,6 +364,7 @@ def get_products_data(products_data: dict, name_subcategory: str) -> list[dict]:
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
@@ -456,14 +455,15 @@ def save_excel(data: list) -> None:
 
 
 def main():
+    brand = 'Stradivarius'
+
     region = 'Казахстан'
     id_region = id_region_dict.get(region)
-    if id_region is None:
-        id_region = '55009603/50331078'
-    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-                                         id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+    id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+
+    # products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+    #                                      id_region=id_region)
+    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
