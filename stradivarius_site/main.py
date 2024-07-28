@@ -476,10 +476,9 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
-            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-            color_ru = colors_format_ru(value=color_en)
+            color = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_ru = colors_format_ru(value=color)
         except Exception:
-            color_en = None
             color_ru = None
 
         try:
