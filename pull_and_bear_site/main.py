@@ -553,6 +553,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
 
         try:
             description = item['detail']['longDescription']
+            description = translator(description)
         except Exception:
             description = None
 

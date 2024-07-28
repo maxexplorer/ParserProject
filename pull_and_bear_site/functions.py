@@ -1407,8 +1407,17 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
 def translator(text: str) -> str:
     try:
         translator = Translator()
-        translation = translator.translate(text, dest='ru')
-        return translation.text
+
+        # Определяем язык текста
+        detected = translator.detect(text)
+
+        if detected.lang == 'en':
+            # Переводим текст на русский, если он на английском
+            translation = translator.translate(text, dest='ru')
+            return translation.text
+        else:
+            # Оставляем текст без изменений, если он не на английском
+            return text
     except Exception:
         return text
 
