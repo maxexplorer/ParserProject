@@ -12,6 +12,7 @@ from configs.config import headers
 from configs.config import params
 from data.data import id_category_list
 from data.data import id_region_dict
+from functions import colors_format_en
 from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
@@ -200,6 +201,242 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                     print(f'get_products_array: {ex}')
                     continue
 
+# Функция получения данных товаров
+def get_products_data_en(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
+                         currency: int) -> None:
+    result_data = []
+
+    for item in products_data['products']:
+        try:
+            id_product = item['id']
+        except Exception:
+            id_product = None
+
+        try:
+            reference = item['bundleProductSummaries'][0]['detail']['displayReference']
+        except Exception:
+            reference = None
+
+        try:
+            name = item['name']
+            product_name = f"Stradivarius {translator(name.lower())}"
+        except Exception:
+            product_name = None
+
+        if not product_name:
+            continue
+
+        try:
+            old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
+            old_price = round(old_price * currency)
+        except Exception:
+            old_price = 0
+
+        try:
+            price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
+            price = round(price * currency)
+        except Exception:
+            price = 0
+
+        try:
+            color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name'].upper()
+            color_ru = colors_format_en(value=color_original)
+        except Exception:
+            color_ru = None
+
+        try:
+            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+        except Exception:
+            id_color = ''
+
+        try:
+            main_image = f"https://static.e-stradivarius.net/5/photos4/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_1_1_1.jpg"
+        except Exception:
+            main_image = None
+
+        try:
+            additional_images_list = []
+            xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
+            for xmedia_elem in xmedia_data:
+                color_code = xmedia_elem['colorCode']
+                if color_code == id_color:
+                    xmedia_items = xmedia_elem['xmediaItems']
+                    for xmedia_item in xmedia_items:
+                        if len(additional_images_list) == 14:
+                            break
+                        for media_item in xmedia_item['medias']:
+                            if not media_item['extraInfo']:
+                                continue
+                            try:
+                                img_url = f"https://static.e-stradivarius.net/5/photos4/{media_item['extraInfo']['url'].split('?')[0]}"
+                            except Exception:
+                                continue
+                            if '.jpg' not in img_url or '3_1_0.jpg' in img_url:
+                                continue
+                            additional_images_list.append(img_url)
+                            if len(additional_images_list) == 14:
+                                break
+
+            additional_images = '; '.join(additional_images_list)
+        except Exception:
+            additional_images = None
+
+        try:
+            model_height = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelHeigh'].replace('cm', 'см')
+        except Exception:
+            model_height = None
+
+        try:
+            model_size = item['bundleProductSummaries'][0]['detail']['colors'][0]['modelSize']
+        except Exception:
+            model_size = None
+
+        try:
+            description = item['detail']['longDescription']
+            description = translator(description)
+        except Exception:
+            description = None
+
+        try:
+            care_items = item['bundleProductSummaries'][0]['detail']['care']
+            care = ', '.join(item['description'] for item in care_items)
+        except Exception:
+            care = None
+
+        try:
+            composition_items = item['bundleProductSummaries'][0]['detail']['composition']
+            material = composition_items[0]['composition'][0]['name']
+            composition = ' '.join(
+                f"{elem['name']}: {elem['percentage']}" for item in composition_items for elem in item['composition'])
+            composition = translator(composition)
+        except Exception:
+            composition = None
+            material = None
+
+        gender = 'женский'
+
+        try:
+            size = ''
+            status_dict = {}
+
+            try:
+                sizes_items = item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes']
+            except Exception:
+                sizes_items = {}
+
+            for size_item in sizes_items:
+                size_eur = size_item.get('name')
+                if size_eur is None:
+                    continue
+                size_value = size_item.get('visibilityValue')
+                if size == size_eur:
+                    if size_value in status_dict.get(size_eur):
+                        continue
+                status_dict.setdefault(size_eur, []).append(size_value)
+                size = size_eur
+
+            for key, value in status_dict.items():
+                size_eur = key
+                if 'SHOW' in status_dict.get(key):
+                    status_size = 'SHOW'
+                else:
+                    status_size = value[0]
+
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
+
+
+                if size_eur.isdigit():
+                    size_rus = sizes_format(format='digit', size_eur=size_eur)
+                elif not size_eur.isdigit():
+                    size_rus = sizes_format(format='alpha', size_eur=size_eur)
+                else:
+                    size_rus = size_eur.replace('-', ';')
+
+                result_data.append(
+                    {
+                        '№': None,
+                        'Артикул': id_product_size,
+                        'Название товара': name,
+                        'Цена, руб.*': price,
+                        'Цена до скидки, руб.': old_price,
+                        'НДС, %*': None,
+                        'Включить продвижение': None,
+                        'Ozon ID': id_product_size,
+                        'Штрихкод (Серийный номер / EAN)': None,
+                        'Вес в упаковке, г*': None,
+                        'Ширина упаковки, мм*': None,
+                        'Высота упаковки, мм*': None,
+                        'Длина упаковки, мм*': None,
+                        'Ссылка на главное фото*': main_image,
+                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылки на фото 360': None,
+                        'Артикул фото': None,
+                        'Бренд в одежде и обуви*': brand,
+                        'Объединить на одной карточке*': reference,
+                        'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
+                        'Российский размер*': size_rus,
+                        'Размер производителя': size_eur,
+                        'Статус наличия': status_size,
+                        'Название цвета': color_ru,
+                        'Тип*': subcategory_name,
+                        'Пол*': gender,
+                        'Размер пеленки': None,
+                        'ТН ВЭД коды ЕАЭС': None,
+                        'Ключевые слова': None,
+                        'Сезон': None,
+                        'Рост модели на фото': model_height,
+                        'Параметры модели на фото': None,
+                        'Размер товара на фото': model_size,
+                        'Коллекция': None,
+                        'Страна-изготовитель': None,
+                        'Вид принта': None,
+                        'Аннотация': description,
+                        'Инструкция по уходу': care,
+                        'Серия в одежде и обуви': None,
+                        'Материал': material,
+                        'Состав материала': composition,
+                        'Материал подклада/внутренней отделки': None,
+                        'Материал наполнителя': None,
+                        'Утеплитель, гр': None,
+                        'Диапазон температур, °С': None,
+                        'Стиль': None,
+                        'Вид спорта': None,
+                        'Вид одежды': None,
+                        'Тип застежки': None,
+                        'Длина рукава': None,
+                        'Талия': None,
+                        'Для беременных или новорожденных': None,
+                        'Тип упаковки одежды': None,
+                        'Количество в упаковке': None,
+                        'Состав комплекта': None,
+                        'Рост': None,
+                        'Длина изделия, см': None,
+                        'Длина подола': None,
+                        'Форма воротника/горловины': None,
+                        'Детали': None,
+                        'Таблица размеров JSON': None,
+                        'Rich-контент JSON': None,
+                        'Плотность, DEN': None,
+                        'Количество пар в упаковке': None,
+                        'Класс компрессии': None,
+                        'Персонаж': None,
+                        'Праздник': None,
+                        'Тематика карнавальных костюмов': None,
+                        'Признак 18+': None,
+                        'Назначение спецодежды': None,
+                        'HS-код': None,
+                        'Количество заводских упаковок': None,
+                        'Ошибка': None,
+                        'Предупреждение': None,
+                    }
+                )
+
+        except Exception as ex:
+            print(f'{id_product} - sizes: {ex}')
+
+    save_excel(data=result_data, species=species, brand=brand, region=region)
+
 
 # Функция получения данных товаров
 def get_products_data_ru(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
@@ -218,11 +455,12 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             reference = None
 
         try:
-            name = f"Stradivarius {item['name'].lower()}"
+            name = item['name']
+            product_name = f"Stradivarius {name.lower()}"
         except Exception:
-            name = None
+            product_name = None
 
-        if not name:
+        if not product_name:
             continue
 
         try:
@@ -238,10 +476,10 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
-            color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-            color_ru = colors_format_ru(value=color_original)
+            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_ru = colors_format_ru(value=color_en)
         except Exception:
-            color_original = None
+            color_en = None
             color_ru = None
 
         try:
@@ -378,7 +616,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
                         'Название цвета': color_ru,
-                        'Тип*': name_subcategory,
+                        'Тип*': subcategory_name,
                         'Пол*': gender,
                         'Размер пеленки': None,
                         'ТН ВЭД коды ЕАЭС': None,
@@ -434,21 +672,21 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
         except Exception as ex:
             print(f'{id_product} - sizes: {ex}')
 
-    return result_data
+    save_excel(data=result_data, species=species, brand=brand, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
+def save_excel(data: list, species: str, brand: str, region: str) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data_stradivarius.xlsx'):
+    if not os.path.exists(f'results/result_data_{species}_{brand}_{region}.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data_stradivarius.xlsx', mode='w') as writer:
+        with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data_stradivarius.xlsx', sheet_name='ОЗОН')
+    df = read_excel(f'results/result_data_{species}_{brand}_{region}.xlsx', sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -456,11 +694,12 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data_stradivarius.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='a',
+                     if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data_stradivarius.xlsx"')
+    print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():

@@ -18,7 +18,7 @@ def colors_format_ru(value: str) -> str:
         color = 'бежевый'
     elif value == 'ИЗУМРУДНЫЙ':
         color = 'изумрудный'
-    elif value == 'Разноцветный':
+    elif value == 'РАЗНОЦВЕТНЫЙ':
         color = 'разноцветный'
     elif value == 'СВЕТЛО-БЕЖЕВЫЙ':
         color = 'бежевый'
@@ -28,9 +28,9 @@ def colors_format_ru(value: str) -> str:
         color = 'зеленый'
     elif value == 'РЫЖЕВАТО-КОРИЧНЕВЫЙ':
         color = 'коричневый'
-    elif value == 'Цвет состаренного золота':
+    elif value == 'ЦВЕТ СОСТАРЕННОГО ЗОЛОТА':
         color = 'золотой'
-    elif value == 'Цвет небеленого полотна/ Бежевый':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/ БЕЖЕВЫЙ':
         color = 'бежевый'
     elif value == 'ХАКИ':
         color = 'хаки'
@@ -66,13 +66,13 @@ def colors_format_ru(value: str) -> str:
         color = 'серый'
     elif value == 'СЕРЫЙ / СИНИЙ':
         color = 'синий'
-    elif value == 'Черный / Белый':
+    elif value == 'ЧЕРНЫЙ / БЕЛЫЙ':
         color = 'черный'
     elif value == 'МЯГКИЙ КАШТАНОВЫЙ':
         color = 'коричневый'
     elif value == 'ТРАВЯНОЙ':
         color = 'зеленый'
-    elif value == 'Цвет небеленого полотна/Темно-синий':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/ТЕМНО-СИНИЙ':
         color = 'синий'
     elif value == 'ИНДИГО':
         color = 'синий'
@@ -100,13 +100,13 @@ def colors_format_ru(value: str) -> str:
         color = 'кремовый'
     elif value == 'МЯГКИЙ СЕРЫЙ':
         color = 'серый'
-    elif value == 'Цвет небеленого полотна/Зеленый':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/ЗЕЛЕНЫЙ':
         color = 'зеленый'
     elif value == 'КАМЕННО-СЕРЫЙ':
         color = 'серый'
     elif value == 'УГОЛЬНЫЙ':
         color = 'черный'
-    elif value == 'Светлый желто-коричневый':
+    elif value == 'СВЕТЛЫЙ ЖЕЛТО-КОРИЧНЕВЫЙ':
         color = 'коричневый'
     elif value == 'ЗЕЛЕНОВАТЫЙ':
         color = 'зеленый'
@@ -118,7 +118,7 @@ def colors_format_ru(value: str) -> str:
         color = 'голубой'
     elif value == 'ЦВЕТ МХА':
         color = 'зеленый'
-    elif value == 'Единственный':
+    elif value == 'ЕДИНСТВЕННЫЙ':
         color = 'белый'
     elif value == 'СВЕТЛЫЙ РЫЖЕВАТО-КОРИЧНЕВЫЙ':
         color = 'коричневый'
@@ -146,27 +146,27 @@ def colors_format_ru(value: str) -> str:
         color = 'розовый'
     elif value == 'ЧЕРНЫЙ С МЕЛАНЖЕВЫМ ЭФФЕКТОМ':
         color = 'черный'
-    elif value == 'Леопардовый':
+    elif value == 'ЛЕОПАРДОВЫЙ':
         color = 'леопардовый'
     elif value == 'ЛИЛОВЫЙ':
         color = 'лиловый'
-    elif value == 'Маджента':
+    elif value == 'МАДЖЕНТА':
         color = 'лиловый'
-    elif value == 'Зеленый / Цвет небеленого полотна':
+    elif value == 'ЗЕЛЕНЫЙ / ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА':
         color = 'зеленый'
-    elif value == 'Цвет выбеленного льна':
+    elif value == 'ЦВЕТ ВЫБЕЛЕННОГО ЛЬНА':
         color = 'бежевый'
     elif value == 'ЛАВАНДОВО-СИНИЙ':
         color = 'синий'
     elif value == 'ОРАНЖЕВЫЙ':
         color = 'оранжевый'
-    elif value == 'Белый / Красный':
+    elif value == 'БЕЛЫЙ / КРАСНЫЙ':
         color = 'красный'
-    elif value == 'С принтом':
+    elif value == 'С ПРИНТОМ':
         color = 'разноцветный'
-    elif value == 'Темно-синий/Белый':
+    elif value == 'ТЕМНО-СИНИЙ/БЕЛЫЙ':
         color = 'синий'
-    elif value == 'Цвет небеленого полотна/ Хаки':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/ ХАКИ':
         color = 'хаки'
     elif value == 'ТЕРРАКОТОВЫЙ':
         color = 'терракотовый'
@@ -176,7 +176,7 @@ def colors_format_ru(value: str) -> str:
         color = 'желтый'
     elif value == 'ТЕМНЫЙ БЕЖЕВО-КОРИЧНЕВЫЙ':
         color = 'коричневый'
-    elif value == 'Оттенки Синего':
+    elif value == 'ОТТЕНКИ СИНЕГО':
         color = 'синий'
     elif value == 'ЦВЕТ ОЛИВКОВОГО МАСЛА':
         color = 'оливковый'
@@ -188,13 +188,13 @@ def colors_format_ru(value: str) -> str:
         color = 'серый'
     elif value == 'ВОДЯНИСТЫЙ ЗЕЛЕНЫЙ':
         color = 'зеленый'
-    elif value == 'Зеленый/белый':
+    elif value == 'ЗЕЛЕНЫЙ/БЕЛЫЙ':
         color = 'зеленый'
-    elif value == 'Розовый / Белый':
+    elif value == 'РОЗОВЫЙ / БЕЛЫЙ':
         color = 'розовый'
     elif value == 'ГОРЧИЧНЫЙ':
         color = 'горчичный'
-    elif value == 'Цвет небеленого полотна/Синий':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/СИНИЙ':
         color = 'синий'
     elif value == 'МАНДАРИНОВЫЙ':
         color = 'оранжевый'
@@ -204,7 +204,7 @@ def colors_format_ru(value: str) -> str:
         color = 'зеленый'
     elif value == 'СВЕТЛАЯ ФУКСИЯ':
         color = 'малиновый'
-    elif value == 'Кава':
+    elif value == 'КАВА':
         color = 'зеленый'
     elif value == 'ОТТЕНОК КОРИЧНЕВОГО':
         color = 'коричневый'
@@ -212,7 +212,7 @@ def colors_format_ru(value: str) -> str:
         color = 'зеленый'
     elif value == 'ПЕРСИКОВЫЙ':
         color = 'персиковый'
-    elif value == 'Цвет небеленого полотна/Красный':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/КРАСНЫЙ':
         color = 'красный'
     elif value == 'НАСЫЩЕННЫЙ КРАСНЫЙ':
         color = 'красный'
@@ -224,11 +224,11 @@ def colors_format_ru(value: str) -> str:
         color = 'сиреневый'
     elif value == 'ЦВЕТ РОЗОВОГО МЕЛА':
         color = 'розовый'
-    elif value == 'Желтый':
+    elif value == 'ЖЕЛТЫЙ':
         color = 'желтый'
     elif value == 'КОРИЧНЕВЫЙ/БЕЛЫЙ':
         color = 'коричневый'
-    elif value == 'Белый / Зеленый':
+    elif value == 'БЕЛЫЙ / ЗЕЛЕНЫЙ':
         color = 'зеленый'
     elif value == 'B':
         color = 'белый'
@@ -236,11 +236,11 @@ def colors_format_ru(value: str) -> str:
         color = 'желтый'
     elif value == 'СВИНЦОВЫЙ':
         color = 'серый'
-    elif value == 'Черный / Цвет небеленого полотна':
+    elif value == 'ЧЕРНЫЙ / ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА':
         color = 'черный'
     elif value == 'СЕРЫЙ / БЕЖЕВЫЙ':
         color = 'черный'
-    elif value == 'Черный / Зеленый':
+    elif value == 'ЧЕРНЫЙ / ЗЕЛЕНЫЙ':
         color = 'черный'
     elif value == 'СВЕТЛО-КРАСНЫЙ':
         color = 'красный'
@@ -248,15 +248,15 @@ def colors_format_ru(value: str) -> str:
         color = 'синий'
     elif value == 'ЛАЙМОВЫЙ':
         color = 'зеленый'
-    elif value == 'Оттенки розового':
+    elif value == 'ОТТЕНКИ РОЗОВОГО':
         color = 'розовый'
     elif value == 'КОРАЛЛОВЫЙ':
         color = 'коралловый'
     elif value == 'ЦВЕТ СЛИВОЧНОГО МАСЛА':
         color = 'желтый'
-    elif value == 'Полоски':
+    elif value == 'ПОЛОСКИ':
         color = 'разноцветный'
-    elif value == 'Черный / Серебряный':
+    elif value == 'ЧЕРНЫЙ / СЕРЕБРЯНЫЙ':
         color = 'серебристый'
     elif value == 'СВЕТЛО-ЗЕЛЕНЫЙ':
         color = 'зеленый'
@@ -264,9 +264,9 @@ def colors_format_ru(value: str) -> str:
         color = 'оливковый'
     elif value == 'ПАСТЕЛЬНО-СИНИЙ':
         color = 'синий'
-    elif value == 'Коричнево-синий':
+    elif value == 'КОРИЧНЕВО-СИНИЙ':
         color = 'синий'
-    elif value == 'Розовый / Лиловый':
+    elif value == 'РОЗОВЫЙ / ЛИЛОВЫЙ':
         color = 'лиловый'
     elif value == 'БЕЖЕВЫЙ С МЕЛАНЖЕВЫМ ЭФФЕКТОМ':
         color = 'бежевый'
@@ -294,17 +294,17 @@ def colors_format_ru(value: str) -> str:
         color = 'серый'
     elif value == 'ЖЕМЧУЖНО-СЕРЫЙ':
         color = 'серый'
-    elif value == 'Красный / Белый':
+    elif value == 'КРАСНЫЙ / БЕЛЫЙ':
         color = 'красный'
-    elif value == 'Белый / Серый':
+    elif value == 'БЕЛЫЙ / СЕРЫЙ':
         color = 'серый'
     elif value == 'ЛИМОННО-ЖЕЛТЫЙ':
         color = 'желтый'
-    elif value == 'Серо-дымчатый':
+    elif value == 'СЕРО-ДЫМЧАТЫЙ':
         color = 'белый'
     elif value == 'МЯГКИЙ РОЗОВЫЙ':
         color = 'розовый'
-    elif value == 'Белый / Розовый':
+    elif value == 'БЕЛЫЙ / РОЗОВЫЙ':
         color = 'розовый'
     elif value == 'ЦВЕТ ЗЕЛЕНОЙ ТРАВЫ':
         color = 'зеленый'
@@ -322,7 +322,7 @@ def colors_format_ru(value: str) -> str:
         color = 'зеленый'
     elif value == 'МЯГКИЙ ЗЕЛЕНЫЙ':
         color = 'зеленый'
-    elif value == 'Зебра':
+    elif value == 'ЗЕБРА':
         color = 'разноцветный'
     elif value == 'ЛИНЯЛЫЙ НЕФТЯНОЙ':
         color = 'черный'
@@ -346,7 +346,7 @@ def colors_format_ru(value: str) -> str:
         color = 'фисташковый'
     elif value == 'СВЕТЛО-РОЗОВЫЙ':
         color = 'розовый'
-    elif value == 'Коричневый / Цвет небеленого полотна':
+    elif value == 'КОРИЧНЕВЫЙ / ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА':
         color = 'коричневый'
     elif value == 'СВЕТЛО-СИРЕНЕВЫЙ':
         color = 'сиреневый'
@@ -369,16 +369,16 @@ def colors_format_ru(value: str) -> str:
     elif value == 'ТЕМНО-БЕЖЕВЫЙ':
         color = 'бежевый'
     elif value == 'МАРСАЛА':
-        color = 'персиковый'
-    elif value == 'Ягодный':
+        color = 'ПЕРСИКОВЫЙ'
+    elif value == 'ЯГОДНЫЙ':
         color = 'бордовый'
-    elif value == 'белый/бирюзовый':
+    elif value == 'БЕЛЫЙ/БИРЮЗОВЫЙ':
         color = 'белый'
     elif value == 'ЦВЕТ БУРГУНДСКОГО ВИНА':
         color = 'бордовый'
     elif value == 'МЯГКИЙ ЖЕЛТЫЙ':
         color = 'желтый'
-    elif value == 'Синий / Черный':
+    elif value == 'СИНИЙ / ЧЕРНЫЙ':
         color = 'черный'
     elif value == 'КОБАЛЬТОВЫЙ':
         color = 'серый'
@@ -392,7 +392,7 @@ def colors_format_ru(value: str) -> str:
         color = 'фиолетовый'
     elif value == 'СВЕТЛО-ГОЛУБОЙ':
         color = 'голубой'
-    elif value == 'Цвет небеленого полотна/Гранатовый':
+    elif value == 'ЦВЕТ НЕБЕЛЕНОГО ПОЛОТНА/ГРАНАТОВЫЙ':
         color = 'гранатовый'
     elif value == 'КОРАЛЛОВО-КРАСНЫЙ':
         color = 'красный'
@@ -402,7 +402,7 @@ def colors_format_ru(value: str) -> str:
         color = 'синий'
     elif value == 'КОСТЯНОЙ':
         color = 'белый'
-    elif value == 'Цвет ночного неба':
+    elif value == 'ЦВЕТ НОЧНОГО НЕБА':
         color = 'синий'
     elif value == 'СЛОНОВАЯ КОСТЬ':
         color = 'белый'
@@ -424,13 +424,13 @@ def colors_format_ru(value: str) -> str:
         color = 'белый'
     elif value == 'БИЛЬЯРДНЫЙ ЗЕЛЕНЫЙ':
         color = 'зеленый'
-    elif value == 'Оттенки Фиолетового':
+    elif value == 'ОТТЕНКИ ФИОЛЕТОВОГО':
         color = 'фиолетовый'
     elif value == 'ТАБАЧНЫЙ':
         color = 'табачный'
     elif value == 'ТЕМНО-ОРАНЖЕВЫЙ':
         color = 'оранжевый'
-    elif value == 'утино-синий':
+    elif value == 'УТИНО-СИНИЙ':
         color = 'синий'
     elif value == 'ЗЕЛЕНЫЙ / СЕРЫЙ':
         color = 'зеленый'
