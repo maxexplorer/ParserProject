@@ -600,7 +600,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                 else:
                     status_size = status_dict.get(size_eur)[0]
 
-                if size_eur.isdigit() and gender_en:
+                if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=gender_en, size_eur=size_eur)
                 elif not size_eur.isdigit() and gender_en:
                     size_rus = sizes_format(format='alpha', gender=gender_en, size_eur=size_eur)

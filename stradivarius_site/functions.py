@@ -442,10 +442,9 @@ def colors_format_ru(value: str) -> str:
 
 
 # Функция для перевода европейских размеров в российские
-def sizes_format(format: str, gender: str, size_eur: str) -> str:
+def sizes_format(format: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
-            'WOMEN': {
                 'XXS': '38',
                 'XS-S': '40;44',
                 'XS': '42',
@@ -458,20 +457,10 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'XL': '50;52',
                 'XL-XXL': '50;54',
                 'XXL': '54'
-            },
-            'MEN': {
-                'XS': '44',
-                'S': '46',
-                'S-M': '46;48',
-                'M': '48',
-                'L': '50;52',
-                'L-XL': '50;54',
-                'XL': '52;54',
-                'XXl': '56'
-            }
+
         },
         'digit': {
-            'WOMEN': {
+
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -483,22 +472,10 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '48': '54',
                 '50': '56'
             },
-            'MEN': {
-                '32': '38',
-                '34': '40',
-                '36': '42',
-                '38': '44',
-                '40': '46',
-                '42': '48',
-                '44': '50',
-                '46': '52',
-                '48': '54'
-            }
         }
-    }
 
     try:
-        size_rus = sizes_dict[format][gender][size_eur]
+        size_rus = sizes_dict[format][size_eur]
     except Exception:
         size_rus = size_eur
 
