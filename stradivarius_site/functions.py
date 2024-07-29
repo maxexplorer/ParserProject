@@ -2,7 +2,7 @@ import requests
 
 from googletrans import Translator
 
-# Функция для перевода формата цветов Pull and Bear в Ozone
+# Функция для перевода формата цветов
 def colors_format_en(value: str) -> str:
     if value == 'ANTHRACITE GREY':
         color = 'светло-серый'
@@ -465,7 +465,7 @@ def colors_format_en(value: str) -> str:
     elif value == 'CORAL':
         color = 'разноцветный'
     elif value == 'TRANSPARENT':
-        olor = 'белый'
+        color = 'белый'
     elif value == 'BEIGE-T':
         color = 'бежевый'
     elif value == 'MEDIUM GREEN':
@@ -669,7 +669,7 @@ def colors_format_en(value: str) -> str:
     return color
 
 
-# Функция для перевода формата цветов Massimo Dutti в Ozone
+# Функция для перевода формата цветов
 def colors_format_ru(value: str) -> str:
     if value == 'АНТРАЦИТОВО-СЕРЫЙ':
         color = 'серый'
@@ -1102,8 +1102,7 @@ def colors_format_ru(value: str) -> str:
     elif value == 'ЗЕЛЕНЫЙ / СЕРЫЙ':
         color = 'зеленый'
     else:
-        color = value.lower()
-
+        color = value
     return color
 
 # Функция для перевода европейских размеров в российские

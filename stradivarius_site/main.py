@@ -1,4 +1,3 @@
-import json
 import os
 import time
 from datetime import datetime
@@ -20,15 +19,6 @@ from functions import get_exchange_rate
 from functions import chunks
 
 start_time = datetime.now()
-
-# base_currency = 'EUR'
-base_currency = 'KZT'
-target_currency = 'RUB'
-
-rub = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-
-# print(f'Курс EUR/RUB: {rub}')
-print(f'Курс KZT/RUB: {rub}')
 
 
 # Функция получения id категорий
@@ -127,7 +117,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_{brand}_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
@@ -200,6 +190,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
                     continue
+
 
 # Функция получения данных товаров
 def get_products_data_en(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
@@ -343,7 +334,6 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                     status_size = value[0]
 
                 id_product_size = f"{reference}/{id_color}/{size_eur}"
-
 
                 if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', size_eur=size_eur)
@@ -579,7 +569,6 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                     status_size = value[0]
 
                 id_product_size = f"{reference}/{id_color}/{size_eur}"
-
 
                 if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', size_eur=size_eur)
