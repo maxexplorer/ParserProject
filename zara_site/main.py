@@ -268,18 +268,15 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             price = 0
 
         try:
-            color_original = item['detail']['colors'][0]['name']
-        except Exception:
-            color_original = None
-
-        try:
             id_color = item['detail']['colors'][0]['id']
         except Exception:
             id_color = ''
 
         try:
-            color_ru = id_colors_dict.get(id_color, None)
+            color_original = item['detail']['colors'][0]['name']
+            color_ru = id_colors_dict.get(id_color, color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
@@ -512,18 +509,15 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
             price = 0
 
         try:
-            color_original = item['detail']['colors'][0]['name']
-        except Exception:
-            color_original = None
-
-        try:
             id_color = item['detail']['colors'][0]['id']
         except Exception:
             id_color = ''
 
         try:
-            color_ru = id_colors_dict.get(id_color, None)
+            color_original = item['detail']['colors'][0]['name']
+            color_ru = id_colors_dict.get(id_color, color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
