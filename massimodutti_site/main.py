@@ -60,19 +60,19 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     for category_item in category_items:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
-            if subcategory_item.get('nameEn') == 'COLLECTION':
+            if subcategory_item.get('nameEn') == 'COLLECTION' or subcategory_item.get('nameEn') == 'NEW COLLECTION':
                 collection_subcategory_items = subcategory_item.get('subcategories')
                 for collection_subcategory_item in collection_subcategory_items:
                     id_category = collection_subcategory_item.get('viewCategoryId')
                     if not id_category:
                         id_category = collection_subcategory_item.get('id')
-                    name_subcategory = collection_subcategory_item.get('name').capitalize()
+                    name_subcategory = collection_subcategory_item.get('nameEn')
                     id_categories_list.append((name_subcategory, id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_categories_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_de.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
@@ -227,7 +227,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
         try:
             id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
         except Exception:
-            id_color = ''
+            id_color = None
 
         try:
             main_image = f"https://static.massimodutti.net/3/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_5_16.jpg"
@@ -447,14 +447,14 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    region = 'Казахстан'
+    region = 'Германия'
     id_region = id_region_dict.get(region)
-    if id_region is None:
-        id_region = '35009503/30359534'
-    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-                                         id_region=id_region)
-    get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+
+    id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+
+    # products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+    #                                      id_region=id_region)
+    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

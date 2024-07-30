@@ -59,7 +59,7 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
                         id_category = collection_subcategory_item.get('viewCategoryId')
                         if not id_category:
                             id_category = collection_subcategory_item.get('id')
-                        name_subcategory = collection_subcategory_item.get('name').capitalize()
+                        name_subcategory = collection_subcategory_item.get('name')
                         id_categories_list.append((name_subcategory, id_category))
 
     if not os.path.exists('data'):

@@ -10,11 +10,11 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
+
 from data.data import id_categories_list
 from data.data import id_region_dict
+from data.data import id_colors_dict
 
-from functions import colors_format_ru
-from functions import colors_format_en
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
@@ -269,15 +269,18 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
         try:
             color_original = item['detail']['colors'][0]['name']
-            color_ru = colors_format_en(value=color_original)
         except Exception:
             color_original = None
-            color_ru = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
         except Exception:
             id_color = ''
+
+        try:
+            color_ru = id_colors_dict.get(id_color, None)
+        except Exception:
+            color_ru = None
 
         try:
             image_urls_list = []
@@ -509,15 +512,18 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
         try:
             color_original = item['detail']['colors'][0]['name']
-            color_ru = colors_format_ru(value=color_original)
         except Exception:
             color_original = None
-            color_ru = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
         except Exception:
             id_color = ''
+
+        try:
+            color_ru = id_colors_dict.get(id_color, None)
+        except Exception:
+            color_ru = None
 
         try:
             image_urls_list = []
