@@ -100,9 +100,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                     if id_region == 'kz/ru' and category_name == 'Девочки;Мальчики':
                         continue
 
-                    time.sleep(1)
-
                     try:
+                        time.sleep(1)
                         response = session.get(
                             f'https://www.zara.com/{id_region}/category/{id_category}/products',
                             params=params,
