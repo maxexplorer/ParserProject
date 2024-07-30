@@ -415,6 +415,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
