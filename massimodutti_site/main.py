@@ -1,8 +1,6 @@
-import json
 import os
 import time
 from datetime import datetime
-from random import randint
 
 from requests import Session
 
@@ -12,12 +10,13 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list
+from data.data import id_category_list
 from data.data import id_region_dict
 from functions import colors_format_ru
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
+from functions import chunks
 
 start_time = datetime.now()
 
@@ -60,33 +59,33 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
     for category_item in category_items:
         subcategory_items = category_item.get('subcategories')
         for subcategory_item in subcategory_items:
-            if subcategory_item.get('nameEn') == 'COLLECTION' or subcategory_item.get('nameEn') == 'NEW COLLECTION':
+            if subcategory_item.get('nameEn') == 'SALE' or subcategory_item.get('nameEn') == 'COLLECTION' or subcategory_item.get('nameEn') == 'NEW COLLECTION':
                 collection_subcategory_items = subcategory_item.get('subcategories')
                 for collection_subcategory_item in collection_subcategory_items:
                     id_category = collection_subcategory_item.get('viewCategoryId')
                     if not id_category:
                         id_category = collection_subcategory_item.get('id')
-                    name_subcategory = collection_subcategory_item.get('nameEn')
-                    id_categories_list.append((name_subcategory, id_category))
+                    name_subcategory = collection_subcategory_item.get('name')
+                    id_categories_list.append((name_subcategory.capitalize(), id_category))
 
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/id_categories_list_de.txt', 'w', encoding='utf-8') as file:
+    with open('data/id_categories_list_kz.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_list, file=file, sep='\n')
 
     return id_categories_list
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict, params: dict, id_region: str) -> list[dict]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str, id_region: str) -> list[dict]:
     products_data_list = []
     id_products_list = []
     with Session() as session:
         for category_dict in id_categories_list:
-            for name_category, products_list in category_dict.items():
+            for category_name, products_list in category_dict.items():
                 for product_tuple in products_list:
-                    name_subcategory, id_category = product_tuple
+                    subcategory_name, id_category = product_tuple
 
                     try:
                         time.sleep(1)
@@ -114,27 +113,27 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                     products_data_list.append(
                         {
-                            (name_category, name_subcategory): product_ids
+                            (category_name, subcategory_name): product_ids
                         }
                     )
 
                     id_products_list.extend(product_ids)
 
-                    print(f'Обработано: категория {name_category}/{name_subcategory} - {len(product_ids)} товаров!')
+                    print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
 
     id_products_set = set(id_products_list)
 
     if not os.path.exists('data'):
         os.makedirs('data')
-
-    with open('data/id_products_list.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/id_products_list_{brand}_{region}.txt', 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, id_region: str) -> None:
+def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, region: str, id_region: str,
+                       currency: int) -> None:
     processed_ids = []
 
     with Session() as session:
@@ -146,40 +145,48 @@ def get_products_array(products_data_list: list, headers: dict, id_region: str) 
                 if id_product not in processed_ids:
                     processed_ids.append(id_product)
                     id_products_list.append(id_product)
-            name_category = key[0]
-            name_subcategory = key[1]
+            category_name = key[0]
+            subcategory_name = key[1]
 
-            id_products_str = ','.join(map(str, id_products_list))
+            print(f'Сбор данных категории: {category_name}/{subcategory_name}')
 
-            print(f'Сбор данных категории: {name_category}/{name_subcategory}')
+            if region == 'Германия':
+                id_language = '-1'
+            elif region == 'Казахстан':
+                id_language = '-20'
+            else:
+                id_language = '-1'
 
-            params = {
-                'languageId': '-20',
-                'appId': '1',
-                'productIds': id_products_str,
-            }
+            for chunk_ids in chunks(id_products_list, 300):
+                id_products_str = ','.join(map(str, chunk_ids))
 
-            try:
-                time.sleep(1)
-                response = session.get(
-                    f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/productsArray',
-                    params=params,
-                    headers=headers,
-                    timeout=60
-                )
+                params = {
+                    'languageId': id_language,
+                    'appId': '1',
+                    'productIds': id_products_str,
+                }
 
-                if response.status_code != 200:
-                    print(f'status_code: {response.status_code}')
+                try:
+                    time.sleep(1)
+                    response = session.get(
+                        f'https://www.massimodutti.com/itxrest/3/catalog/store/{id_region}/productsArray',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
+
+                    if response.status_code != 200:
+                        print(f'status_code: {response.status_code}')
+                        continue
+
+                    json_data = response.json()
+
+                    get_products_data(products_data=json_data, category_name=category_name,
+                                      subcategory_name=subcategory_name)
+
+                except Exception as ex:
+                    print(f'get_products_array: {ex}')
                     continue
-
-                json_data = response.json()
-
-                get_products_data(products_data=json_data, name_category=name_category,
-                                  name_subcategory=name_subcategory)
-
-            except Exception as ex:
-                print(f'get_products_array: {ex}')
-                continue
 
 
 # Функция получения данных товаров
@@ -447,14 +454,34 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    region = 'Германия'
+    brand = 'Massimo Dutti'
+
+    # region = 'Казахстан'
+    # id_region = id_region_dict.get(region)
+    # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
+
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    if value == '1':
+        region = 'Германия'
+        base_currency = 'EUR'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс EUR/RUB: {currency}')
+    elif value == '2':
+        region = 'Казахстан'
+        base_currency = 'KZT'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс KZT/RUB: {currency}')
+    else:
+        raise ValueError('Введено неправильное значение')
+
     id_region = id_region_dict.get(region)
 
-    id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
-
-    # products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
-    #                                      id_region=id_region)
-    # get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region)
+    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
+                                         brand=brand, region=region, id_region=id_region)
+    get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
+                       region=region, id_region=id_region, currency=currency)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

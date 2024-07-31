@@ -11,7 +11,7 @@ from pandas import read_excel
 from configs.config import headers
 from configs.config import params
 
-from data.data import id_categories_list
+from data.data import id_category_list
 from data.data import id_region_dict
 from data.data import id_colors_dict
 
@@ -757,7 +757,7 @@ def main():
 
     id_region = id_region_dict.get(region)
 
-    products_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers, params=params,
+    products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
                                          brand=brand, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
                        id_region=id_region, currency=currency)
