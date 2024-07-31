@@ -232,10 +232,10 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
-            color_en = item['bundleProductSummaries'][0]['detail']['colors'][0]['name'].upper()
-            color_ru = colors_format(value=color_en)
+            color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name'].upper()
+            color_ru = colors_format(value=color_original)
         except Exception:
-            color_en = None
+            color_original = None
             color_ru = None
 
         try:
@@ -385,7 +385,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color_en,
+                        'Название цвета': color_original,
                         'Тип*': subcategory_name,
                         'Пол*': gender,
                         'Размер пеленки': None,
@@ -445,7 +445,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
 
 # Функция получения данных товаров
-def  get_products_data_ru(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
+def get_products_data_ru(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
                          currency: int) -> None:
     result_data = []
 

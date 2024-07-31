@@ -1110,7 +1110,7 @@ def colors_format_ru(value: str) -> str:
 def sizes_format(format: str, gender: str, size_eur: str) -> str:
     sizes_dict = {
         'alpha': {
-            'WOMEN': {
+            'Женщины': {
                 'XXS': '38',
                 'XS-S': '40;44',
                 'XS': '42',
@@ -1124,7 +1124,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 'XL-XXL': '50;54',
                 'XXL': '54'
             },
-            'MEN': {
+            'Мужчины': {
                 'XS': '44',
                 'S': '46',
                 'S-M': '46;48',
@@ -1136,7 +1136,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
             }
         },
         'digit': {
-            'WOMEN': {
+            'Женщины': {
                 '32': '38',
                 '34': '40',
                 '36': '42',
@@ -1148,7 +1148,7 @@ def sizes_format(format: str, gender: str, size_eur: str) -> str:
                 '48': '54',
                 '50': '56'
             },
-            'MEN': {
+            'Мужчины': {
                 '32': '38',
                 '34': '40',
                 '36': '42',

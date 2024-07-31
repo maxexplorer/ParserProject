@@ -233,6 +233,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name'].upper()
             color_ru = colors_format_en(value=color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
@@ -368,7 +369,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color_ru,
+                        'Название цвета': color_original,
                         'Тип*': subcategory_name,
                         'Пол*': gender,
                         'Размер пеленки': None,
@@ -466,8 +467,8 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
-            color = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
-            color_ru = colors_format_ru(value=color)
+            color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
+            color_ru = colors_format_ru(value=color_original)
         except Exception:
             color_ru = None
 
@@ -603,7 +604,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color_ru,
+                        'Название цвета': color_original,
                         'Тип*': subcategory_name,
                         'Пол*': gender,
                         'Размер пеленки': None,

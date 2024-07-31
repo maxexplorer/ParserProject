@@ -138,6 +138,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
     with Session() as session:
         for dict_item in products_data_list:
+            count = 0
             id_products_list = []
             key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
@@ -181,8 +182,18 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    get_products_data(products_data=json_data, category_name=category_name,
-                                      subcategory_name=subcategory_name)
+                    if region == 'Германия':
+                        get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
+                                             subcategory_name=subcategory_name, currency=currency)
+                    elif region == 'Казахстан':
+                        get_products_data_ru(products_data=json_data, species=species, brand=brand, region=region,
+                                             subcategory_name=subcategory_name, currency=currency)
+                    else:
+                        raise 'Регион не найден!'
+
+                    count += len(chunk_ids)
+
+                    print(f'В категории {subcategory_name} обработано: {count} товаров!')
 
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
@@ -190,7 +201,8 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
 
 # Функция получения данных товаров
-def get_products_data(products_data: dict, name_category: str, name_subcategory: str) -> None:
+def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str,
+                         currency: int) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -246,7 +258,7 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
             for xmedia_elem in xmedia_data:
                 color_code = xmedia_elem['colorCode']
-                if color_code == id_color or name_subcategory == 'Духи и средства для ухода за кожей тела':
+                if color_code == id_color:
                     xmedia_items = xmedia_elem['xmediaItems']
                     for xmedia_item in xmedia_items:
                         if len(additional_images_list) == 14:
@@ -269,12 +281,12 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
             additional_images = None
 
         try:
-            if name_category == 'Женщины':
+            if category_name == 'Женщины':
                 gender = 'женский'
-            elif name_category == 'Мужчины':
+            elif category_name == 'Мужчины':
                 gender = 'мужской'
             else:
-                gender = name_subcategory
+                gender = category_name
         except Exception:
             gender = None
 
@@ -333,15 +345,12 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                 else:
                     id_product_size = f"{reference}/{color_original}/{size_eur}"
 
-                if (name_subcategory == 'Обувь' or name_subcategory == 'Сумки' or name_subcategory == 'Украшения' or
-                        name_subcategory == 'Аксессуары' or name_subcategory == 'Духи и средства для ухода за кожей тела'):
-                    size_rus = size_eur
-                elif size_eur.isdigit():
-                    size_rus = sizes_format(format='digit', gender=gender, size_eur=size_eur)
+                if size_eur.isdigit():
+                    size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
                 elif not size_eur.isdigit():
-                    size_rus = sizes_format(format='alpha', gender=gender, size_eur=size_eur)
+                    size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
                 else:
-                    size_rus = size_eur
+                    size_rus = size_eur.replace('-', ';')
 
                 result_data.append(
                     {
@@ -365,11 +374,12 @@ def get_products_data(products_data: dict, name_category: str, name_subcategory:
                         'Бренд в одежде и обуви*': brand,
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
+                        'Код цвета': id_color,
                         'Российский размер*': size_rus,
                         'Размер производителя': size_eur,
                         'Статус наличия': status_size,
-                        'Название цвета': color_ru,
-                        'Тип*': name_subcategory,
+                        'Название цвета': color_original,
+                        'Тип*': subcategory_name,
                         'Пол*': gender,
                         'Размер пеленки': None,
                         'ТН ВЭД коды ЕАЭС': None,
