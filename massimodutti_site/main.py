@@ -349,7 +349,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                 if not size_eur:
                     id_product_size = reference
                 else:
-                    id_product_size = f"{reference}/{color_original}/{size_eur}"
+                    id_product_size = f"{reference}/{id_color}/{size_eur}"
 
                 if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
@@ -585,7 +585,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                 if not size_eur:
                     id_product_size = reference
                 else:
-                    id_product_size = f"{reference}/{color_original}/{size_eur}"
+                    id_product_size = f"{reference}/{id_color}/{size_eur}"
 
                 if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
