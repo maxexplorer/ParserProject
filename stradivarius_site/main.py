@@ -347,7 +347,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                     {
                         '№': None,
                         'Артикул': id_product_size,
-                        'Название товара': name,
+                        'Название товара': product_name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
@@ -470,6 +470,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
             color_ru = colors_format_ru(value=color_original)
         except Exception:
+            color_original = None
             color_ru = None
 
         try:
@@ -582,7 +583,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                     {
                         '№': None,
                         'Артикул': id_product_size,
-                        'Название товара': name,
+                        'Название товара': product_name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
