@@ -307,7 +307,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
         try:
             attributes = item['attributes']
-            description = '. '.join(attr['value'] for attr in attributes)
+            description = '. '.join(attr['value'].replace('BASESTYLE', '') for attr in attributes)
             description = translator(description)
         except Exception:
             description = None
@@ -547,7 +547,7 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
 
         try:
             attributes = item['attributes']
-            description = '. '.join(attr['value'] for attr in attributes)
+            description = '. '.join(attr['value'].replace('BASESTYLE', '') for attr in attributes)
         except Exception:
             description = None
 
