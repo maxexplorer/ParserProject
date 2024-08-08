@@ -15,8 +15,9 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list
-from functions import colors_format
-from functions import sizes_format
+from data.data import colors_dict
+from data.data import sizes_dict
+
 from functions import translator
 from functions import get_exchange_rate
 
@@ -218,11 +219,11 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
                 continue
 
             try:
-                name_product_original = inner_data.find('hm-product-name').text.strip()
-                name_product_ru = translator(name_product_original)
-                name_product = f'H&M {name_product_ru}'
+                product_name_original = inner_data.find('hm-product-name').text.strip()
+                product_name_ru = translator(product_name_original)
+                product_name = f'H&M {product_name_ru.lower()}'
             except Exception:
-                name_product = None
+                product_name = None
 
             try:
                 price = int(''.join(
@@ -238,7 +239,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
                 for color_item in color_items:
                     if color_item.find('a').get('aria-checked') == 'true':
                         color_original = color_item.find('a').get('title')
-                color_ru = colors_format(value=color_original)
+                color_ru = colors_dict.get(color_original, color_original)
             except Exception:
                 color_original = None
                 color_ru = None
@@ -342,23 +343,10 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
                     else:
                         status_size = 'в наличии'
 
-                    if category_name == 'Женщины' or category_name == 'Мужчины':
-                        if subcategory_name == 'Обувь':
-                            size_rus = size_eur
-                        elif size_eur.isdigit():
-                            size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
-                        elif not size_eur.isdigit():
-                            size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
-                        else:
-                            size_rus = size_eur
-                    else:
-                        if size_eur.isdigit():
-                            size_rus = size_eur
-                        else:
-                            try:
-                                size_rus = size_eur.split()[0]
-                            except Exception:
-                                size_rus = size_eur
+                    try:
+                        size_rus = sizes_dict[category_name][size_eur]
+                    except Exception:
+                        size_rus = size_eur
 
                     id_product_size = f"{id_product}/{size_eur}"
 
@@ -366,7 +354,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
                         {
                             '№': None,
                             'Артикул': id_product_size,
-                            'Название товара': name_product,
+                            'Название товара': product_name,
                             'Цена, руб.*': price,
                             'Цена до скидки, руб.': None,
                             'НДС, %*': None,
@@ -477,7 +465,7 @@ def save_excel(data: list, species: str, brand: str) -> None:
 
 def main():
     # get_category_urls(url=url, headers=headers)
-    driver = init_chromedriver(headless_mode=True)
+    driver = init_chromedriver(headless_mode=False)
     try:
         get_product_urls(category_data_list=category_data_list, headers=headers, driver=driver)
     except Exception as ex:
