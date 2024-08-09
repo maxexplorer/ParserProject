@@ -10,7 +10,7 @@ from pandas import read_excel
 
 from configs.config import headers
 from configs.config import params
-from data.data import id_categories_list
+from data.data import id_category_list
 from data.data import id_region_dict
 from functions import colors_format_ru
 from functions import sizes_format
@@ -511,7 +511,7 @@ def main():
 
     print(f'Сбор данных в регионе: {region}!')
 
-    products_data_list, products_new_data_list = get_id_products(id_categories_list=id_categories_list, headers=headers,
+    products_data_list, products_new_data_list = get_id_products(id_categories_list=id_category_list, headers=headers,
                                                                  params=params, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, id_region=id_region, species='size')
 
