@@ -79,102 +79,105 @@ def get_pages(html: str) -> int:
 
 
 # Получаем ссылки всех категорий товаров
-def get_category_urls(url: str, headers: dict) -> None:
+def get_category_urls(url: str, driver: Chrome) -> None:
     category_data_list = []
 
-    with Session() as session:
-        html = get_html(url=url, headers=headers, session=session)
+    driver.get(url=url)
+    html = driver.page_source
 
-        soup = BeautifulSoup(html, 'lxml')
+    soup = BeautifulSoup(html, 'lxml')
 
-        try:
-            data = soup.find('ul', class_='MLEL').find_all('li')
+    try:
+        data = soup.find('ul', class_='MLEL').find_all('li')
 
-            for item in data:
-                category_name = item.text
-                category_url = f"https://www2.hm.com{item.find('a').get('href')}"
+        for item in data:
+            category_name = item.text
+            category_url = f"https://www2.hm.com{item.find('a').get('href')}"
 
-                category_data_list.append(
-                    (category_name, category_url)
-                )
+            category_data_list.append(
+                (category_name, category_url)
+            )
 
-        except Exception as ex:
-            print(ex)
+    except Exception as ex:
+        print(ex)
 
-        if not os.path.exists('data'):
-            os.makedirs('data')
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
-        with open(f'data/category_data_list.txt', 'w', encoding='utf-8') as file:
-            print(*category_data_list, file=file, sep='\n')
+    with open(f'data/category_data_list.txt', 'w', encoding='utf-8') as file:
+        print(*category_data_list, file=file, sep='\n')
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict, driver: Chrome) -> None:
+def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> None:
     url_products_set = set()
 
-    with Session() as session:
-        for category_dict in category_data_list:
-            for category_name, category_list in category_dict.items():
-                for product_tuple in category_list:
-                    products_data_list = []
-                    product_urls = []
-                    subcategory_name, category_url = product_tuple
+    for category_dict in category_data_list:
+        for category_name, category_list in category_dict.items():
+            for product_tuple in category_list:
+                products_data_list = []
+                product_urls = []
+                subcategory_name, category_url = product_tuple
 
+                try:
+                    driver.get(url=category_url)
+                    time.sleep(1)
+                    html = driver.page_source
+                except Exception as ex:
+                    print(f"{category_url} - {ex}")
+                    continue
+
+                pages = get_pages(html=html)
+                print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
+
+                # for page in range(1, pages + 1):
+                for page in range(1, 2):
+                    page_product_url = f"{category_url}?page={page}"
                     try:
-                        html = get_html(url=category_url, headers=headers, session=session)
+                        driver.get(url=page_product_url)
+                        time.sleep(1)
+                        html = driver.page_source
                     except Exception as ex:
-                        print(f"{category_url} - {ex}")
+                        print(f"{page_product_url} - {ex}")
                         continue
 
-                    pages = get_pages(html=html)
-                    print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
+                    if not html:
+                        continue
 
-                    for page in range(1, pages + 1):
-                        page_product_url = f"{category_url}?page={page}"
-                        try:
-                            time.sleep(1)
-                            html = get_html(url=page_product_url, headers=headers, session=session)
-                        except Exception as ex:
-                            print(f"{page_product_url} - {ex}")
-                            continue
+                    soup = BeautifulSoup(html, 'lxml')
 
-                        if not html:
-                            continue
+                    try:
+                        product_items = soup.find('div',
+                                                  id='products-listing-section').find_next().find_next_sibling()
+                        for product_item in product_items:
+                            try:
+                                product_url = product_item.find('a').get('href')
+                            except Exception as ex:
+                                print(ex)
+                                continue
+                            product_urls.append(product_url)
+                            url_products_set.add(product_url)
+                    except Exception as ex:
+                        print(ex)
 
-                        soup = BeautifulSoup(html, 'lxml')
+                    print(f'Обработано: {page}/{pages} страниц')
 
-                        try:
-                            product_items = soup.find('div',
-                                                      id='products-listing-section').find_next().find_next_sibling()
-                            for product_item in product_items:
-                                try:
-                                    product_url = product_item.find('a').get('href')
-                                except Exception as ex:
-                                    print(ex)
-                                    continue
-                                product_urls.append(product_url)
-                                url_products_set.add(product_url)
-                        except Exception as ex:
-                            print(ex)
+                products_data_list.append(
+                    {
+                        (category_name, subcategory_name): product_urls
+                    }
+                )
 
-                        print(f'Обработано: {page}/{pages} страниц')
+                print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
 
-                    products_data_list.append(
-                        {
-                            (category_name, subcategory_name): product_urls
-                        }
-                    )
+                get_products_data(products_data_list=products_data_list, driver=driver, brand=brand)
 
-                    print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
-
-                    get_products_data(products_data_list=products_data_list, driver=driver)
-
-    with open('data/url_products_list_H&M.txt', 'a', encoding='utf-8') as file:
+    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
         print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
+def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str) -> None:
     result_data = []
     processed_urls = []
 
@@ -192,10 +195,9 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
         count_products = len(product_urls)
         print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
 
-        brand = 'H&M'
         for i, product_url in enumerate(product_urls, 1):
             try:
-                driver.get(product_url)
+                driver.get(url=product_url)
                 time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
@@ -206,6 +208,9 @@ def get_products_data(products_data_list: list[dict], driver: Chrome) -> None:
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
+
+            with open('data/index.html', 'w', encoding='utf-8') as file:
+                file.write(soup.prettify())
 
             try:
                 id_product = product_url.split('.')[-2]
@@ -464,10 +469,12 @@ def save_excel(data: list, species: str, brand: str) -> None:
 
 
 def main():
-    # get_category_urls(url=url, headers=headers)
+    brand = 'H&M'
+
     driver = init_chromedriver(headless_mode=False)
+    # get_category_urls(url=url, driver=driver)
     try:
-        get_product_urls(category_data_list=category_data_list, headers=headers, driver=driver)
+        get_product_urls(category_data_list=category_data_list, driver=driver, brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
