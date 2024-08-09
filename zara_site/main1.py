@@ -99,14 +99,14 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
 
                     products_data_list.append(
                         {
-                            (category_name, id_category): product_ids
+                            (category_name, subcategory_name): product_ids
                         }
                     )
 
                     if new_id_list:
                         products_new_data_list.append(
                             {
-                                (category_name, id_category): new_id_list
+                                (category_name, subcategory_name): new_id_list
                             }
                         )
 
