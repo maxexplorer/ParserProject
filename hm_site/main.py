@@ -218,21 +218,20 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 id_product = None
 
             try:
-                inner_data = soup.find('div', class_='inner')
+                data = soup.find('div', class_='rOGz')
             except Exception as ex:
                 print(f'inner: {product_url} - {ex}')
                 continue
 
             try:
-                product_name_original = inner_data.find('hm-product-name').text.strip()
-                product_name_ru = translator(product_name_original)
-                product_name = f'H&M {product_name_ru.lower()}'
+                name = data.find('h1').text.strip()
+                product_name = f'H&M {translator(name).lower()}'
             except Exception:
                 product_name = None
 
             try:
                 price = int(''.join(
-                    i for i in inner_data.find('hm-product-price', id='product-price').text.split()[0] if
+                    i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
                     i.isdigit())) / 100
                 price = round(price * rub)
             except Exception:
@@ -240,11 +239,11 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
             try:
                 color_original = None
-                color_items = inner_data.find('div', class_='mini-slider').find_all('li')
+                color_items = data.find('div', class_='ff18ac ab7eab').find_all('a')
                 for color_item in color_items:
-                    if color_item.find('a').get('aria-checked') == 'true':
-                        color_original = color_item.find('a').get('title')
-                color_ru = colors_dict.get(color_original, color_original)
+                    if color_item.get('aria-checked') == 'true':
+                        color_original = color_item.get('title')
+                color_ru = colors_dict.get(color_original, color_original).lower()
             except Exception:
                 color_original = None
                 color_ru = None

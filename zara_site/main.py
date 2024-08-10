@@ -273,7 +273,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
         try:
             color_original = item['detail']['colors'][0]['name']
-            color_ru = id_colors_dict.get(id_color, color_original)
+            color_ru = id_colors_dict.get(id_color, color_original).lower()
         except Exception:
             color_original = None
             color_ru = None
@@ -514,7 +514,7 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
         try:
             color_original = item['detail']['colors'][0]['name']
-            color_ru = id_colors_dict.get(id_color, color_original)
+            color_ru = id_colors_dict.get(id_color, color_original).lower()
         except Exception:
             color_original = None
             color_ru = None
