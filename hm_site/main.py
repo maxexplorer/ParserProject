@@ -249,24 +249,17 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 color_ru = None
 
             try:
-                main_image = soup.find('figure',
-                                       class_='pdp-image product-detail-images product-detail-main-image').find(
-                    'img').get('src')
-                main_image_url = 'https:' + main_image
+                images_list = []
+                images_items = data.find_all('button', class_='ecc322')
+                for item in images_items:
+                    image_url = item.find('img').get('src')
+                    image_url = image_url.split('?')[0]
+                    images_list.append(image_url)
+                main_image_url = images_list[0]
+                images_urls = '; '.join(images_list)
             except Exception:
-                main_image_url = None
-
-            try:
-                additional_images_list = []
-                additional_images_items = soup.find_all('figure', class_='pdp-secondary-image pdp-image')
-
-                for additional_item in additional_images_items:
-                    additional_image = additional_item.find('img').get('src')
-                    additional_image_url = 'https:' + additional_image
-                    additional_images_list.append(additional_image_url)
-                additional_images = '; '.join(additional_images_list)
-            except Exception:
-                additional_images = []
+                main_image_url = ''
+                images_urls = ''
 
             try:
                 if category_name == 'Женщины':
