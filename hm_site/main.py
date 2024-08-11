@@ -51,33 +51,6 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
     return driver
 
 
-# Получаем html разметку страницы
-def get_html(url: str, headers: dict, session: Session) -> str:
-    try:
-        response = session.get(url=url, headers=headers, timeout=60)
-
-        if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
-
-        html = response.text
-        return html
-    except Exception as ex:
-        print(ex)
-
-
-# Получаем количество страниц
-def get_pages(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
-    except Exception as ex:
-        print(ex)
-        pages = 1
-
-    return pages
-
-
 # Получаем ссылки всех категорий товаров
 def get_category_urls(url: str, driver: Chrome) -> None:
     category_data_list = []
@@ -106,6 +79,19 @@ def get_category_urls(url: str, driver: Chrome) -> None:
 
     with open(f'data/category_data_list.txt', 'w', encoding='utf-8') as file:
         print(*category_data_list, file=file, sep='\n')
+
+
+# Получаем количество страниц
+def get_pages(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
+    except Exception as ex:
+        print(ex)
+        pages = 1
+
+    return pages
 
 
 # Получаем ссылки товаров
