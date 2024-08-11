@@ -256,7 +256,6 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             main_image_url = images_urls_list[0]
 
             additional_images_urls = '; '.join(images_urls_list[1:])
-
         except Exception:
             main_image_url = None
             additional_images_urls = None
@@ -497,7 +496,6 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
             main_image_url = images_urls_list[0]
 
             additional_images_urls = '; '.join(images_urls_list[1:])
-
         except Exception:
             main_image_url = None
             additional_images_urls = None
