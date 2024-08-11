@@ -239,7 +239,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             color_ru = None
 
         try:
-            image_urls_list = []
+            images_urls_list = []
             xmedia_items = item['detail']['colors'][0]['xmedia']
             for xmedia_item in xmedia_items:
                 path_image = xmedia_item['path']
@@ -251,15 +251,15 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                 except Exception:
                     img_url = f"https://static.zara.net/photos//{path_image}/w/750/{name_image}.jpg?ts={timestamp_image}"
 
-                image_urls_list.append(img_url)
+                images_urls_list.append(img_url)
 
-            main_image = image_urls_list[0]
+            main_image_url = images_urls_list[0]
 
-            additional_images = '; '.join(image_urls_list[1:])
+            additional_images_urls = '; '.join(images_urls_list[1:])
 
         except Exception:
-            main_image = None
-            additional_images = None
+            main_image_url = None
+            additional_images_urls = None
 
         try:
             if category_name == 'Женщины':
@@ -364,8 +364,8 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                         'Ширина упаковки, мм*': None,
                         'Высота упаковки, мм*': None,
                         'Длина упаковки, мм*': None,
-                        'Ссылка на главное фото*': main_image,
-                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылка на главное фото*': main_image_url,
+                        'Ссылки на дополнительные фото': additional_images_urls,
                         'Ссылки на фото 360': None,
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,
@@ -480,7 +480,7 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
             color_ru = None
 
         try:
-            image_urls_list = []
+            images_urls_list = []
             xmedia_items = item['detail']['colors'][0]['xmedia']
             for xmedia_item in xmedia_items:
                 path_image = xmedia_item['path']
@@ -492,15 +492,15 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
                 except Exception:
                     img_url = f"https://static.zara.net/photos//{path_image}/w/750/{name_image}.jpg?ts={timestamp_image}"
 
-                image_urls_list.append(img_url)
+                images_urls_list.append(img_url)
 
-            main_image = image_urls_list[0]
+            main_image_url = images_urls_list[0]
 
-            additional_images = '; '.join(image_urls_list[1:])
+            additional_images_urls = '; '.join(images_urls_list[1:])
 
         except Exception:
-            main_image = None
-            additional_images = None
+            main_image_url = None
+            additional_images_urls = None
 
         try:
             if category_name == 'Женщины':
@@ -600,8 +600,8 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
                         'Ширина упаковки, мм*': None,
                         'Высота упаковки, мм*': None,
                         'Длина упаковки, мм*': None,
-                        'Ссылка на главное фото*': main_image,
-                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылка на главное фото*': main_image_url,
+                        'Ссылки на дополнительные фото': additional_images_urls,
                         'Ссылки на фото 360': None,
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,
