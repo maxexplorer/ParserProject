@@ -107,7 +107,6 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
 
                 try:
                     driver.get(url=category_url)
-                    time.sleep(1)
                     html = driver.page_source
                 except Exception as ex:
                     print(f"{category_url} - {ex}")
@@ -121,7 +120,6 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                     page_product_url = f"{category_url}?page={page}"
                     try:
                         driver.get(url=page_product_url)
-                        time.sleep(1)
                         html = driver.page_source
                     except Exception as ex:
                         print(f"{page_product_url} - {ex}")
@@ -154,8 +152,6 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                     }
                 )
 
-                print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_urls)} товаров!')
-
                 get_products_data(products_data_list=products_data_list, driver=driver, brand=brand)
 
     with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
@@ -184,7 +180,6 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
         for i, product_url in enumerate(product_urls, 1):
             try:
                 driver.get(url=product_url)
-                time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
@@ -194,9 +189,6 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
-
-            with open('data/index.html', 'w', encoding='utf-8') as file:
-                file.write(soup.prettify())
 
             try:
                 id_product = product_url.split('.')[-2]
@@ -213,7 +205,16 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 name = data.find('h1').text.strip()
                 product_name = f'H&M {translator(name).lower()}'
             except Exception:
+                print('not product_name')
                 product_name = None
+
+            try:
+                old_price = int(''.join(
+                    i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
+                    i.isdigit())) / 100
+                old_price = round(old_price * rub)
+            except Exception:
+                old_price = None
 
             try:
                 price = int(''.join(
@@ -221,7 +222,8 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                     i.isdigit())) / 100
                 price = round(price * rub)
             except Exception:
-                price = 0
+                print('not price')
+                price = None
 
             try:
                 color_original = None
@@ -231,6 +233,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                         color_original = color_item.get('title')
                 color_ru = colors_dict.get(color_original, color_original).lower()
             except Exception:
+                print('not color')
                 color_original = None
                 color_ru = None
 
@@ -244,6 +247,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
             except Exception:
+                print('not images')
                 main_image_url = None
                 additional_images_urls = None
 
@@ -341,7 +345,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                             'Артикул': id_product_size,
                             'Название товара': product_name,
                             'Цена, руб.*': price,
-                            'Цена до скидки, руб.': None,
+                            'Цена до скидки, руб.': old_price,
                             'НДС, %*': None,
                             'Включить продвижение': None,
                             'Ozon ID': id_product_size,
@@ -451,8 +455,9 @@ def save_excel(data: list, species: str, brand: str) -> None:
 def main():
     brand = 'H&M'
 
-    driver = init_chromedriver(headless_mode=False)
+    driver = init_chromedriver(headless_mode=True)
     # get_category_urls(url=url, driver=driver)
+
     try:
         get_product_urls(category_data_list=category_data_list, driver=driver, brand=brand)
     except Exception as ex:
