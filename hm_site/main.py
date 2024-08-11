@@ -21,7 +21,6 @@ from data.data import sizes_dict
 from functions import translator
 from functions import get_exchange_rate
 
-
 start_time = datetime.now()
 
 rub = get_exchange_rate()
@@ -34,6 +33,7 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/125.0.0.0 Safari/537.36'
 }
+
 
 # Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -220,7 +220,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
             try:
                 data = soup.find('div', class_='rOGz')
             except Exception as ex:
-                print(f'inner: {product_url} - {ex}')
+                print(f'data: {product_url} - {ex}')
                 continue
 
             try:
@@ -249,17 +249,17 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 color_ru = None
 
             try:
-                images_list = []
+                images_urls_list = []
                 images_items = data.find_all('button', class_='ecc322')
                 for item in images_items:
                     image_url = item.find('img').get('src')
                     image_url = image_url.split('?')[0]
-                    images_list.append(image_url)
-                main_image_url = images_list[0]
-                images_urls = '; '.join(images_list)
+                    images_urls_list.append(image_url)
+                main_image_url = images_urls_list[0]
+                additional_images_urls = '; '.join(images_urls_list)
             except Exception:
-                main_image_url = ''
-                images_urls = ''
+                main_image_url = None
+                additional_images_urls = None
 
             try:
                 if category_name == 'Женщины':
@@ -272,12 +272,12 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 gender = None
 
             try:
-                raw_description = inner_data.find('div', class_='details parbase').find_all('div', class_='af08f4')
+                section_description = data.find('div', id='section-descriptionAccordion')
             except Exception:
-                raw_description = []
+                section_description = None
 
             try:
-                description = raw_description[0].find('p').text
+                description = section_description.find('p').text.strip()
                 description = translator(description)
             except Exception:
                 description = None
@@ -286,7 +286,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
             model_size = None
 
             try:
-                model_size_description = raw_description[0].find('dl').find(
+                model_size_description = section_description.find('dl').find(
                     string=re.compile('Größe des Models')).find_next().text.split('cm')
             except Exception:
                 model_size_description = None
@@ -303,12 +303,12 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                     model_size = None
 
             try:
-                composition_items = raw_description[1].find('ul').find_all('li')
+                section_material_description = data.find('div', id='section-materialsAndSuppliersAccordion')
             except Exception:
-                composition_items = []
+                section_material_description = None
 
             try:
-                composition_outer_shell = composition_items[0].find('p').text
+                composition_outer_shell = section_material_description.find('li').find('p').text
                 composition = translator(composition_outer_shell)
                 material_outer_shell = composition_outer_shell.split()[0]
                 material = translator(material_outer_shell)
@@ -316,32 +316,34 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 composition = None
                 material = None
 
-            # try:
-            #     composition_lining = composition_items[1].find('p').text
-            #     material_lining = composition_lining.split()[0]
-            # except Exception:
-            #     composition_lining = None
-            #     material_lining = None
+            try:
+                section_care = data.find('div', id='section-careGuideAccordion').find('ul').find_all('li')
+            except Exception:
+                section_care = None
 
             try:
-                care = raw_description[2].find('ul').text.strip()
+                care = '. '.join(i.text for i in section_care)
                 care = translator(care)
             except Exception:
                 care = None
 
             try:
-                sizes_items = inner_data.find('hm-size-selector', class_='size-selector').find_all('li')
+                sizes_items = data.find('div', {'data-testid': 'size-selector'}).find_all('li')
 
                 for size_item in sizes_items:
                     size_eur = size_item.find('input').get('id')
+                    try:
+                        size_availability = size_item.find('label').find('span').text.strip()
+                    except Exception:
+                        size_availability = None
 
-                    if size_item.find('div').get('aria-disabled') == 'true':
-                        status_size = 'нет в наличии'
-                    else:
+                    if not size_availability:
                         status_size = 'в наличии'
+                    else:
+                        status_size = translator(size_availability).lower()
 
                     try:
-                        size_rus = sizes_dict[category_name][size_eur]
+                        size_rus = sizes_dict['Женщины'][size_eur]
                     except Exception:
                         size_rus = size_eur
 
@@ -363,7 +365,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                             'Высота упаковки, мм*': None,
                             'Длина упаковки, мм*': None,
                             'Ссылка на главное фото*': main_image_url,
-                            'Ссылки на дополнительные фото': additional_images,
+                            'Ссылки на дополнительные фото': additional_images_urls,
                             'Ссылки на фото 360': None,
                             'Артикул фото': None,
                             'Бренд в одежде и обуви*': brand,
