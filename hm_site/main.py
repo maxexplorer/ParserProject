@@ -107,6 +107,7 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
 
                 try:
                     driver.get(url=category_url)
+                    time.sleep(1)
                     html = driver.page_source
                 except Exception as ex:
                     print(f"{category_url} - {ex}")
@@ -120,6 +121,7 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                     page_product_url = f"{category_url}?page={page}"
                     try:
                         driver.get(url=page_product_url)
+                        time.sleep(1)
                         html = driver.page_source
                     except Exception as ex:
                         print(f"{page_product_url} - {ex}")
@@ -180,6 +182,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
         for i, product_url in enumerate(product_urls, 1):
             try:
                 driver.get(url=product_url)
+                time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
@@ -218,7 +221,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
             try:
                 price = int(''.join(
-                    i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
+                    i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
                     i.isdigit())) / 100
                 price = round(price * rub)
             except Exception:
@@ -227,7 +230,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
             try:
                 color_original = None
-                color_items = data.find('div', class_='ff18ac ab7eab').find_all('a')
+                color_items = data.find('div', {'data-testid': 'grid', 'aria-live': 'polite'}).find_all('a')
                 for color_item in color_items:
                     if color_item.get('aria-checked') == 'true':
                         color_original = color_item.get('title')
