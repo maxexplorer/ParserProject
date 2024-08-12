@@ -115,8 +115,7 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                 pages = get_pages(html=html)
                 print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                # for page in range(1, pages + 1):
-                for page in range(1, 2):
+                for page in range(1, pages + 1):
                     page_product_url = f"{category_url}?page={page}"
                     try:
                         driver.get(url=page_product_url)
