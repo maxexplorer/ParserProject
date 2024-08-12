@@ -3,8 +3,6 @@ import re
 import time
 from datetime import datetime
 
-from requests import Session
-
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 
@@ -95,9 +93,8 @@ def get_pages(html: str) -> int:
 
 # Получаем ссылки товаров
 def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> None:
-    url_products_set = set()
-
     for category_dict in category_data_list:
+        url_products_set = set()
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
                 products_data_list = []
@@ -154,8 +151,8 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
 
                 get_products_data(products_data_list=products_data_list, driver=driver, brand=brand)
 
-    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-        print(*url_products_set, file=file, sep='\n')
+        with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+            print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
@@ -215,6 +212,8 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 price = round(price * rub)
             except Exception:
                 price = None
+
+            old_price = None
 
             if not price:
                 try:
