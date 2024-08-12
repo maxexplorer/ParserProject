@@ -115,7 +115,8 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                 pages = get_pages(html=html)
                 print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                for page in range(1, pages + 1):
+                # for page in range(1, pages + 1):
+                for page in range(1, 2):
                     page_product_url = f"{category_url}?page={page}"
                     try:
                         driver.get(url=page_product_url)
@@ -219,7 +220,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
             try:
                 price = int(''.join(
-                    i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
+                    i for i in data.find('span', class_='edbe20 ac3d9e d9ca8b e29fbf').text.split()[0] if
                     i.isdigit())) / 100
                 price = round(price * rub)
             except Exception:
@@ -334,7 +335,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                         status_size = translator(size_availability).lower()
 
                     try:
-                        size_rus = sizes_dict['Женщины'][size_eur]
+                        size_rus = sizes_dict[category_name][size_eur]
                     except Exception:
                         size_rus = size_eur
 
