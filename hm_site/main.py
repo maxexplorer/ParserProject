@@ -210,21 +210,29 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 product_name = None
 
             try:
-                old_price = int(''.join(
-                    i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
-                    i.isdigit())) / 100
-                old_price = round(old_price * rub)
-            except Exception:
-                old_price = None
-
-            try:
                 price = int(''.join(
                     i for i in data.find('span', class_='edbe20 ac3d9e d9ca8b e29fbf').text.split()[0] if
                     i.isdigit())) / 100
                 price = round(price * rub)
             except Exception:
-                print('not price')
                 price = None
+
+            if not price:
+                try:
+                    old_price = int(''.join(
+                        i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
+                        i.isdigit())) / 100
+                    old_price = round(old_price * rub)
+                except Exception:
+                    old_price = None
+
+                try:
+                    price = int(''.join(
+                        i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
+                        i.isdigit())) / 100
+                    price = round(price * rub)
+                except Exception:
+                    price = None
 
             try:
                 color_original = None
