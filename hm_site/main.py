@@ -206,7 +206,6 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 name = data.find('h1').text.strip()
                 product_name = f'H&M {translator(name).lower()}'
             except Exception:
-                print('not product_name')
                 product_name = None
 
             try:
@@ -248,7 +247,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
             try:
                 images_urls_list = []
-                images_items = data.find_all('button', class_='ecc322')
+                images_items = data.find('ul', {'data-testid': 'grid-gallery'}).find_all('li')
                 for item in images_items:
                     image_url = item.find('img').get('src')
                     image_url = image_url.split('?')[0]
