@@ -237,7 +237,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
                 color_items = data.find('div', {'data-testid': 'grid', 'aria-live': 'polite'}).find_all('a')
                 for color_item in color_items:
                     if color_item.get('aria-checked') == 'true':
-                        color_original = color_item.get('title')
+                        color_original = color_item.get('title').lower()
                 color_ru = colors_dict.get(color_original, color_original).lower()
             except Exception:
                 print('not color')
