@@ -151,8 +151,8 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
 
                 get_products_data(products_data_list=products_data_list, driver=driver, brand=brand)
 
-        with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-            print(*url_products_set, file=file, sep='\n')
+                with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                    print(*url_products_set, file=file, sep='\n')
 
 
 # Функция получения данных товаров
