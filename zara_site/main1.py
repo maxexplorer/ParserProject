@@ -38,7 +38,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, id_re
             for category_name, products_list in category_dict.items():
                 for product_tuple in products_list:
                     with open(f'data/id_products_list_Zara_{region}.txt', 'r', encoding='utf-8') as file:
-                        id_products_list = [line.strip() for line in file.readlines()]
+                        id_products_list = [line.strip() for line in file]
                     product_ids = []
                     new_id_list = []
                     subcategory_name, id_category = product_tuple
