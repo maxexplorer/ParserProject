@@ -465,6 +465,14 @@ def main():
     driver = init_chromedriver(headless_mode=True)
     # get_category_urls(url=url, driver=driver)
 
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(f'data/url_products_list_{brand}.txt', 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
     try:
         get_product_urls(category_data_list=category_data_list, driver=driver, brand=brand)
     except Exception as ex:
