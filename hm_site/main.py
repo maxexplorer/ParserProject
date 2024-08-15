@@ -32,6 +32,8 @@ headers = {
                   'Chrome/125.0.0.0 Safari/537.36'
 }
 
+processed_urls = []
+
 
 # Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -158,7 +160,6 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
 # Функция получения данных товаров
 def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str) -> None:
     result_data = []
-    processed_urls = []
 
     for dict_item in products_data_list:
         product_urls = []
