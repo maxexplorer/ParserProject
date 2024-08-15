@@ -167,8 +167,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, id_region: str,
-                       currency: int) -> None:
-    global result_data
+                       currency: int, result_data: list) -> None:
 
     processed_ids = []
 
@@ -228,7 +227,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
             save_excel(data=result_data, species=species, brand=brand, region=region)
 
-            result_data = []
+            result_data.clear()
 
 
 # Функция получения данных товаров
@@ -758,7 +757,7 @@ def main():
     products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
                                          brand=brand, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
-                       id_region=id_region, currency=currency)
+                       id_region=id_region, currency=currency, result_data=result_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
