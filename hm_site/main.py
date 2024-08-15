@@ -137,6 +137,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: s
                                 print(ex)
                                 continue
                             product_urls.append(product_url)
+                            processed_urls.add(product_url)
                     except Exception as ex:
                         print(ex)
 
