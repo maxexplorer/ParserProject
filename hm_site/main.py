@@ -144,7 +144,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: s
 
                     print(f'Обработано: {page}/{pages} страниц')
 
-                with open(f'data/url_products_list_{brand}_1.txt', 'a', encoding='utf-8') as file:
+                with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
                     print(*product_urls, file=file, sep='\n')
 
                 products_data_list.append(
