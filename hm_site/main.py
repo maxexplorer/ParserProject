@@ -32,6 +32,8 @@ headers = {
                   'Chrome/125.0.0.0 Safari/537.36'
 }
 
+processed_urls = set()
+
 
 # Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -142,6 +144,9 @@ def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: s
 
                     print(f'Обработано: {page}/{pages} страниц')
 
+                with open(f'data/url_products_list_{brand}_1.txt', 'a', encoding='utf-8') as file:
+                    print(*product_urls, file=file, sep='\n')
+
                 products_data_list.append(
                     {
                         (category_name, subcategory_name): product_urls
@@ -150,9 +155,6 @@ def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: s
 
                 get_products_data(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
                                   brand=brand)
-
-                with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                    print(*product_urls, file=file, sep='\n')
 
 
 # Функция получения данных товаров
@@ -464,16 +466,16 @@ def main():
     driver = init_chromedriver(headless_mode=True)
     # get_category_urls(url=url, driver=driver)
 
-    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
-        unique_urls = set(line.strip() for line in file)
-
-    # Сохраняем уникальные URL-адреса обратно в файл
-    with open(f'data/url_products_list_{brand}.txt', 'w', encoding='utf-8') as file:
-        print(*unique_urls, file=file, sep='\n')
+    # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
+    #     unique_urls = set(line.strip() for line in file)
+    #
+    # # Сохраняем уникальные URL-адреса обратно в файл
+    # with open(f'data/url_products_list_{brand}.txt', 'w', encoding='utf-8') as file:
+    #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_product_urls(driver=driver, category_data_list=category_data_list, processed_urls=unique_urls, brand=brand)
+        get_product_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls, brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
