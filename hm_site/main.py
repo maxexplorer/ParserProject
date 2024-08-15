@@ -32,8 +32,6 @@ headers = {
                   'Chrome/125.0.0.0 Safari/537.36'
 }
 
-processed_urls = []
-
 
 # Создаём объект chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -93,10 +91,10 @@ def get_pages(html: str) -> int:
 
     return pages
 
+
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> None:
+def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
     for category_dict in category_data_list:
-        url_products_set = set()
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
                 products_data_list = []
@@ -139,7 +137,6 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                                 print(ex)
                                 continue
                             product_urls.append(product_url)
-                            url_products_set.add(product_url)
                     except Exception as ex:
                         print(ex)
 
@@ -151,14 +148,15 @@ def get_product_urls(category_data_list: list, driver: Chrome, brand: str) -> No
                     }
                 )
 
-                get_products_data(products_data_list=products_data_list, driver=driver, brand=brand)
+                get_products_data(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
+                                  brand=brand)
 
                 with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                    print(*url_products_set, file=file, sep='\n')
+                    print(*product_urls, file=file, sep='\n')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str) -> None:
+def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -167,7 +165,7 @@ def get_products_data(products_data_list: list[dict], driver: Chrome, brand: str
 
         for product_url in values:
             if product_url not in processed_urls:
-                processed_urls.append(product_url)
+                processed_urls.add(product_url)
                 product_urls.append(product_url)
         category_name = key[0]
         subcategory_name = key[1]
@@ -475,7 +473,7 @@ def main():
         print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_product_urls(category_data_list=category_data_list, driver=driver, brand=brand)
+        get_product_urls(driver=driver, category_data_list=category_data_list, processed_urls=unique_urls, brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
