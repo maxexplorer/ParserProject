@@ -7,7 +7,6 @@ from datetime import datetime
 import json
 import csv
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 

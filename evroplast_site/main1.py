@@ -4,7 +4,6 @@ import csv
 import os
 from datetime import datetime
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 
@@ -33,11 +32,11 @@ def get_data(data_list):
                 )
                 continue
             try:
-                title_site = soup.find(class_='prod-info-main').text.strip()
+                title_site = soup.find('h1', itemprop='name').text.strip()
             except Exception:
                 title_site = None
             try:
-                price = soup.find(class_='prod-price').text.strip('RUB')
+                price = soup.find('h2', class_='prod-info-price').text.strip('RUB')
             except Exception:
                 price = None
 
