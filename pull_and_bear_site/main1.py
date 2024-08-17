@@ -23,9 +23,8 @@ start_time = datetime.now()
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str, id_region: str) -> \
-        tuple[
-            list[dict], list[dict]]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str,
+                    id_region: str) -> tuple[list[dict], list[dict]]:
     products_data_list = []
     products_new_data_list = []
 
@@ -110,8 +109,6 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
             subcategory_name = key[0]
             id_category = key[1]
 
-            print(f'Сбор данных категории: {subcategory_name}')
-
             if region == 'Германия':
                 id_language = '-1'
             elif region == 'Казахстан':
@@ -146,8 +143,8 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     if species == 'size':
                         print(f'Сбор данных о наличии размеров категории: {subcategory_name}')
-                        get_size_data(products_data=json_data, id_region=id_region, currency=currency)
-
+                        get_size_data(products_data=json_data, species=species, brand=brand, region=region,
+                                      currency=currency)
                     elif species == 'products' and region == 'Германия':
                         get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
                                              subcategory_name=subcategory_name, currency=currency)
