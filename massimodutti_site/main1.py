@@ -42,7 +42,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                 for product_tuple in products_list:
                     subcategory_name, id_category = product_tuple
 
-                    product_ids = []
                     new_id_list = []
 
 
