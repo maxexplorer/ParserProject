@@ -78,7 +78,7 @@ list[dict]:
     with Session() as session:
         for subcategory_name, id_category in id_categories_list:
             try:
-                time.sleep(randint(1, 2))
+                time.sleep(1)
                 response = session.get(
                     f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/category/{id_category}/product',
                     params=params,
@@ -161,7 +161,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                 }
 
                 try:
-                    time.sleep(randint(1, 2))
+                    time.sleep(1)
                     response = session.get(
                         f'https://www.pullandbear.com/itxrest/3/catalog/store/{id_region}/productsArray',
                         params=params,
