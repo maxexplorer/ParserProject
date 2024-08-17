@@ -222,13 +222,13 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
             old_price = round(old_price * currency)
         except Exception:
-            old_price = 0
+            old_price = None
 
         try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
             price = round(price * currency)
         except Exception:
-            price = 0
+            price = None
 
         try:
             id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
@@ -472,13 +472,13 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
             old_price = round(old_price * currency)
         except Exception:
-            old_price = 0
+            old_price = None
 
         try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
             price = round(price * currency)
         except Exception:
-            price = 0
+            price = None
 
         try:
             id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']

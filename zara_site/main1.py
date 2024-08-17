@@ -216,13 +216,13 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
             old_price = round(old_price * currency)
         except Exception:
-            old_price = 0
+            old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
             price = round(price * currency)
         except Exception:
-            price = 0
+            price = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
@@ -456,13 +456,13 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
             old_price = round(old_price * currency)
         except Exception:
-            old_price = 0
+            old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
             price = round(price * currency)
         except Exception:
-            price = 0
+            price = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
@@ -688,13 +688,13 @@ def get_size_data(products_data: dict, id_region: str, currency: int) -> None:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
             old_price = round(old_price * currency)
         except Exception:
-            old_price = 0
+            old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
             price = round(price * currency)
         except Exception:
-            price = 0
+            price = None
 
         try:
             id_color = item['detail']['colors'][0]['id']
