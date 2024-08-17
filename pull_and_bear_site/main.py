@@ -71,7 +71,8 @@ def get_id_categories(headers: dict, params: dict, id_region: str) -> list:
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str, id_region: str) -> list[dict]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str, id_region: str) -> \
+list[dict]:
     products_data_list = []
     id_products_list = []
     with Session() as session:
@@ -232,6 +233,11 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
+            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+        except Exception:
+            id_color = ''
+
+        try:
             color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name'].upper()
             color_ru = colors_format(value=color_original)
         except Exception:
@@ -239,24 +245,19 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
             color_ru = None
 
         try:
-            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+            main_image_url = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
         except Exception:
-            id_color = ''
+            main_image_url = None
 
         try:
-            main_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
-        except Exception:
-            main_image = None
-
-        try:
-            additional_images_list = []
+            additional_images_urls_list = []
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
             for xmedia_elem in xmedia_data:
                 color_code = xmedia_elem['colorCode']
                 if color_code == id_color:
                     xmedia_items = xmedia_elem['xmediaItems']
                     for xmedia_item in xmedia_items:
-                        if len(additional_images_list) == 14:
+                        if len(additional_images_urls_list) == 14:
                             break
                         for media_item in xmedia_item['medias']:
                             if not media_item['extraInfo']:
@@ -268,14 +269,14 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                             if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or \
                                     '3_1_0.jpg' in img_url or '02/' in img_url:
                                 continue
-                            additional_images_list.append(img_url)
-                            if len(additional_images_list) == 14:
+                            additional_images_urls_list.append(img_url)
+                            if len(additional_images_urls_list) == 14:
                                 break
 
-            additional_images = '; '.join(additional_images_list)
+            additional_images_urls = '; '.join(additional_images_urls_list)
 
         except Exception:
-            additional_images = None
+            additional_images_urls = None
 
         try:
             gender_en = item['sectionNameEN']
@@ -338,10 +339,8 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                 status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-
-                id_product_size = f"{reference}/{id_color}/{size_eur}"
+            for size_item in sizes_items:
+                size_eur = size_item.get('name')
 
                 if size == size_eur:
                     continue
@@ -359,6 +358,8 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                 else:
                     size_rus = size_eur.replace('-', ';')
 
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
+
                 result_data.append(
                     {
                         '№': None,
@@ -374,8 +375,8 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                         'Ширина упаковки, мм*': None,
                         'Высота упаковки, мм*': None,
                         'Длина упаковки, мм*': None,
-                        'Ссылка на главное фото*': main_image,
-                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылка на главное фото*': main_image_url,
+                        'Ссылки на дополнительные фото': additional_images_urls,
                         'Ссылки на фото 360': None,
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,
@@ -482,6 +483,11 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             price = 0
 
         try:
+            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+        except Exception:
+            id_color = ''
+
+        try:
             color_original = item['bundleProductSummaries'][0]['detail']['colors'][0]['name']
             color_ru = color_original
         except Exception:
@@ -489,24 +495,19 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
             color_ru = None
 
         try:
-            id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
+            main_image_url = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
         except Exception:
-            id_color = ''
+            main_image_url = None
 
         try:
-            main_image = f"https://static.pullandbear.net/2/photos/{item['bundleProductSummaries'][0]['detail']['colors'][0]['image']['url']}_2_1_8.jpg"
-        except Exception:
-            main_image = None
-
-        try:
-            additional_images_list = []
+            additional_images_urls_list = []
             xmedia_data = item['bundleProductSummaries'][0]['detail']['xmedia']
             for xmedia_elem in xmedia_data:
                 color_code = xmedia_elem['colorCode']
                 if color_code == id_color:
                     xmedia_items = xmedia_elem['xmediaItems']
                     for xmedia_item in xmedia_items:
-                        if len(additional_images_list) == 14:
+                        if len(additional_images_urls_list) == 14:
                             break
                         for media_item in xmedia_item['medias']:
                             if not media_item['extraInfo']:
@@ -518,14 +519,14 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                             if '.jpg' not in img_url or '2_1_0.jpg' in img_url or '4_1_0.jpg' in img_url or \
                                     '3_1_0.jpg' in img_url or '02/' in img_url:
                                 continue
-                            additional_images_list.append(img_url)
-                            if len(additional_images_list) == 14:
+                            additional_images_urls_list.append(img_url)
+                            if len(additional_images_urls_list) == 14:
                                 break
 
-            additional_images = '; '.join(additional_images_list)
+            additional_images_urls = '; '.join(additional_images_urls_list)
 
         except Exception:
-            additional_images = None
+            additional_images_urls = None
 
         try:
             gender_en = item['sectionNameEN']
@@ -585,10 +586,8 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                 status_dict.setdefault(size_eur, []).append(size_value)
                 size = size_eur
 
-            for c in sizes_items:
-                size_eur = c.get('name')
-
-                id_product_size = f"{reference}/{id_color}/{size_eur}"
+            for size_item in sizes_items:
+                size_eur = size_item.get('name')
 
                 if size == size_eur:
                     continue
@@ -606,6 +605,8 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                 else:
                     size_rus = size_eur.replace('-', ';')
 
+                id_product_size = f"{reference}/{id_color}/{size_eur}"
+
                 result_data.append(
                     {
                         '№': None,
@@ -621,8 +622,8 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
                         'Ширина упаковки, мм*': None,
                         'Высота упаковки, мм*': None,
                         'Длина упаковки, мм*': None,
-                        'Ссылка на главное фото*': main_image,
-                        'Ссылки на дополнительные фото': additional_images,
+                        'Ссылка на главное фото*': main_image_url,
+                        'Ссылки на дополнительные фото': additional_images_urls,
                         'Ссылки на фото 360': None,
                         'Артикул фото': None,
                         'Бренд в одежде и обуви*': brand,

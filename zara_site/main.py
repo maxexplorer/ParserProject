@@ -94,8 +94,9 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
         for category_dict in id_categories_list:
             for category_name, products_list in category_dict.items():
                 for product_tuple in products_list:
-                    product_ids = []
                     subcategory_name, id_category = product_tuple
+
+                    product_ids = []
 
                     if id_region == 'kz/ru' and category_name == 'Девочки;Мальчики':
                         continue
