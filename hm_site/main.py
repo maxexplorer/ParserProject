@@ -178,6 +178,9 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
         for i, product_url in enumerate(product_urls, 1):
             try:
                 driver.get(url=product_url)
+                driver.execute_script("window.scrollTo(0, 2000);")
+                time.sleep(1)
+                driver.execute_script("window.scrollTo(0, 4000);")
                 time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
