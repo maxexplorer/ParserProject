@@ -33,7 +33,7 @@ def get_pages(html: str) -> int:
     return pages
 
 
-def get_products_urls():
+def get_products_urls(driver: undetectedChrome):
     pass
 
 def get_products_data():
@@ -47,7 +47,7 @@ def main():
 
 
     try:
-        get_product_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls, brand=brand)
+        get_products_urls(driver=driver)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
