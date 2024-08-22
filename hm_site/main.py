@@ -95,7 +95,7 @@ def get_pages(html: str) -> int:
 
 
 # Получаем ссылки товаров
-def get_product_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
+def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
     for category_dict in category_data_list:
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
@@ -478,7 +478,7 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_product_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls, brand=brand)
+        get_products_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls, brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
