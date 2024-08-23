@@ -100,7 +100,7 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
                 products_data_list = []
-                product_urls = []
+                products_urls = []
                 subcategory_name, category_url = product_tuple
 
                 try:
@@ -138,18 +138,21 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                             except Exception as ex:
                                 print(ex)
                                 continue
-                            product_urls.append(product_url)
+                            products_urls.append(product_url)
                     except Exception as ex:
                         print(ex)
 
                     print(f'Обработано: {page}/{pages} страниц')
 
+                if not os.path.exists('data'):
+                    os.makedirs('data')
+
                 with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                    print(*product_urls, file=file, sep='\n')
+                    print(*products_urls, file=file, sep='\n')
 
                 products_data_list.append(
                     {
-                        (category_name, subcategory_name): product_urls
+                        (category_name, subcategory_name): products_urls
                     }
                 )
 
