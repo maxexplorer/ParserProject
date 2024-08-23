@@ -87,8 +87,9 @@ def get_products_urls(driver: undetectedChrome, brand: str, seller: str):
 # Функция получения данных товаров
 def get_products_data(driver: undetectedChrome, products_urls_list: list, brand: str, seller: str) -> None:
     result_list = []
-    batch_size = 100
-    for product_url in products_urls_list[:1]:
+    batch_size = 10
+
+    for product_url in products_urls_list[:100]:
         try:
             driver.get(url=product_url)
             time.sleep(2)
@@ -174,6 +175,10 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
             save_csv(data=result_list, brand=brand, seller=seller)
             result_list.clear()  # Очищаем список для следующей партии
 
+    # Записываем оставшиеся данные в Excel
+    if result_list:
+        save_csv(data=result_list, brand=brand, seller=seller)
+
 
 # Функция для записи данных в формат csv
 def save_csv(data: list, brand: str, seller: str) -> None:
@@ -190,15 +195,16 @@ def save_csv(data: list, brand: str, seller: str) -> None:
         with open(file_path, 'w', encoding="utf-8-sig") as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerow(
-                ('vendor: Производитель',
-                 'folder: Категория',
-                 'article: Артикул',
-                 'name: Название',
-                 'price: Цена',
-                 'image: Иллюстрация',
-                 'body: Описание',
-                 'amount : Количество'
-                 )
+                (
+                    'brand: Бренд',
+                    'category: Категория',
+                    'name: Название',
+                    'article: Артикул',
+                    'price: Цена',
+                    'images_urls: Изображения',
+                    'description: Описание',
+                    'characteristics: Характеристики',
+                )
             )
 
     # Записываем данные в файл (добавляем строки)
