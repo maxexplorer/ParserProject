@@ -35,7 +35,7 @@ headers = {
 processed_urls = set()
 
 
-# Создаём объект chromedriver
+# Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
     options = Options()
     options.add_argument(
@@ -51,7 +51,7 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
     return driver
 
 
-# Получаем ссылки всех категорий товаров
+# Функция получения количества страниц
 def get_category_urls(url: str, driver: Chrome) -> None:
     category_data_list = []
 
@@ -94,7 +94,7 @@ def get_pages(html: str) -> int:
     return pages
 
 
-# Получаем ссылки товаров
+# Функция получения ссылок товаров
 def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
     for category_dict in category_data_list:
         for category_name, category_list in category_dict.items():
