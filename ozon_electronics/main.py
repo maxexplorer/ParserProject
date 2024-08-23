@@ -170,7 +170,7 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
             )
         )
 
-        # Записываем данные в Excel каждые 1000 URL
+        # Записываем данные в CSV каждые batch_size
         if len(result_list) >= batch_size:
             save_csv(data=result_list, brand=brand, seller=seller)
             result_list.clear()  # Очищаем список для следующей партии
