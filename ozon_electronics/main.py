@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 start_time = datetime.now()
 
+
 # Создаём объект undetected_chromedriver
 def init_undetected_chromedriver(headless_mode=False):
     if headless_mode:
@@ -22,6 +23,7 @@ def init_undetected_chromedriver(headless_mode=False):
         driver.maximize_window()
         driver.implicitly_wait(15)
     return driver
+
 
 # Получаем количество страниц
 def get_pages(html: str) -> int:
@@ -39,12 +41,12 @@ def get_pages(html: str) -> int:
 def get_products_urls(driver: undetectedChrome, brand: str, seller: str):
     pages = 27
 
-    for page in range(1, pages + 1):
+    for page in range(1, 27):
         products_urls = []
         page_url = f"https://www.ozon.ru/brand/apple-26303000/?page={page}&seller=0"
         try:
             driver.get(url=page_url)
-            time.sleep(randint(1, 3))
+            time.sleep(3)
             html = driver.page_source
         except Exception as ex:
             print(f"{page_url} - {ex}")
@@ -69,7 +71,7 @@ def get_products_urls(driver: undetectedChrome, brand: str, seller: str):
 
             products_urls.append(product_url)
 
-            print(f'Обработано: {page}/{pages} страниц')
+        print(f'Обработано: {page}/{pages} страниц')
 
         if not os.path.exists('data'):
             os.makedirs('data')
@@ -78,18 +80,32 @@ def get_products_urls(driver: undetectedChrome, brand: str, seller: str):
             print(*products_urls, file=file, sep='\n')
 
 
-def get_products_data():
-    pass
+def get_products_data(driver: undetectedChrome, products_urls_list: list):
+    for product_url in products_urls_list:
+        try:
+            driver.get(url=product_url)
+            time.sleep(1)
+            html = driver.page_source
+        except Exception as ex:
+            print(f"{product_url} - {ex}")
+            continue
+
+        if not html:
+            print(f'not html: {product_url}')
+            continue
 
 
 def main():
     brand = 'Apple'
     seller = 'Ozon'
 
-    driver = init_undetected_chromedriver(headless_mode=True)
+    driver = init_undetected_chromedriver(headless_mode=False)
 
     try:
         get_products_urls(driver=driver, brand=brand, seller=seller)
+        with open('data/products_urls_list_Apple_Ozon.txt', 'r', encoding='utf-8') as file:
+            products_urls_list = [line.strip() for line in file]
+        get_products_data(driver=driver, products_urls_list=products_urls_list)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
@@ -103,4 +119,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
