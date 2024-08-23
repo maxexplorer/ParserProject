@@ -89,12 +89,12 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
     result_list = []
     batch_size = 10
 
-    for product_url in products_urls_list[:100]:
+    for product_url in products_urls_list:
         try:
             driver.get(url=product_url)
-            time.sleep(2)
+            time.sleep(randint(2, 3))
             driver.execute_script("window.scrollTo(0, 4000);")
-            time.sleep(2)
+            time.sleep(randint(2, 3))
             html = driver.page_source
         except Exception as ex:
             print(f"{product_url} - {ex}")
@@ -104,10 +104,23 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
             print(f'not html: {product_url}')
             continue
 
-        with open('data/index.html', 'r', encoding='utf-8') as file:
-            html = file.read()
-
         soup = BeautifulSoup(html, 'lxml')
+
+        try:
+            out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
+            if out_of_stock:
+                print(f'{product_url}: Этот товар закончился')
+                continue
+        except Exception:
+            pass
+
+        try:
+            no_such_page = soup.find('h2', string=re.compile('Такой страницы не существует'))
+            if no_such_page:
+                print(f'{product_url}: Такой страницы не существует')
+                continue
+        except Exception:
+            pass
 
         # sript = soup.find('script', {"type":"application/ld+json"}).text
 
@@ -144,7 +157,7 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
             images_urls = None
 
         try:
-            description = soup.find('div', id='section-description').text.strip()
+            description = soup.find('div', id='section-description').find('div', class_='RA-a1').text.strip()
         except Exception:
             description = None
 
