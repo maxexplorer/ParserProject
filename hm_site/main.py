@@ -96,6 +96,10 @@ def get_pages(html: str) -> int:
 
 # Функция получения ссылок товаров
 def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
+    # Путь к файлу для сохранения URL продуктов
+    directory = 'data'
+    file_path = f'{directory}/url_products_list_{brand}.txt'
+
     for category_dict in category_data_list:
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
@@ -144,10 +148,10 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
 
                     print(f'Обработано: {page}/{pages} страниц')
 
-                if not os.path.exists('data'):
-                    os.makedirs('data')
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
 
-                with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
+                with open(file_path, 'a', encoding='utf-8') as file:
                     print(*products_urls, file=file, sep='\n')
 
                 products_data_list.append(
@@ -441,16 +445,22 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    directory = 'results'
 
-    if not os.path.exists(f'results/result_data_{species}_{brand}.xlsx'):
-        # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='w') as writer:
+    # Создаем директорию, если она не существует
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Путь к файлу для сохранения данных
+    file_path = f'{directory}/result_data_{species}_{brand}.xlsx'
+
+    # Если файл не существует, создаем его с пустым DataFrame
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_{brand}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(file_path, sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -458,12 +468,12 @@ def save_excel(data: list, species: str, brand: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='a',
+    with ExcelWriter(file_path, mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "{file_path}"')
 
 
 def main():
@@ -481,7 +491,8 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_products_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls, brand=brand)
+        get_products_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls,
+                          brand=brand)
     except Exception as ex:
         print(f'main: {ex}')
     finally:

@@ -201,6 +201,7 @@ def save_csv(data: list, brand: str, seller: str) -> None:
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+    # Путь к файлу для сохранения данных
     file_path = f'{directory}/result_data_{brand}_{seller}.csv'
 
     # Если файл не существует, записываем заголовки

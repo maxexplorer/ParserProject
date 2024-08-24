@@ -87,9 +87,15 @@ def get_id_categories(headers: dict, params: dict) -> None:
 
 
 # Функция получения id товаров
-def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, id_region: str) -> list[dict]:
+def get_id_products(id_categories_list: list, headers: dict, params: dict, brand: str, region: str,
+                    id_region: str) -> list[dict]:
     products_data_list = []
     id_products_set = set()
+
+    # Путь к файлу для сохранения идентификаторов продуктов
+    directory = 'data'
+    file_path = f'{directory}/id_products_list_{brand}_{region}.txt'
+
     with Session() as session:
         for category_dict in id_categories_list:
             for category_name, products_list in category_dict.items():
@@ -155,21 +161,19 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                     print(
                         f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
 
-    region = id_region.split('/')[0]
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-    with open(f'data/id_products_list_{brand}_{region}.txt', 'a', encoding='utf-8') as file:
+    with open(file_path, 'a', encoding='utf-8') as file:
         print(*id_products_set, file=file, sep='\n')
 
     return products_data_list
 
 
 # Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, id_region: str,
-                       currency: int, result_data: list) -> None:
-
+def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, region: str,
+                       id_region: str, currency: int, result_data: list) -> None:
     processed_ids = []
 
     with Session() as session:
@@ -223,8 +227,6 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                 except Exception as ex:
                     print(f'get_products_array: {ex}')
                     continue
-
-            region = id_region.split('/')[0]
 
             save_excel(data=result_data, species=species, brand=brand, region=region)
 
@@ -708,16 +710,22 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str, region: str) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    directory = 'results'
 
-    if not os.path.exists(f'results/result_data_{species}_{brand}_{region}.xlsx'):
-        # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='w') as writer:
+    # Создаем директорию, если она не существует
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Путь к файлу для сохранения данных
+    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
+
+    # Если файл не существует, создаем его с пустым DataFrame
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_{brand}_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(file_path, sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -725,12 +733,11 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='a',
-                     if_sheet_exists='overlay') as writer:
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "{file_path}"')
 
 
 def main():
@@ -756,9 +763,9 @@ def main():
     id_region = id_region_dict.get(region)
 
     products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
-                                         brand=brand, id_region=id_region)
+                                         brand=brand, region=region, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
-                       id_region=id_region, currency=currency, result_data=result_data)
+                       region=region, id_region=id_region, currency=currency, result_data=result_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

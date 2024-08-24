@@ -35,6 +35,15 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                     id_region: str) -> tuple[list[dict], list[dict]]:
     products_data_list = []
     products_new_data_list = []
+    new_id_set = set()
+
+    directory = 'data'
+
+    # Путь к файлу для сохранения идентификаторов продуктов
+    file_path = f'{directory}/id_products_list_{brand}_{region}.txt'
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        id_products_list = [line.strip() for line in file.readlines()]
 
     with Session() as session:
         for category_dict in id_categories_list:
@@ -43,10 +52,6 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                     subcategory_name, id_category = product_tuple
 
                     new_id_list = []
-
-
-                    with open(f'data/id_products_list_{brand}_{region}.txt', 'r', encoding='utf-8') as file:
-                        id_products_list = [line.strip() for line in file]
 
                     try:
                         time.sleep(1)
@@ -83,6 +88,8 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
                             continue
 
                         new_id_list.append(id_product)
+                        id_products_list.append(id_product)
+                        new_id_set.add(id_product)
 
                     if new_id_list:
                         products_new_data_list.append(
@@ -93,12 +100,11 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
                     print(f'Обработано: категория {category_name}/{subcategory_name} - {len(product_ids)} товаров!')
 
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-                    if not os.path.exists('data'):
-                        os.makedirs('data')
-
-                    with open(f'data/id_products_list_{brand}_{region}.txt', 'a', encoding='utf-8') as file:
-                        print(*new_id_list, file=file, sep='\n')
+    with open(file_path, 'a', encoding='utf-8') as file:
+        print(*new_id_set, file=file, sep='\n')
 
     return products_data_list, products_new_data_list
 
@@ -171,8 +177,8 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
                     print(f'В категории {category_name}/{subcategory_name} обработано: {count} товаров!')
 
                 except Exception as ex:
-                        print(f'get_products_array: {ex}')
-                        continue
+                    print(f'get_products_array: {ex}')
+                    continue
 
 
 # Функция получения данных товаров
@@ -648,8 +654,10 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
 
     save_excel(data=result_data, species=species, brand=brand, region=region)
 
+
 # Функция получения данных товаров
-def get_size_data(products_data: dict, species: str, brand: str, region: str, category_name: str, currency: int) -> None:
+def get_size_data(products_data: dict, species: str, brand: str, region: str, category_name: str,
+                  currency: int) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -678,7 +686,6 @@ def get_size_data(products_data: dict, species: str, brand: str, region: str, ca
             price = round(price * currency)
         except Exception:
             price = None
-
 
         try:
             id_color = item['bundleProductSummaries'][0]['detail']['colors'][0]['id']
@@ -718,18 +725,25 @@ def get_size_data(products_data: dict, species: str, brand: str, region: str, ca
 
     save_excel(data=result_data, species=species, brand=brand, region=region)
 
+
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str, region: str) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    directory = 'results'
 
-    if not os.path.exists(f'results/result_data_{species}_{brand}_{region}.xlsx'):
-        # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='w') as writer:
+    # Создаем директорию, если она не существует
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Путь к файлу для сохранения данных
+    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
+
+    # Если файл не существует, создаем его с пустым DataFrame
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_{brand}_{region}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(file_path, sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -737,12 +751,11 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_{brand}_{region}.xlsx', mode='a',
-                     if_sheet_exists='overlay') as writer:
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "{file_path}"')
 
 
 def main():
