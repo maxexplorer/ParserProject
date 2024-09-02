@@ -1,14 +1,11 @@
-import re
+import os
 import time
+from datetime import datetime
 from random import randint
 
 import requests
 from bs4 import BeautifulSoup
-import os
-from datetime import datetime
-import json
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 
