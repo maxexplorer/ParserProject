@@ -4,11 +4,8 @@ import os
 from datetime import datetime
 import csv
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
-
-
 
 
 def get_data(data_list):
