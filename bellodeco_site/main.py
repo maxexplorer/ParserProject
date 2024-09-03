@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from requests import Session
@@ -44,15 +45,14 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('div', class_='b-pageline').find_all('a')[-2].text.strip())
-    except Exception as ex:
-        print(f'get_pages: {ex}')
+        pages = int(soup.find('div', class_='b-pageline').find_all('a')[-3].text.strip())
+    except Exception:
         pages = 1
 
     return pages
 
 
-def get_urls(category_urls_list, headers):
+def get_products_urls(category_urls_list, headers):
     count_urls = len(category_urls_list)
 
     products_urls_list = []
@@ -69,6 +69,7 @@ def get_urls(category_urls_list, headers):
             for page in range(1, pages + 1):
                 product_url = f"{category_url}page/{page}/"
                 try:
+                    time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{url} - {ex}")
@@ -83,13 +84,14 @@ def get_urls(category_urls_list, headers):
                     data = soup.find('div', class_='catalogbox__wrapper').find_all('div', class_='catalogbox__title')
                     for item in data:
                         try:
-                            url = f"https://bellodeco.ru/{item.find('a').get('href')}"
+                            product_url = f"https://bellodeco.ru/{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
-                        products_urls_list.append(url)
+                        products_urls_list.append(product_url)
                 except Exception as ex:
-                    print(ex)
+                    print(f'{product_url}: {ex}')
+                    continue
 
             print(f'Обработано: {i}/{count_urls}')
 
@@ -109,7 +111,7 @@ def get_data(file_path):
     result_list = []
     image_urls_list = []
 
-    with requests.Session() as session:
+    with Session() as session:
         for j, product_url in enumerate(product_urls_list, 1):
             try:
                 html = get_html(url=product_url, headers=headers, session=session)
@@ -186,6 +188,9 @@ def get_data(file_path):
 
 
 def download_imgs(file_path):
+    if not os.path.exists('images'):
+        os.makedirs('images')
+
     with open(file_path, 'r', encoding='utf-8') as file:
         image_urls_list = [line.strip() for line in file.readlines()]
 
@@ -194,20 +199,19 @@ def download_imgs(file_path):
     for k, img_url in enumerate(image_urls_list, 1):
         image_title = img_url.split('/')[-1]
 
-        response = requests.get(url=img_url)
+        with Session() as session:
+            response = session.get(url=img_url)
 
-        if not os.path.exists('images'):
-            os.mkdir('images')
 
         with open(f"images/{image_title}", "wb") as file:
             file.write(response.content)
 
         print(f'Обработано: {k}/{count_urls}')
 
-
-def save_excel(data):
+# Функция для записи данных в формат xlsx
+def save_excel(data: list) -> None:
     if not os.path.exists('data'):
-        os.mkdir('data')
+        os.makedirs('data')
 
     dataframe = DataFrame(data)
 
@@ -218,10 +222,11 @@ def save_excel(data):
 
 
 def main():
-    # get_urls(category_urls_list=category_urls_list, headers=headers)
-    result_list = get_data(file_path="data/product_urls_list.txt")
-    save_excel(data=result_list)
-    download_imgs(file_path="data/image_urls_list.txt")
+    get_urls(category_urls_list=category_urls_list, headers=headers)
+    # result_list = get_data(file_path="data/product_urls_list.txt")
+    # save_excel(data=result_list)
+    # download_imgs(file_path="data/image_urls_list.txt")
+
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
