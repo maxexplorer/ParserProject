@@ -72,7 +72,7 @@ def get_products_urls(category_urls_list, headers):
                     time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
-                    print(f"{url} - {ex}")
+                    print(f"{product_url} - {ex}")
                     continue
 
                 if not html:
@@ -98,58 +98,69 @@ def get_products_urls(category_urls_list, headers):
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/products_urls_list.txt', 'w', encoding='utf-8') as file:
         print(*products_urls_list, file=file, sep='\n')
 
 
-def get_data(file_path):
+def get_products_data(file_path: str) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
-        product_urls_list = [line.strip() for line in file.readlines()]
+        products_urls_list = [line.strip() for line in file.readlines()]
 
-        count_urls = len(product_urls_list)
+        count_urls = len(products_urls_list)
 
     result_list = []
-    image_urls_list = []
+    images_urls_list = []
 
     with Session() as session:
-        for j, product_url in enumerate(product_urls_list, 1):
+        for j, product_url in enumerate(products_urls_list[:1], 1):
             try:
+                time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
+                #
+                # with open('data/index.html', 'w', encoding='utf-8') as file:
+                #     file.write(html)
+
             except Exception as ex:
                 print(f"{product_url} - {ex}")
+                continue
+
+            if not html:
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                title = soup.find('h2', class_='product_name').text.strip()
+                title = soup.find('h1').text.strip()
             except Exception:
                 title = None
-            try:
-                image_data = soup.find('div', class_='newGall').find_all('li', class_='newGall__thumbItem')
-                for img_url in image_data:
-                    image_urls_list.append("https://decor-dizayn.ru" + img_url.find('img').get('full'))
-            except Exception:
-                image_data = None
-            try:
-                image_title = ' ,'.join(img_url.find('img').get('full').split('/')[-1] for img_url in image_data)
-            except Exception:
-                image_title = None
 
             try:
-                description = soup.find('div', id='t1').text.strip().splitlines()[-1]
-            except Exception:
-                description = None
-            try:
-                models = ' ,'.join(["https://decor-dizayn.ru" + model.get('href') for model in
-                                    soup.find('div', id='t4').find_all('a')])
-            except Exception:
-                models = None
-                pass
-            try:
-                price = soup.find('div', class_='price').text.strip()
+                price = int(''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='catalogbox__price').text.strip())))
             except Exception:
                 price = None
+
+            try:
+                images_items = soup.find('div', class_='catalogbox__galbox js-catalog-detail-fotorama-wrap').find_all('a')
+                for image_item in images_items:
+                    image_url = f"https://bellodeco.ru/{image_item.get('href')}"
+                    images_urls_list.append(image_url)
+                main_image_url = images_urls_list[0]
+                additional_images_urls = '; '.join(images_urls_list)
+            except Exception:
+                main_image_url = None
+                additional_images_urls = None
+
+            try:
+                description = soup.find('div', class_='catalogbox__description').text.strip().splitlines()[-1]
+            except Exception:
+                description = None
+
+            try:
+                models = soup.find('div', class_='b-model-list').find_all('div', class_='model-list__item')
+            except Exception:
+                models = None
+
+
 
             try:
                 data = soup.find('div', class_='data').find_all('div', class_='item')
@@ -159,10 +170,12 @@ def get_data(file_path):
             result_dict = {
                 'Название товара': title,
                 'Ссылка': product_url,
-                'Изображения': image_title,
+                'Цена': price,
+                'Главное изображение': main_image_url,
+                'Дополнительные изображения': additional_images_urls,
                 'Описание': description,
                 '3D модели': models,
-                'Цена': price,
+
 
             }
 
@@ -182,7 +195,7 @@ def get_data(file_path):
         os.mkdir('data')
 
     with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
-        print(*image_urls_list, file=file, sep='\n')
+        print(*images_urls_list, file=file, sep='\n')
 
     return result_list
 
@@ -222,8 +235,8 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    get_urls(category_urls_list=category_urls_list, headers=headers)
-    # result_list = get_data(file_path="data/product_urls_list.txt")
+    # get_products_urls(category_urls_list=category_urls_list, headers=headers)
+    result_list = get_products_data(file_path="data/products_urls_list.txt")
     # save_excel(data=result_list)
     # download_imgs(file_path="data/image_urls_list.txt")
 
