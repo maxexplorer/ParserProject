@@ -175,7 +175,7 @@ def get_data(file_path):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/images_urls_list.txt', 'w', encoding='utf-8') as file:
         print(*image_urls_list, file=file, sep='\n')
 
     return result_list
@@ -216,7 +216,7 @@ def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
     result_list = get_data(file_path="data/products_urls_list.txt")
     save_excel(data=result_list)
-    download_imgs(file_path="data/image_urls_list.txt")
+    download_imgs(file_path="data/images_urls_list.txt")
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
