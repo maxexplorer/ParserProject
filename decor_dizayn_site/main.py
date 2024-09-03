@@ -92,7 +92,7 @@ def get_urls(category_urls_list, headers):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
+    with open('data/products_urls_list.txt', 'w', encoding='utf-8') as file:
         print(*product_urls_list, file=file, sep='\n')
 
 
@@ -214,7 +214,7 @@ def save_excel(data):
 
 def main():
     # get_urls(category_urls_list=category_urls_list, headers=headers)
-    result_list = get_data(file_path="data/product_urls_list.txt")
+    result_list = get_data(file_path="data/products_urls_list.txt")
     save_excel(data=result_list)
     download_imgs(file_path="data/image_urls_list.txt")
     execution_time = datetime.now() - start_time
