@@ -52,10 +52,13 @@ def get_pages(html: str) -> int:
     return pages
 
 
-def get_products_urls(category_urls_list: list, headers: dict):
+def get_products_urls(category_urls_list: list, headers: dict) -> tuple[list[str], list[str]]:
     count_urls = len(category_urls_list)
 
-    products_urls_list = []
+    new_products_urls_list = []
+
+    with open('data/products_urls_list.txt', 'r', encoding='utf-8') as file:
+        products_urls_list = [line.strip() for line in file]
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
@@ -88,7 +91,12 @@ def get_products_urls(category_urls_list: list, headers: dict):
                         except Exception as ex:
                             print(ex)
                             continue
-                        products_urls_list.append(product_url)
+
+                        if product_url in products_urls_list:
+                            products_urls_list.append(product_url)
+                        else:
+                            new_products_urls_list.append(product_url)
+
                 except Exception as ex:
                     print(f'{product_url}: {ex}')
                     continue
@@ -98,15 +106,14 @@ def get_products_urls(category_urls_list: list, headers: dict):
     if not os.path.exists('data'):
         os.makedirs('data')
 
-    with open('data/products_urls_list.txt', 'w', encoding='utf-8') as file:
-        print(*products_urls_list, file=file, sep='\n')
+    with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
+        print(*new_products_urls_list, file=file, sep='\n')
+
+    return products_urls_list, new_products_urls_list
 
 
-def get_products_data(file_path: str) -> list[dict]:
-    with open(file_path, 'r', encoding='utf-8') as file:
-        products_urls_list = [line.strip() for line in file.readlines()]
-
-        count_urls = len(products_urls_list)
+def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
+    count_urls = len(products_urls_list)
 
     result_data = []
     images_urls_list = []
@@ -224,6 +231,51 @@ def get_products_data(file_path: str) -> list[dict]:
     return result_data
 
 
+def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
+    count_urls = len(products_urls_list)
+
+    result_data = []
+
+    with Session() as session:
+        for j, product_url in enumerate(products_urls_list, 1):
+            try:
+                time.sleep(1)
+                html = get_html(url=product_url, headers=headers, session=session)
+
+
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            if not html:
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                title = soup.find('h1').text.strip()
+            except Exception:
+                title = None
+
+            try:
+                price = int(
+                    ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='catalogbox__price').text.strip())))
+            except Exception:
+                price = None
+
+            result_data.append(
+                {
+                    'Название товара': title,
+                    'Ссылка': product_url,
+                    'Цена': price,
+                }
+            )
+
+            print(f'Обработано: {j}/{count_urls}')
+
+    return result_data
+
+
 def download_imgs(file_path: str, headers: dict) -> None:
     if not os.path.exists('images'):
         os.makedirs('images')
@@ -247,23 +299,35 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
-    if not os.path.exists('data'):
-        os.makedirs('data')
+def save_excel(data: list, species: str) -> None:
+    directory = 'results'
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_path = f'{directory}/result_data_{species}.xlsx'
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
+    with ExcelWriter(file_path, mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data', index=False)
 
-    print(f'Данные сохранены в файл "data.xlsx"')
+    print(f'Данные сохранены в файл {file_path}')
 
 
 def main():
-    # get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    # result_data = get_products_data(file_path="data/products_urls_list.txt")
-    # save_excel(data=result_data)
-    download_imgs(file_path="data/images_urls_list.txt")
+    products_urls_list, new_products_urls_list = get_products_urls(category_urls_list=category_urls_list,
+                                                                   headers=headers)
+    result_data = get_products_price(products_urls_list=products_urls_list, headers=headers)
+    save_excel(data=result_data, species='price')
+
+    if new_products_urls_list:
+        print(f'Появились  новые товары!')
+        value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
+        if value == '1':
+            result_data = get_products_data(products_urls_list=new_products_urls_list, headers=headers)
+            save_excel(data=result_data, species='products')
+            download_imgs(file_path="data/images_urls_list.txt")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
