@@ -1,3 +1,5 @@
+import time
+
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -23,7 +25,12 @@ def get_data(data_list):
     with requests.Session() as session:
         for id, title, url in data_list:
             try:
+                time.sleep(1)
                 response = session.get(url=url, headers=headers, timeout=60)
+
+                if response.status_code != 200:
+                    print(f'url: {url} status_code: {response.status_code}')
+                    continue
 
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception:
@@ -60,17 +67,19 @@ def save_excel(data):
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('data/data.xlsx', mode='w') as writer:
+    with ExcelWriter('data/result_data.xlsx', mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data')
 
-    print(f'Данные сохранены в файл "data.xlsx"')
+    print(f'Данные сохранены в файл "result_data.xlsx"')
 
 
 def main():
     try:
         with open('data/evroplast.csv', 'r', encoding='cp1251') as file:
             reader = csv.reader(file, delimiter=';')
+
             data_list = list(reader)
+
         print(f'Количество ссылок: {len(data_list)}')
         data = get_data(data_list=data_list)
         save_excel(data)
