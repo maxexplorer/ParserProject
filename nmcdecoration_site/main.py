@@ -4,7 +4,6 @@ import csv
 import os
 from datetime import datetime
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 
@@ -17,12 +16,15 @@ def get_data(data_list):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                       ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931'
     }
+    count_urls = len(data_list)
+
+    print(f'Количество ссылок: {count_urls}')
 
     count = 1
     result_list = []
 
     with requests.Session() as session:
-        for id, title, url in data_list:
+        for id, title, url in data_list[1:]:
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
 
@@ -51,7 +53,7 @@ def get_data(data_list):
                     price
                 )
             )
-            print(count)
+            print(f'Обработано: {count}/{count_urls}')
             count += 1
     return result_list
 
@@ -69,14 +71,13 @@ def save_excel(data):
 
 
 def main():
-    with open('data/nmcdecoration.csv', 'r', encoding='cp1251') as file:
+    with open('data/nmcdecoration.csv', 'r', encoding='utf-8') as file:
         reader = csv.reader(file, delimiter=';')
         data_list = list(reader)
-    print(f'Количество ссылок: {len(data_list)}')
     data = get_data(data_list=data_list)
     save_excel(data)
     if len(exceptions_list) > 0:
-        with open('data/exceptions_list.csv', 'w', encoding='cp1251', newline='') as file:
+        with open('data/exceptions_list.csv', 'w', encoding='utf-8', newline='') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerows(exceptions_list)
     execution_time = datetime.now() - start_time
