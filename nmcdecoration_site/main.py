@@ -26,10 +26,6 @@ def get_data(data_list):
             try:
                 response = session.get(url=url, headers=headers, timeout=60)
 
-                if response.status_code != 200:
-                    print(f'url: {url} status_code: {response.status_code}')
-                    continue
-
                 soup = BeautifulSoup(response.text, 'lxml')
             except Exception:
                 exceptions_list.append(
