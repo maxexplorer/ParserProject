@@ -31,10 +31,12 @@ def ozon_parser(workbook):
     try:
         for row in ws.iter_rows(min_row=4):
             for cell in row:
-                if cell.hyperlink is not None:
+                # Проверяем, что ячейка содержит строку
+                if isinstance(cell.value, str) and 'https://' in cell.value:
                     try:
-                        url = cell.hyperlink.target
+                        url = cell.value
                         driver.get(url=url)
+
                         time.sleep(randint(3, 5))
 
                         soup = BeautifulSoup(driver.page_source, 'lxml')
@@ -58,7 +60,7 @@ def ozon_parser(workbook):
                             row[cell.column - 4].value = ''
                             row[cell.column - 3].value = 'Такой страницы не существует'
                             row[cell.column - 2].value = ''
-                            print(f'{cell.hyperlink.target}: Такой страницы не существует')
+                            print(f'{url}: Такой страницы не существует')
                             continue
                     except Exception:
                         pass
@@ -126,7 +128,7 @@ def ozon_parser(workbook):
                         # print(f'button_del2: {ex}')
                         continue
 
-                    print(f'{cell.hyperlink.target}: price - {price}, quantity - {quantity}, storage - {storage}')
+                    print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
     except Exception as ex:
         print(ex)
@@ -158,8 +160,9 @@ def wildberries_parser(workbook):
 
     for row in ws.iter_rows(min_row=4):
         for cell in row:
-            if cell.hyperlink is not None:
-                url = cell.hyperlink.target
+            # Проверяем, что ячейка содержит строку
+            if isinstance(cell.value, str) and 'https://' in cell.value:
+                url = cell.value
                 prod_id = url.split('catalog')[-1].split('detail')[0].strip('/')
 
                 params = {
