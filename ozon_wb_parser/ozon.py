@@ -107,7 +107,7 @@ def get_urls_rating_feedbacks(file_path: str) -> list[dict]:
         driver.quit()
 
 # Функция получения данных с карточки продукта
-def get_data_products_ozone(product_data: list) -> list[dict]:
+def get_data_products_ozon(product_data: list) -> list[dict]:
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -156,14 +156,14 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
             except Exception:
                 sale_price = None
             try:
-                ozone_price = ''.join(filter(lambda x: x.isdigit(), item_price.find('span', string=re.compile(
+                ozon_price = ''.join(filter(lambda x: x.isdigit(), item_price.find('span', string=re.compile(
                     'c Ozon Картой')).find_parent().text))
             except Exception:
-                ozone_price = None
+                ozon_price = None
 
             result_list.append(
                 {
-                    'Ozone': 'Ozone',
+                    'Ozon': 'Ozon',
                     'Ссылка': item.get('url'),
                     'Бренд': item.get('brand'),
                     'Название': name,
@@ -172,7 +172,7 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
                     'РЦ+СПП': sale_price,
                     'Рейтинг': item.get('rating'),
                     'Кол-во отзывов': item.get('feedbacks_count'),
-                    'Цена с Ozone картой': ozone_price
+                    'Цена с ozon картой': ozon_price
                 }
             )
 
@@ -185,7 +185,7 @@ def get_data_products_ozone(product_data: list) -> list[dict]:
         driver.quit()
 
 # Функция для записи данных в формат xlsx
-def save_excel_ozone(data: list) -> None:
+def save_excel_ozon(data: list) -> None:
     if not os.path.exists('data/result_list.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
         with ExcelWriter('data/result_list.xlsx', mode='w') as writer:
@@ -194,7 +194,7 @@ def save_excel_ozone(data: list) -> None:
     dataframe = DataFrame(data)
 
     with ExcelWriter('data/result_list.xlsx', if_sheet_exists='replace', mode='a') as writer:
-        dataframe.to_excel(writer, sheet_name='Ozone', index=False)
+        dataframe.to_excel(writer, sheet_name='ozon', index=False)
 
     print(f'Данные сохранены в файл "result_data.xlsx"')
 

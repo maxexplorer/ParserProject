@@ -20,7 +20,7 @@ start_time = datetime.now()
 workbook = openpyxl.load_workbook("data/data.xlsx")
 
 
-def ozone_parser(workbook):
+def ozon_parser(workbook):
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ОЗОН']
 
@@ -44,7 +44,7 @@ def ozone_parser(workbook):
                     try:
                         out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
                         if out_of_stock:
-                            print(f'{url}: Этот товар закончился')
+                            # print(f'{url}: Этот товар закончился')
                             row[cell.column - 4].value = ''
                             row[cell.column - 3].value = 0
                             row[cell.column - 2].value = ''
@@ -108,8 +108,7 @@ def ozone_parser(workbook):
                     row[cell.column - 3].value = quantity
 
                     try:
-                        button_del1 = driver.find_element(By.XPATH,
-                                                          '//*[@id="layoutPage"]/div[1]/div/div/div[2]/div[4]/div[1]/div/div/div[1]/div[1]/button')
+                        button_del1 = driver.find_element(By.XPATH, '//div[contains(text(), "Удалить выбранные")]')
                         button_del1.click()
                     except Exception as ex:
                         # print(f'button_del1: {ex}')
@@ -118,7 +117,7 @@ def ozone_parser(workbook):
                     try:
                         button_del2 = WebDriverWait(driver, 15).until(
                             EC.element_to_be_clickable(
-                                (By.XPATH, '/html/body/div[3]/div/div[2]/div/div/section/div[3]/button'))
+                                (By.XPATH, '/html/body/div[4]/div/div[2]/div/div/section/div[3]/button'))
                         )
                         button_del2.click()
 
@@ -211,20 +210,20 @@ def wildberries_parser(workbook):
 
 
 def main():
-    value = input('Введите значение:\n1 - Ozone\n2 - Wildberries\n3 - Оба сайта\n')
+    value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
 
     if value == '1':
-        print('Сбор данных Ozone')
-        ozone_parser(workbook=workbook)
-        print('Сбор данных Ozone завершен')
+        print('Сбор данных Ozon')
+        ozon_parser(workbook=workbook)
+        print('Сбор данных Ozon завершен')
     elif value == '2':
         print('Сбор данных Wildberries')
         wildberries_parser(workbook=workbook)
         print('Сбор данных Wildberries завершен')
     elif value == '3':
-        print('Сбор данных Ozone')
-        ozone_parser(workbook=workbook)
-        print('Сбор данных Ozone завершен')
+        print('Сбор данных Ozon')
+        ozon_parser(workbook=workbook)
+        print('Сбор данных Ozon завершен')
 
         print('Сбор данных Wildberries')
         wildberries_parser(workbook=workbook)

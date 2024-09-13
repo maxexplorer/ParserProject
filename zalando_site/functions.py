@@ -2,7 +2,7 @@ import requests
 
 from googletrans import Translator
 
-# Функция для перевода формата цветов H&M в Ozone
+# Функция для перевода формата цветов H&M в ozon
 def colors_format(value: str) -> str:
     if value == 'Schwarz':
         color = 'черный'
