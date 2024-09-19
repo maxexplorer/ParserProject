@@ -761,7 +761,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 def main():
     brand = 'Zara'
 
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n')
     if value == '1':
         region = 'Германия'
         base_currency = 'EUR'
@@ -774,6 +774,12 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс KZT/RUB: {currency}')
+    elif value == '3':
+        region = 'Турция'
+        base_currency = 'TRY'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс TRY/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
 
