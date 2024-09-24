@@ -12,7 +12,7 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_data_list
+from data.data import category_data_list_tr
 from data.data import colors_dict
 from data.data import sizes_dict
 
@@ -21,16 +21,8 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-rub = get_exchange_rate()
 
-print(f'Курс EUR/RUB: {rub}')
-
-url = "https://www2.hm.com/de_de/index.html"
-
-headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/125.0.0.0 Safari/537.36'
-}
+url = "https://www2.hm.com/tr_tr/index.html"
 
 processed_urls = set()
 
@@ -39,7 +31,7 @@ processed_urls = set()
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
     options = Options()
     options.add_argument(
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
     options.add_argument("--disable-blink-features=AutomationControlled")
     if headless_mode:
         options.add_argument("--headless=new")
@@ -52,7 +44,11 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 
 
 # Функция получения количества страниц
-def get_category_urls(url: str, driver: Chrome) -> None:
+def get_category_urls(driver: Chrome, url: str, region: str) -> None:
+    # Путь к файлу для сохранения URL продуктов
+    directory = 'data'
+    file_path = f'{directory}/category_data_list_{region}.txt'
+
     category_data_list = []
 
     driver.get(url=url)
@@ -74,10 +70,10 @@ def get_category_urls(url: str, driver: Chrome) -> None:
     except Exception as ex:
         print(ex)
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-    with open(f'data/category_data_list.txt', 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         print(*category_data_list, file=file, sep='\n')
 
 
@@ -95,10 +91,11 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str) -> None:
+def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str,
+                      region: str, currency: int) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}.txt'
+    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
     for category_dict in category_data_list:
         for category_name, category_list in category_dict.items():
@@ -161,11 +158,12 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                 )
 
                 get_products_data(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
-                                  brand=brand)
+                                  brand=brand, currency=currency)
 
 
 # Функция получения данных товаров
-def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str) -> None:
+def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
+                      currency: int) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -220,7 +218,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 price = int(''.join(
                     i for i in data.find('span', class_='edbe20 ac3d9e d9ca8b e29fbf').text.split()[0] if
                     i.isdigit())) / 100
-                price = round(price * rub)
+                price = round(price * currency)
             except Exception:
                 price = None
 
@@ -231,7 +229,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                     old_price = int(''.join(
                         i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
                         i.isdigit())) / 100
-                    old_price = round(old_price * rub)
+                    old_price = round(old_price * currency)
                 except Exception:
                     old_price = None
 
@@ -239,7 +237,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                     price = int(''.join(
                         i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
                         i.isdigit())) / 100
-                    price = round(price * rub)
+                    price = round(price * currency)
                 except Exception:
                     price = None
 
@@ -479,8 +477,25 @@ def save_excel(data: list, species: str, brand: str) -> None:
 def main():
     brand = 'H&M'
 
+    value = input('Введите значение:\n1 - Германия\n2 - Турция\n')
+
+    if value == '1':
+        region = 'Германия'
+        base_currency = 'EUR'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс EUR/RUB: {currency}')
+    elif value == '2':
+        region = 'Турция'
+        base_currency = 'TRY'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс TRY/RUB: {currency}')
+    else:
+        raise ValueError('Введено неправильное значение')
+
     driver = init_chromedriver(headless_mode=True)
-    # get_category_urls(url=url, driver=driver)
+    get_category_urls(url=url, driver=driver, region=region)
 
     # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
     # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
@@ -491,8 +506,8 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_products_urls(driver=driver, category_data_list=category_data_list, processed_urls=processed_urls,
-                          brand=brand)
+        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+                          brand=brand, region=region, currency=currency)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
