@@ -15,17 +15,15 @@ from pandas import read_excel
 from data.data import category_data_list_tr
 from data.data import colors_dict
 from data.data import sizes_dict
+from data.data import id_region_dict
+
 
 from functions import translator
 from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-
-url = "https://www2.hm.com/tr_tr/index.html"
-
 processed_urls = set()
-
 
 # Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -44,12 +42,14 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 
 
 # Функция получения количества страниц
-def get_category_urls(driver: Chrome, url: str, region: str) -> None:
+def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/category_data_list_{region}.txt'
 
     category_data_list = []
+
+    url = f"https://www2.hm.com/{id_region}/index.html"
 
     driver.get(url=url)
     html = driver.page_source
@@ -61,14 +61,18 @@ def get_category_urls(driver: Chrome, url: str, region: str) -> None:
 
         for item in data:
             category_name = item.text
-            category_url = f"https://www2.hm.com{item.find('a').get('href')}"
+            try:
+                category_url = f"https://www2.hm.com{item.find('a').get('href')}"
+            except Exception as ex:
+                print(f' category_url: {ex}')
+                continue
 
             category_data_list.append(
-                (category_name, category_url)
+                (translator(category_name), category_url)
             )
 
     except Exception as ex:
-        print(ex)
+        print(f':get_category_urls: {ex}')
 
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -494,8 +498,9 @@ def main():
     else:
         raise ValueError('Введено неправильное значение')
 
-    driver = init_chromedriver(headless_mode=True)
-    get_category_urls(url=url, driver=driver, region=region)
+    driver = init_chromedriver(headless_mode=False)
+
+    id_region = id_region_dict.get(region)
 
     # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
     # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
@@ -506,8 +511,9 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
-                          brand=brand, region=region, currency=currency)
+        get_category_urls(driver=driver, region=region, id_region=id_region)
+    #     get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+    #                       brand=brand, region=region, currency=currency)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
