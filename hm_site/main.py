@@ -158,12 +158,12 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                 )
 
                 get_products_data(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
-                                  brand=brand, currency=currency)
+                                  brand=brand, region=region, currency=currency)
 
 
 # Функция получения данных товаров
 def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                      currency: int) -> None:
+                      region: str, currency: int) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -438,11 +438,11 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
 
             print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=brand)
+        save_excel(data=result_data, species='products', brand=brand, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, species: str, brand: str) -> None:
+def save_excel(data: list, species: str, brand: str, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -450,7 +450,7 @@ def save_excel(data: list, species: str, brand: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
