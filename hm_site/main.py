@@ -498,7 +498,7 @@ def main():
     else:
         raise ValueError('Введено неправильное значение')
 
-    driver = init_chromedriver(headless_mode=False)
+    driver = init_chromedriver(headless_mode=True)
 
     id_region = id_region_dict.get(region)
 
