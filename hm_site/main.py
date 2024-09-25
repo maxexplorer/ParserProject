@@ -82,13 +82,23 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
 
 
 # Получаем количество страниц
-def get_pages(html: str) -> int:
+def get_pages_de(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
         pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
-    except Exception as ex:
-        print(ex)
+    except Exception:
+        pages = 1
+
+    return pages
+
+# Получаем количество страниц
+def get_pages_tr(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Sayfalandırma'}).find_all('li')[-2].text.strip())
+    except Exception:
         pages = 1
 
     return pages
@@ -116,7 +126,11 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     print(f"{category_url} - {ex}")
                     continue
 
-                pages = get_pages(html=html)
+                if region == 'Турция':
+                    pages = get_pages_tr(html=html)
+                else:
+                    pages = get_pages_de(html=html)
+
                 print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                 for page in range(1, pages + 1):
@@ -161,12 +175,12 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     }
                 )
 
-                if region == 'Германия':
+                if region == 'Турция':
+                    get_products_data_tr(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
+                                      brand=brand, region=region)
+                else:
                     get_products_data_de(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
                                       brand=brand, region=region)
-                elif region == 'Турция':
-                    get_products_data_tr()
-
 
 
 # Функция получения данных товаров
@@ -488,7 +502,7 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
                 id_product = None
 
             try:
-                data = soup.find('div', class_='rOGz')
+                data = soup.find('div', class_='product parbase')
             except Exception as ex:
                 print(f'data: {product_url} - {ex}')
                 continue
@@ -524,23 +538,15 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
                     price = None
 
             try:
-                color_original = None
-                color_items = data.find('div', {'data-testid': 'grid', 'aria-live': 'polite'}).find_all('a')
-                for color_item in color_items:
-                    if color_item.get('aria-checked') == 'true':
-                        color_original = color_item.get('title').lower()
-                color_ru = colors_dict.get(color_original, color_original).lower()
+                color_original = data.find('h3', class_='product-input-label').text.strip().lower()
             except Exception:
-                print('not color')
                 color_original = None
-                color_ru = None
 
             try:
                 images_urls_list = []
-                images_items = data.find('ul', {'data-testid': 'grid-gallery'}).find_all('li')
+                images_items = data.find('div', class_='sticky-candidate').find_all('figure')
                 for item in images_items:
                     image_url = item.find('img').get('src')
-                    image_url = image_url.split('?')[0]
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
@@ -575,7 +581,7 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
 
             try:
                 model_size_description = section_description.find('dl').find(
-                    string=re.compile('Größe des Models')).find_next().text.split('cm')
+                    string=re.compile('Model bedeni')).find_next().text.split('cm')
             except Exception:
                 model_size_description = None
 
@@ -616,19 +622,19 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
                 care = None
 
             try:
-                sizes_items = data.find('div', {'data-testid': 'size-selector'}).find_all('li')
+                sizes_items = data.find('hm-size-selector', class_='size-selector').find_all('li')
 
                 for size_item in sizes_items:
                     size_eur = size_item.find('input').get('id')
                     try:
-                        size_availability = size_item.find('label').find('span').text.strip()
+                        size_availability = size_item.find('input', {'type': 'radio'}).has_attr('disabled')
                     except Exception:
                         size_availability = None
 
                     if not size_availability:
                         status_size = 'в наличии'
                     else:
-                        status_size = translator(size_availability).lower()
+                        status_size = 'нет в наличии'
 
                     try:
                         size_rus = sizes_dict[category_name][size_eur]
@@ -658,7 +664,7 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
                             'Артикул фото': None,
                             'Бренд в одежде и обуви*': brand,
                             'Объединить на одной карточке*': id_product,
-                            'Цвет товара*': color_ru,
+                            'Цвет товара*': color_original,
                             'Российский размер*': size_rus,
                             'Размер производителя': size_eur,
                             'Статус наличия': status_size,
@@ -790,9 +796,9 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        get_category_urls(driver=driver, region=region, id_region=id_region)
-    #     get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
-    #                       brand=brand, region=region, currency=currency)
+        # get_category_urls(driver=driver, region=region, id_region=id_region)
+        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+                          brand=brand, region=region)
     except Exception as ex:
         print(f'main: {ex}')
     finally:
