@@ -18,13 +18,13 @@ from data.data import colors_dict
 from data.data import sizes_dict
 from data.data import id_region_dict
 
-
 from functions import translator
 from functions import get_exchange_rate
 
 start_time = datetime.now()
 
 processed_urls = set()
+
 
 # Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -93,6 +93,7 @@ def get_pages_de(html: str) -> int:
 
     return pages
 
+
 # Получаем количество страниц
 def get_pages_tr(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
@@ -127,7 +128,9 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     print(f"{category_url} - {ex}")
                     continue
 
-                if region == 'Турция':
+                if region == 'Германия':
+                    pages = get_pages_de(html=html)
+                elif region == 'Турция':
                     pages = get_pages_tr(html=html)
                 else:
                     pages = get_pages_de(html=html)
@@ -176,17 +179,23 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     }
                 )
 
-                if region == 'Турция':
-                    get_products_data_tr(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
-                                      brand=brand, region=region)
+                if region == 'Германия':
+                    get_products_data_de(driver=driver, products_data_list=products_data_list,
+                                         processed_urls=processed_urls,
+                                         brand=brand, region=region)
+                elif region == 'Турция':
+                    get_products_data_tr(driver=driver, products_data_list=products_data_list,
+                                         processed_urls=processed_urls,
+                                         brand=brand, region=region)
                 else:
-                    get_products_data_de(driver=driver, products_data_list=products_data_list, processed_urls=processed_urls,
-                                      brand=brand, region=region)
+                    get_products_data_de(driver=driver, products_data_list=products_data_list,
+                                         processed_urls=processed_urls,
+                                         brand=brand, region=region)
 
 
 # Функция получения данных товаров
 def get_products_data_de(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                      region: str) -> None:
+                         region: str) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -463,7 +472,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
 
 # Функция получения данных товаров
 def get_products_data_tr(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                      region: str) -> None:
+                         region: str) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -485,8 +494,8 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
                 driver.get(url=product_url)
                 driver.execute_script("window.scrollTo(0, 2000);")
                 time.sleep(1)
-                driver.execute_script("window.scrollTo(0, 4000);")
-                time.sleep(1)
+                # driver.execute_script("window.scrollTo(0, 4000);")
+                # time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
@@ -730,7 +739,6 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
         save_excel(data=result_data, species='products', brand=brand, region=region)
 
 
-
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str, region: str) -> None:
     directory = 'results'
@@ -773,31 +781,29 @@ def main():
     brand = 'H&M'
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n')
+    try:
+        if value == '1':
+            region = 'Германия'
+            base_currency = 'EUR'
+            target_currency = 'RUB'
+            currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+            print(f'Курс EUR/RUB: {currency}')
 
-    if value == '1':
-        region = 'Германия'
-        base_currency = 'EUR'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс EUR/RUB: {currency}')
+            get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
+                              brand=brand, region=region)
 
-        get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
-                          brand=brand, region=region)
+        elif value == '2':
+            region = 'Турция'
+            base_currency = 'TRY'
+            target_currency = 'RUB'
+            currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+            print(f'Курс TRY/RUB: {currency}')
 
-    elif value == '2':
-        region = 'Турция'
-        base_currency = 'TRY'
-        target_currency = 'RUB'
-        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс TRY/RUB: {currency}')
+            get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+                              brand=brand, region=region)
 
-        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
-                          brand=brand, region=region)
-
-    else:
-        raise ValueError('Введено неправильное значение')
-
-
+        else:
+            raise ValueError('Введено неправильное значение')
 
     # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
     # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
@@ -806,8 +812,6 @@ def main():
     # # Сохраняем уникальные URL-адреса обратно в файл
     # with open(f'data/url_products_list_{brand}.txt', 'w', encoding='utf-8') as file:
     #     print(*unique_urls, file=file, sep='\n')
-
-    try:
 
 
     except Exception as ex:
