@@ -12,6 +12,7 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
+from data.data import category_data_list_de
 from data.data import category_data_list_tr
 from data.data import colors_dict
 from data.data import sizes_dict
@@ -764,6 +765,11 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 
 
 def main():
+    driver = init_chromedriver(headless_mode=True)
+
+    # id_region = id_region_dict.get(region)
+    # get_category_urls(driver=driver, region=region, id_region=id_region)
+
     brand = 'H&M'
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n')
@@ -774,18 +780,24 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс EUR/RUB: {currency}')
+
+        get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
+                          brand=brand, region=region)
+
     elif value == '2':
         region = 'Турция'
         base_currency = 'TRY'
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс TRY/RUB: {currency}')
+
+        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+                          brand=brand, region=region)
+
     else:
         raise ValueError('Введено неправильное значение')
 
-    driver = init_chromedriver(headless_mode=True)
 
-    id_region = id_region_dict.get(region)
 
     # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
     # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
@@ -796,9 +808,8 @@ def main():
     #     print(*unique_urls, file=file, sep='\n')
 
     try:
-        # get_category_urls(driver=driver, region=region, id_region=id_region)
-        get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
-                          brand=brand, region=region)
+
+
     except Exception as ex:
         print(f'main: {ex}')
     finally:
