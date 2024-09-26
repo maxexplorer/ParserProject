@@ -178,7 +178,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    if region == 'Германия':
+                    if region == 'Германия' or region == 'Турция':
                         get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
                                              subcategory_name=subcategory_name)
                     elif region == 'Казахстан':
