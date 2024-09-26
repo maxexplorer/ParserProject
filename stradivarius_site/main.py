@@ -129,8 +129,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
 
 ## Функция получения json данных товаров
-def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, region: str, id_region: str,
-                       currency: int) -> None:
+def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, region: str, id_region: str) -> None:
     processed_ids = []
 
     with Session() as session:
@@ -148,7 +147,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
             print(f'Сбор данных категории: {subcategory_name}')
 
-            if region == 'Германия':
+            if region == 'Германия' or region == 'Турция':
                 id_language = '-1'
             elif region == 'Казахстан':
                 id_language = '-20'
@@ -179,12 +178,12 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    if region == 'Германия':
+                    if region == 'Германия' or region == 'Турция':
                         get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
                     elif region == 'Казахстан':
                         get_products_data_ru(products_data=json_data, species=species, brand=brand, region=region,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
                     else:
                         raise 'Регион не найден!'
 
@@ -198,8 +197,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_en(products_data: dict, species: str, brand: str, region: str, subcategory_name: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -224,13 +222,11 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
         try:
             old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -435,8 +431,7 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, species: str, brand: str, region: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_ru(products_data: dict, species: str, brand: str, region: str, subcategory_name: str) -> None:
     result_data = []
 
     for item in products_data['products']:
@@ -461,13 +456,11 @@ def get_products_data_ru(products_data: dict, species: str, brand: str, region: 
 
         try:
             old_price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['bundleProductSummaries'][0]['detail']['colors'][0]['sizes'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -709,7 +702,7 @@ def main():
     # id_region = id_region_dict.get(region)
     # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
 
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n')
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n')
     if value == '1':
         region = 'Германия'
         base_currency = 'EUR'
@@ -722,6 +715,12 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс KZT/RUB: {currency}')
+    elif value == '3':
+        region = 'Турция'
+        base_currency = 'TRY'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс TRY/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
 
@@ -730,7 +729,7 @@ def main():
     products_data_list = get_id_products(id_categories_list=id_category_list, headers=headers, params=params,
                                          brand=brand, region=region, id_region=id_region)
     get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
-                       region=region, id_region=id_region, currency=currency)
+                       region=region, id_region=id_region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
