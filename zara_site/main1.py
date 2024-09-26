@@ -130,7 +130,7 @@ def get_id_products(id_categories_list: list, headers: dict, params: dict, brand
 
 # Функция получения json данных товаров
 def get_products_array(products_data_list: list, headers: dict, species: str, brand: str, region: str,
-                       id_region: str, currency: int, result_data: list) -> None:
+                       id_region: str, result_data: list) -> None:
     processed_ids = []
 
     with Session() as session:
@@ -169,16 +169,16 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     if species == 'size':
                         print(f'Сбор данных о наличии размеров категории: {category_name}/{subcategory_name}')
-                        get_size_data(products_data=json_data, id_region=id_region, currency=currency)
+                        get_size_data(products_data=json_data, id_region=id_region)
 
-                    elif species == 'products' and id_region == 'de/en':
+                    elif species == 'products' and (id_region == 'de/en' or id_region == 'tr/en'):
                         print(f'Сбор данных категории: {category_name}/{subcategory_name}')
                         get_products_data_en(products_data=json_data, brand=brand, category_name=category_name,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
                     elif species == 'products' and id_region == 'kz/ru':
                         print(f'Сбор данных категории: {category_name}/{subcategory_name}')
                         get_products_data_ru(products_data=json_data, brand=brand, category_name=category_name,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
 
                     count += len(chunk_ids)
 
@@ -194,8 +194,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, brand: str, category_name: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_en(products_data: dict, brand: str, category_name: str, subcategory_name: str) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -218,13 +217,11 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -434,8 +431,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -458,13 +454,11 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -669,7 +663,7 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
 
 # Функция получения данных о размерах товаров
-def get_size_data(products_data: dict, id_region: str, currency: int) -> None:
+def get_size_data(products_data: dict, id_region: str) -> None:
     for item in products_data:
         try:
             reference = item['detail']['reference'].split('-')[0]
@@ -690,13 +684,11 @@ def get_size_data(products_data: dict, id_region: str, currency: int) -> None:
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -789,14 +781,14 @@ def main():
                                                                  id_region=id_region)
     print('Сбор данных о наличии размеров!')
     get_products_array(products_data_list=products_data_list, headers=headers, species='size', brand=brand,
-                       region=region, id_region=id_region, currency=currency, result_data=result_data)
+                       region=region, id_region=id_region, result_data=result_data)
 
     if products_new_data_list:
         print(f'Появились  новые товары!')
         value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
         if value == '1':
             get_products_array(products_data_list=products_new_data_list, headers=headers, species='products', brand=brand,
-                               region=region, id_region=id_region, currency=currency, result_data=result_data)
+                               region=region, id_region=id_region, result_data=result_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
