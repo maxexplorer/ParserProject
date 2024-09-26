@@ -114,7 +114,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
             subcategory_name = key[0]
             id_category = key[1]
 
-            if region == 'Германия':
+            if region == 'Германия' or region == 'Турция':
                 id_language = '-1'
             elif region == 'Казахстан':
                 id_language = '-20'
