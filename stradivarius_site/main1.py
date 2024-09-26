@@ -20,17 +20,6 @@ from functions import get_exchange_rate
 from functions import chunks
 
 start_time = datetime.now()
-cur_time = start_time.strftime('%d.%m.%Y %H:%M')
-print(f'Дата и время сбора данных: {cur_time}')
-
-# base_currency = 'EUR'
-base_currency = 'KZT'
-target_currency = 'RUB'
-rub = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-# print(f'Курс EUR/RUB: {rub}')
-print(f'Курс KZT/RUB: {rub}')
-
-result_data = []
 
 
 # Функция получения id товаров
