@@ -805,13 +805,17 @@ def main():
         else:
             raise ValueError('Введено неправильное значение')
 
-    # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    # with open(f'data/url_products_list_{brand}.txt', 'r', encoding='utf-8') as file:
-    #     unique_urls = set(line.strip() for line in file)
-    #
-    # # Сохраняем уникальные URL-адреса обратно в файл
-    # with open(f'data/url_products_list_{brand}.txt', 'w', encoding='utf-8') as file:
-    #     print(*unique_urls, file=file, sep='\n')
+        # # Путь к файлу для сохранения URL продуктов
+        # directory = 'data'
+        # file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+        #
+        # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+        # with open(file_path, 'r', encoding='utf-8') as file:
+        #     unique_urls = set(line.strip() for line in file)
+        #
+        # # Сохраняем уникальные URL-адреса обратно в файл
+        # with open(file_path, 'w', encoding='utf-8') as file:
+        #     print(*unique_urls, file=file, sep='\n')
 
 
     except Exception as ex:
