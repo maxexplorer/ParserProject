@@ -211,12 +211,12 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    if id_region == 'de/en':
+                    if id_region == 'de/en' or id_region == 'tr/en':
                         get_products_data_en(products_data=json_data, brand=brand, category_name=category_name,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
                     elif id_region == 'kz/ru':
                         get_products_data_ru(products_data=json_data, brand=brand, category_name=category_name,
-                                             subcategory_name=subcategory_name, currency=currency)
+                                             subcategory_name=subcategory_name)
                     else:
                         raise 'Регион не найден!'
 
@@ -234,8 +234,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
 
 # Функция получения данных товаров
-def get_products_data_en(products_data: dict, brand: str, category_name: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_en(products_data: dict, brand: str, category_name: str, subcategory_name: str) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -258,13 +257,11 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
@@ -474,8 +471,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
 
 # Функция получения данных товаров
-def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str,
-                         currency: int) -> None:
+def get_products_data_ru(products_data: dict, brand: str, category_name: str, subcategory_name: str) -> None:
     for item in products_data:
         try:
             id_product = item['detail']['colors'][0]['productId']
@@ -498,13 +494,11 @@ def get_products_data_ru(products_data: dict, brand: str, category_name: str, su
 
         try:
             old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-            old_price = round(old_price * currency)
         except Exception:
             old_price = None
 
         try:
             price = int(item['detail']['colors'][0]['price']) / 100
-            price = round(price * currency)
         except Exception:
             price = None
 
