@@ -774,7 +774,7 @@ def main():
         print(f'Появились  новые товары!')
         value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
         if value == '1':
-            get_products_array(products_data_list=products_data_list, headers=headers, species='products', brand=brand,
+            get_products_array(products_data_list=products_new_data_list, headers=headers, species='products', brand=brand,
                                region=region, id_region=id_region)
 
     execution_time = datetime.now() - start_time
