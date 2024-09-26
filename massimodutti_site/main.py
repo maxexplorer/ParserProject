@@ -57,7 +57,7 @@ def get_id_categories(headers: dict, params: dict, region: str, id_region: str) 
                     id_category = collection_subcategory_item.get('viewCategoryId')
                     if not id_category:
                         id_category = collection_subcategory_item.get('id')
-                    name_subcategory = collection_subcategory_item.get('name')
+                    name_subcategory = collection_subcategory_item.get('nameEn')
                     id_categories_list.append((name_subcategory.capitalize(), id_category))
 
     if not os.path.exists('data'):
@@ -702,7 +702,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 def main():
     brand = 'Massimo Dutti'
 
-    # region = 'Казахстан'
+    # region = 'Турция'
     # id_region = id_region_dict.get(region)
     # id_categories_list = get_id_categories(headers=headers, params=params, region=region, id_region=id_region)
 
