@@ -14,7 +14,8 @@ from pandas import read_excel
 
 from data.data import category_data_list_de
 from data.data import category_data_list_tr
-from data.data import colors_dict
+from data.data import category_data_list_pl
+from data.data import colors_dict_de
 from data.data import sizes_dict
 from data.data import id_region_dict
 
@@ -276,7 +277,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
                 for color_item in color_items:
                     if color_item.get('aria-checked') == 'true':
                         color_original = color_item.get('title').lower()
-                color_ru = colors_dict.get(color_original, color_original).lower()
+                color_ru = colors_dict_de.get(color_original, color_original).lower()
             except Exception:
                 print('not color')
                 color_original = None
@@ -775,12 +776,9 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 def main():
     driver = init_chromedriver(headless_mode=True)
 
-    # id_region = id_region_dict.get(region)
-    # get_category_urls(driver=driver, region=region, id_region=id_region)
-
     brand = 'H&M'
 
-    value = input('Введите значение:\n1 - Германия\n2 - Турция\n')
+    value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
     try:
         if value == '1':
             region = 'Германия'
@@ -801,6 +799,20 @@ def main():
 
             get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
                               brand=brand, region=region)
+
+        elif value == '3':
+            region = 'Польша'
+            base_currency = 'PLN'
+            target_currency = 'RUB'
+            currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+            print(f'Курс PLN/RUB: {currency}')
+
+
+            get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+                              brand=brand, region=region)
+
+        # id_region = id_region_dict.get(region)
+        # get_category_urls(driver=driver, region=region, id_region=id_region)
 
         else:
             raise ValueError('Введено неправильное значение')
