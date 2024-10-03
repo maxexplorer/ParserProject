@@ -816,12 +816,12 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
-            #
-            # get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
-            #                   brand=brand, region=region)
 
-            id_region = id_region_dict.get(region)
-            get_category_urls(driver=driver, region=region, id_region=id_region)
+            get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+                              brand=brand, region=region)
+
+            # id_region = id_region_dict.get(region)
+            # get_category_urls(driver=driver, region=region, id_region=id_region)
 
         else:
             raise ValueError('Введено неправильное значение')
