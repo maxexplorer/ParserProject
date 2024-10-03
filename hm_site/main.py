@@ -96,6 +96,18 @@ def get_pages_de(html: str) -> int:
 
 
 # Получаем количество страниц
+def get_pages_pl(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Paginacja'}).find_all('li')[-2].text.strip())
+    except Exception:
+        pages = 1
+
+    return pages
+
+
+# Получаем количество страниц
 def get_pages_tr(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
@@ -133,6 +145,8 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     pages = get_pages_de(html=html)
                 elif region == 'Турция':
                     pages = get_pages_tr(html=html)
+                elif region == 'Польша':
+                    pages = get_pages_pl(html=html)
                 else:
                     pages = get_pages_de(html=html)
 
@@ -185,9 +199,13 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                                          processed_urls=processed_urls,
                                          brand=brand, region=region)
                 elif region == 'Турция':
-                    get_products_data_tr(driver=driver, products_data_list=products_data_list,
+                    get_products_data(driver=driver, products_data_list=products_data_list,
                                          processed_urls=processed_urls,
-                                         brand=brand, region=region)
+                                         brand=brand, region=region, size_model_title='Model bedeni')
+                elif region == 'Польша':
+                    get_products_data(driver=driver, products_data_list=products_data_list,
+                                         processed_urls=processed_urls,
+                                         brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
                 else:
                     get_products_data_de(driver=driver, products_data_list=products_data_list,
                                          processed_urls=processed_urls,
@@ -472,8 +490,8 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
 
 
 # Функция получения данных товаров
-def get_products_data_tr(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                         region: str) -> None:
+def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
+                         region: str, size_model_title: str) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -592,7 +610,7 @@ def get_products_data_tr(driver: Chrome, products_data_list: list[dict], process
 
             try:
                 model_size_description = section_description.find('dl').find(
-                    string=re.compile('Model bedeni')).find_next().text.split('cm')
+                    string=re.compile(size_model_title)).find_next().text.split('cm')
             except Exception:
                 model_size_description = None
 
