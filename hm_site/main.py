@@ -549,22 +549,13 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
             except Exception:
                 price = None
 
-            old_price = None
 
-            if not price:
-                try:
-                    old_price = int(''.join(
-                        i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
-                        i.isdigit())) / 100
-                except Exception:
-                    old_price = None
-
-                try:
-                    price = int(''.join(
-                        i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
-                        i.isdigit())) / 100
-                except Exception:
-                    price = None
+            try:
+                old_price = int(''.join(
+                    i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
+                    i.isdigit())) / 100
+            except Exception:
+                old_price = None
 
             try:
                 color_original = data.find('h3', class_='product-input-label').text.strip().lower()
@@ -825,12 +816,12 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
+            #
+            # get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+            #                   brand=brand, region=region)
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
-                              brand=brand, region=region)
-
-        # id_region = id_region_dict.get(region)
-        # get_category_urls(driver=driver, region=region, id_region=id_region)
+            id_region = id_region_dict.get(region)
+            get_category_urls(driver=driver, region=region, id_region=id_region)
 
         else:
             raise ValueError('Введено неправильное значение')
