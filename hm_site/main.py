@@ -575,7 +575,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 images_urls_list = []
                 images_items = data.find('div', class_='sticky-candidate').find_all('figure')
                 for item in images_items:
-                    image_url = item.find('img').get('src')
+                    image_url = f"https:{item.find('img').get('src')}"
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
