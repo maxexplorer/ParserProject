@@ -793,14 +793,15 @@ def main():
         print(f'Курс TRY/RUB: {currency}')
     elif value == '4':
         region = 'Польша'
-        base_currency = 'TRY'
+        base_currency = 'PLN'
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
-        print(f'Курс TRY/RUB: {currency}')
+        print(f'Курс PLN/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
 
     id_region = id_region_dict.get(region)
+
     products_data_list, products_new_data_list = get_id_products(id_categories_list=id_category_list, headers=headers,
                                                                  params=params, brand=brand, region=region,
                                                                  id_region=id_region)

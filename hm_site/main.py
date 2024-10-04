@@ -807,7 +807,6 @@ def main():
 
             get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
                               brand=brand, region=region)
-
         elif value == '2':
             region = 'Турция'
             base_currency = 'TRY'
@@ -817,14 +816,12 @@ def main():
 
             get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
                               brand=brand, region=region)
-
         elif value == '3':
             region = 'Польша'
             base_currency = 'PLN'
             target_currency = 'RUB'
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
-
 
             get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
                               brand=brand, region=region)

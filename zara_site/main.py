@@ -211,7 +211,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    if id_region == 'de/en' or id_region == 'tr/en':
+                    if id_region == 'de/en' or id_region == 'tr/en' or id_region == 'pl/en':
                         get_products_data_en(products_data=json_data, brand=brand, category_name=category_name,
                                              subcategory_name=subcategory_name)
                     elif id_region == 'kz/ru':
@@ -738,7 +738,7 @@ def main():
     brand = 'Zara'
     # get_id_categories(headers=headers, params=params)
 
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n')
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n4 - Польша\n')
     if value == '1':
         region = 'Германия'
         base_currency = 'EUR'
@@ -757,6 +757,12 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс TRY/RUB: {currency}')
+    elif value == '4':
+        region = 'Польша'
+        base_currency = 'PLN'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс PLN/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
 
