@@ -739,7 +739,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 
 
 def main():
-    brand = 'Massimo Dutti'
+    brand = 'MassimoDutti'
 
     value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n4 - Польша\n')
     if value == '1':

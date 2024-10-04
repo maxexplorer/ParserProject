@@ -700,7 +700,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 
 
 def main():
-    brand = 'Massimo Dutti'
+    brand = 'MassimoDutti'
 
     # region = 'Турция'
     # id_region = id_region_dict.get(region)
