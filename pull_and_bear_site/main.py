@@ -146,7 +146,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
             subcategory_name = key[0]
             id_category = key[1]
 
-            if region == 'Германия' or region == 'Турция':
+            if region == 'Германия' or region == 'Турция' or region == 'Польша':
                 id_language = '-1'
             elif region == 'Казахстан':
                 id_language = '-20'
@@ -178,7 +178,7 @@ def get_products_array(products_data_list: list, headers: dict, species: str, br
 
                     json_data = response.json()
 
-                    if region == 'Германия' or region == 'Турция':
+                    if region == 'Германия' or region == 'Турция' or region == 'Польша':
                         get_products_data_en(products_data=json_data, species=species, brand=brand, region=region,
                                              subcategory_name=subcategory_name)
                     elif region == 'Казахстан':
@@ -726,7 +726,7 @@ def main():
     # id_region = id_region_dict.get(region)
     # id_categories_list = get_id_categories(headers=headers, params=params, id_region=id_region)
 
-    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n')
+    value = input('Введите значение:\n1 - Германия\n2 - Казахстан\n3 - Турция\n4 - Польша\n')
     if value == '1':
         region = 'Германия'
         base_currency = 'EUR'
@@ -741,6 +741,12 @@ def main():
         print(f'Курс KZT/RUB: {currency}')
     elif value == '3':
         region = 'Турция'
+        base_currency = 'TRY'
+        target_currency = 'RUB'
+        currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+        print(f'Курс TRY/RUB: {currency}')
+    elif value == '4':
+        region = 'Польша'
         base_currency = 'TRY'
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
