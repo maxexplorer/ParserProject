@@ -152,6 +152,8 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
 
                 print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
+                count = 0
+
                 for page in range(1, pages + 1):
                     page_product_url = f"{category_url}?page={page}"
                     try:
@@ -160,7 +162,11 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                         html = driver.page_source
                     except Exception as ex:
                         print(f"{page_product_url} - {ex}")
+                        count += 1
                         continue
+
+                    if count > 5:
+                        raise 'disconnected: not connected to DevTools'
 
                     if not html:
                         continue
