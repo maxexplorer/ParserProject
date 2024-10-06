@@ -163,10 +163,13 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     except Exception as ex:
                         print(f"{page_product_url} - {ex}")
                         count += 1
+
+                        if count > 5:
+                            raise 'disconnected: not connected to DevTools'
+
                         continue
 
-                    if count > 5:
-                        raise 'disconnected: not connected to DevTools'
+
 
                     if not html:
                         continue
