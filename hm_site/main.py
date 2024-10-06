@@ -126,6 +126,8 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
+    count = 0
+
     for category_dict in category_data_list:
         for category_name, category_list in category_dict.items():
             for product_tuple in category_list:
@@ -151,8 +153,6 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     pages = get_pages_de(html=html)
 
                 print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
-
-                count = 0
 
                 for page in range(1, pages + 1):
                     page_product_url = f"{category_url}?page={page}"
