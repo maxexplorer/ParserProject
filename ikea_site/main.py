@@ -827,45 +827,26 @@ def main():
             target_currency = 'RUB'
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
+            get_products_urls(category_data_list=category_data_list_pl, brand=brand, region=region)
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
-                              brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
             base_currency = 'TRY'
             target_currency = 'RUB'
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс TRY/RUB: {currency}')
+            get_products_urls(category_data_list=category_data_list_pl, brand=brand, region=region)
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
-                              brand=brand, region=region)
         elif value == '3':
             region = 'Польша'
             base_currency = 'PLN'
             target_currency = 'RUB'
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
-
-            get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
-                              brand=brand, region=region)
-
-            # id_region = id_region_dict.get(region)
-            # get_category_urls(driver=driver, region=region, id_region=id_region)
-
+            get_products_urls(category_data_list=category_data_list_pl, brand=brand, region=region)
         else:
             raise ValueError('Введено неправильное значение')
 
-        # # Путь к файлу для сохранения URL продуктов
-        # directory = 'data'
-        # file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
-        #
-        # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     unique_urls = set(line.strip() for line in file)
-        #
-        # # Сохраняем уникальные URL-адреса обратно в файл
-        # with open(file_path, 'w', encoding='utf-8') as file:
-        #     print(*unique_urls, file=file, sep='\n')
 
 
     except Exception as ex:
