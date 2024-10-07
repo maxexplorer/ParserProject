@@ -3,11 +3,8 @@ import re
 import time
 from datetime import datetime
 
-import undetected_chromedriver
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
-from undetected_chromedriver import Chrome as undetectedChrome
-from undetected_chromedriver import ChromeOptions
 
 from bs4 import BeautifulSoup
 
@@ -45,20 +42,6 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 
     return driver
 
-# Создаём объект undetected_chromedriver
-def init_undetected_chromedriver(headless_mode=False):
-    if headless_mode:
-        options = ChromeOptions()
-        options.add_argument('--headless=new')
-        # is equivalent to
-        # options.headless = True
-        driver = undetectedChrome(options=options)
-        driver.implicitly_wait(15)
-    else:
-        driver = undetectedChrome()
-        driver.maximize_window()
-        driver.implicitly_wait(15)
-    return driver
 
 # Функция получения количества страниц
 def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
@@ -191,11 +174,10 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     soup = BeautifulSoup(html, 'lxml')
 
                     try:
-                        product_items = soup.find('div',
-                                                  id='products-listing-section').find_next().find_next_sibling()
+                        product_items = soup.find('ul', class_='products-listing small').find_all('li')
                         for product_item in product_items:
                             try:
-                                product_url = product_item.find('a').get('href')
+                                product_url = f"https://www2.hm.com{product_item.find('a').get('href')}"
                             except Exception as ex:
                                 print(ex)
                                 continue
@@ -223,12 +205,12 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                                          brand=brand, region=region)
                 elif region == 'Турция':
                     get_products_data(driver=driver, products_data_list=products_data_list,
-                                         processed_urls=processed_urls,
-                                         brand=brand, region=region, size_model_title='Model bedeni')
+                                      processed_urls=processed_urls,
+                                      brand=brand, region=region, size_model_title='Model bedeni')
                 elif region == 'Польша':
                     get_products_data(driver=driver, products_data_list=products_data_list,
-                                         processed_urls=processed_urls,
-                                         brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
+                                      processed_urls=processed_urls,
+                                      brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
                 else:
                     get_products_data_de(driver=driver, products_data_list=products_data_list,
                                          processed_urls=processed_urls,
@@ -514,7 +496,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
 
 # Функция получения данных товаров
 def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                         region: str, size_model_title: str) -> None:
+                      region: str, size_model_title: str) -> None:
     result_data = []
 
     for dict_item in products_data_list:
@@ -815,7 +797,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
 
 
 def main():
-    driver = init_undetected_chromedriver(headless_mode=True)
+    driver = init_chromedriver(headless_mode=True)
 
     brand = 'H&M'
 
