@@ -260,9 +260,9 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    # get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    # result_data = get_products_data(file_path="data/products_urls_list.txt")
-    # save_excel(data=result_data)
+    get_products_urls(category_urls_list=category_urls_list, headers=headers)
+    result_data = get_products_data(file_path="data/products_urls_list.txt")
+    save_excel(data=result_data)
     download_imgs(file_path="data/images_urls_list.txt")
 
     execution_time = datetime.now() - start_time
