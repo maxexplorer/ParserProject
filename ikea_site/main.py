@@ -84,12 +84,12 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> l
     directory = 'data'
     file_path = f'{directory}/url_products_list_{region}.txt'
 
-    products_urls = []
-
     count = 0
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
+            products_urls = []
+
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
             except Exception as ex:
@@ -132,15 +132,14 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> l
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-    return products_urls
+            get_products_data(products_urls=products_urls, region=region)
 
 
 # Функция получения данных товаров
-def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                      region: str, size_model_title: str) -> None:
+def get_products_data(products_urls: list, region: str) -> None:
     result_data = []
 
-    for dict_item in products_data_list:
+    for dict_item in products_urls:
         product_urls = []
         key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
@@ -401,11 +400,11 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
 
             print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=brand, region=region)
+        save_excel(data=result_data, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, species: str, brand: str, region: str) -> None:
+def save_excel(data: list, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -413,7 +412,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
