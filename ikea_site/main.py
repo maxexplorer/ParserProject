@@ -132,35 +132,22 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> l
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            get_products_data(products_urls=products_urls, region=region)
+            get_products_data(products_urls=products_urls, headers=headers, region=region)
 
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, region: str) -> None:
+def get_products_data(products_urls: list, headers: dict, region: str) -> None:
     result_data = []
 
-    for dict_item in products_urls:
-        product_urls = []
-        key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+    count_urls = len(products_urls)
 
-        for product_url in values:
-            if product_url not in processed_urls:
-                processed_urls.add(product_url)
-                product_urls.append(product_url)
-        category_name = key[0]
-        subcategory_name = key[1]
-
-        count_products = len(product_urls)
-        print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
-
-        for i, product_url in enumerate(product_urls, 1):
+    with Session() as session:
+        for i, product_url in enumerate(products_urls, 1):
             try:
-                driver.get(url=product_url)
-                driver.execute_script("window.scrollTo(0, 2000);")
                 time.sleep(1)
-                # driver.execute_script("window.scrollTo(0, 4000);")
-                # time.sleep(1)
-                html = driver.page_source
+                html = get_html(url=product_url, headers=headers, session=session)
+
+
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
@@ -170,57 +157,41 @@ def get_products_data(products_urls: list, region: str) -> None:
 
             soup = BeautifulSoup(html, 'lxml')
 
-            try:
-                id_product = product_url.split('.')[-2]
-            except Exception:
-                id_product = None
+            # with open('data/index.html', 'w', encoding='utf-8') as file:
+            #     file.write(soup.prettify())
 
             try:
-                data = soup.find('div', class_='product parbase')
+                data = soup.find('main', id='content')
             except Exception as ex:
                 print(f'data: {product_url} - {ex}')
                 continue
 
             try:
+                id_product = data.find('span', class_='pip-product-identifier__value').text.strip()
+            except Exception:
+                id_product = None
+
+            try:
                 name = data.find('h1').text.strip()
-                product_name = f'H&M {translator(name).lower()}'
+                product_name = f'IKEA {translator(name).lower()}'
             except Exception:
                 product_name = None
 
             try:
-                price = int(''.join(
-                    i for i in data.find('span', class_='edbe20 ac3d9e d9ca8b e29fbf').text.split()[0] if
-                    i.isdigit())) / 100
+                price = data.find('span', class_='pip-temp-price__integer').text.strip()
             except Exception:
                 price = None
 
-            old_price = None
-
-            if not price:
-                try:
-                    old_price = int(''.join(
-                        i for i in data.find('span', class_='e98f30 ac3d9e e29fbf').text.split()[0] if
-                        i.isdigit())) / 100
-                except Exception:
-                    old_price = None
-
-                try:
-                    price = int(''.join(
-                        i for i in data.find('span', class_='edbe20 ac3d9e c8e3aa e29fbf').text.split()[0] if
-                        i.isdigit())) / 100
-                except Exception:
-                    price = None
-
             try:
-                color_original = data.find('h3', class_='product-input-label').text.strip().lower()
+                color_original = data.find('span', class_='pip-list-view-item__addon').text.strip().lower()
             except Exception:
                 color_original = None
 
             try:
                 images_urls_list = []
-                images_items = data.find('div', class_='sticky-candidate').find_all('figure')
+                images_items = data.find('div', class_='pip-product-gallery__thumbnails').find_all('button')
                 for item in images_items:
-                    image_url = f"https:{item.find('img').get('src')}"
+                    image_url = item.find('img').get('src').split('?')[0]
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
@@ -230,175 +201,105 @@ def get_products_data(products_urls: list, region: str) -> None:
                 additional_images_urls = None
 
             try:
-                if category_name == 'Женщины':
-                    gender = 'женский'
-                elif category_name == 'Мужчины':
-                    gender = 'мужской'
-                else:
-                    gender = category_name
-            except Exception:
-                gender = None
-
-            try:
-                section_description = data.find('div', id='section-descriptionAccordion')
-            except Exception:
-                section_description = None
-
-            try:
-                description = section_description.find('p').text.strip()
-                description = translator(description)
+                description = data.find('div', class_='pip-product-details__container').text
             except Exception:
                 description = None
 
-            model_height = None
-            model_size = None
-
-            try:
-                model_size_description = section_description.find('dl').find(
-                    string=re.compile(size_model_title)).find_next().text.split('cm')
-            except Exception:
-                model_size_description = None
-
-            if model_size_description:
-                try:
-                    model_height = model_size_description[0].split()[-1]
-                except Exception:
-                    model_height = None
-
-                try:
-                    model_size = model_size_description[-1].split()[-1].replace('.', '').replace(')', '')
-                except Exception:
-                    model_size = None
 
             try:
                 section_material_description = data.find('div', id='section-materialsAndSuppliersAccordion')
             except Exception:
                 section_material_description = None
 
-            try:
-                composition_outer_shell = section_material_description.find('li').find('p').text
-                composition = translator(composition_outer_shell)
-                material_outer_shell = composition_outer_shell.split()[0]
-                material = translator(material_outer_shell)
-            except Exception:
-                composition = None
-                material = None
-
-            try:
-                section_care = data.find('div', id='section-careGuideAccordion').find('ul').find_all('li')
-            except Exception:
-                section_care = None
-
-            try:
-                care = '. '.join(i.text for i in section_care)
-                care = translator(care)
-            except Exception:
-                care = None
 
             try:
                 sizes_items = data.find('hm-size-selector', class_='size-selector').find_all('li')
-
-                for size_item in sizes_items:
-                    size_eur = size_item.find('input').get('id')
-                    try:
-                        size_availability = size_item.find('input', {'type': 'radio'}).has_attr('disabled')
-                    except Exception:
-                        size_availability = None
-
-                    if not size_availability:
-                        status_size = 'в наличии'
-                    else:
-                        status_size = 'нет в наличии'
-
-                    try:
-                        size_rus = sizes_dict[category_name][size_eur]
-                    except Exception:
-                        size_rus = size_eur
-
-                    id_product_size = f"{id_product}/{size_eur}"
-
-                    result_data.append(
-                        {
-                            '№': None,
-                            'Артикул': id_product_size,
-                            'Название товара': product_name,
-                            'Цена, руб.*': price,
-                            'Цена до скидки, руб.': old_price,
-                            'НДС, %*': None,
-                            'Включить продвижение': None,
-                            'Ozon ID': id_product_size,
-                            'Штрихкод (Серийный номер / EAN)': None,
-                            'Вес в упаковке, г*': None,
-                            'Ширина упаковки, мм*': None,
-                            'Высота упаковки, мм*': None,
-                            'Длина упаковки, мм*': None,
-                            'Ссылка на главное фото*': main_image_url,
-                            'Ссылки на дополнительные фото': additional_images_urls,
-                            'Ссылки на фото 360': None,
-                            'Артикул фото': None,
-                            'Бренд в одежде и обуви*': brand,
-                            'Объединить на одной карточке*': id_product,
-                            'Цвет товара*': color_original,
-                            'Российский размер*': size_rus,
-                            'Размер производителя': size_eur,
-                            'Статус наличия': status_size,
-                            'Название цвета': color_original,
-                            'Тип*': subcategory_name,
-                            'Пол*': gender,
-                            'Размер пеленки': None,
-                            'ТН ВЭД коды ЕАЭС': None,
-                            'Ключевые слова': None,
-                            'Сезон': None,
-                            'Рост модели на фото': model_height,
-                            'Параметры модели на фото': None,
-                            'Размер товара на фото': model_size,
-                            'Коллекция': None,
-                            'Страна-изготовитель': None,
-                            'Вид принта': None,
-                            'Аннотация': description,
-                            'Инструкция по уходу': care,
-                            'Серия в одежде и обуви': None,
-                            'Материал': material,
-                            'Состав материала': composition,
-                            'Материал подклада/внутренней отделки': None,
-                            'Материал наполнителя': None,
-                            'Утеплитель, гр': None,
-                            'Диапазон температур, °С': None,
-                            'Стиль': None,
-                            'Вид спорта': None,
-                            'Вид одежды': None,
-                            'Тип застежки': None,
-                            'Длина рукава': None,
-                            'Талия': None,
-                            'Для беременных или новорожденных': None,
-                            'Тип упаковки одежды': None,
-                            'Количество в упаковке': None,
-                            'Состав комплекта': None,
-                            'Рост': None,
-                            'Длина изделия, см': None,
-                            'Длина подола': None,
-                            'Форма воротника/горловины': None,
-                            'Детали': None,
-                            'Таблица размеров JSON': None,
-                            'Rich-контент JSON': None,
-                            'Плотность, DEN': None,
-                            'Количество пар в упаковке': None,
-                            'Класс компрессии': None,
-                            'Персонаж': None,
-                            'Праздник': None,
-                            'Тематика карнавальных костюмов': None,
-                            'Признак 18+': None,
-                            'Назначение спецодежды': None,
-                            'HS-код': None,
-                            'Количество заводских упаковок': None,
-                            'Ошибка': None,
-                            'Предупреждение': None,
-                        }
-                    )
             except Exception as ex:
                 print(f'sizes: {product_url} - {ex}')
 
-            print(f'Обработано: {i}/{count_products} товаров!')
+            brand = 'IKEA'
+            subcategory_name = 'Текстиль'
+
+            result_data.append(
+                {
+                    '№': None,
+                    'Артикул': id_product,
+                    'Название товара': product_name,
+                    'Цена, руб.*': price,
+                    'Цена до скидки, руб.': None,
+                    'НДС, %*': None,
+                    'Включить продвижение': None,
+                    'Ozon ID': id_product,
+                    'Штрихкод (Серийный номер / EAN)': None,
+                    'Вес в упаковке, г*': None,
+                    'Ширина упаковки, мм*': None,
+                    'Высота упаковки, мм*': None,
+                    'Длина упаковки, мм*': None,
+                    'Ссылка на главное фото*': main_image_url,
+                    'Ссылки на дополнительные фото': additional_images_urls,
+                    'Ссылки на фото 360': None,
+                    'Артикул фото': None,
+                    'Бренд в одежде и обуви*': brand,
+                    'Объединить на одной карточке*': id_product,
+                    'Цвет товара*': color_original,
+                    'Российский размер*': sizes_items,
+                    'Размер производителя': sizes_items,
+                    'Статус наличия': None,
+                    'Название цвета': color_original,
+                    'Тип*': subcategory_name,
+                    'Пол*': None,
+                    'Размер пеленки': None,
+                    'ТН ВЭД коды ЕАЭС': None,
+                    'Ключевые слова': None,
+                    'Сезон': None,
+                    'Рост модели на фото': None,
+                    'Параметры модели на фото': None,
+                    'Размер товара на фото': None,
+                    'Коллекция': None,
+                    'Страна-изготовитель': None,
+                    'Вид принта': None,
+                    'Аннотация': description,
+                    'Инструкция по уходу': None,
+                    'Серия в одежде и обуви': None,
+                    'Материал': material,
+                    'Состав материала': composition,
+                    'Материал подклада/внутренней отделки': None,
+                    'Материал наполнителя': None,
+                    'Утеплитель, гр': None,
+                    'Диапазон температур, °С': None,
+                    'Стиль': None,
+                    'Вид спорта': None,
+                    'Вид одежды': None,
+                    'Тип застежки': None,
+                    'Длина рукава': None,
+                    'Талия': None,
+                    'Для беременных или новорожденных': None,
+                    'Тип упаковки одежды': None,
+                    'Количество в упаковке': None,
+                    'Состав комплекта': None,
+                    'Рост': None,
+                    'Длина изделия, см': None,
+                    'Длина подола': None,
+                    'Форма воротника/горловины': None,
+                    'Детали': None,
+                    'Таблица размеров JSON': None,
+                    'Rich-контент JSON': None,
+                    'Плотность, DEN': None,
+                    'Количество пар в упаковке': None,
+                    'Класс компрессии': None,
+                    'Персонаж': None,
+                    'Праздник': None,
+                    'Тематика карнавальных костюмов': None,
+                    'Признак 18+': None,
+                    'Назначение спецодежды': None,
+                    'HS-код': None,
+                    'Количество заводских упаковок': None,
+                    'Ошибка': None,
+                    'Предупреждение': None,
+                }
+            )
+
+            print(f'Обработано: {i}/{count_urls} товаров!')
 
         save_excel(data=result_data, region=region)
 
@@ -461,7 +362,9 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        products_urls = get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        # products_urls = get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
+        get_products_data(products_urls=products_urls, headers=headers, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
