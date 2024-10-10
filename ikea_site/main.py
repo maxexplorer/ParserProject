@@ -129,7 +129,6 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
 
-
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
