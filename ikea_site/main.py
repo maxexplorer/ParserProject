@@ -336,9 +336,7 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # products_urls = get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
-        products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
-        get_products_data(products_urls=products_urls, headers=headers, region=region)
+        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
