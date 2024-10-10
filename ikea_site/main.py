@@ -1,3 +1,4 @@
+import json
 import os
 from random import randint
 import time
@@ -174,7 +175,8 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
 
             try:
                 name = data.find('h1').text.strip()
-                product_name = f'IKEA {translator(name).lower()}'
+                name_item = name.split()[0]
+                product_name = f'IKEA {name_item} {translator(name).lower()}'
             except Exception:
                 product_name = None
 
@@ -209,12 +211,38 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 description = None
 
             try:
-                sizes_original = ' '.join(
-                    item.text for item in
-                    data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
-                sizes = translator(sizes_original)
-            except Exception as ex:
-                sizes = None
+                product_information_json = data.find('div',
+                                                     class_='js-product-information-section pip-product-information-section').get(
+                    'data-initial-props')
+
+                product_information_dict = json.loads(product_information_json)
+            except Exception:
+                product_information_dict = None
+
+            if product_information_dict:
+                # try:
+                #     product_sizes_original = ' '.join(
+                #         item.text for item in
+                #         data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
+                #     product_sizes = translator(product_sizes_original)
+                # except Exception as ex:
+                #     product_sizes = None
+
+                try:
+                    product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
+                                          product_information_dict['dimensionProps']['dimensions']}
+
+                except Exception:
+                    product_dimensions = None
+
+                try:
+                    packaging_dimensions = {dict_item['label']: dict_item['text'] for dict_item in
+                                            product_information_dict['dimensionProps']['packaging']['contentProps'][
+                                                'packages'][0]['measurements'][0]}
+
+                    print(packaging_dimensions)
+                except Exception:
+                    packaging_dimensions = None
 
             brand = 'IKEA'
             subcategory_name = 'Текстиль'
@@ -337,7 +365,7 @@ def save_excel(data: list, brand: str, region: str) -> None:
 
 
 def main():
-    driver = init_chromedriver(headless_mode=True)
+    # driver = init_chromedriver(headless_mode=True)
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
 
@@ -361,7 +389,9 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
+        get_products_data(products_urls=products_urls, headers=headers, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
