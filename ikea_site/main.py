@@ -24,9 +24,24 @@ from functions import get_exchange_rate
 start_time = datetime.now()
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/128.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
 }
+
+
+# Функция инициализации объекта chromedriver
+def init_chromedriver(headless_mode: bool = False) -> Chrome:
+    options = Options()
+    options.add_argument(
+        'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    if headless_mode:
+        options.add_argument("--headless=new")
+    driver = Chrome(options=options)
+    if not headless_mode:
+        driver.maximize_window()
+    driver.implicitly_wait(15)
+
+    return driver
 
 
 # Получаем html разметку страницы
@@ -61,7 +76,7 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(category_urls_list: list, headers: dict, region: str) -> None:
+def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{region}.txt'
@@ -69,6 +84,8 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
             products_urls = []
+
+            print(f'Обрабатывается категория: {category_url}')
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -78,12 +95,16 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
             pages = get_pages(html=html)
 
             for page in range(1, pages + 1):
-                product_url = f"{category_url}?page={page}/"
+                category_page_url = f"{category_url}?page={page}"
                 try:
-                    time.sleep(randint(1, 3))
-                    html = get_html(url=product_url, headers=headers, session=session)
+                    driver.get(url=category_page_url)
+                    driver.execute_script("window.scrollTo(0, 2000);")
+                    time.sleep(1)
+                    # driver.execute_script("window.scrollTo(0, 4000);")
+                    # time.sleep(1)
+                    html = driver.page_source
                 except Exception as ex:
-                    print(f"{product_url} - {ex}")
+                    print(f"{category_page_url} - {ex}")
                     continue
 
                 if not html:
@@ -122,6 +143,8 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
     result_data = []
 
     count_urls = len(products_urls)
+
+    print(f'Всего: {count_urls} товаров!')
 
     with Session() as session:
         for i, product_url in enumerate(products_urls, 1):
@@ -277,11 +300,11 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
 
             print(f'Обработано: {i}/{count_urls} товаров!')
 
-        save_excel(data=result_data, region=region)
+        save_excel(data=result_data, brand=brand, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, region: str) -> None:
+def save_excel(data: list, brand: str, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -289,7 +312,7 @@ def save_excel(data: list, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{region}.xlsx'
+    file_path = f'{directory}/result_data_{brand}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -314,6 +337,8 @@ def save_excel(data: list, region: str) -> None:
 
 
 def main():
+    driver = init_chromedriver(headless_mode=True)
+
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
 
     if value == '1':
@@ -336,7 +361,7 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, headers=headers, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
