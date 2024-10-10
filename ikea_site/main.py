@@ -1,5 +1,5 @@
 import os
-import re
+from random import randint
 import time
 from datetime import datetime
 from math import ceil
@@ -23,28 +23,10 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-processed_urls = set()
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/128.0.0.0 Safari/537.36'
 }
-
-
-# Функция инициализации объекта chromedriver
-def init_chromedriver(headless_mode: bool = False) -> Chrome:
-    options = Options()
-    options.add_argument(
-        'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    if headless_mode:
-        options.add_argument("--headless=new")
-    driver = Chrome(options=options)
-    if not headless_mode:
-        driver.maximize_window()
-    driver.implicitly_wait(15)
-
-    return driver
 
 
 # Получаем html разметку страницы
@@ -79,12 +61,10 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(category_urls_list: list, headers: dict, region: str) -> list:
+def get_products_urls(category_urls_list: list, headers: dict, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{region}.txt'
-
-    count = 0
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
@@ -100,7 +80,7 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> l
             for page in range(1, pages + 1):
                 product_url = f"{category_url}?page={page}/"
                 try:
-                    time.sleep(1)
+                    time.sleep(randint(1, 3))
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
@@ -134,6 +114,8 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> l
 
             get_products_data(products_urls=products_urls, headers=headers, region=region)
 
+            print(f'Обработано: {category_url}')
+
 
 # Функция получения данных товаров
 def get_products_data(products_urls: list, headers: dict, region: str) -> None:
@@ -156,9 +138,6 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
-
-            # with open('data/index.html', 'w', encoding='utf-8') as file:
-            #     file.write(soup.prettify())
 
             try:
                 data = soup.find('main', id='content')
@@ -201,21 +180,19 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 additional_images_urls = None
 
             try:
-                description = data.find('div', class_='pip-product-details__container').text
+                description_original = ' '.join(
+                    item.text for item in data.find('div', class_='pip-product-details__container').find_all('p'))
+                description = translator(description_original)
             except Exception:
                 description = None
 
-
             try:
-                section_material_description = data.find('div', id='section-materialsAndSuppliersAccordion')
-            except Exception:
-                section_material_description = None
-
-
-            try:
-                sizes_items = data.find('hm-size-selector', class_='size-selector').find_all('li')
+                sizes_original = ' '.join(
+                    item.text for item in
+                    data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
+                sizes = translator(sizes_original)
             except Exception as ex:
-                print(f'sizes: {product_url} - {ex}')
+                sizes = None
 
             brand = 'IKEA'
             subcategory_name = 'Текстиль'
@@ -242,8 +219,8 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                     'Бренд в одежде и обуви*': brand,
                     'Объединить на одной карточке*': id_product,
                     'Цвет товара*': color_original,
-                    'Российский размер*': sizes_items,
-                    'Размер производителя': sizes_items,
+                    'Российский размер*': sizes,
+                    'Размер производителя': sizes_original,
                     'Статус наличия': None,
                     'Название цвета': color_original,
                     'Тип*': subcategory_name,
@@ -261,8 +238,8 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                     'Аннотация': description,
                     'Инструкция по уходу': None,
                     'Серия в одежде и обуви': None,
-                    'Материал': material,
-                    'Состав материала': composition,
+                    'Материал': None,
+                    'Состав материала': None,
                     'Материал подклада/внутренней отделки': None,
                     'Материал наполнителя': None,
                     'Утеплитель, гр': None,
@@ -347,14 +324,12 @@ def main():
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс EUR/RUB: {currency}')
 
-
     elif value == '2':
         region = 'Турция'
         base_currency = 'TRY'
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс TRY/RUB: {currency}')
-
 
     elif value == '3':
         region = 'Польша'
