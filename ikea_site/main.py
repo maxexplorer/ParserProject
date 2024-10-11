@@ -77,10 +77,10 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, region: str) -> None:
+def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{region}.txt'
+    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
@@ -134,13 +134,13 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, r
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            get_products_data(products_urls=products_urls, headers=headers, region=region)
+            get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
 
             print(f'Обработано: {category_url}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, headers: dict, region: str) -> None:
+def get_products_data(products_urls: list, headers: dict, brand: str, region: str) -> None:
     result_data = []
 
     count_urls = len(products_urls)
@@ -175,7 +175,7 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
 
             try:
                 name = data.find('h1').text.strip()
-                name_item = name.split()[0]
+                name_item = name.split()[0].capitalize()
                 product_name = f'IKEA {name_item} {translator(name).lower()}'
             except Exception:
                 product_name = None
@@ -220,31 +220,35 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 product_information_dict = None
 
             if product_information_dict:
-                # try:
-                #     product_sizes_original = ' '.join(
-                #         item.text for item in
-                #         data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
-                #     product_sizes = translator(product_sizes_original)
-                # except Exception as ex:
-                #     product_sizes = None
-
                 try:
-                    product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
-                                          product_information_dict['dimensionProps']['dimensions']}
+                    product_sizes_original = ' '.join(
+                        item.text for item in
+                        data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
+                    product_sizes = translator(product_sizes_original)
+                except Exception as ex:
+                    product_sizes = None
 
-                except Exception:
-                    product_dimensions = None
+                # try:
+                #     product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
+                #                           product_information_dict['dimensionProps']['dimensions']}
+                #
+                # except Exception:
+                #     product_dimensions = None
 
                 try:
                     packaging_dimensions = {dict_item['label']: dict_item['text'] for dict_item in
                                             product_information_dict['dimensionProps']['packaging']['contentProps'][
                                                 'packages'][0]['measurements'][0]}
 
+                    pack_length = int(packaging_dimensions['Długość']) * 10
+                    pack_width = int(packaging_dimensions['Szerokość']) * 10
+                    pack_height = int(packaging_dimensions['Wysokość']) * 10
+                    pack_weight = int(packaging_dimensions['Waga']) * 1000
+
                     print(packaging_dimensions)
                 except Exception:
                     packaging_dimensions = None
 
-            brand = 'IKEA'
             subcategory_name = 'Текстиль'
 
             result_data.append(
@@ -258,10 +262,10 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                     'Включить продвижение': None,
                     'Ozon ID': id_product,
                     'Штрихкод (Серийный номер / EAN)': None,
-                    'Вес в упаковке, г*': None,
-                    'Ширина упаковки, мм*': None,
-                    'Высота упаковки, мм*': None,
-                    'Длина упаковки, мм*': None,
+                    'Вес в упаковке, г*': pack_weight,
+                    'Ширина упаковки, мм*': pack_width,
+                    'Высота упаковки, мм*': pack_height,
+                    'Длина упаковки, мм*': pack_length,
                     'Ссылка на главное фото*': main_image_url,
                     'Ссылки на дополнительные фото': additional_images_urls,
                     'Ссылки на фото 360': None,
@@ -365,6 +369,8 @@ def save_excel(data: list, brand: str, region: str) -> None:
 
 
 def main():
+    brand = 'IKEA'
+
     # driver = init_chromedriver(headless_mode=True)
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
@@ -389,9 +395,14 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, brand=brand, headers=headers, region=region)
         products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
-        get_products_data(products_urls=products_urls, headers=headers, region=region)
+        directory = 'data'
+        file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            products_urls = [line.strip() for line in file.readlines()]
+
+        get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
