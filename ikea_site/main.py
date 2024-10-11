@@ -1,6 +1,5 @@
 import json
 import os
-from random import randint
 import time
 from datetime import datetime
 from math import ceil
@@ -142,6 +141,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
 # Функция получения данных товаров
 def get_products_data(products_urls: list, headers: dict, brand: str, region: str) -> None:
     result_data = []
+    batch_size = 100
 
     count_urls = len(products_urls)
 
@@ -175,7 +175,7 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
 
                 product_information_dict = json.loads(product_information_json)
             except Exception:
-                product_subgrid_dict = None
+                continue
 
             try:
                 id_product = product_information_dict['buyModule']['productNumber']
@@ -184,7 +184,7 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
 
             try:
                 product_name_original = product_information_dict['pipPriceModule']['productName'].capitalize()
-                product_description_original = product_information_dict['pipPriceModule']['productDescription']
+                product_description_original = f"{product_name_original} {product_information_dict['pipPriceModule']['productDescription']}"
                 product_name = f'IKEA {product_name_original} {translator(product_description_original).lower()}'
             except Exception:
                 product_name = None
@@ -258,33 +258,38 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 description = None
 
             try:
-                product_sizes_original = ' '.join(
-                    item.text for item in
-                    data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
-                product_sizes = translator(product_sizes_original)
-            except Exception as ex:
-                product_sizes = None
+                dimension_props = product_information_dict['productInformationSection']['dimensionProps']
 
-            # try:
-            #     product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
-            #                           product_information_dict['dimensionProps']['dimensions']}
-            #
-            # except Exception:
-            #     product_dimensions = None
+                try:
+                    product_dimensions_original = ', '.join(f"{item['name']}: {item['measure']}" for item in dimension_props['dimensions'])
+                    product_dimensions = translator(product_dimensions_original)
+                except Exception:
+                    product_dimensions = None
 
-            try:
-                packaging_dimensions = {dict_item['label']: dict_item['text'] for dict_item in
-                                        product_information_dict['dimensionProps']['packaging']['contentProps'][
-                                            'packages'][0]['measurements'][0]}
+                try:
+                    packaging_items = dimension_props['packaging']['contentProps']['packages'][0]['measurements'][0]
+                    packaging_dict = {item['type']: item['text'] for item in packaging_items}
 
-                pack_length = int(packaging_dimensions['Długość']) * 10
-                pack_width = int(packaging_dimensions['Szerokość']) * 10
-                pack_height = int(packaging_dimensions['Wysokość']) * 10
-                pack_weight = int(packaging_dimensions['Waga']) * 1000
-
-                print(packaging_dimensions)
+                    try:
+                        pack_width = int(packaging_dict['width'].split()[0]) * 10
+                    except Exception:
+                        pack_width = None
+                    try:
+                        pack_height = int(packaging_dict['height'].split()[0]) * 10
+                    except Exception:
+                        pack_height = None
+                    try:
+                        pack_length = int(packaging_dict['length'].split()[0]) * 10
+                    except Exception:
+                        pack_length = None
+                    try:
+                        pack_weight = float(packaging_dict['weight'].split()[0]) * 1000
+                    except Exception:
+                        pack_weight = None
+                except Exception:
+                    pass
             except Exception:
-                packaging_dimensions = None
+                pass
 
             subcategory_name = 'Текстиль'
 
@@ -309,9 +314,9 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                     'Артикул фото': None,
                     'Бренд в одежде и обуви*': brand,
                     'Объединить на одной карточке*': id_product,
-                    'Цвет товара*': color_original,
-                    'Российский размер*': sizes,
-                    'Размер производителя': sizes_original,
+                    'Цвет товара*': color,
+                    'Российский размер*': product_dimensions,
+                    'Размер производителя': product_dimensions_original,
                     'Статус наличия': None,
                     'Название цвета': color_original,
                     'Тип*': subcategory_name,
@@ -327,10 +332,10 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                     'Страна-изготовитель': None,
                     'Вид принта': None,
                     'Аннотация': description,
-                    'Инструкция по уходу': None,
+                    'Инструкция по уходу': care,
                     'Серия в одежде и обуви': None,
-                    'Материал': None,
-                    'Состав материала': None,
+                    'Материал': material,
+                    'Состав материала': materials,
                     'Материал подклада/внутренней отделки': None,
                     'Материал наполнителя': None,
                     'Утеплитель, гр': None,
@@ -369,7 +374,16 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
 
             print(f'Обработано: {i}/{count_urls} товаров!')
 
-        save_excel(data=result_data, brand=brand, region=region)
+            # Записываем данные в Excel каждые 100 URL
+            if len(result_data) >= batch_size:
+                save_excel(data=result_data, brand=brand, region=region)
+                result_data.clear() # Очищаем список для следующей партии
+
+        # Записываем оставшиеся данные в Excel
+        if result_data:
+            save_excel(data=result_data, brand=brand, region=region)
+
+
 
 
 # Функция для записи данных в формат xlsx
@@ -433,11 +447,10 @@ def main():
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
         # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, brand=brand, headers=headers, region=region)
-        products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
-        # directory = 'data'
-        # file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     products_urls = [line.strip() for line in file.readlines()]
+        directory = 'data'
+        file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            products_urls = [line.strip() for line in file.readlines()]
 
         get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
     else:
