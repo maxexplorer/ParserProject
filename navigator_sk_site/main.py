@@ -86,6 +86,10 @@ def get_data(headers: dict) -> None:
                 except Exception:
                     revenue = None
 
+                revenue2021 = None
+                revenue2022 = None
+                revenue2023 = None
+
                 try:
                     revenue_by_year = item['revenue_by_year']
                     revenue2021 = revenue_by_year.get(2023)
@@ -93,6 +97,10 @@ def get_data(headers: dict) -> None:
                     revenue2023 = revenue_by_year.get(2021)
                 except Exception:
                     pass
+
+                profit2021 = None
+                profit2022 = None
+                profit2023 = None
 
                 try:
                     key_indicators = item['key_indicators']
@@ -117,21 +125,22 @@ def get_data(headers: dict) -> None:
                         'ИНН': inn,
                         'Сайт': site,
                         'Общая выручка': revenue,
-                        'Выручка за 2023': revenue2021,
+                        'Выручка за 2021': revenue2021,
                         'Выручка за 2022': revenue2022,
-                        'Выручка за 2021': revenue2023,
-                        'Чистая прибыль за 2021': profit2021,
-                        'Чистая прибыль за 2022': profit2022,
-                        'Чистая прибыль за 2023': profit2023,
+                        'Выручка за 2023': revenue2023,
+                        'Чистая прибыль за 2021 (убыток)': profit2021,
+                        'Чистая прибыль за 2022 (убыток)': profit2022,
+                        'Чистая прибыль за 2023 (убыток)': profit2023,
                     }
                 )
 
-                print(f'Обработано: {i}')
 
                 # Записываем данные в Excel каждые 100 URL
                 if len(result_data) >= batch_size:
                     save_excel(data=result_data)
                     result_data.clear()  # Очищаем список для следующей партии
+
+            print(f'Обработано: {i}')
 
         # Записываем оставшиеся данные в Excel
         if result_data:
