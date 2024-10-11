@@ -86,21 +86,21 @@ def get_data(headers: dict) -> None:
                 except Exception:
                     revenue = None
 
-                revenue2021 = None
-                revenue2022 = None
                 revenue2023 = None
+                revenue2022 = None
+                revenue2021 = None
 
                 try:
                     revenue_by_year = item['revenue_by_year']
-                    revenue2021 = revenue_by_year.get(2023)
-                    revenue2022 = revenue_by_year.get(2022)
-                    revenue2023 = revenue_by_year.get(2021)
+                    revenue2021 = revenue_by_year.get('2023')
+                    revenue2022 = revenue_by_year.get('2022')
+                    revenue2023 = revenue_by_year.get('2021')
                 except Exception:
                     pass
 
-                profit2021 = None
-                profit2022 = None
                 profit2023 = None
+                profit2022 = None
+                profit2021 = None
 
                 try:
                     key_indicators = item['key_indicators']
