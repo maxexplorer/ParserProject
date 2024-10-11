@@ -169,85 +169,117 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 continue
 
             try:
-                id_product = data.find('span', class_='pip-product-identifier__value').text.strip()
+                product_information_json = data.find('div', class_="pip-product__subgrid product-pip js-product-pip").get(
+                    'data-hydration-props')
+
+                product_information_dict = json.loads(product_information_json)
+            except Exception:
+                product_subgrid_dict = None
+
+            try:
+                id_product = product_information_dict['buyModule']['productNumber']
             except Exception:
                 id_product = None
 
             try:
-                name = data.find('h1').text.strip()
-                name_item = name.split()[0].capitalize()
-                product_name = f'IKEA {name_item} {translator(name).lower()}'
+                product_name = product_information_dict['pipPriceModule']['productName'].capitalize()
+                product_description = product_information_dict['pipPriceModule']['productDescription']
+                product_name_ru = f'IKEA {product_name} {translator(product_description).lower()}'
             except Exception:
-                product_name = None
+                product_name_ru = None
 
             try:
-                price = data.find('span', class_='pip-temp-price__integer').text.strip()
+                price = product_information_dict['pipPriceModule']['price']['mainPriceProps']['price']['integer']
             except Exception:
                 price = None
 
             try:
-                color_original = data.find('span', class_='pip-list-view-item__addon').text.strip().lower()
+                color_original = product_information_dict['productStylePicker']['variationStyles'][0]['selectedOption']
+                color_ru = translator(color_original)
             except Exception:
                 color_original = None
+                color_ru = None
 
             try:
                 images_urls_list = []
-                images_items = data.find('div', class_='pip-product-gallery__thumbnails').find_all('button')
-                for item in images_items:
-                    image_url = item.find('img').get('src').split('?')[0]
+                product_gallery = product_information_dict['productGallery']['mediaList']
+                for item_gallery in product_gallery:
+                    image_url = item_gallery['content']['url']
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
             except Exception:
-                print('not images')
                 main_image_url = None
                 additional_images_urls = None
 
             try:
-                description_original = ' '.join(
-                    item.text for item in data.find('div', class_='pip-product-details__container').find_all('p'))
+                product_details_props = product_information_dict['productInformationSection']['productDetailsProps']
+                try:
+                    paragraphs = ' '.join(paragraph for paragraph in product_details_props['productDescriptionProps']['paragraphs'])
+                except Exception:
+                    paragraphs = None
+                try:
+                    designer_label = product_details_props['productDescriptionProps']['designerLabel']
+                except Exception:
+                    designer_label = None
+                try:
+                    designer_name = product_details_props['productDescriptionProps']['designerName']
+                except Exception:
+                    designer_name = None
+
+                description_original = f'{paragraphs} {designer_label} {designer_name}'
                 description = translator(description_original)
+
+                try:
+                    materials_and_care = product_details_props['accordionObject']['materialsAndCare']['contentProps']
+                    try:
+                        # materials = ' '.join(material['materials'] for material in materials_and_care['materials'])
+                        materials = materials_and_care['materials']
+                        print(materials)
+                    except Exception:
+                        materials = None
+                    try:
+                        care_instructions = ' '.join(care for care in materials_and_care['careInstructions'])
+                    except Exception:
+                        care_instructions = None
+
+                except Exception:
+                    pass
             except Exception:
                 description = None
 
+
+
+
+
             try:
-                product_information_json = data.find('div',
-                                                     class_='js-product-information-section pip-product-information-section').get(
-                    'data-initial-props')
+                product_sizes_original = ' '.join(
+                    item.text for item in
+                    data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
+                product_sizes = translator(product_sizes_original)
+            except Exception as ex:
+                product_sizes = None
 
-                product_information_dict = json.loads(product_information_json)
+            # try:
+            #     product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
+            #                           product_information_dict['dimensionProps']['dimensions']}
+            #
+            # except Exception:
+            #     product_dimensions = None
+
+            try:
+                packaging_dimensions = {dict_item['label']: dict_item['text'] for dict_item in
+                                        product_information_dict['dimensionProps']['packaging']['contentProps'][
+                                            'packages'][0]['measurements'][0]}
+
+                pack_length = int(packaging_dimensions['Długość']) * 10
+                pack_width = int(packaging_dimensions['Szerokość']) * 10
+                pack_height = int(packaging_dimensions['Wysokość']) * 10
+                pack_weight = int(packaging_dimensions['Waga']) * 1000
+
+                print(packaging_dimensions)
             except Exception:
-                product_information_dict = None
-
-            if product_information_dict:
-                try:
-                    product_sizes_original = ' '.join(
-                        item.text for item in
-                        data.find('div', class_='pip-product-dimensions__dimensions-container').find_all('p'))
-                    product_sizes = translator(product_sizes_original)
-                except Exception as ex:
-                    product_sizes = None
-
-                # try:
-                #     product_dimensions = {dict_item['name']: dict_item['measure'] for dict_item in
-                #                           product_information_dict['dimensionProps']['dimensions']}
-                #
-                # except Exception:
-                #     product_dimensions = None
-
-                try:
-                    packaging_dimensions = {dict_item['label']: dict_item['text'] for dict_item in
-                                            product_information_dict['dimensionProps']['packaging']['contentProps'][
-                                                'packages'][0]['measurements'][0]}
-
-                    pack_length = int(packaging_dimensions['Długość']) * 10
-                    pack_width = int(packaging_dimensions['Szerokość']) * 10
-                    pack_height = int(packaging_dimensions['Wysokość']) * 10
-                    pack_weight = int(packaging_dimensions['Waga']) * 1000
-
-                    print(packaging_dimensions)
-                except Exception:
-                    packaging_dimensions = None
+                packaging_dimensions = None
 
             subcategory_name = 'Текстиль'
 
@@ -397,10 +429,10 @@ def main():
         print(f'Курс PLN/RUB: {currency}')
         # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, brand=brand, headers=headers, region=region)
         products_urls = ["https://www.ikea.com/pl/pl/p/bymott-zaslona-2-szt-bialy-jasnoszary-w-paski-30466686/"]
-        directory = 'data'
-        file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
-        with open(file_path, 'r', encoding='utf-8') as file:
-            products_urls = [line.strip() for line in file.readlines()]
+        # directory = 'data'
+        # file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+        # with open(file_path, 'r', encoding='utf-8') as file:
+        #     products_urls = [line.strip() for line in file.readlines()]
 
         get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
     else:
