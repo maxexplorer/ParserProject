@@ -169,7 +169,8 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 continue
 
             try:
-                product_information_json = data.find('div', class_="pip-product__subgrid product-pip js-product-pip").get(
+                product_information_json = data.find('div',
+                                                     class_="pip-product__subgrid product-pip js-product-pip").get(
                     'data-hydration-props')
 
                 product_information_dict = json.loads(product_information_json)
@@ -182,11 +183,11 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 id_product = None
 
             try:
-                product_name = product_information_dict['pipPriceModule']['productName'].capitalize()
-                product_description = product_information_dict['pipPriceModule']['productDescription']
-                product_name_ru = f'IKEA {product_name} {translator(product_description).lower()}'
+                product_name_original = product_information_dict['pipPriceModule']['productName'].capitalize()
+                product_description_original = product_information_dict['pipPriceModule']['productDescription']
+                product_name = f'IKEA {product_name_original} {translator(product_description_original).lower()}'
             except Exception:
-                product_name_ru = None
+                product_name = None
 
             try:
                 price = product_information_dict['pipPriceModule']['price']['mainPriceProps']['price']['integer']
@@ -195,10 +196,10 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
 
             try:
                 color_original = product_information_dict['productStylePicker']['variationStyles'][0]['selectedOption']
-                color_ru = translator(color_original)
+                color = translator(color_original)
             except Exception:
                 color_original = None
-                color_ru = None
+                color = None
 
             try:
                 images_urls_list = []
@@ -215,7 +216,8 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
             try:
                 product_details_props = product_information_dict['productInformationSection']['productDetailsProps']
                 try:
-                    paragraphs = ' '.join(paragraph for paragraph in product_details_props['productDescriptionProps']['paragraphs'])
+                    paragraphs = ' '.join(
+                        paragraph for paragraph in product_details_props['productDescriptionProps']['paragraphs'])
                 except Exception:
                     paragraphs = None
                 try:
@@ -233,24 +235,27 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 try:
                     materials_and_care = product_details_props['accordionObject']['materialsAndCare']['contentProps']
                     try:
-                        # materials = ' '.join(material['materials'] for material in materials_and_care['materials'])
-                        materials = materials_and_care['materials']
-                        print(materials)
+                        materials_original = ' '.join(
+                            material_info['material'] for material_group in materials_and_care['materials'] for
+                            material_info in material_group['materials'])
+                        materials = translator(materials_original)
+                        material_items = materials.split()
+                        material = material_items[1].rstrip(',')
                     except Exception:
                         materials = None
+                        material = None
                     try:
-                        care_instructions = ' '.join(care for care in materials_and_care['careInstructions'])
+                        care_original = ' '.join(
+                            care_info for care_group in materials_and_care['careInstructions'] for
+                            care_info in care_group['texts'])
+                        care = translator(care_original)
                     except Exception:
-                        care_instructions = None
+                        care = None
 
                 except Exception:
                     pass
             except Exception:
                 description = None
-
-
-
-
 
             try:
                 product_sizes_original = ' '.join(
