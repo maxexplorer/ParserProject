@@ -184,8 +184,9 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
 
             try:
                 product_name_original = product_information_dict['pipPriceModule']['productName'].capitalize()
-                product_description_original = f"{product_name_original} {product_information_dict['pipPriceModule']['productDescription']}"
-                product_name = f'IKEA {product_name_original} {translator(product_description_original).lower()}'
+                product_description_original = product_information_dict['pipPriceModule']['productDescription']
+                product_name_ru = translator(product_name_original)
+                product_name = f'IKEA {product_name_original} {product_name_ru} {translator(product_description_original).lower()}'
             except Exception:
                 product_name = None
 
@@ -241,6 +242,8 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                         materials = translator(materials_original)
                         material_items = materials.split()
                         material = material_items[1].rstrip(',')
+                        if material == '%':
+                            material = material_items[2].rstrip(',')
                     except Exception:
                         materials = None
                         material = None
