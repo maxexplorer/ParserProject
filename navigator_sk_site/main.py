@@ -81,11 +81,6 @@ def get_data(headers: dict) -> None:
                 except Exception:
                     site = None
 
-                # try:
-                #     revenue = item['revenue']
-                # except Exception:
-                #     revenue = None
-
                 revenue2021 = None
                 revenue2022 = None
                 revenue2023 = None
@@ -124,7 +119,6 @@ def get_data(headers: dict) -> None:
                         'Название компании: EN': company_name_en,
                         'ИНН': inn,
                         'Сайт': site,
-                        # 'Общая выручка': revenue,
                         'Выручка за 2023': revenue2023,
                         'Выручка за 2022': revenue2022,
                         'Выручка за 2021': revenue2021,
