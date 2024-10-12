@@ -81,26 +81,26 @@ def get_data(headers: dict) -> None:
                 except Exception:
                     site = None
 
-                try:
-                    revenue = item['revenue']
-                except Exception:
-                    revenue = None
+                # try:
+                #     revenue = item['revenue']
+                # except Exception:
+                #     revenue = None
 
-                revenue2023 = None
-                revenue2022 = None
                 revenue2021 = None
+                revenue2022 = None
+                revenue2023 = None
 
                 try:
                     revenue_by_year = item['revenue_by_year']
-                    revenue2021 = revenue_by_year.get('2023')
+                    revenue2021 = revenue_by_year.get('2021')
                     revenue2022 = revenue_by_year.get('2022')
-                    revenue2023 = revenue_by_year.get('2021')
+                    revenue2023 = revenue_by_year.get('2023')
                 except Exception:
                     pass
 
-                profit2023 = None
-                profit2022 = None
                 profit2021 = None
+                profit2022 = None
+                profit2023 = None
 
                 try:
                     key_indicators = item['key_indicators']
@@ -108,13 +108,13 @@ def get_data(headers: dict) -> None:
                         year = key['year']
                         code = key['code']
                         value = key['value']
-                        if year in (2023, 2022, 2021) and code == 'profit':
-                            if year == 2023:
-                                profit2023 = value
+                        if year in (2021, 2022, 2023) and code == 'profit':
+                            if year == 2021:
+                                profit2021 = value
                             elif year == 2022:
                                 profit2022 = value
-                            elif year == 2021:
-                                profit2021 = value
+                            elif year == 2023:
+                                profit2023 = value
                 except Exception:
                     pass
 
@@ -124,13 +124,13 @@ def get_data(headers: dict) -> None:
                         'Название компании: EN': company_name_en,
                         'ИНН': inn,
                         'Сайт': site,
-                        'Общая выручка': revenue,
-                        'Выручка за 2021': revenue2021,
-                        'Выручка за 2022': revenue2022,
+                        # 'Общая выручка': revenue,
                         'Выручка за 2023': revenue2023,
-                        'Чистая прибыль за 2021 (убыток)': profit2021,
-                        'Чистая прибыль за 2022 (убыток)': profit2022,
+                        'Выручка за 2022': revenue2022,
+                        'Выручка за 2021': revenue2021,
                         'Чистая прибыль за 2023 (убыток)': profit2023,
+                        'Чистая прибыль за 2022 (убыток)': profit2022,
+                        'Чистая прибыль за 2021 (убыток)': profit2021,
                     }
                 )
 
