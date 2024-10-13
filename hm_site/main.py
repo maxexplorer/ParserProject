@@ -845,7 +845,6 @@ def main():
 
             # id_region = id_region_dict.get(region)
             # get_category_urls(driver=driver, region=region, id_region=id_region)
-
         else:
             raise ValueError('Введено неправильное значение')
 
