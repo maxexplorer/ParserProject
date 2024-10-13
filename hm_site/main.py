@@ -165,7 +165,7 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                         count += 1
 
                         if count > 5:
-                            raise 'disconnected: not connected to DevTools'
+                            raise ex
                         continue
 
                     if not html:
@@ -251,7 +251,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
                 count += 1
 
                 if count > 5:
-                    raise 'disconnected: not connected to DevTools'
+                    raise ex
                 continue
 
             if not html:
@@ -534,7 +534,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 count += 1
 
                 if count > 5:
-                    raise 'disconnected: not connected to DevTools'
+                    raise ex
                 continue
 
             if not html:
