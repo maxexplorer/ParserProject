@@ -174,10 +174,10 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     soup = BeautifulSoup(html, 'lxml')
 
                     try:
-                        product_items = soup.find('ul', class_='products-listing small').find_all('li')
+                        product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div', class_='a4d8ee')
                         for product_item in product_items:
                             try:
-                                product_url = f"https://www2.hm.com{product_item.find('a').get('href')}"
+                                product_url = product_item.find('a').get('href')
                             except Exception as ex:
                                 print(ex)
                                 continue
@@ -222,6 +222,8 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
                          region: str) -> None:
     result_data = []
 
+    count = 0
+
     for dict_item in products_data_list:
         product_urls = []
         key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
@@ -246,6 +248,10 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
+                count += 1
+
+                if count > 5:
+                    raise 'disconnected: not connected to DevTools'
                 continue
 
             if not html:
@@ -499,6 +505,8 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                       region: str, size_model_title: str) -> None:
     result_data = []
 
+    count = 0
+
     for dict_item in products_data_list:
         product_urls = []
         key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
@@ -523,6 +531,10 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
+                count += 1
+
+                if count > 5:
+                    raise 'disconnected: not connected to DevTools'
                 continue
 
             if not html:
