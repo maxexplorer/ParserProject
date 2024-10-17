@@ -423,7 +423,7 @@ def save_excel(data: list, brand: str, category: str, region: str) -> None:
 
 def main():
     brand = 'IKEA'
-    category = 'Посуда'
+    category = 'посуда'
 
     driver = init_chromedriver(headless_mode=True)
 
