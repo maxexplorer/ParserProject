@@ -380,7 +380,7 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
 
             # Записываем данные в Excel каждые 100 URL
             if len(result_data) >= batch_size:
-                save_excel(data=result_data, brand=brand, region=region)
+                save_excel(data=result_data, brand=brand, category=category, region=region)
                 result_data.clear()  # Очищаем список для следующей партии
 
         # Записываем оставшиеся данные в Excel
