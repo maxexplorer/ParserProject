@@ -15,7 +15,7 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_urls_list_dishes_pl
+from data.data import category_urls_list_cookware_pl
 from data.data import id_region_dict
 
 from functions import translator
@@ -449,7 +449,7 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # get_products_urls(driver=driver, category_urls_list=category_urls_list_dishes_pl, headers=headers, brand=brand,
+        # get_products_urls(driver=driver, category_urls_list=category_urls_list_cookware_pl, headers=headers, brand=brand,
         #                   category=category, region=region)
         directory = 'data'
         file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
