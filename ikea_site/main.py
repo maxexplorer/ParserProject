@@ -15,7 +15,7 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_urls_list_pl
+from data.data import category_urls_list_dishes_pl
 from data.data import id_region_dict
 
 from functions import translator
@@ -76,10 +76,10 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, region: str) -> None:
+def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, category: str, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+    file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
@@ -139,7 +139,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
 
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, headers: dict, brand: str, region: str) -> None:
+def get_products_data(products_urls: list, headers: dict, brand: str, category: str, region: str) -> None:
     result_data = []
     batch_size = 100
 
@@ -264,7 +264,8 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
                 dimension_props = product_information_dict['productInformationSection']['dimensionProps']
 
                 try:
-                    product_dimensions_original = ', '.join(f"{item['name']}: {item['measure']}" for item in dimension_props['dimensions'])
+                    product_dimensions_original = ', '.join(
+                        f"{item['name']}: {item['measure']}" for item in dimension_props['dimensions'])
                     product_dimensions = translator(product_dimensions_original)
                 except Exception:
                     product_dimensions = None
@@ -380,17 +381,15 @@ def get_products_data(products_urls: list, headers: dict, brand: str, region: st
             # Записываем данные в Excel каждые 100 URL
             if len(result_data) >= batch_size:
                 save_excel(data=result_data, brand=brand, region=region)
-                result_data.clear() # Очищаем список для следующей партии
+                result_data.clear()  # Очищаем список для следующей партии
 
         # Записываем оставшиеся данные в Excel
         if result_data:
-            save_excel(data=result_data, brand=brand, region=region)
-
-
+            save_excel(data=result_data, brand=brand, category=category, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, region: str) -> None:
+def save_excel(data: list, brand: str, category: str, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -398,7 +397,7 @@ def save_excel(data: list, brand: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{brand}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{brand}_{category}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -424,8 +423,9 @@ def save_excel(data: list, brand: str, region: str) -> None:
 
 def main():
     brand = 'IKEA'
+    category = 'Посуда'
 
-    # driver = init_chromedriver(headless_mode=True)
+    driver = init_chromedriver(headless_mode=True)
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
 
@@ -449,13 +449,14 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # get_products_urls(driver=driver, category_urls_list=category_urls_list_pl, brand=brand, headers=headers, region=region)
-        directory = 'data'
-        file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
-        with open(file_path, 'r', encoding='utf-8') as file:
-            products_urls = [line.strip() for line in file.readlines()]
-
-        get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
+        get_products_urls(driver=driver, category_urls_list=category_urls_list_dishes_pl, headers=headers, brand=brand,
+                          category=category, region=region)
+        # directory = 'data'
+        # file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
+        # with open(file_path, 'r', encoding='utf-8') as file:
+        #     products_urls = [line.strip() for line in file.readlines()]
+        #
+        # get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
