@@ -425,7 +425,7 @@ def main():
     brand = 'IKEA'
     category = 'посуда'
 
-    driver = init_chromedriver(headless_mode=True)
+    # driver = init_chromedriver(headless_mode=True)
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
 
