@@ -295,8 +295,6 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
             except Exception:
                 pass
 
-            subcategory_name = 'Текстиль'
-
             result_data.append(
                 {
                     '№': None,
@@ -323,7 +321,7 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
                     'Размер производителя': product_dimensions_original,
                     'Статус наличия': None,
                     'Название цвета': color_original,
-                    'Тип*': subcategory_name,
+                    'Тип*': category,
                     'Пол*': None,
                     'Размер пеленки': None,
                     'ТН ВЭД коды ЕАЭС': None,
