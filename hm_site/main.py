@@ -100,11 +100,11 @@ def get_pages_pl(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('nav', {'aria-label': 'Paginacja'}).find_all('li')[-2].text.strip())
+        products_total = int(soup.find('h2', class_='load-more-heading').get('data-total'))
     except Exception:
-        pages = 1
+        products_total = 0
 
-    return pages
+    return products_total
 
 
 # Получаем количество страниц
@@ -143,49 +143,54 @@ def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: 
                     print(f"{category_url} - {ex}")
                     continue
 
+                products_total = 0
+
                 if region == 'Германия':
                     pages = get_pages_de(html=html)
                 elif region == 'Турция':
                     pages = get_pages_tr(html=html)
                 elif region == 'Польша':
-                    pages = get_pages_pl(html=html)
+                    products_total = get_pages_pl(html=html)
                 else:
-                    pages = get_pages_de(html=html)
+                    products_total = 0
 
-                print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
+                print(f'В категории {category_name}/{subcategory_name}: {products_total} товаров!')
 
-                for page in range(1, pages + 1):
-                    page_product_url = f"{category_url}?page={page}"
-                    try:
-                        driver.get(url=page_product_url)
-                        time.sleep(1)
-                        html = driver.page_source
-                    except Exception as ex:
-                        print(f"{page_product_url} - {ex}")
-                        count += 1
+                # for page in range(1, pages + 1):
+                page_product_url = f"{category_url}?sort=stock&image-size=small&image=model&offset=0&page-size={products_total}"
+                try:
+                    driver.get(url=page_product_url)
+                    driver.execute_script("window.scrollTo(0, 2000);")
+                    time.sleep(1)
+                    # driver.execute_script("window.scrollTo(0, 4000);")
+                    # time.sleep(1)
+                    html = driver.page_source
+                except Exception as ex:
+                    print(f"{page_product_url} - {ex}")
+                    count += 1
 
-                        if count > 5:
-                            raise ex
-                        continue
+                    if count > 5:
+                        raise ex
+                    continue
 
-                    if not html:
-                        continue
+                if not html:
+                    continue
 
-                    soup = BeautifulSoup(html, 'lxml')
+                soup = BeautifulSoup(html, 'lxml')
 
-                    try:
-                        product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div', class_='a4d8ee')
-                        for product_item in product_items:
-                            try:
-                                product_url = product_item.find('a').get('href')
-                            except Exception as ex:
-                                print(ex)
-                                continue
-                            products_urls.append(product_url)
-                    except Exception as ex:
-                        print(ex)
+                try:
+                    product_items = soup.find('ul', {'class': 'products-listing small'}).find_all('div', class_='image-container')
+                    for product_item in product_items:
+                        try:
+                            product_url = f"https://www2.hm.com{product_item.find('a').get('href')}"
+                        except Exception as ex:
+                            print(ex)
+                            continue
+                        products_urls.append(product_url)
+                except Exception as ex:
+                    print(ex)
 
-                    print(f'Обработано: {page}/{pages} страниц')
+                print(f'Обработано: {products_total} ссылок товаров!')
 
                 if not os.path.exists(directory):
                     os.makedirs(directory)
@@ -548,7 +553,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 id_product = None
 
             try:
-                data = soup.find('div', class_='product parbase')
+                data = soup.find('div', class_='rOGz')
             except Exception as ex:
                 print(f'data: {product_url} - {ex}')
                 continue
@@ -584,15 +589,16 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                     price = None
 
             try:
-                color_original = data.find('h3', class_='product-input-label').text.strip().lower()
+                color_original = data.find('div', {'data-testid': 'color-selector'}).find('p').text.strip('-').lower()
             except Exception:
                 color_original = None
 
             try:
                 images_urls_list = []
-                images_items = data.find('div', class_='sticky-candidate').find_all('figure')
+                images_items = data.find('ul', {'data-testid': 'grid-gallery'}).find_all('li')
                 for item in images_items:
-                    image_url = f"https:{item.find('img').get('src')}"
+                    image_url = item.find('img').get('src')
+                    image_url = image_url.split('?')[0]
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
@@ -668,19 +674,25 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 care = None
 
             try:
-                sizes_items = data.find('hm-size-selector', class_='size-selector').find_all('li')
+                sizes_items = data.find('ul', {'aria-labelledby': 'sizeSelector'}).find_all('li')
+            except Exception:
+                sizes_items = [' ']
 
+            try:
                 for size_item in sizes_items:
-                    size_eur = size_item.find('input').get('id')
                     try:
-                        size_availability = size_item.find('input', {'type': 'radio'}).has_attr('disabled')
+                        size_eur = size_item.find('input').get('id')
+                    except Exception:
+                        size_eur = 'ONESIZE'
+                    try:
+                        size_availability = size_item.find('label').find('span').text.strip()
                     except Exception:
                         size_availability = None
 
                     if not size_availability:
                         status_size = 'в наличии'
                     else:
-                        status_size = 'нет в наличии'
+                        status_size = translator(size_availability).lower()
 
                     try:
                         size_rus = sizes_dict[category_name][size_eur]
@@ -784,7 +796,7 @@ def save_excel(data: list, species: str, brand: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_Аксессуары_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
