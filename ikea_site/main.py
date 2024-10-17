@@ -133,7 +133,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
+            get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
 
             print(f'Обработано: {category_url}')
 
@@ -449,14 +449,14 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        get_products_urls(driver=driver, category_urls_list=category_urls_list_dishes_pl, headers=headers, brand=brand,
-                          category=category, region=region)
-        # directory = 'data'
-        # file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     products_urls = [line.strip() for line in file.readlines()]
-        #
-        # get_products_data(products_urls=products_urls, headers=headers, brand=brand, region=region)
+        # get_products_urls(driver=driver, category_urls_list=category_urls_list_dishes_pl, headers=headers, brand=brand,
+        #                   category=category, region=region)
+        directory = 'data'
+        file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            products_urls = [line.strip() for line in file.readlines()]
+
+        get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
