@@ -63,12 +63,7 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages_list = list(map(int, filter(lambda x: x.isdigit(),
-                                          soup.find('div', class_='catalog-product-list__total-count').text.split())))
-        if len(pages_list) == 2:
-            pages = ceil(pages_list[1] / 48) + 1
-        else:
-            pages = 1
+        pages = soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3')
     except Exception:
         pages = 1
 
@@ -76,16 +71,16 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, category: str, region: str) -> None:
+def get_products_urls(category_urls_list: list, headers: dict, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
+    file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
 
     with Session() as session:
-        for i, category_url in enumerate(category_urls_list, 1):
+        for category_name, category_url in category_urls_list:
             products_urls = []
 
-            print(f'Обрабатывается категория: {category_url}')
+            print(f'Обрабатывается категория: {category_name} url: {category_url}')
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -97,12 +92,14 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
             for page in range(1, pages + 1):
                 category_page_url = f"{category_url}?page={page}"
                 try:
-                    driver.get(url=category_page_url)
-                    driver.execute_script("window.scrollTo(0, 2000);")
                     time.sleep(1)
+                    html = get_html(url=category_url, headers=headers, session=session)
+                    # driver.get(url=category_page_url)
+                    # driver.execute_script("window.scrollTo(0, 2000);")
+                    # time.sleep(1)
                     # driver.execute_script("window.scrollTo(0, 4000);")
                     # time.sleep(1)
-                    html = driver.page_source
+                    # html = driver.page_source
                 except Exception as ex:
                     print(f"{category_page_url} - {ex}")
                     continue
@@ -420,9 +417,6 @@ def save_excel(data: list, brand: str, category: str, region: str) -> None:
 
 
 def main():
-    brand = 'IKEA'
-    category = 'посуда'
-
     # driver = init_chromedriver(headless_mode=True)
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
@@ -447,8 +441,7 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, brand=brand,
-                          category=category, region=region)
+        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
         # directory = 'data'
         # file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
         # with open(file_path, 'r', encoding='utf-8') as file:
