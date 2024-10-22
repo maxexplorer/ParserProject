@@ -63,9 +63,9 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3')
+        pages = int(soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3').find_all('li')[-2].text.strip())
     except Exception:
-        pages = 1
+        pages = 0
 
     return pages
 
@@ -84,22 +84,19 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
+
+                # with open('data/index.html', 'w', encoding='utf-8') as file:
+                #     file.write(html)
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
             pages = get_pages(html=html)
 
-            for page in range(1, pages + 1):
-                category_page_url = f"{category_url}?page={page}"
+            for page in range(pages):
+                category_page_url = f"{category_url}?counter={page}"
                 try:
                     time.sleep(1)
-                    html = get_html(url=category_url, headers=headers, session=session)
-                    # driver.get(url=category_page_url)
-                    # driver.execute_script("window.scrollTo(0, 2000);")
-                    # time.sleep(1)
-                    # driver.execute_script("window.scrollTo(0, 4000);")
-                    # time.sleep(1)
-                    # html = driver.page_source
+                    html = get_html(url=category_page_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{category_page_url} - {ex}")
                     continue
@@ -110,8 +107,7 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    product_items = soup.find('div', class_='plp-product-list__products').find_all('div',
-                                                                                                   class_='plp-fragment-wrapper')
+                    product_items = soup.find('section', class_='search products d-flex flex-wrap mb-2 mb-sm-3').find_all('div', class_='product col-6 col-sm-4 col-xl-3 pt-3 pb-md-3')
                     for product_item in product_items:
                         try:
                             product_url = product_item.find('a').get('href')
@@ -130,9 +126,9 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
+            # get_products_data(products_urls=products_urls, headers=headers, category_name=category_name, region=region)
 
-            print(f'Обработано: {category_url}')
+            print(f'Обработана категория: {category_name} url: {category_url}')
 
 
 # Функция получения данных товаров
@@ -443,7 +439,7 @@ def main():
         print(f'Курс PLN/RUB: {currency}')
         get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
         # directory = 'data'
-        # file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
+        # file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
         # with open(file_path, 'r', encoding='utf-8') as file:
         #     products_urls = [line.strip() for line in file.readlines()]
         #
