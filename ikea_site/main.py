@@ -82,7 +82,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
     file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
 
     with Session() as session:
-        for i, category_url in enumerate(category_urls_list, 1):
+        for category_url in category_urls_list:
             products_urls = []
 
             print(f'Обрабатывается категория: {category_url}')
