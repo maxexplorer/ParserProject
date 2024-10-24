@@ -1,8 +1,9 @@
 import json
 import os
+import re
 import time
 from datetime import datetime
-from math import ceil
+from random import randint
 
 from requests import Session
 
@@ -63,9 +64,10 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3').find_all('li')[-2].text.strip())
+        pages = int(
+            soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3').find_all('li')[-2].text.strip())
     except Exception:
-        pages = 0
+        pages = 1
 
     return pages
 
@@ -83,16 +85,15 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
             print(f'Обрабатывается категория: {category_name} url: {category_url}')
 
             try:
+                time.sleep(randint(3, 5))
                 html = get_html(url=category_url, headers=headers, session=session)
 
-                # with open('data/index.html', 'w', encoding='utf-8') as file:
-                #     file.write(html)
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
             pages = get_pages(html=html)
 
-            for page in range(pages):
+            for page in range(0, pages):
                 category_page_url = f"{category_url}?counter={page}"
                 try:
                     time.sleep(1)
@@ -107,7 +108,9 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    product_items = soup.find('section', class_='search products d-flex flex-wrap mb-2 mb-sm-3').find_all('div', class_='product col-6 col-sm-4 col-xl-3 pt-3 pb-md-3')
+                    product_items = soup.find('section',
+                                              class_='search products d-flex flex-wrap mb-2 mb-sm-3').find_all('div',
+                                                                                                               class_='product col-6 col-sm-4 col-xl-3 pt-3 pb-md-3')
                     for product_item in product_items:
                         try:
                             product_url = product_item.find('a').get('href')
@@ -118,7 +121,7 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
                 except Exception as ex:
                     print(ex)
 
-                print(f'Обработано: {page}/{pages} страниц')
+                print(f'Обработано: {page + 1}/{pages} страниц')
 
             if not os.path.exists(directory):
                 os.makedirs(directory)
@@ -126,13 +129,13 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            # get_products_data(products_urls=products_urls, headers=headers, category_name=category_name, region=region)
+            # get_products_data(products_urls=products_urls, headers=headers, region=region)
 
             print(f'Обработана категория: {category_name} url: {category_url}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, headers: dict, brand: str, category: str, region: str) -> None:
+def get_products_data(products_urls: list, headers: dict, region: str) -> None:
     result_data = []
     batch_size = 100
 
@@ -143,7 +146,7 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
     with Session() as session:
         for i, product_url in enumerate(products_urls, 1):
             try:
-                time.sleep(1)
+                time.sleep(randint(1, 3))
                 html = get_html(url=product_url, headers=headers, session=session)
 
             except Exception as ex:
@@ -155,52 +158,69 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
 
             soup = BeautifulSoup(html, 'lxml')
 
+            # with open('data/index1.html', 'w', encoding='utf-8') as file:
+            #     file.write(soup.prettify())
+
             try:
-                data = soup.find('main', id='content')
+                id_product = product_url.split('-')[-1]
+            except Exception:
+                id_product = None
+
+            try:
+                category_list = soup.find('div', class_='list_wrapper')
+                try:
+                    product_name_original = category_list.find('li', class_='bc-active bc-product-name').text.strip()
+                    product_name_ru = translator(product_name_original)
+                except Exception:
+                    product_name_original = None
+                    product_name_ru = None
+                try:
+                    category_name = '/'.join(
+                        category.text.strip() for category in category_list.find_all('a', class_='category'))
+                except Exception:
+                    category_name = None
+
+            except Exception:
+                pass
+
+            try:
+                data = soup.find('div', id='content')
             except Exception as ex:
                 print(f'data: {product_url} - {ex}')
                 continue
 
             try:
-                product_information_json = data.find('div',
-                                                     class_="pip-product__subgrid product-pip js-product-pip").get(
-                    'data-hydration-props')
-
-                product_information_dict = json.loads(product_information_json)
+                brand = data.find('span', class_='dictionary__name_txt', string=re.compile('Brand')).find_next(
+                    'a', class_='dictionary__value_txt').text.strip()
             except Exception:
-                continue
+                brand = True
 
             try:
-                id_product = product_information_dict['buyModule']['productNumber']
-            except Exception:
-                id_product = None
-
-            try:
-                product_name_original = product_information_dict['pipPriceModule']['productName'].capitalize()
-                product_description_original = product_information_dict['pipPriceModule']['productDescription']
-                product_name_ru = translator(product_name_original)
-                product_name = f'IKEA {product_name_original} {product_name_ru} {translator(product_description_original).lower()}'
-            except Exception:
-                product_name = None
-
-            try:
-                price = product_information_dict['pipPriceModule']['price']['mainPriceProps']['price']['integer']
+                price = None
             except Exception:
                 price = None
 
             try:
-                color_original = product_information_dict['productStylePicker']['variationStyles'][0]['selectedOption']
-                color = translator(color_original)
+                color_original = None
+                # color = translator(color_original)
             except Exception:
                 color_original = None
                 color = None
 
             try:
                 images_urls_list = []
-                product_gallery = product_information_dict['productGallery']['mediaList']
-                for item_gallery in product_gallery:
-                    image_url = item_gallery['content']['url']
-                    images_urls_list.append(image_url)
+                images_items = data.find('section', id='projector_photos').find_all('figure')
+                for item in images_items:
+                    try:
+                        image_url = item.find('img').get('href')
+                    except Exception:
+                        image_url = None
+                    if not image_url:
+                        try:
+                            image_url = item.find('img').get('src')
+                        except Exception:
+                            image_url = None
+                images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
             except Exception:
@@ -437,13 +457,15 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
+        # get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
         # directory = 'data'
         # file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
         # with open(file_path, 'r', encoding='utf-8') as file:
         #     products_urls = [line.strip() for line in file.readlines()]
         #
-        # get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
+        products_urls = [
+            'https://arkonasports.pl/en/products/skates/recreational-skates/jackson-classic-200-yth-figure-skates-1152035668']
+        get_products_data(products_urls=products_urls, headers=headers, region=region)
     else:
         raise ValueError('Введено неправильное значение')
 
