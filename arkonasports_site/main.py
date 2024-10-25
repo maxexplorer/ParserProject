@@ -166,6 +166,11 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
             soup = BeautifulSoup(html, 'lxml')
 
             try:
+                product_id = product_url.split('-')[-1]
+            except Exception:
+                product_id = None
+
+            try:
                 category_list = soup.find('div', class_='list_wrapper')
                 try:
                     product_name_original = category_list.find('li', class_='bc-active bc-product-name').text.strip()
@@ -218,12 +223,12 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                 images_items = data.find('section', id='projector_photos').find_all('figure')
                 for item in images_items:
                     try:
-                        image_url = item.find('img').get('href')
+                        image_url = item.find('a').get('href')
                     except Exception:
                         image_url = None
                     if not image_url:
                         try:
-                            image_url = item.find('img').get('src')
+                            image_url = item.find('a').get('src')
                         except Exception:
                             image_url = None
                     images_urls_list.append(image_url)
@@ -255,17 +260,14 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     try:
                         # Преобразуем JSON-строку в Python-объект
                         product_dict = json.loads(json_str)
-                    except json.JSONDecodeError as e:
-                        print("Ошибка при декодировании JSON:", e)
+                    except json.JSONDecodeError as ex:
+                        print(f'Ошибка при декодировании JSON: {ex} url: {product_url}')
+
                 else:
                     print("JSON не найден")
             except Exception as ex:
                 print(f'html_data: {ex}')
 
-            try:
-                product_id = product_dict['product_id']
-            except Exception:
-                product_id = None
             try:
                 sizes_dict = product_dict['sizes']
             except Exception:
