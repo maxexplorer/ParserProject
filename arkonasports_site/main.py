@@ -377,10 +377,6 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
 
             print(f'Обработано: {i}/{count_urls} товаров!')
 
-        # Записываем оставшиеся данные в Excel
-        if result_data:
-            save_excel(data=result_data, region=region)
-
         if get_version_urls:
             if not os.path.exists(directory):
                 os.makedirs(directory)
