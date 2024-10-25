@@ -78,6 +78,8 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
     directory = 'data'
     file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
 
+    products_urls_set = set()
+
     with Session() as session:
         for category_name, category_url in category_urls_list:
             products_urls = []
@@ -118,25 +120,31 @@ def get_products_urls(category_urls_list: list, headers: dict, region: str) -> N
                             print(ex)
                             continue
                         products_urls.append(product_url)
+                        products_urls_set.add(product_url)
                 except Exception as ex:
                     print(ex)
 
                 print(f'Обработано: {page + 1}/{pages} страниц')
 
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-
-            with open(file_path, 'a', encoding='utf-8') as file:
-                print(*products_urls, file=file, sep='\n')
-
-            # get_products_data(products_urls=products_urls, headers=headers, region=region)
+            get_products_data(products_urls=products_urls, headers=headers, region=region)
 
             print(f'Обработана категория: {category_name} url: {category_url}')
 
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(file_path, 'a', encoding='utf-8') as file:
+            print(*products_urls_set, file=file, sep='\n')
+
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, headers: dict, region: str) -> None:
+def get_products_data(products_urls: list, headers: dict, region: str, get_version_urls=True) -> None:
+    # Путь к файлу для сохранения URL продуктов
+    directory = 'data'
+    file_path = f'{directory}/url_version_list_arkonasports_{region}.txt'
+
     result_data = []
+    version_urls_set = set()
     batch_size = 100
 
     count_urls = len(products_urls)
@@ -158,22 +166,14 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
 
             soup = BeautifulSoup(html, 'lxml')
 
-            # with open('data/index1.html', 'w', encoding='utf-8') as file:
-            #     file.write(soup.prettify())
-
-            try:
-                id_product = product_url.split('-')[-1]
-            except Exception:
-                id_product = None
-
             try:
                 category_list = soup.find('div', class_='list_wrapper')
                 try:
                     product_name_original = category_list.find('li', class_='bc-active bc-product-name').text.strip()
-                    product_name_ru = translator(product_name_original)
+                    product_name = translator(product_name_original)
                 except Exception:
-                    product_name_original = None
-                    product_name_ru = None
+                    product_name = None
+
                 try:
                     category_name = '/'.join(
                         category.text.strip() for category in category_list.find_all('a', class_='category'))
@@ -190,22 +190,29 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 continue
 
             try:
+                versions_items = data.find('div', class_='projector_versions__sub').find_all('option')
+
+                for version_item in versions_items:
+                    # Проверяем, есть ли у элемента атрибут 'selected'
+                    if version_item.get('selected') is not None:
+                        try:
+                            category_size = version_item.text.strip()
+                        except Exception:
+                            category_size = None
+                    elif get_version_urls:
+                        try:
+                            version_url = f"https://arkonasports.pl{version_item.get('data-link')}"
+                        except Exception:
+                            version_url = None
+                        version_urls_set.add(version_url)
+            except Exception:
+                category_size = None
+
+            try:
                 brand = data.find('span', class_='dictionary__name_txt', string=re.compile('Brand')).find_next(
                     'a', class_='dictionary__value_txt').text.strip()
             except Exception:
                 brand = True
-
-            try:
-                price = None
-            except Exception:
-                price = None
-
-            try:
-                color_original = None
-                # color = translator(color_original)
-            except Exception:
-                color_original = None
-                color = None
 
             try:
                 images_urls_list = []
@@ -228,179 +235,165 @@ def get_products_data(products_urls: list, headers: dict, region: str) -> None:
                 additional_images_urls = None
 
             try:
-                product_details_props = product_information_dict['productInformationSection']['productDetailsProps']
-                try:
-                    paragraphs = ' '.join(
-                        paragraph for paragraph in product_details_props['productDescriptionProps']['paragraphs'])
-                except Exception:
-                    paragraphs = None
-                try:
-                    designer_label = product_details_props['productDescriptionProps']['designerLabel']
-                except Exception:
-                    designer_label = None
-                try:
-                    designer_name = product_details_props['productDescriptionProps']['designerName']
-                except Exception:
-                    designer_name = None
-
-                description_original = f'{paragraphs} {designer_label} {designer_name}'
+                description_original = data.find('section', id='projector_longdescription').text.strip()
                 description = translator(description_original)
-
-                try:
-                    materials_and_care = product_details_props['accordionObject']['materialsAndCare']['contentProps']
-                    try:
-                        materials_original = ' '.join(
-                            material_info['material'] for material_group in materials_and_care['materials'] for
-                            material_info in material_group['materials'])
-                        materials = translator(materials_original)
-                        material_items = materials.split()
-                        material = material_items[1].rstrip(',')
-                        if material == '%':
-                            material = material_items[2].rstrip(',')
-                    except Exception:
-                        materials = None
-                        material = None
-                    try:
-                        care_original = ' '.join(
-                            care_info for care_group in materials_and_care['careInstructions'] for
-                            care_info in care_group['texts'])
-                        care = translator(care_original)
-                    except Exception:
-                        care = None
-
-                except Exception:
-                    pass
             except Exception:
                 description = None
 
             try:
-                dimension_props = product_information_dict['productInformationSection']['dimensionProps']
+                html_data = data.find('script', class_='ajaxLoad').text.strip()
+                html = ''.join(i.strip() for i in html_data.splitlines())
 
+                # Используем регулярное выражение, чтобы найти JSON
+                # pattern = r'{"product_id".*'
+                pattern = r'(?<=product_data\s=\s)(\{.*?\})(?=\s*var)'
+                match = re.search(pattern, html)
+
+                if match:
+                    # json_str = match.group(0).rstrip(
+                    #     " var  trust_level = '1'; </script>").strip().replace("'", '"')  # Извлекаем строку с JSON
+                    json_str = match.group(0).replace("'", '"')
+                    try:
+                        # Преобразуем JSON-строку в Python-объект
+                        product_data = json.loads(json_str)
+                    except json.JSONDecodeError as e:
+                        print("Ошибка при декодировании JSON:", e)
+                else:
+                    print("JSON не найден")
+            except Exception as ex:
+                print(f'html_data: {ex}')
+
+            for item in product_data:
                 try:
-                    product_dimensions_original = ', '.join(
-                        f"{item['name']}: {item['measure']}" for item in dimension_props['dimensions'])
-                    product_dimensions = translator(product_dimensions_original)
+                    product_id = item['product_id']
                 except Exception:
-                    product_dimensions = None
-
+                    product_id = None
                 try:
-                    packaging_items = dimension_props['packaging']['contentProps']['packages'][0]['measurements'][0]
-                    packaging_dict = {item['type']: item['text'] for item in packaging_items}
-
-                    try:
-                        pack_width = int(packaging_dict['width'].split()[0]) * 10
-                    except Exception:
-                        pack_width = None
-                    try:
-                        pack_height = int(packaging_dict['height'].split()[0]) * 10
-                    except Exception:
-                        pack_height = None
-                    try:
-                        pack_length = int(packaging_dict['length'].split()[0]) * 10
-                    except Exception:
-                        pack_length = None
-                    try:
-                        pack_weight = float(packaging_dict['weight'].split()[0]) * 1000
-                    except Exception:
-                        pack_weight = None
+                    size_items = item['size']
                 except Exception:
-                    pass
-            except Exception:
-                pass
+                    size_items = {}
+                for size_item in size_items:
+                    try:
+                        if category_size:
+                            size = f"{category_size}/{size_item['name']}"
+                        else:
+                            size = size_item['name']
+                    except Exception:
+                        size = None
+                    try:
+                        quantity = size_item['quantity']
+                    except Exception:
+                        quantity = None
+                    if quantity:
+                        status_size = 'в наличии'
+                    else:
+                        status_size = 'нет в наличии'
+                    try:
+                        price = size_item['price']['value']
+                    except Exception:
+                        price = None
 
-            result_data.append(
-                {
-                    '№': None,
-                    'Артикул': id_product,
-                    'Название товара': product_name,
-                    'Цена, руб.*': price,
-                    'Цена до скидки, руб.': None,
-                    'НДС, %*': None,
-                    'Включить продвижение': None,
-                    'Ozon ID': id_product,
-                    'Штрихкод (Серийный номер / EAN)': None,
-                    'Вес в упаковке, г*': pack_weight,
-                    'Ширина упаковки, мм*': pack_width,
-                    'Высота упаковки, мм*': pack_height,
-                    'Длина упаковки, мм*': pack_length,
-                    'Ссылка на главное фото*': main_image_url,
-                    'Ссылки на дополнительные фото': additional_images_urls,
-                    'Ссылки на фото 360': None,
-                    'Артикул фото': None,
-                    'Бренд в одежде и обуви*': brand,
-                    'Объединить на одной карточке*': id_product,
-                    'Цвет товара*': color,
-                    'Российский размер*': product_dimensions,
-                    'Размер производителя': product_dimensions_original,
-                    'Статус наличия': None,
-                    'Название цвета': color_original,
-                    'Тип*': category,
-                    'Пол*': None,
-                    'Размер пеленки': None,
-                    'ТН ВЭД коды ЕАЭС': None,
-                    'Ключевые слова': None,
-                    'Сезон': None,
-                    'Рост модели на фото': None,
-                    'Параметры модели на фото': None,
-                    'Размер товара на фото': None,
-                    'Коллекция': None,
-                    'Страна-изготовитель': None,
-                    'Вид принта': None,
-                    'Аннотация': description,
-                    'Инструкция по уходу': care,
-                    'Серия в одежде и обуви': None,
-                    'Материал': material,
-                    'Состав материала': materials,
-                    'Материал подклада/внутренней отделки': None,
-                    'Материал наполнителя': None,
-                    'Утеплитель, гр': None,
-                    'Диапазон температур, °С': None,
-                    'Стиль': None,
-                    'Вид спорта': None,
-                    'Вид одежды': None,
-                    'Тип застежки': None,
-                    'Длина рукава': None,
-                    'Талия': None,
-                    'Для беременных или новорожденных': None,
-                    'Тип упаковки одежды': None,
-                    'Количество в упаковке': None,
-                    'Состав комплекта': None,
-                    'Рост': None,
-                    'Длина изделия, см': None,
-                    'Длина подола': None,
-                    'Форма воротника/горловины': None,
-                    'Детали': None,
-                    'Таблица размеров JSON': None,
-                    'Rich-контент JSON': None,
-                    'Плотность, DEN': None,
-                    'Количество пар в упаковке': None,
-                    'Класс компрессии': None,
-                    'Персонаж': None,
-                    'Праздник': None,
-                    'Тематика карнавальных костюмов': None,
-                    'Признак 18+': None,
-                    'Назначение спецодежды': None,
-                    'HS-код': None,
-                    'Количество заводских упаковок': None,
-                    'Ошибка': None,
-                    'Предупреждение': None,
-                }
-            )
 
-            print(f'Обработано: {i}/{count_urls} товаров!')
+                    result_data.append(
+                        {
+                            '№': None,
+                            'Артикул': product_id,
+                            'Название товара': product_name,
+                            'Цена, руб.*': price,
+                            'Цена до скидки, руб.': price,
+                            'НДС, %*': None,
+                            'Включить продвижение': None,
+                            'Ozon ID': product_id,
+                            'Штрихкод (Серийный номер / EAN)': None,
+                            'Вес в упаковке, г*': None,
+                            'Ширина упаковки, мм*': None,
+                            'Высота упаковки, мм*': None,
+                            'Длина упаковки, мм*': None,
+                            'Ссылка на главное фото*': main_image_url,
+                            'Ссылки на дополнительные фото': additional_images_urls,
+                            'Ссылки на фото 360': None,
+                            'Артикул фото': None,
+                            'Бренд в одежде и обуви*': brand,
+                            'Объединить на одной карточке*': product_id,
+                            'Цвет товара*': None,
+                            'Российский размер*': size,
+                            'Размер производителя': size,
+                            'Статус наличия': status_size,
+                            'Название цвета': None,
+                            'Тип*': category_name,
+                            'Пол*': None,
+                            'Размер пеленки': None,
+                            'ТН ВЭД коды ЕАЭС': None,
+                            'Ключевые слова': None,
+                            'Сезон': None,
+                            'Рост модели на фото': None,
+                            'Параметры модели на фото': None,
+                            'Размер товара на фото': None,
+                            'Коллекция': None,
+                            'Страна-изготовитель': None,
+                            'Вид принта': None,
+                            'Аннотация': description,
+                            'Инструкция по уходу': None,
+                            'Серия в одежде и обуви': None,
+                            'Материал': None,
+                            'Состав материала': None,
+                            'Материал подклада/внутренней отделки': None,
+                            'Материал наполнителя': None,
+                            'Утеплитель, гр': None,
+                            'Диапазон температур, °С': None,
+                            'Стиль': None,
+                            'Вид спорта': None,
+                            'Вид одежды': None,
+                            'Тип застежки': None,
+                            'Длина рукава': None,
+                            'Талия': None,
+                            'Для беременных или новорожденных': None,
+                            'Тип упаковки одежды': None,
+                            'Количество в упаковке': None,
+                            'Состав комплекта': None,
+                            'Рост': None,
+                            'Длина изделия, см': None,
+                            'Длина подола': None,
+                            'Форма воротника/горловины': None,
+                            'Детали': None,
+                            'Таблица размеров JSON': None,
+                            'Rich-контент JSON': None,
+                            'Плотность, DEN': None,
+                            'Количество пар в упаковке': None,
+                            'Класс компрессии': None,
+                            'Персонаж': None,
+                            'Праздник': None,
+                            'Тематика карнавальных костюмов': None,
+                            'Признак 18+': None,
+                            'Назначение спецодежды': None,
+                            'HS-код': None,
+                            'Количество заводских упаковок': None,
+                            'Ошибка': None,
+                            'Предупреждение': None,
+                        }
+                    )
 
-            # Записываем данные в Excel каждые 100 URL
-            if len(result_data) >= batch_size:
-                save_excel(data=result_data, brand=brand, category=category, region=region)
-                result_data.clear()  # Очищаем список для следующей партии
+                    print(f'Обработано: {i}/{count_urls} товаров!')
+
+                    # Записываем данные в Excel каждые 100 URL
+                    if len(result_data) >= batch_size:
+                        save_excel(data=result_data, region=region)
+                        result_data.clear()  # Очищаем список для следующей партии
 
         # Записываем оставшиеся данные в Excel
         if result_data:
-            save_excel(data=result_data, brand=brand, category=category, region=region)
+            save_excel(data=result_data, region=region)
+
+        if get_version_urls:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+            with open(file_path, 'a', encoding='utf-8') as file:
+                print(*version_urls_set, file=file, sep='\n')
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, category: str, region: str) -> None:
+def save_excel(data: list, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -408,7 +401,7 @@ def save_excel(data: list, brand: str, category: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{brand}_{category}_{region}.xlsx'
+    file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -457,15 +450,28 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
-        # directory = 'data'
-        # file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     products_urls = [line.strip() for line in file.readlines()]
-        #
-        products_urls = [
-            'https://arkonasports.pl/en/products/skates/recreational-skates/jackson-classic-200-yth-figure-skates-1152035668']
-        get_products_data(products_urls=products_urls, headers=headers, region=region)
+        get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
+
+
+        # Путь к файлу для сохранения URL продуктов
+        directory = 'data'
+        file_path_product_list = f'{directory}/url_products_list_arkonasports_{region}.txt'
+        file_path_version_list = f'{directory}/url_version_list_arkonasports_{region}.txt'
+
+        # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+        with open(file_path_product_list, 'r', encoding='utf-8') as file:
+            product_urls = set(line.strip() for line in file)
+
+        # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+        with open(file_path_version_list, 'r', encoding='utf-8') as file:
+            version_urls = set(line.strip() for line in file)
+
+        # Выбираем URL, которые находятся в version_urls, но не в product_urls
+        unique_urls_list = list(version_urls - product_urls)
+
+        if unique_urls_list:
+            get_products_data(products_urls=unique_urls_list, headers=headers, region=region, get_version_urls=False)
+
     else:
         raise ValueError('Введено неправильное значение')
 
