@@ -452,7 +452,6 @@ def main():
         print(f'Курс PLN/RUB: {currency}')
         get_products_urls(category_urls_list=category_urls_list_pl, headers=headers, region=region)
 
-
         # Путь к файлу для сохранения URL продуктов
         directory = 'data'
         file_path_product_list = f'{directory}/url_products_list_arkonasports_{region}.txt'
@@ -470,6 +469,7 @@ def main():
         unique_urls_list = list(version_urls - product_urls)
 
         if unique_urls_list:
+            print(f'Получено {len(unique_urls_list)} дополнительных версий товаров!')
             get_products_data(products_urls=unique_urls_list, headers=headers, region=region, get_version_urls=False)
 
     else:
