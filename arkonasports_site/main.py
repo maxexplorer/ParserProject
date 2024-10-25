@@ -462,6 +462,10 @@ def main():
         unique_urls_list = list(version_urls - product_urls)
 
         if unique_urls_list:
+            # Сохраняем уникальные URL-адреса обратно в файл
+            with open(file_path_product_list, 'a', encoding='utf-8') as file:
+                print(*unique_urls_list, file=file, sep='\n')
+
             print(f'Получено {len(unique_urls_list)} дополнительных версий товаров!')
             get_products_data(products_urls=unique_urls_list, headers=headers, region=region, get_version_urls=False)
 
