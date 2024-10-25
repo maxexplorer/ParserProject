@@ -227,7 +227,7 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                             image_url = item.find('img').get('src')
                         except Exception:
                             image_url = None
-                images_urls_list.append(image_url)
+                    images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
             except Exception:
@@ -255,7 +255,7 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     json_str = match.group(0).replace("'", '"')
                     try:
                         # Преобразуем JSON-строку в Python-объект
-                        product_data = json.loads(json_str)
+                        product_dict = json.loads(json_str)
                     except json.JSONDecodeError as e:
                         print("Ошибка при декодировании JSON:", e)
                 else:
@@ -263,122 +263,122 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
             except Exception as ex:
                 print(f'html_data: {ex}')
 
-            for item in product_data:
+            try:
+                product_id = product_dict['product_id']
+            except Exception:
+                product_id = None
+            try:
+                sizes_dict = product_dict['sizes']
+            except Exception:
+                sizes_dict = {}
+
+            for key, value in sizes_dict.items():
                 try:
-                    product_id = item['product_id']
-                except Exception:
-                    product_id = None
-                try:
-                    size_items = item['size']
-                except Exception:
-                    size_items = {}
-                for size_item in size_items:
-                    try:
-                        if category_size:
-                            size = f"{category_size}/{size_item['name']}"
-                        else:
-                            size = size_item['name']
-                    except Exception:
-                        size = None
-                    try:
-                        quantity = size_item['quantity']
-                    except Exception:
-                        quantity = None
-                    if quantity:
-                        status_size = 'в наличии'
+                    if category_size:
+                        size = f"{category_size}/{value['name']}"
                     else:
-                        status_size = 'нет в наличии'
-                    try:
-                        price = size_item['price']['value']
-                    except Exception:
-                        price = None
+                        size = value['name']
+                except Exception:
+                    size = None
+                try:
+                    quantity = value['amount']
+                except Exception:
+                    quantity = None
+                if quantity:
+                    status_size = 'в наличии'
+                else:
+                    status_size = 'нет в наличии'
+                try:
+                    price = value['price']['value']
+                except Exception:
+                    price = None
 
 
-                    result_data.append(
-                        {
-                            '№': None,
-                            'Артикул': product_id,
-                            'Название товара': product_name,
-                            'Цена, руб.*': price,
-                            'Цена до скидки, руб.': price,
-                            'НДС, %*': None,
-                            'Включить продвижение': None,
-                            'Ozon ID': product_id,
-                            'Штрихкод (Серийный номер / EAN)': None,
-                            'Вес в упаковке, г*': None,
-                            'Ширина упаковки, мм*': None,
-                            'Высота упаковки, мм*': None,
-                            'Длина упаковки, мм*': None,
-                            'Ссылка на главное фото*': main_image_url,
-                            'Ссылки на дополнительные фото': additional_images_urls,
-                            'Ссылки на фото 360': None,
-                            'Артикул фото': None,
-                            'Бренд в одежде и обуви*': brand,
-                            'Объединить на одной карточке*': product_id,
-                            'Цвет товара*': None,
-                            'Российский размер*': size,
-                            'Размер производителя': size,
-                            'Статус наличия': status_size,
-                            'Название цвета': None,
-                            'Тип*': category_name,
-                            'Пол*': None,
-                            'Размер пеленки': None,
-                            'ТН ВЭД коды ЕАЭС': None,
-                            'Ключевые слова': None,
-                            'Сезон': None,
-                            'Рост модели на фото': None,
-                            'Параметры модели на фото': None,
-                            'Размер товара на фото': None,
-                            'Коллекция': None,
-                            'Страна-изготовитель': None,
-                            'Вид принта': None,
-                            'Аннотация': description,
-                            'Инструкция по уходу': None,
-                            'Серия в одежде и обуви': None,
-                            'Материал': None,
-                            'Состав материала': None,
-                            'Материал подклада/внутренней отделки': None,
-                            'Материал наполнителя': None,
-                            'Утеплитель, гр': None,
-                            'Диапазон температур, °С': None,
-                            'Стиль': None,
-                            'Вид спорта': None,
-                            'Вид одежды': None,
-                            'Тип застежки': None,
-                            'Длина рукава': None,
-                            'Талия': None,
-                            'Для беременных или новорожденных': None,
-                            'Тип упаковки одежды': None,
-                            'Количество в упаковке': None,
-                            'Состав комплекта': None,
-                            'Рост': None,
-                            'Длина изделия, см': None,
-                            'Длина подола': None,
-                            'Форма воротника/горловины': None,
-                            'Детали': None,
-                            'Таблица размеров JSON': None,
-                            'Rich-контент JSON': None,
-                            'Плотность, DEN': None,
-                            'Количество пар в упаковке': None,
-                            'Класс компрессии': None,
-                            'Персонаж': None,
-                            'Праздник': None,
-                            'Тематика карнавальных костюмов': None,
-                            'Признак 18+': None,
-                            'Назначение спецодежды': None,
-                            'HS-код': None,
-                            'Количество заводских упаковок': None,
-                            'Ошибка': None,
-                            'Предупреждение': None,
-                        }
-                    )
+                result_data.append(
+                    {
+                        '№': None,
+                        'Артикул': product_id,
+                        'Название товара': product_name,
+                        'Цена, руб.*': price,
+                        'Цена до скидки, руб.': price,
+                        'НДС, %*': None,
+                        'Включить продвижение': None,
+                        'Ozon ID': product_id,
+                        'Штрихкод (Серийный номер / EAN)': None,
+                        'Вес в упаковке, г*': None,
+                        'Ширина упаковки, мм*': None,
+                        'Высота упаковки, мм*': None,
+                        'Длина упаковки, мм*': None,
+                        'Ссылка на главное фото*': main_image_url,
+                        'Ссылки на дополнительные фото': additional_images_urls,
+                        'Ссылки на фото 360': None,
+                        'Артикул фото': None,
+                        'Бренд в одежде и обуви*': brand,
+                        'Объединить на одной карточке*': product_id,
+                        'Цвет товара*': None,
+                        'Российский размер*': size,
+                        'Размер производителя': size,
+                        'Статус наличия': status_size,
+                        'Название цвета': None,
+                        'Тип*': category_name,
+                        'Пол*': None,
+                        'Размер пеленки': None,
+                        'ТН ВЭД коды ЕАЭС': None,
+                        'Ключевые слова': None,
+                        'Сезон': None,
+                        'Рост модели на фото': None,
+                        'Параметры модели на фото': None,
+                        'Размер товара на фото': None,
+                        'Коллекция': None,
+                        'Страна-изготовитель': None,
+                        'Вид принта': None,
+                        'Аннотация': description,
+                        'Инструкция по уходу': None,
+                        'Серия в одежде и обуви': None,
+                        'Материал': None,
+                        'Состав материала': None,
+                        'Материал подклада/внутренней отделки': None,
+                        'Материал наполнителя': None,
+                        'Утеплитель, гр': None,
+                        'Диапазон температур, °С': None,
+                        'Стиль': None,
+                        'Вид спорта': None,
+                        'Вид одежды': None,
+                        'Тип застежки': None,
+                        'Длина рукава': None,
+                        'Талия': None,
+                        'Для беременных или новорожденных': None,
+                        'Тип упаковки одежды': None,
+                        'Количество в упаковке': None,
+                        'Состав комплекта': None,
+                        'Рост': None,
+                        'Длина изделия, см': None,
+                        'Длина подола': None,
+                        'Форма воротника/горловины': None,
+                        'Детали': None,
+                        'Таблица размеров JSON': None,
+                        'Rich-контент JSON': None,
+                        'Плотность, DEN': None,
+                        'Количество пар в упаковке': None,
+                        'Класс компрессии': None,
+                        'Персонаж': None,
+                        'Праздник': None,
+                        'Тематика карнавальных костюмов': None,
+                        'Признак 18+': None,
+                        'Назначение спецодежды': None,
+                        'HS-код': None,
+                        'Количество заводских упаковок': None,
+                        'Ошибка': None,
+                        'Предупреждение': None,
+                    }
+                )
 
-                    print(f'Обработано: {i}/{count_urls} товаров!')
+                print(f'Обработано: {i}/{count_urls} товаров!')
 
-                    # Записываем данные в Excel каждые 100 URL
-                    if len(result_data) >= batch_size:
-                        save_excel(data=result_data, region=region)
-                        result_data.clear()  # Очищаем список для следующей партии
+                # Записываем данные в Excel каждые 100 URL
+                if len(result_data) >= batch_size:
+                    save_excel(data=result_data, region=region)
+                    result_data.clear()  # Очищаем список для следующей партии
 
         # Записываем оставшиеся данные в Excel
         if result_data:
