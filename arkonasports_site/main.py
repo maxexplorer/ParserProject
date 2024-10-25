@@ -371,10 +371,9 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     }
                 )
 
-            save_excel(data=result_data, region=region)
-            result_data.clear()  # Очищаем список для следующей партии
+        print(f'Обработано: {i}/{count_urls} товаров!')
 
-            print(f'Обработано: {i}/{count_urls} товаров!')
+        save_excel(data=result_data, region=region)
 
         if get_version_urls:
             if not os.path.exists(directory):
