@@ -292,7 +292,6 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                 except Exception:
                     price = None
 
-
                 result_data.append(
                     {
                         '№': None,
