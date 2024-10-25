@@ -145,7 +145,6 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
 
     result_data = []
     version_urls_set = set()
-    batch_size = 100
 
     count_urls = len(products_urls)
 
@@ -154,7 +153,7 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
     with Session() as session:
         for i, product_url in enumerate(products_urls, 1):
             try:
-                time.sleep(randint(1, 3))
+                time.sleep(randint(2, 4))
                 html = get_html(url=product_url, headers=headers, session=session)
 
             except Exception as ex:
@@ -373,10 +372,8 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     }
                 )
 
-                # Записываем данные в Excel каждые 100 URL
-                if len(result_data) >= batch_size:
-                    save_excel(data=result_data, region=region)
-                    result_data.clear()  # Очищаем список для следующей партии
+            save_excel(data=result_data, region=region)
+            result_data.clear()  # Очищаем список для следующей партии
 
             print(f'Обработано: {i}/{count_urls} товаров!')
 
@@ -401,7 +398,7 @@ def save_excel(data: list, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/url_products_list_arkonasports_{region}.txt'
+    file_path = f'{directory}/url_products_list_arkonasports_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
