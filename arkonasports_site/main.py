@@ -373,12 +373,12 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     }
                 )
 
-                print(f'Обработано: {i}/{count_urls} товаров!')
-
                 # Записываем данные в Excel каждые 100 URL
                 if len(result_data) >= batch_size:
                     save_excel(data=result_data, region=region)
                     result_data.clear()  # Очищаем список для следующей партии
+
+            print(f'Обработано: {i}/{count_urls} товаров!')
 
         # Записываем оставшиеся данные в Excel
         if result_data:
