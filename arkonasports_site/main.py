@@ -28,6 +28,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
 }
 
+processed_urls = set()
 
 # Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -298,6 +299,7 @@ def get_products_data(products_urls: list, headers: dict, region: str, get_versi
                     {
                         '№': None,
                         'Артикул': product_id,
+                        'Название товара оригинальное': product_name_original,
                         'Название товара': product_name,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': price,
