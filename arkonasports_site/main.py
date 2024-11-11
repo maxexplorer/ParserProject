@@ -396,7 +396,7 @@ def save_excel(data: list, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/url_products_list_arkonasports_{region}.xlsx'
+    file_path = f'{directory}/result_data_products_arkonasports_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
