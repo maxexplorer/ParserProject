@@ -30,8 +30,20 @@ rub = get_exchange_rate()
 print(f'Курс EUR/RUB: {rub}')
 
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                  '(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'cache-control': 'max-age=0',
+    # 'cookie': 'Zalando-Client-Id=85946414-50ed-4d17-936f-c942e0fdbfe0; mpulseinject=false; ncx=k; language-preference=en; ak_bmsc=3B62412FC9B401DAA0956763231399E0~000000000000000000000000000000~YAAQdGsRAsFwkQWTAQAADQi+Hhm/WuXpIc+rYA8t6+8QUAGfhiotyx93z9p1SI4eEdvlAYIySSOQ8ngeCg+/Q3llzfGVbD+Wa7ZKBz0EeoutMh3F9599szDUb7QEEFf9+vySv9IdqqkD1T21GXK2P8Tq+k/BHTJ1LRgP7l2RVZPqVjMepL+Tjf2Dak+5QSAKg5+cATPaFCKVQjq6POYENYqrSbc1jjSdCX/9utWP9nmlSyUIs6s68xJLeCGy+mWFJBRU4lYW0exYc7/A2hkfEZC+B4Qhrf2bCNOu6VSWlaA9aj/CKmdNKIn0edstCQl1c3q/fzLBOax7CYUATaldnqcDPsMzAUAwnkCQHuBsgrTOa3GeMnmksnTtnTHZdYd2FFXGOnlU00Se8BEJkqJ93lhmNWQ/yhps29EH/XcQwdIhlY7zQDVQa3RZs1/SfvS+4KGBXTGdQrK01bI=; bm_sz=CEAD2F99C32F05C368550A3FF98BDB4C~YAAQdGsRAvSMkQWTAQAA6o7AHhmX+oWs8pciZYQ0akocMeQ5cTuVpQia1dEH3gbngizdKxUrqr1U2EBIDNI+IfnRqw5HUKRhvqH3cXqx+UKGHzhfSrBk9+szwgOCv/yEkqEIWQHMxoR65jJUIXlY7kONpGcs7DSwIpXb8ErHnm6wGlUzKa8B+x7QLHdiJpIpvEUzT5J6L4xk8/8vqW7l9TZJvoC7bfd9zD5E+cU6EL5Y0rP0hPT1AZePSOENgDBX9EO5JgqK6yX0TqpDY8xQnpB9T9yduOPcL//btMid+QGRdmxQErV0YHBlcnpJDM3C/3707HmXQkjn2UrpnFOWoMxXM5/suzk6EynuHjQAL4xsPUol+87pwPnCy5Qf4jmUfUhpKkiuqTJcJiySjL+qL4lXkEM8AK9JkGJZV4lz45nanwRiqDKNC50=~4604470~3487556; _abck=DB617D3D97D64526A0BC13670ABC9B7D~-1~YAAQdGsRAhmRkQWTAQAAlNnAHgxkK1thPbxo2GfF5+mKyeMO/bjgCJti1/SmUOAmqIoCGkD4DGAXkj/gLpSxax0TP2qICwj6cZWUQViKBT3Iq0RZ7yoTcquOC/B/7+6QJY6zttLIBsHClcAr28LjSeFxY6q5U91IL+GqaCsLyMmOldke2Ynmw3KPxVcvhPYfT4N2+pQ+NyDaj7ayHGwP9xAKonOSKTGS7+dVSw3oVViLCW2hK41aX2yB0s6b6CSeuK0ktw6kZ5CcpyVz/5Z2JBTb52ZH3eEaMUyTIB7AvI7Fkzz1kciu6AukxLC7UPiAkASxdW4K0BMIgHH9gKp45GypPThbPgTfMEjHQLMYPRREVsIf4R1izRtR7Sil/UgdwC8tVdX9rVD53H4CroiYdiw+m8K8cy1rBfbAxFO971K1IlWibJ4LcC5NwKPT7Ngc+u1O7zcT9xJWKrP6kTOrDH/Kq+Ox7W9KeZ75nvPNsKZJv3pGCtpXqDU1OyTzanEmNL1urPzqtkjJTTgfCZ6tuNroqL/tQcw3erdA50mE3chY/g==~-1~-1~-1; frsx=AAAAAE2hJ-qjNjZ8YsCHwW4udH_miaTsLjW-AgqBxlov8_6AUFcuqSoiQ5ubmoL1brvTPJBbuaZZae1Q-BttsyeeouBHMujqugMqX0aVQVotZ2XKKmd3L4-zHSltaP3sP2GShk-moa-2WF-I68U7FoE=; bm_sv=32B98C53CE0CBAE8C75842EB36BC6761~YAAQbWsRAuEzLgmTAQAAIPfMHhkjtqScSv5uYO0XQZAG7r9nRebMEORCOrxOFJnbisALoaNSACEsLc6qaGx5W+h3O84wFw+51zqSsbk1FxHTXgWSWOXHNO721Sg/RNG7B2OrMdRXbvBS1MaAZQvU6zcmyROEIbh10dXRYe1rC4jjPbfP4Gz+2H5HR2hHu7rr9oWq6/7gSyY54FLBoMjOIiR7VnbmFoT3WqeLauWEp+mxO2n2Pvnn3RJ957dGzGq5~1',
+    'priority': 'u=0, i',
+    'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'same-origin',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
 }
 
 
@@ -154,7 +166,7 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                         try:
                             product_items = soup.find_all('div',
-                                                          class_='_5qdMrS w8MdNG cYylcv BaerYO _75qWlu iOzucJ JT3_zV _Qe9k6')
+                                                          class_='_5qdMrS _75qWlu iOzucJ')
                             for product_item in product_items:
                                 try:
                                     product_url = product_item.find('a').get('href')
@@ -534,13 +546,13 @@ def save_excel(data: list, brand: str, species: str) -> None:
 
 
 def main():
-    # get_category_urls(url="https://en.zalando.de/kids-clothing/columbia/", headers=headers)
+    # get_category_urls(url="https://en.zalando.de/kids-clothing/next/?order=activation_date", headers=headers)
     try:
         value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
             '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
             '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas Originals\n16 - Nike Sportswear\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
-            '21 - Reebok\n22 - Columbia\n')
+            '21 - Reebok\n22 - Columbia\n23 - Next\n')
         brand = brand_dict.get(value)
     except KeyError:
         raise 'Такой бренд отсутствует в словаре!'
