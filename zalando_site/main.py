@@ -218,6 +218,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
                 try:
+                    time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
