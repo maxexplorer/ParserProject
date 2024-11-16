@@ -68,7 +68,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
+            raise Exception(f'status_code: {response.status_code}')
 
         html = response.text
         return html
@@ -126,7 +126,9 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 # Получаем ссылки товаров
 def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> None:
-    url_products_set = set()
+    # Путь к файлу для сохранения URL продуктов
+    directory = 'data'
+    file_path = f'{directory}/url_products_list_{brand}.txt'
 
     with Session() as session:
         for brand_dict in category_data_list:
@@ -174,7 +176,6 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                                     print(ex)
                                     continue
                                 product_urls.append(product_url)
-                                url_products_set.add(product_url)
                         except Exception as ex:
                             print(ex)
 
@@ -191,11 +192,11 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                             product_urls = []  # Очищаем список после обработки
                             products_data_list = []  # Очищаем накопленные данные
 
-                    if not os.path.exists('data'):
-                        os.makedirs('data')
+                            if not os.path.exists(directory):
+                                os.makedirs(directory)
 
-                    with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
-                        print(*url_products_set, file=file, sep='\n')
+                            with open(file_path, 'a', encoding='utf-8') as file:
+                                print(*product_urls, file=file, sep='\n')
 
 
 # Функция получения данных товаров
@@ -517,21 +518,27 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, brand=brand, species='products')
+        save_excel(data=result_data, species='products', brand=brand)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, species: str) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+def save_excel(data: list, species: str, brand: str) -> None:
+    directory = 'results'
 
-    if not os.path.exists(f'results/result_data_{species}_{brand}.xlsx'):
-        # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='w') as writer:
+    # Создаем директорию, если она не существует
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Путь к файлу для сохранения данных
+    file_path = f'{directory}/result_data_{species}_{brand}.xlsx'
+
+    # Если файл не существует, создаем его с пустым DataFrame
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(f'results/result_data_{species}_{brand}.xlsx', sheet_name='ОЗОН')
+    df = read_excel(file_path, sheet_name='ОЗОН')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -539,12 +546,12 @@ def save_excel(data: list, brand: str, species: str) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(f'results/result_data_{species}_{brand}.xlsx', mode='a',
+    with ExcelWriter(file_path, mode='a',
                      if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
                            index=False)
 
-    print(f'Данные сохранены в файл "result_data.xlsx"')
+    print(f'Данные сохранены в файл "{file_path}"')
 
 
 def main():
