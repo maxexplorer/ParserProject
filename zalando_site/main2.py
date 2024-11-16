@@ -574,7 +574,7 @@ def main():
 
     if brand:
         try:
-            driver = init_chromedriver(headless_mode=False)
+            driver = init_chromedriver(headless_mode=True)
         except Exception as ex:
             raise f'driver: {ex}'
         try:
