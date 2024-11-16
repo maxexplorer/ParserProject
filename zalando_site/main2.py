@@ -3,6 +3,7 @@ import re
 import time
 from datetime import datetime
 import json
+from random import randint
 
 from requests import Session
 
@@ -68,7 +69,8 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
-            raise Exception(f'status_code: {response.status_code}')
+            # raise Exception(f'status_code: {response.status_code}')
+            exit(1)
 
         html = response.text
         return html
@@ -185,7 +187,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, br
                         print(f'Обработано: {page}/{pages} страниц!')
 
                         # Проверяем кратность 10 или достижение последней страницы
-                        if page % 10 == 0 or page == pages:
+                        if page % 5 == 0 or page == pages:
                             products_data_list.append(
                                 {
                                     (category_name, subcategory_name): product_urls
@@ -226,7 +228,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
                 try:
-                    time.sleep(1)
+                    time.sleep(randint(1, 3))
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
