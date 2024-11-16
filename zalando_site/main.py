@@ -125,7 +125,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 
 # Получаем ссылки товаров
-def get_product_urls(category_data_list: list, headers: dict, brand: str, driver: Chrome) -> None:
+def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, brand: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}.txt'
@@ -571,7 +571,7 @@ def main():
         except Exception as ex:
             raise f'driver: {ex}'
         try:
-            get_product_urls(category_data_list=category_data_list, headers=headers, brand=brand, driver=driver)
+            get_product_urls(driver=driver, category_data_list=category_data_list, headers=headers, brand=brand)
         except Exception as ex:
             print(f'main: {ex}')
         finally:
