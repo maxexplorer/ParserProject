@@ -70,6 +70,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
 
         if response.status_code != 200:
             # raise Exception(f'status_code: {response.status_code}')
+            print(f'status_code: {response.status_code}')
             exit(1)
 
         html = response.text
@@ -228,7 +229,7 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
             for i, product_url in enumerate(product_urls, 1):
                 image_urls_list = []
                 try:
-                    time.sleep(randint(1, 3))
+                    time.sleep(randint(2, 3))
                     html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
