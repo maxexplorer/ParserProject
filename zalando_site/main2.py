@@ -189,14 +189,15 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
                                 }
                             )
                             get_products_data(products_data_list=products_data_list, brand=brand)
-                            product_urls = []  # Очищаем список после обработки
-                            products_data_list = []  # Очищаем накопленные данные
 
                             if not os.path.exists(directory):
                                 os.makedirs(directory)
 
                             with open(file_path, 'a', encoding='utf-8') as file:
                                 print(*product_urls, file=file, sep='\n')
+
+                            product_urls = []  # Очищаем список после обработки
+                            products_data_list = []  # Очищаем накопленные данные
 
 
 # Функция получения данных товаров
