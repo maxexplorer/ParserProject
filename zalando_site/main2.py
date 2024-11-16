@@ -180,16 +180,19 @@ def get_product_urls(category_data_list: list, headers: dict, brand: str, driver
 
                         print(f'Обработано: {page}/{pages} страниц!')
 
-                    products_data_list.append(
-                        {
-                            (category_name, subcategory_name): product_urls
-                        }
-                    )
-
-                    get_products_data(products_data_list=products_data_list, brand=brand)
+                        # Проверяем кратность 10 или достижение последней страницы
+                        if page % 10 == 0 or page == pages:
+                            products_data_list.append(
+                                {
+                                    (category_name, subcategory_name): product_urls
+                                }
+                            )
+                            get_products_data(products_data_list=products_data_list, brand=brand)
+                            product_urls = []  # Очищаем список после обработки
+                            products_data_list = []  # Очищаем накопленные данные
 
                     if not os.path.exists('data'):
-                        os.makedirs(f'data')
+                        os.makedirs('data')
 
                     with open(f'data/url_products_list_{brand}.txt', 'a', encoding='utf-8') as file:
                         print(*url_products_set, file=file, sep='\n')
