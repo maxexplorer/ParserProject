@@ -155,9 +155,9 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, br
                         try:
                             driver.get(url=page_product_url)
                             time.sleep(1)
-                            driver.execute_script("window.scrollTo(0, 4000);")
+                            driver.execute_script("window.scrollTo(0, 8000);")
                             time.sleep(1)
-                            driver.execute_script("window.scrollTo(0, 4000);")
+
                             html = driver.page_source
                         except Exception as ex:
                             print(f"{page_product_url} - {ex}")
@@ -171,6 +171,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, br
                         try:
                             product_items = soup.find_all('div',
                                                           class_='_5qdMrS _75qWlu iOzucJ')
+
                             for product_item in product_items:
                                 try:
                                     product_url = product_item.find('a').get('href')
@@ -558,7 +559,7 @@ def save_excel(data: list, species: str, brand: str) -> None:
 
 
 def main():
-    get_category_urls(url="https://www.zalando.pl/kobiety-akcesoria/", headers=headers)
+    # get_category_urls(url="https://www.zalando.pl/kobiety-akcesoria/", headers=headers)
     try:
         value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
@@ -573,7 +574,7 @@ def main():
 
     if brand:
         try:
-            driver = init_chromedriver(headless_mode=True)
+            driver = init_chromedriver(headless_mode=False)
         except Exception as ex:
             raise f'driver: {ex}'
         try:
