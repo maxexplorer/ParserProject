@@ -422,12 +422,10 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                             price_data = {}
                         try:
                             price_original = int(price_data['original']['amount']) / 100
-                            price_original = round(price_original * rub)
                         except Exception:
                             price_original = ''
                         try:
                             price_discount = (price_data['promotional']['amount']) / 100
-                            price_discount = round(price_discount * rub)
                         except Exception:
                             price_discount = ''
 
