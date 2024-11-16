@@ -26,10 +26,6 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-rub = get_exchange_rate()
-
-print(f'Курс EUR/RUB: {rub}')
-
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -579,6 +575,10 @@ def main():
         except Exception as ex:
             raise f'driver: {ex}'
         try:
+            base_currency = 'PLN'
+            target_currency = 'RUB'
+            currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+            print(f'Курс PLN/RUB: {currency}')
             get_product_urls(driver=driver, category_data_list=category_data_list, headers=headers, brand=brand)
         except Exception as ex:
             print(f'main: {ex}')

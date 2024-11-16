@@ -569,6 +569,10 @@ def main():
         except Exception as ex:
             raise f'driver: {ex}'
         try:
+            base_currency = 'PLN'
+            target_currency = 'RUB'
+            currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
+            print(f'Курс PLN/RUB: {currency}')
             get_product_urls(driver=driver, category_data_list=category_data_list, headers=headers, brand=brand)
         except Exception as ex:
             print(f'main: {ex}')
