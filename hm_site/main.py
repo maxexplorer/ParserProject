@@ -3,6 +3,8 @@ import re
 import time
 from datetime import datetime
 
+from requests import Session
+
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 
@@ -26,6 +28,23 @@ start_time = datetime.now()
 
 processed_urls = set()
 
+headers = {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'cache-control': 'max-age=0',
+    # 'cookie': 'preshoppingUser=false; INGRESSCOOKIE=1727860329.262.73.100142|690fb80ac6d9f7009fc04fa34f769148; OptanonAlertBoxClosed=2024-10-02T09:12:14.591Z; utag_main_vapi_domain=hm.com; hmid=0BFE9A7D-77C6-4819-8AAD-48CA78B9C4D0; _fbp=fb.1.1727860335310.606249847180237751; _gcl_au=1.1.1661617167.1727860336; AMCVS_32B2238B555215F50A4C98A4%40AdobeOrg=1; _pin_unauth=dWlkPU56TXpPRE0yWW1VdE5UQmtPQzAwTVRWaExXSXdZV1l0TW1Rek56Z3hOakpqWldKbA; _ga=GA1.2.1950914713.1727860336; s_ecid=MCMID%7C28890392179810197603003150097585318351; agCookie=e26c8c81-f4f0-4aeb-9392-62417262ce08; hm-poland-cart=dc2b20f1-5ff8-4f5d-b4cb-36bdae9b9869; akavpau_www2_tr=1727961891~id=baf307bd878026802a9cbae4263f6f27; akavpau_www2_de_de=1728061975~id=c409bc6d4c0ead6040425f3aea6fa5e4; akainst=EU5; AKA_A2=A; _abck=9D5FE6D5EF5D843AE8C4A5AB80F54DFB~0~YAAQHCjdFw5zcyyTAQAAn0qmQwwLuiiVKNlshfP7aneVd0y2iHSIplPBEftTUTDUVK+MK6prIzOhBm+Ek4qTueZlOCSpj/7MUqlgzx/r9SlaLmiKLVvWUDdKy2GZSkTgz1BzZtfPanIh1QB6rR+goi0dB3W4Xp6ABc8vHkhw4hzrb/H9GV+jj5D4jVv0/fY1+36FobAx2VJ2I34kTJx9zfCVyPgJRNU6zPNwQmuBtRqmtg48RkRlgTJ0dAqxvlmkDQIflKaaewV41jPZE1chlJl7Ra84m8erUPjKsb4aTHQRH0K043ee9gECTHT8Y1ZsDtXHv/iKWuzcph96EVZZ0XbbE5Pe+oZZbK6RZJpEWBO+T3sVN2Ws1/bgOzQ3jX34SOQdVpLazVqtHvhxRIbEuNDjIdY5+wPP3CC1gCszAp4rifM7zWTAgj9kwJJPNFiU/T8QorbeZvyJqOZzEsXqBI63tCWEIqB82M/F2Q==~-1~-1~-1; bm_sz=153B84F408A915EA3878123E581044B1~YAAQHCjdFxFzcyyTAQAAn0qmQxn0Ytme8coNo1Ogel/lgwtA2xq9PpxdoqDQKcw2oh6QVZ73/fMENmqGK/ld8UGM+vCss6njV8FZG1wNCYtOCFyhx80L8rxdrLanAdhBZde40XBRX6baJtTDFHdal6X4ZYVdi9ZxhuIr/KKOHHrbJSbFTdhxN2Qyn3FZ422fx256CbRUSpnbME07krqiA6OqbygJbogLS6GsmP8tOKQLh6BZGbz36X87IClF8NMCwizL1XqIYxoKJ5M7uyccnSA4ZBh2iHJOe84SdbKGEof6TKj8Z/fxkOqmTPRKIrBI0lSvbPxSypiiAdge9JnGSK5QFTr7bcAyX+PeDjlS/XggNZBax5BPuQDAZuBPY3lQk/4+xwsKXlc/~3490371~4405559; JSESSIONID=4FFE53AAA1492E09DF6FCE2E3800176FAB9C1F0723BBE559ABC2A8091A9B8A65623EB17F82F45CD51BD7B73DABD2575099B3379A090AFEB4B5F487C4FC091312.hybris-ecm-web-678cccbdf6-dfwlq; utag_main__sn=25; utag_main_ses_id=1732006795368%3Bexp-session; utag_main__pn=1%3Bexp-session; dep_sid=s_7158716817278081.1732006795373; utag_main_segment=normal%3Bexp-session; utag_main__ss=0%3Bexp-session; ak_bmsc=3343BEEDBFC0D27FBBA14DF269D46EFF~000000000000000000000000000000~YAAQHCjdF0J4cyyTAQAAxVimQxkbstjfmtaaeaPVLlEEt7ycZRpDSm4pP69moOwdPmXXxLcm2FezuRBvjdUI81d00vb8jR7+Mpa+bAQMXchJsEvloJETv82c+wijrda5WplC8E4Bv9W+cypgBCBIlhT99EP3WvNQUN1mmriEpnEl/WmAE1r9wCPWGop9XWb49/uqTKsifcAvmEsZGqr7HFpxJeA0f/SPbKYOZMnvcAZ7zxfPtPfESg81rZZ+5pImIzuvv+gSn/EYuKxVABJbstP3jW/WGq5OV5BuRmeXM3KDbf1FeFI69eiQ+5OXLdQ4p7rzEX99eZDg52x/zri3PVt5aTZDIr8H5lV8oayhHiivFlJr7uz5vteSquWq7EKfZHD0jgrE9JS8XUOhx2Q2ZjT4Z0jkA1tRWf247FXsqQWB3vsskJZLqWBJMGsIabnvdmueeN3U/g==; _uetsid=a60a5930a65411ef96d679d7daddef26; _uetvid=6b2c92a0809e11efa813ed1bec30d9d5; utag_main__se=4%3Bexp-session; utag_main__st=1732008596637%3Bexp-session; dep_exp=Tue, 19 Nov 2024 09:29:56 GMT; AMCV_32B2238B555215F50A4C98A4%40AdobeOrg=179643557%7CMCIDTS%7C20047%7CMCMID%7C28890392179810197603003150097585318351%7CMCAAMLH-1732611596%7C6%7CMCAAMB-1732611596%7C6G1ynYcLPuiQxYZrsz_pkqfLG9yMXBpb2zX5dvJdYQJzPXImdj0y%7CMCOPTOUT-1732013996s%7CNONE%7CMCAID%7CNONE%7CMCCIDH%7C2008772682%7CvVersion%7C5.5.0; _ga_Z1370GPB5L=GS1.2.1732006796.29.0.1732006796.60.0.0; OptanonConsent=isGpcEnabled=0&datestamp=Tue+Nov+19+2024+11%3A59%3A57+GMT%2B0300+(%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0%2C+%D1%81%D1%82%D0%B0%D0%BD%D0%B4%D0%B0%D1%80%D1%82%D0%BD%D0%BE%D0%B5+%D0%B2%D1%80%D0%B5%D0%BC%D1%8F)&version=202401.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=324134e5-3c0d-4304-94d9-d1e137bbd05c&interactionCount=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A1%2CC0003%3A1%2CC0004%3A1&geolocation=RU%3BMOW&AwaitingReconsent=false; userCookie=##eyJjYXJ0Q291bnQiOjB9##; akamref=pl_pl; akavpau_www2_pl_pl=1732007102~id=c6a259f5d6d5738133e2c91c03e732e8; bm_sv=80B0C8AC7E676D5F05ACFE4FE7A0E167~YAAQHCjdF2qAcyyTAQAAAHOmQxkgacwS8C5AILnCMQtIa2Kzb8pjumfgLOHAkHgLKYDYaOax2P0Ff33O72JQnvouUviriTfQA6xbAAc/hvBEFRotZZdsa3R1dLrWXXL1UPF7KrfjjzCFFXi8W4YuvChTFdCt7/1TgIRk2Tx5vSfml1yEha/Jx4F11apxC0+JM0mXGfyDyOwkNdNbF4PqDiDyHVqndmtE5PaPQoX7fsIHU0K09aVmRb0zCc0=~1',
+    'priority': 'u=0, i',
+    'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'same-origin',
+    'sec-fetch-user': '?1',
+    'upgrade-insecure-requests': '1',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+}
+
 
 # Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
@@ -42,6 +61,54 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 
     return driver
 
+
+# Получаем html разметку страницы
+def get_html(url: str, headers: dict, session: Session) -> str:
+    try:
+        response = session.get(url=url, headers=headers, timeout=60)
+
+        if response.status_code != 200:
+            raise Exception(f'status_code: {response.status_code}')
+
+        html = response.text
+        return html
+    except Exception as ex:
+        print(ex)
+
+# Получаем количество страниц
+def get_pages_de(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
+    except Exception:
+        pages = 1
+
+    return pages
+
+
+# Получаем количество страниц
+def get_pages_pl(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Paginacja'}).find_all('li')[-2].text.strip())
+    except Exception:
+        pages = 1
+
+    return pages
+
+
+# Получаем количество страниц
+def get_pages_tr(html: str) -> int:
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        pages = int(soup.find('nav', {'aria-label': 'Sayfalandırma'}).find_all('li')[-2].text.strip())
+    except Exception:
+        pages = 1
+
+    return pages
 
 # Функция получения количества страниц
 def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
@@ -83,65 +150,27 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
         print(*category_data_list, file=file, sep='\n')
 
 
-# Получаем количество страниц
-def get_pages_de(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        pages = int(soup.find('nav', {'aria-label': 'Paginierung'}).find_all('li')[-2].text.strip())
-    except Exception:
-        pages = 1
-
-    return pages
-
-
-# Получаем количество страниц
-def get_pages_pl(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        pages = int(soup.find('nav', {'aria-label': 'Paginacja'}).find_all('li')[-2].text.strip())
-    except Exception:
-        pages = 1
-
-    return pages
-
-
-# Получаем количество страниц
-def get_pages_tr(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        pages = int(soup.find('nav', {'aria-label': 'Sayfalandırma'}).find_all('li')[-2].text.strip())
-    except Exception:
-        pages = 1
-
-    return pages
-
-
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_data_list: list, processed_urls: set, brand: str,
+def get_products_urls(headers: dict, category_data_list: list, processed_urls: set, brand: str,
                       region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
     count = 0
+    with Session() as session:
+        for category_dict in category_data_list:
+            for category_name, category_list in category_dict.items():
+                for product_tuple in category_list:
+                    products_data_list = []
+                    products_urls = []
+                    subcategory_name, category_url = product_tuple
 
-    for category_dict in category_data_list:
-        for category_name, category_list in category_dict.items():
-            for product_tuple in category_list:
-                products_data_list = []
-                products_urls = []
-                subcategory_name, category_url = product_tuple
-
-                try:
-                    driver.get(url=category_url)
-                    time.sleep(1)
-                    html = driver.page_source
-                except Exception as ex:
-                    print(f"{category_url} - {ex}")
-                    continue
+                    try:
+                        html = get_html(url=category_url, headers=headers, session=session)
+                    except Exception as ex:
+                        print(f"{category_url} - {ex}")
+                        continue
 
                 if region == 'Германия':
                     pages = get_pages_de(html=html)
@@ -822,7 +851,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_de, processed_urls=processed_urls,
+            get_products_urls(headers=headers, category_data_list=category_data_list_de, processed_urls=processed_urls,
                               brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
@@ -831,7 +860,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс TRY/RUB: {currency}')
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+            get_products_urls(headers=headers, category_data_list=category_data_list_tr, processed_urls=processed_urls,
                               brand=brand, region=region)
         elif value == '3':
             region = 'Польша'
@@ -840,7 +869,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
-            get_products_urls(driver=driver, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+            get_products_urls(headers=headers, category_data_list=category_data_list_pl, processed_urls=processed_urls,
                               brand=brand, region=region)
 
             # id_region = id_region_dict.get(region)
