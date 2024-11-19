@@ -75,6 +75,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
     except Exception as ex:
         print(ex)
 
+
 # Получаем количество страниц
 def get_pages_de(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
@@ -109,6 +110,7 @@ def get_pages_tr(html: str) -> int:
         pages = 1
 
     return pages
+
 
 # Функция получения количества страниц
 def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
@@ -151,13 +153,12 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(headers: dict, category_data_list: list, processed_urls: set, brand: str,
+def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, processed_urls: set, brand: str,
                       region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
-    count = 0
     with Session() as session:
         for category_dict in category_data_list:
             for category_name, category_list in category_dict.items():
@@ -172,83 +173,75 @@ def get_products_urls(headers: dict, category_data_list: list, processed_urls: s
                         print(f"{category_url} - {ex}")
                         continue
 
-                if region == 'Германия':
-                    pages = get_pages_de(html=html)
-                elif region == 'Турция':
-                    pages = get_pages_tr(html=html)
-                elif region == 'Польша':
-                    pages = get_pages_pl(html=html)
-                else:
-                    pages = get_pages_de(html=html)
+                    if region == 'Германия':
+                        pages = get_pages_de(html=html)
+                    elif region == 'Турция':
+                        pages = get_pages_tr(html=html)
+                    elif region == 'Польша':
+                        pages = get_pages_pl(html=html)
+                    else:
+                        pages = get_pages_de(html=html)
 
-                print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
+                    print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                for page in range(1, pages + 1):
-                    page_product_url = f"{category_url}?page={page}"
-                    try:
-                        driver.get(url=page_product_url)
-                        time.sleep(1)
-                        html = driver.page_source
-                    except Exception as ex:
-                        print(f"{page_product_url} - {ex}")
-                        count += 1
+                    # for page in range(1, pages + 1):
+                    for page in range(1, 2):
+                        page_product_url = f"{category_url}?page={page}"
+                        try:
+                            time.sleep(1)
+                            html = get_html(url=page_product_url, headers=headers, session=session)
+                        except Exception as ex:
+                            print(f"{page_product_url} - {ex}")
+                            continue
 
-                        if count > 5:
-                            raise ex
-                        continue
+                        if not html:
+                            continue
 
-                    if not html:
-                        continue
+                        soup = BeautifulSoup(html, 'lxml')
 
-                    soup = BeautifulSoup(html, 'lxml')
+                        try:
+                            product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div', class_='a4d8ee')
+                            for product_item in product_items:
+                                try:
+                                    product_url = product_item.find('a').get('href')
+                                except Exception as ex:
+                                    print(ex)
+                                    continue
+                                products_urls.append(product_url)
+                        except Exception as ex:
+                            print(ex)
 
-                    try:
-                        product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div', class_='a4d8ee')
-                        for product_item in product_items:
-                            try:
-                                product_url = product_item.find('a').get('href')
-                            except Exception as ex:
-                                print(ex)
-                                continue
-                            products_urls.append(product_url)
-                    except Exception as ex:
-                        print(ex)
+                        print(f'Обработано: {page}/{pages} страниц')
 
-                    print(f'Обработано: {page}/{pages} страниц')
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
 
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
+                    with open(file_path, 'a', encoding='utf-8') as file:
+                        print(*products_urls, file=file, sep='\n')
 
-                with open(file_path, 'a', encoding='utf-8') as file:
-                    print(*products_urls, file=file, sep='\n')
+                    products_data_list.append(
+                        {
+                            (category_name, subcategory_name): products_urls
+                        }
+                    )
 
-                products_data_list.append(
-                    {
-                        (category_name, subcategory_name): products_urls
-                    }
-                )
-
-                if region == 'Германия':
-                    get_products_data_de(driver=driver, products_data_list=products_data_list,
-                                         processed_urls=processed_urls,
-                                         brand=brand, region=region)
-                elif region == 'Турция':
-                    get_products_data(driver=driver, products_data_list=products_data_list,
-                                      processed_urls=processed_urls,
-                                      brand=brand, region=region, size_model_title='Model bedeni')
-                elif region == 'Польша':
-                    get_products_data(driver=driver, products_data_list=products_data_list,
-                                      processed_urls=processed_urls,
-                                      brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
-                else:
-                    get_products_data_de(driver=driver, products_data_list=products_data_list,
-                                         processed_urls=processed_urls,
-                                         brand=brand, region=region)
+                    if region == 'Германия':
+                        get_products_data(driver=driver, products_data_list=products_data_list,
+                                          processed_urls=processed_urls,
+                                          brand=brand, region=region, size_model_title='Größe des Models')
+                    elif region == 'Турция':
+                        get_products_data(driver=driver, products_data_list=products_data_list,
+                                          processed_urls=processed_urls,
+                                          brand=brand, region=region, size_model_title='Model bedeni')
+                    elif region == 'Польша':
+                        get_products_data(driver=driver, products_data_list=products_data_list,
+                                          processed_urls=processed_urls,
+                                          brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
 
 
 # Функция получения данных товаров
-def get_products_data_de(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                         region: str) -> None:
+def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
+                      region: str, size_model_title: str) -> None:
     result_data = []
 
     count = 0
@@ -381,7 +374,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
 
             try:
                 model_size_description = section_description.find('dl').find(
-                    string=re.compile('Größe des Models')).find_next().text.split('cm')
+                    string=re.compile(size_model_title)).find_next().text.split('cm')
             except Exception:
                 model_size_description = None
 
@@ -530,7 +523,7 @@ def get_products_data_de(driver: Chrome, products_data_list: list[dict], process
 
 
 # Функция получения данных товаров
-def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
+def get_products_data1(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
                       region: str, size_model_title: str) -> None:
     result_data = []
 
@@ -804,6 +797,8 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
         save_excel(data=result_data, species='products', brand=brand, region=region)
 
 
+
+
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str, region: str) -> None:
     directory = 'results'
@@ -851,7 +846,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
 
-            get_products_urls(headers=headers, category_data_list=category_data_list_de, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_de, processed_urls=processed_urls,
                               brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
@@ -860,7 +855,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс TRY/RUB: {currency}')
 
-            get_products_urls(headers=headers, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_tr, processed_urls=processed_urls,
                               brand=brand, region=region)
         elif value == '3':
             region = 'Польша'
@@ -869,7 +864,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
-            get_products_urls(headers=headers, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl, processed_urls=processed_urls,
                               brand=brand, region=region)
 
             # id_region = id_region_dict.get(region)
