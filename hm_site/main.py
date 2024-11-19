@@ -184,8 +184,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, p
 
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
-                    # for page in range(1, pages + 1):
-                    for page in range(1, 2):
+                    for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -265,8 +264,8 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 driver.get(url=product_url)
                 driver.execute_script("window.scrollTo(0, 2000);")
                 time.sleep(1)
-                driver.execute_script("window.scrollTo(0, 4000);")
-                time.sleep(1)
+                # driver.execute_script("window.scrollTo(0, 4000);")
+                # time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
                 print(f"{product_url} - {ex}")
