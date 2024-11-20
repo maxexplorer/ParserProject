@@ -2,6 +2,7 @@ import os
 import re
 import time
 from datetime import datetime
+from random import randint
 
 from requests import Session
 
@@ -168,6 +169,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, p
                     subcategory_name, category_url = product_tuple
 
                     try:
+                        time.sleep(1)
                         html = get_html(url=category_url, headers=headers, session=session)
                     except Exception as ex:
                         print(f"{category_url} - {ex}")
