@@ -154,7 +154,9 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
                         try:
                             driver.get(url=page_product_url)
                             time.sleep(1)
-                            driver.execute_script("window.scrollTo(0, 8000);")
+                            driver.execute_script("window.scrollTo(0, 4000);")
+                            time.sleep(1)
+                            driver.execute_script("window.scrollTo(0, 4000);")
                             time.sleep(1)
 
                             html = driver.page_source
