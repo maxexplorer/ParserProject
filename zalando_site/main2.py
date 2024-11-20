@@ -124,14 +124,14 @@ def get_category_urls(url: str, headers: dict) -> None:
 
 
 # Получаем ссылки товаров
-def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, brand: str) -> None:
+def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, value: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}.txt'
+    file_path = f'{directory}/url_products_list_{value}.txt'
 
     with Session() as session:
         for brand_dict in category_data_list:
-            category_dict = brand_dict.get(brand)
+            category_dict = brand_dict.get(value)
             if category_dict is None:
                 continue
             for category_name, category_list in category_dict.items():
@@ -190,7 +190,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, br
                                     (category_name, subcategory_name): product_urls
                                 }
                             )
-                            get_products_data(products_data_list=products_data_list, brand=brand)
+                            get_products_data(products_data_list=products_data_list)
 
                             if not os.path.exists(directory):
                                 os.makedirs(directory)
@@ -203,7 +203,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, br
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict], brand: str) -> None:
+def get_products_data(products_data_list: list[dict]) -> None:
     result_data = []
     processed_urls = []
 
@@ -294,10 +294,10 @@ def get_products_data(products_data_list: list[dict], brand: str) -> None:
                         sku = product_data['sku']
                     except Exception:
                         sku = ''
-                    # try:
-                    #     brand = product_data['brand']['name']
-                    # except Exception:
-                    #     brand = ''
+                    try:
+                        brand = product_data['brand']['name']
+                    except Exception:
+                        brand = ''
                     try:
                         color_data = product_data['color']
                     except Exception:
@@ -558,18 +558,18 @@ def save_excel(data: list, species: str, brand: str) -> None:
 def main():
     # get_category_urls(url="https://www.zalando.pl/kobiety-akcesoria/", headers=headers)
     try:
-        value = input(
+        input_value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
             '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
             '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas Originals\n16 - Nike Sportswear\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
             '21 - Reebok\n22 - Columbia\n23 - Next\n24 - Women Accessories\n')
-        brand = brand_dict.get(value)
+        value = brand_dict.get(input_value)
     except KeyError:
         raise 'Такой бренд отсутствует в словаре!'
 
-    print(f'Сбор данных бренда: {brand}')
+    print(f'Сбор данных: {value}')
 
-    if brand:
+    if value:
         try:
             driver = init_chromedriver(headless_mode=True)
         except Exception as ex:
@@ -579,7 +579,7 @@ def main():
             target_currency = 'RUB'
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
-            get_product_urls(driver=driver, category_data_list=category_data_list, headers=headers, brand=brand)
+            get_product_urls(driver=driver, category_data_list=category_data_list, headers=headers, value=value)
         except Exception as ex:
             print(f'main: {ex}')
         finally:
