@@ -289,15 +289,12 @@ def get_products_data(products_data_list: list[dict], value: str) -> None:
                         additional_images = '; '.join(image_urls_list[1:])
                     except Exception:
                         continue
-                    try:
-                        name_product = product_data['name']
-                        name_product = f'{brand} {translator(name_product).lower()}'
-                    except Exception:
-                        name_product = ''
+
                     try:
                         sku = product_data['sku']
                     except Exception:
                         sku = ''
+
                     try:
                         brand = product_data['brand']['name']
                     except Exception:
@@ -308,6 +305,13 @@ def get_products_data(products_data_list: list[dict], value: str) -> None:
                             brand = soup.find('span', class_='z2N-Fg yOtBvf FxZV-M HlZ_Tf _5Yd-hZ').text.strip()
                         except Exception:
                             brand = ''
+
+                    try:
+                        name_product = product_data['name']
+                        name_product = f'{brand} {translator(name_product).lower()}'
+                    except Exception:
+                        name_product = ''
+
                     try:
                         color_data = product_data['color']
                     except Exception:
