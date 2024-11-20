@@ -190,7 +190,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
                                     (category_name, subcategory_name): product_urls
                                 }
                             )
-                            get_products_data(products_data_list=products_data_list)
+                            get_products_data(products_data_list=products_data_list, value=value)
 
                             if not os.path.exists(directory):
                                 os.makedirs(directory)
@@ -203,7 +203,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict]) -> None:
+def get_products_data(products_data_list: list[dict], value: str) -> None:
     result_data = []
     processed_urls = []
 
@@ -233,6 +233,8 @@ def get_products_data(products_data_list: list[dict]) -> None:
 
                 if not html:
                     continue
+
+                soup = BeautifulSoup(html, 'lxml')
 
                 try:
                     # Регулярное выражение для извлечения текста
@@ -298,6 +300,12 @@ def get_products_data(products_data_list: list[dict]) -> None:
                         brand = product_data['brand']['name']
                     except Exception:
                         brand = ''
+
+                    if not brand:
+                        try:
+                            brand = soup.find('span', class_='z2N-Fg yOtBvf FxZV-M HlZ_Tf _5Yd-hZ').text.strip()
+                        except Exception:
+                            brand = ''
                     try:
                         color_data = product_data['color']
                     except Exception:
@@ -519,7 +527,7 @@ def get_products_data(products_data_list: list[dict]) -> None:
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=brand)
+        save_excel(data=result_data, species='products', brand=value)
 
 
 # Функция для записи данных в формат xlsx
