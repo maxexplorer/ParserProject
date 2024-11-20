@@ -109,15 +109,13 @@ def get_products_data(file_path: str) -> list[dict]:
         count_urls = len(products_urls_list)
 
     result_data = []
-    images_urls_list = []
 
     with Session() as session:
         for j, product_url in enumerate(products_urls_list, 1):
+            images_urls_list = []
             try:
                 time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
-
-
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
