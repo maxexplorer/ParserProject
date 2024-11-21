@@ -21,8 +21,7 @@ category_urls_list = [
 ]
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/128.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 }
 
 
@@ -123,8 +122,6 @@ def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
             try:
                 time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
-
-
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
