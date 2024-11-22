@@ -345,7 +345,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
             except Exception:
-                print('not images')
+                print(f'images: {product_url} - {ex}')
                 main_image_url = None
                 additional_images_urls = None
 
