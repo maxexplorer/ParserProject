@@ -27,7 +27,6 @@ from functions import get_exchange_rate
 
 start_time = datetime.now()
 
-processed_urls = set()
 
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -154,11 +153,15 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, processed_urls: set, brand: str,
+def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, brand: str,
                       region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        processed_urls = set(line.strip() for line in file)
 
     with Session() as session:
         for category_dict in category_data_list:
@@ -330,8 +333,8 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                     if color_item.get('aria-checked') == 'true':
                         color_original = color_item.get('title').lower()
                 color_ru = colors_dict_de.get(color_original, color_original).lower()
-            except Exception:
-                print('not color')
+            except Exception as ex:
+                print(f'color: {product_url} - {ex}')
                 color_original = None
                 color_ru = None
 
@@ -344,7 +347,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                     images_urls_list.append(image_url)
                 main_image_url = images_urls_list[0]
                 additional_images_urls = '; '.join(images_urls_list)
-            except Exception:
+            except Exception as ex:
                 print(f'images: {product_url} - {ex}')
                 main_image_url = None
                 additional_images_urls = None
@@ -520,7 +523,8 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
 
             print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=brand, region=region)
+        if result_data:
+            save_excel(data=result_data, species='products', brand=brand, region=region)
 
 
 # Функция получения данных товаров
@@ -839,6 +843,7 @@ def main():
     brand = 'H&M'
 
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
+
     try:
         if value == '1':
             region = 'Германия'
@@ -847,7 +852,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_de, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_de,
                               brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
@@ -856,7 +861,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс TRY/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_tr, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_tr,
                               brand=brand, region=region)
         elif value == '3':
             region = 'Польша'
@@ -865,7 +870,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl, processed_urls=processed_urls,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl,
                               brand=brand, region=region)
 
             # id_region = id_region_dict.get(region)
