@@ -129,6 +129,8 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
     directory = 'data'
     file_path = f'{directory}/url_products_list_{value}.txt'
 
+    processed_urls = set()
+
     with Session() as session:
         for brand_dict in category_data_list:
             category_dict = brand_dict.get(value)
@@ -192,7 +194,8 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
                                     (category_name, subcategory_name): product_urls
                                 }
                             )
-                            get_products_data(products_data_list=products_data_list, value=value)
+                            get_products_data(products_data_list=products_data_list, processed_urls=processed_urls,
+                                              value=value)
 
                             if not os.path.exists(directory):
                                 os.makedirs(directory)
@@ -205,9 +208,8 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[dict], value: str) -> None:
+def get_products_data(products_data_list: list[dict], processed_urls: set, value: str) -> None:
     result_data = []
-    processed_urls = []
 
     with Session() as session:
         for dict_item in products_data_list:
@@ -216,7 +218,7 @@ def get_products_data(products_data_list: list[dict], value: str) -> None:
 
             for product_url in values:
                 if product_url not in processed_urls:
-                    processed_urls.append(product_url)
+                    processed_urls.add(product_url)
                     product_urls.append(product_url)
             category_name = key[0]
             subcategory_name = key[1]
