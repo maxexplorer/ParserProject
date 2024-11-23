@@ -332,7 +332,10 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 for color_item in color_items:
                     if color_item.get('aria-checked') == 'true':
                         color_original = color_item.get('title').lower()
-                color_ru = colors_dict_de.get(color_original, color_original).lower()
+                if region == 'Германия':
+                    color_ru = colors_dict_de.get(color_original, color_original).lower()
+                else:
+                    color_ru = translator(color_original)
             except Exception as ex:
                 print(f'color: {product_url} - {ex}')
                 color_original = None
