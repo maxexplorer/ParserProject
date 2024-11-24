@@ -65,7 +65,7 @@ def get_product_urls(headers: dict) -> None:
 
 
 # Получаем данные о продуктах
-def get_products_data(file_path: str, headers: dict,) -> tuple[list, list]:
+def get_products_data(file_path: str, headers: dict, ) -> tuple[list, list]:
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls_list = [line.strip() for line in file.readlines()]
 
@@ -111,19 +111,21 @@ def get_products_data(file_path: str, headers: dict,) -> tuple[list, list]:
 
                 # Доступ к region и address для всех поставщиков
                 suppliers = data.get('filter', {}).get('supplier', {})
-                for supplier_id, supplier_info in suppliers.items():
-                    title = supplier_info.get('title')
-                    region = supplier_info.get('region')
-                    address = supplier_info.get('address')
+                try:
+                    for supplier_id, supplier_info in suppliers.items():
+                        title = supplier_info.get('title')
+                        region = supplier_info.get('region')
+                        address = supplier_info.get('address')
 
-
-                    contacts_data.add(
-                        (
-                            title,
-                            region,
-                            address,
+                        contacts_data.add(
+                            (
+                                title,
+                                region,
+                                address,
+                            )
                         )
-                    )
+                except Exception as ex:
+                    print(f'suppliers: {product_url} - {ex}')
 
             print(f'Обработано товаров: {j}/{count}')
 
