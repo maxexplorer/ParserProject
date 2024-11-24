@@ -26,10 +26,9 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         print(f'get_html: {ex}')
 
 
-
 # Получаем ссылки статей
 def get_product_urls(headers: dict) -> None:
-    product_urls_list = []
+    products_urls_list = []
 
     with Session() as session:
         try:
@@ -42,31 +41,26 @@ def get_product_urls(headers: dict) -> None:
         soup = BeautifulSoup(html, 'lxml')
 
         try:
-            urls_items = soup.find('div', class_='alphabet__main').find_all('div', class_='alphabet__col-content')
+            urls_items = soup.find('div', class_='alphabet__main').find_all('div', class_='alphabet__link')
         except Exception as ex:
             print(f'urls_items: {ex}')
 
-        try:
-            for i, url_item in enumerate(urls_items, 1):
-                try:
-                    product_url_short = url_item.find('div', class_='alphabet__link').find('a').get('href')
-                    product_url = f"https://b2b.mppm.ru{product_url_short}"
-                except Exception as ex:
-                    print(f'product_url: {ex}')
-                    continue
+        for i, url_item in enumerate(urls_items, 1):
+            try:
+                product_url_short = url_item.find('a').get('href')
+                product_url = f"https://b2b.mppm.ru{product_url_short}"
+                products_urls_list.append(product_url)
+            except Exception as ex:
+                print(f'product_url: {ex}')
+                continue
 
-                product_urls_list.append(product_url)
-        except Exception as ex:
-            print(ex)
+            print(f'Обработано: {i} url!')
 
-        print(f'Обработано: {i} url!')
+    if not os.path.exists('data'):
+        os.makedirs(f'data')
 
-        if not os.path.exists('data'):
-            os.makedirs(f'data')
-
-        with open('data/products_urls_list, 'a', encoding='utf-8') as file:
-            print(*products_urls, file=file, sep='\n')
-
+    with open('data/products_urls_list', 'a', encoding='utf-8') as file:
+        print(*products_urls_list, file=file, sep='\n')
 
 
 # Получаем данные о продуктах
@@ -74,7 +68,7 @@ def get_data(headers: dict, json_data: dict) -> tuple[list, list]:
     title_plants_data = set()
     contacts_data = set()
 
-    with requests.Session() as session:
+    with Session() as session:
         for page in range(1, 385):
             try:
                 time.sleep(1)
