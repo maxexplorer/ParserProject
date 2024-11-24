@@ -105,8 +105,7 @@ def get_products_data(file_path: str) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls_list = [line.strip() for line in file.readlines()]
 
-        count_urls = len(products_urls_list)
-
+    count_urls = len(products_urls_list)
     result_data = []
     images_urls_list = []
 

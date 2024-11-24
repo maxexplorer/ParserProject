@@ -112,7 +112,6 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
 
 def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
     count_urls = len(products_urls_list)
-
     result_data = []
     images_urls_list = []
 
