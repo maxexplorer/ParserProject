@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 import os
+import json
 
 from requests import Session
 from bs4 import BeautifulSoup
@@ -59,98 +60,72 @@ def get_product_urls(headers: dict) -> None:
     if not os.path.exists('data'):
         os.makedirs(f'data')
 
-    with open('data/products_urls_list', 'a', encoding='utf-8') as file:
+    with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
         print(*products_urls_list, file=file, sep='\n')
 
 
 # Получаем данные о продуктах
-def get_data(headers: dict, json_data: dict) -> tuple[list, list]:
-    title_plants_data = set()
+def get_products_data(file_path: str, headers: dict,) -> tuple[list, list]:
+    with open(file_path, 'r', encoding='utf-8') as file:
+        products_urls_list = [line.strip() for line in file.readlines()]
+
+    count = len(products_urls_list)
+    title_plants_data = list()
     contacts_data = set()
 
     with Session() as session:
-        for page in range(1, 385):
+        for j, product_url in enumerate(products_urls_list, 1):
             try:
                 time.sleep(1)
-                response = session.post(
-                    f'https://back.profiplants.ru/api/app/table-products?page={page}&per_page=50&user_coords[]=56.46249048388979&user_coords[]=37.61718750000001',
-                    headers=headers,
-                    json=json_data,
-                )
-
-                if response.status_code != 200:
-                    print(f'page: {page} status_code: {response.status_code}')
-
-                data = response.json()
-
+                html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
-                print(f"page: {page} - {ex}")
+                print(f'{product_url} - {ex}')
+                continue
+
+            if not html:
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            try:
+                title_ru = soup.find('h1').text.strip()
+            except Exception:
+                print(f'not title: {product_url}')
                 continue
 
             try:
-                products_data = data['products']
-            except Exception as ex:
-                print(f'products_data/page: {page} - {ex}')
-                continue
+                title_lat = soup.find('span', class_='catalog-top__latin').text.strip()
+            except Exception:
+                title_lat = None
 
-            try:
-                for item in products_data:
-                    try:
-                        lat_title = item['variety']['lat_title']
-                    except Exception:
-                        lat_title = None
-                    try:
-                        ru_title = item['variety']['ru_title']
-                    except Exception:
-                        ru_title = None
+            title_plants_data.append((title_ru, title_lat))
 
-                    title_plants_data.add((ru_title, lat_title))
+            # Поиск скрипта с данными
+            script_tag = soup.find("script", string=lambda t: t and "window.dataSearchList" in t)
 
-                    try:
-                        organization = item['organization']['title']
-                    except Exception:
-                        organization = None
+            if script_tag:
+                # Извлечение текста и очистка
+                script_content = script_tag.string.strip()
+                json_str = script_content.split("=", 1)[-1].strip().rstrip(";").rstrip("|| []")
+                data = json.loads(json_str)  # Преобразование в Python-объект
 
-                    try:
-                        contacts = item['organization']['contacts']
-                    except Exception:
-                        contacts = None
+                # Доступ к region и address для всех поставщиков
+                suppliers = data.get('filter', {}).get('supplier', {})
+                for supplier_id, supplier_info in suppliers.items():
+                    title = supplier_info.get('title')
+                    region = supplier_info.get('region')
+                    address = supplier_info.get('address')
 
-                    try:
-                        address = contacts['address']
-                    except Exception:
-                        address = None
-
-                    try:
-                        email = contacts['email']
-                    except Exception:
-                        email = None
-
-                    try:
-                        phone = contacts['phone']
-                    except Exception:
-                        phone = None
-
-                    try:
-                        site = contacts['site']
-                    except Exception:
-                        site = None
 
                     contacts_data.add(
                         (
-                            organization,
+                            title,
+                            region,
                             address,
-                            email,
-                            phone,
-                            site
                         )
                     )
 
-            except Exception as ex:
-                print(print(f'products_data/page: {page} - {ex}'))
-                continue
-
-            print(f'Обработано товаров: {page}/{385}')
+            print(f'Обработано товаров: {j}/{count}')
 
     title_plants_data = sorted(title_plants_data)
     contacts_data = sorted(contacts_data)
@@ -160,29 +135,33 @@ def get_data(headers: dict, json_data: dict) -> tuple[list, list]:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, sheet_name: str) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    directory = 'results'
 
-    if not os.path.exists('results/profiplants.xlsx'):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_path = f'{directory}/result_data.xlsx'
+
+    if not os.path.exists(file_path):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/profiplants.xlsx', mode='w') as writer:
+        with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/profiplants.xlsx', if_sheet_exists='replace', mode='a') as writer:
+    with ExcelWriter(file_path, if_sheet_exists='replace', mode='a') as writer:
         dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    print(f'Данные сохранены в файл формата xlsx')
+    print(f'Данные сохранены в файл {file_path}')
 
 
 def main():
-    get_product_urls(headers=headers)
+    # get_product_urls(headers=headers)
 
-    # title_plants_data, contacts_data = get_data(headers=headers, json_data=json_data)
-    #
-    # save_excel(data=title_plants_data, sheet_name='Растения')
-    # save_excel(data=contacts_data, sheet_name='Питомники')
+    title_plants_data, contacts_data = get_products_data(file_path='data/products_urls_list.txt', headers=headers)
+
+    save_excel(data=title_plants_data, sheet_name='Plants')
+    save_excel(data=contacts_data, sheet_name='Contacts')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
