@@ -5,7 +5,7 @@ from datetime import datetime
 from requests import Session
 
 from bs4 import BeautifulSoup
-from pandas import DataFrame, ExcelWriter
+from pandas import DataFrame, ExcelWriter, read_excel
 
 start_time = datetime.now()
 
@@ -51,13 +51,13 @@ def get_pages(html: str) -> int:
     return pages
 
 
-def get_products_urls(category_urls_list: list, headers: dict) -> tuple[list[str], list[str]]:
+def get_products_urls(category_urls_list: list, headers: dict) -> list:
     count_urls = len(category_urls_list)
 
     new_products_urls_list = []
 
-    with open('data/products_urls_list.txt', 'r', encoding='utf-8') as file:
-        products_urls_list = [line.strip() for line in file]
+    with open('data/exception_urls_list.txt', 'r', encoding='utf-8') as file:
+        exception_urls_list = [line.strip() for line in file]
 
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
@@ -91,10 +91,9 @@ def get_products_urls(category_urls_list: list, headers: dict) -> tuple[list[str
                             print(ex)
                             continue
 
-                        if product_url in products_urls_list:
-                            products_urls_list.append(product_url)
-                        else:
-                            new_products_urls_list.append(product_url)
+                        if product_url in exception_urls_list:
+                            continue
+                        new_products_urls_list.append(product_url)
 
                 except Exception as ex:
                     print(f'{product_url}: {ex}')
@@ -108,7 +107,7 @@ def get_products_urls(category_urls_list: list, headers: dict) -> tuple[list[str
     with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
         print(*new_products_urls_list, file=file, sep='\n')
 
-    return products_urls_list, new_products_urls_list
+    return new_products_urls_list
 
 
 def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
@@ -230,16 +229,14 @@ def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
 
 def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
     count_urls = len(products_urls_list)
-
+    count = 1
     result_data = []
 
     with Session() as session:
-        for j, product_url in enumerate(products_urls_list, 1):
+        for title, product_url in products_urls_list:
             try:
                 time.sleep(1)
                 html = get_html(url=product_url, headers=headers, session=session)
-
-
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
@@ -249,10 +246,10 @@ def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
 
             soup = BeautifulSoup(html, 'lxml')
 
-            try:
-                title = soup.find('h1').text.strip()
-            except Exception:
-                title = None
+            # try:
+            #     title = soup.find('h1').text.strip()
+            # except Exception:
+            #     title = None
 
             try:
                 price = int(
@@ -268,14 +265,17 @@ def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
                 }
             )
 
-            print(f'Обработано: {j}/{count_urls}')
+            print(f'Обработано: {count}/{count_urls}')
+            count += 1
 
     return result_data
 
 
 def download_imgs(file_path: str, headers: dict) -> None:
-    if not os.path.exists('images'):
-        os.makedirs('images')
+    directory = 'images'
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     with open(file_path, 'r', encoding='utf-8') as file:
         image_urls_list = [line.strip() for line in file.readlines()]
@@ -289,7 +289,7 @@ def download_imgs(file_path: str, headers: dict) -> None:
             time.sleep(1)
             response = session.get(url=img_url, headers=headers)
 
-        with open(f"images/{image_title}", "wb") as file:
+        with open(f'{directory}/{image_title}', 'wb') as file:
             file.write(response.content)
 
         print(f'Обработано: {k}/{count_urls}')
@@ -313,18 +313,23 @@ def save_excel(data: list, species: str) -> None:
 
 
 def main():
-    products_urls_list, new_products_urls_list = get_products_urls(category_urls_list=category_urls_list,
-                                                                   headers=headers)
-    result_data = get_products_price(products_urls_list=products_urls_list, headers=headers)
-    save_excel(data=result_data, species='price')
+    # Считываем Excel-файл
+    excel_data = read_excel('data/data.xlsx', sheet_name=0)  # sheet_name=0 для первой страницы
+
+    # Преобразуем в список списков
+    data_list = excel_data.values.tolist()
+
+    # Собираем цены товаров
+    result_data_price = get_products_price(products_urls_list=data_list, headers=headers)
+    save_excel(data=result_data_price, species='price')
+
+    # Собираем новые URL
+    new_products_urls_list = get_products_urls(category_urls_list=category_urls_list, headers=headers)
 
     if new_products_urls_list:
-        print(f'Появились  новые товары!')
-        value = input('Продолжить сбор новых товаров:\n1 - Да\n2 - Нет\n')
-        if value == '1':
-            result_data = get_products_data(products_urls_list=new_products_urls_list, headers=headers)
-            save_excel(data=result_data, species='products')
-            download_imgs(file_path="data/images_urls_list.txt")
+        result_data_products = get_products_data(products_urls_list=new_products_urls_list, headers=headers)
+        save_excel(data=result_data_products, species='products')
+        download_imgs(file_path="data/images_urls_list.txt", headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

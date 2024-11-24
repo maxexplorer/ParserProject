@@ -246,23 +246,28 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
-    if not os.path.exists('results'):
-        os.makedirs('results')
+def save_excel(data: list, species: str) -> None:
+    directory = 'results'
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file_path = f'{directory}/result_data_{species}.xlsx'
 
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_list_bellodeco.xlsx', mode='w') as writer:
+    with ExcelWriter(file_path, mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data', index=False)
 
-    print(f'Данные сохранены в файл "data.xlsx"')
+    print(f'Данные сохранены в файл {file_path}')
+
 
 
 def main():
     get_products_urls(category_urls_list=category_urls_list, headers=headers)
     result_data = get_products_data(file_path="data/products_urls_list.txt")
-    save_excel(data=result_data)
-    # download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+    save_excel(data=result_data, species='products')
+    download_imgs(file_path="data/images_urls_list.txt", headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
