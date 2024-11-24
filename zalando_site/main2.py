@@ -72,7 +72,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         html = response.text
         return html
     except Exception as ex:
-        print(ex)
+        print(f'get_html: {ex}')
 
 
 # Получаем количество страниц

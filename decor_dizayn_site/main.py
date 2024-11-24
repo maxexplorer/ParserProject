@@ -40,7 +40,7 @@ def get_html(url, headers, session):
         html = response.text
         return html
     except Exception as ex:
-        print(ex)
+        print(f'get_html: {ex}')
 
 
 def get_pages(html):
