@@ -2,11 +2,12 @@ import time
 from datetime import datetime
 import os
 import json
+from random import randint
 
 from requests import Session
 from bs4 import BeautifulSoup
 
-from pandas import DataFrame, ExcelWriter
+from pandas import DataFrame, ExcelWriter, read_excel
 
 from configs import headers
 
@@ -19,7 +20,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
+            raise f'status_code: {response.status_code}'
 
         html = response.text
         return html
@@ -65,18 +66,24 @@ def get_product_urls(headers: dict) -> None:
 
 
 # Получаем данные о продуктах
-def get_products_data(file_path: str, headers: dict, ) -> tuple[list, list]:
+def get_products_data(file_path: str, headers: dict, ) -> None:
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls_list = [line.strip() for line in file.readlines()]
 
     count = len(products_urls_list)
     title_plants_data = list()
-    contacts_data = set()
+    suppliers_data = list()
+    suppliers_processed = list()
+
+    # Размер пакета для записи
+    batch_size = 10
+    # Счетчик обработанных URL
+    processed_count = 0
 
     with Session() as session:
         for j, product_url in enumerate(products_urls_list, 1):
             try:
-                time.sleep(1)
+                time.sleep(randint(1, 3))
                 html = get_html(url=product_url, headers=headers, session=session)
             except Exception as ex:
                 print(f'{product_url} - {ex}')
@@ -117,7 +124,12 @@ def get_products_data(file_path: str, headers: dict, ) -> tuple[list, list]:
                         region = supplier_info.get('region')
                         address = supplier_info.get('address')
 
-                        contacts_data.add(
+                        if title in suppliers_processed:
+                            continue
+
+                        suppliers_processed.append(title)
+
+                        suppliers_data.append(
                             (
                                 title,
                                 region,
@@ -127,21 +139,30 @@ def get_products_data(file_path: str, headers: dict, ) -> tuple[list, list]:
                 except Exception as ex:
                     print(f'suppliers: {product_url} - {ex}')
 
+            processed_count += 1
             print(f'Обработано товаров: {j}/{count}')
 
-    title_plants_data = sorted(title_plants_data)
-    contacts_data = sorted(contacts_data)
+            # Записываем данные в Excel каждые 100 URL
+            if len(title_plants_data) >= batch_size:
+                save_excel(data=title_plants_data, sheet_name='Plants')
+                save_excel(data=suppliers_data, sheet_name='Suppliers')
+                title_plants_data.clear()  # Очищаем список для следующей партии
 
-    return title_plants_data, contacts_data
+    # Записываем оставшиеся данные в Excel
+    if title_plants_data:
+        save_excel(data=title_plants_data, sheet_name='Plants')
+        save_excel(data=suppliers_data, sheet_name='Suppliers')
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, sheet_name: str) -> None:
+def save_excel(data: list | set, sheet_name: str) -> None:
     directory = 'results'
 
+    # Создаем директорию, если она не существует
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+    # Путь к файлу для сохранения данных
     file_path = f'{directory}/result_data.xlsx'
 
     if not os.path.exists(file_path):
@@ -149,21 +170,32 @@ def save_excel(data: list, sheet_name: str) -> None:
         with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
 
+    # Получаем все листы из файла
+    existing_sheets = read_excel(file_path, sheet_name=None)
+    if sheet_name not in existing_sheets:
+        # Если файл существует, добавляем пустой лист
+        with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+            DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # Загружаем данные из файла
+    df = read_excel(file_path, sheet_name=sheet_name)
+    # Определение количества уже записанных строк
+    num_existing_rows = len(df.index)
+
+    # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter(file_path, if_sheet_exists='replace', mode='a') as writer:
-        dataframe.to_excel(writer, sheet_name=sheet_name, index=False)
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
+                           sheet_name=sheet_name, index=False)
 
-    print(f'Данные сохранены в файл {file_path}')
+    print(f'Данные сохранены в файл "{file_path}"')
 
 
 def main():
     # get_product_urls(headers=headers)
 
-    title_plants_data, contacts_data = get_products_data(file_path='data/products_urls_list.txt', headers=headers)
-
-    save_excel(data=title_plants_data, sheet_name='Plants')
-    save_excel(data=contacts_data, sheet_name='Contacts')
+    get_products_data(file_path='data/products_urls_list.txt', headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
