@@ -76,7 +76,7 @@ def get_products_data(file_path: str, headers: dict, ) -> None:
     suppliers_processed = list()
 
     # Размер пакета для записи
-    batch_size = 10
+    batch_size = 100
     # Счетчик обработанных URL
     processed_count = 0
 
