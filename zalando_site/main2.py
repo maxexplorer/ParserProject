@@ -152,7 +152,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
-                        page_product_url = f"{category_url}?p={page}"
+                        page_product_url = f"{category_url}&p={page}"
                         try:
                             driver.get(url=page_product_url)
                             time.sleep(1)
@@ -188,7 +188,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
                         print(f'Обработано: {page}/{pages} страниц!')
 
                         # Проверяем кратность 10 или достижение последней страницы
-                        if page % 5 == 0 or page == pages:
+                        if page % 10 == 0 or page == pages:
                             products_data_list.append(
                                 {
                                     (category_name, subcategory_name): product_urls
@@ -535,11 +535,12 @@ def get_products_data(products_data_list: list[dict], processed_urls: set, value
 
                 print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=value)
+        if result_data:
+            save_excel(data=result_data, species='products', brand=value, category_name=category_name)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, species: str, brand: str) -> None:
+def save_excel(data: list, species: str, brand: str, category_name: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -547,7 +548,7 @@ def save_excel(data: list, species: str, brand: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -572,13 +573,13 @@ def save_excel(data: list, species: str, brand: str) -> None:
 
 
 def main():
-    # get_category_urls(url="https://www.zalando.pl/kobiety-akcesoria/", headers=headers)
+    # get_category_urls(url="https://www.zalando.pl/odziez-dziecieca/?gender=5", headers=headers)
     try:
         input_value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
             '5 - Scotch & Soda\n6 - GAP\n7 - Helly Hansen\n8 - The North Face\n9 - Tom Tailor\n10 - s.Oliver\n11 - G-Star\n'
             '12 - Esprit\n13 - Guess\n14 - Mango\n15 - Adidas Originals\n16 - Nike Sportswear\n17 - Puma\n18 - Vans\n19 - ASICS\n20 - Under Armour\n'
-            '21 - Reebok\n22 - Columbia\n23 - Next\n24 - Women Accessories\n')
+            '21 - Reebok\n22 - Columbia\n23 - Next\n24 - Women Accessories\n25 - Kids\n')
         value = brand_dict.get(input_value)
     except KeyError:
         raise 'Такой бренд отсутствует в словаре!'
