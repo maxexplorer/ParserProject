@@ -129,7 +129,11 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
     directory = 'data'
     file_path = f'{directory}/url_products_list_{value}.txt'
 
-    processed_urls = set()
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        processed_urls = set(line.strip() for line in file)
+
+    # processed_urls = set()
 
     with Session() as session:
         for brand_dict in category_data_list:
