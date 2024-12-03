@@ -7,9 +7,6 @@ from random import randint
 
 from requests import Session
 
-from selenium.webdriver import Chrome
-from selenium.webdriver.chrome.options import Options
-
 from bs4 import BeautifulSoup
 
 from pandas import DataFrame
@@ -29,21 +26,6 @@ headers = {
 }
 
 processed_urls = set()
-
-# Функция инициализации объекта chromedriver
-def init_chromedriver(headless_mode: bool = False) -> Chrome:
-    options = Options()
-    options.add_argument(
-        'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    if headless_mode:
-        options.add_argument("--headless=new")
-    driver = Chrome(options=options)
-    if not headless_mode:
-        driver.maximize_window()
-    driver.implicitly_wait(15)
-
-    return driver
 
 
 # Получаем html разметку страницы
@@ -421,8 +403,6 @@ def save_excel(data: list, region: str) -> None:
 
 
 def main():
-    # driver = init_chromedriver(headless_mode=True)
-
     value = input('Введите значение:\n1 - Германия\n2 - Турция\n3 - Польша\n')
 
     if value == '1':
