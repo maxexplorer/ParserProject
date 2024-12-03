@@ -24,9 +24,9 @@ from data.data import id_region_dict
 
 from functions import translator
 from functions import get_exchange_rate
+from functions import get_unique_urls
 
 start_time = datetime.now()
-
 
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -159,9 +159,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
 
-    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(file_path, 'r', encoding='utf-8') as file:
-        processed_urls = set(line.strip() for line in file)
+    processed_urls = get_unique_urls(file_path=file_path)
 
     with Session() as session:
         for category_dict in category_data_list:
@@ -204,7 +202,8 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                         soup = BeautifulSoup(html, 'lxml')
 
                         try:
-                            product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div', class_='a4d8ee')
+                            product_items = soup.find('ul', {'data-elid': 'product-grid'}).find_all('div',
+                                                                                                    class_='a4d8ee')
                             for product_item in product_items:
                                 try:
                                     product_url = product_item.find('a').get('href')
@@ -532,7 +531,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
 
 # Функция получения данных товаров
 def get_products_data1(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
-                      region: str, size_model_title: str) -> None:
+                       region: str, size_model_title: str) -> None:
     result_data = []
 
     count = 0
@@ -805,8 +804,6 @@ def get_products_data1(driver: Chrome, products_data_list: list[dict], processed
         save_excel(data=result_data, species='products', brand=brand, region=region)
 
 
-
-
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str, brand: str, region: str) -> None:
     directory = 'results'
@@ -881,20 +878,6 @@ def main():
 
         else:
             raise ValueError('Введено неправильное значение')
-
-        # # Путь к файлу для сохранения URL продуктов
-        # directory = 'data'
-        # file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
-        #
-        # # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-        # with open(file_path, 'r', encoding='utf-8') as file:
-        #     unique_urls = set(line.strip() for line in file)
-        #
-        # # Сохраняем уникальные URL-адреса обратно в файл
-        # with open(file_path, 'w', encoding='utf-8') as file:
-        #     print(*unique_urls, file=file, sep='\n')
-
-
     except Exception as ex:
         print(f'main: {ex}')
     finally:

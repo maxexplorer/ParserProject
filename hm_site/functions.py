@@ -490,3 +490,16 @@ def get_exchange_rate(base_currency: str, target_currency: str) -> int:
         exchange_rate = 0
 
     return exchange_rate
+
+
+def get_unique_urls(file_path: str) -> set:
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(file_path, 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
+    return unique_urls
+
