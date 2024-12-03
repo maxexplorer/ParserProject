@@ -83,10 +83,10 @@ def get_products_urls(category_urls_list: list, headers: dict) -> None:
 
                 try:
                     product_items = soup.find('div',
-                                              class_='catalog-items loaded').find_all('div', class_='position-relative')
+                                              class_='catalog-items').find_all('div', class_='position-relative')
                     for product_item in product_items:
                         try:
-                            product_url = product_item.find('a').get('href')
+                            product_url = f"https://meetropol.ru{product_item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -98,8 +98,6 @@ def get_products_urls(category_urls_list: list, headers: dict) -> None:
                 print(f'Обработано: {page}/{pages} страниц')
 
             get_products_data(products_urls=products_urls, headers=headers)
-
-            print(f'Обработана ссылка: {category_url}')
 
 
 # Функция получения данных товаров
@@ -125,7 +123,7 @@ def get_products_data(products_urls: list, headers: dict) -> None:
 
             soup = BeautifulSoup(html, 'lxml')
 
-            try:
+
 
 
 
