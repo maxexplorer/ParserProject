@@ -23,6 +23,7 @@ headers = {
 
 processed_urls = set()
 
+
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
     try:
@@ -43,7 +44,8 @@ def get_pages(html: str) -> int:
 
     try:
         pages = int(
-            soup.find('div', class_='catalog-pagination d-flex').find_all('li')[-1].find('a').get('href').split('=')[-1])
+            soup.find('div', class_='catalog-pagination d-flex').find_all('li')[-1].find('a').get('href').split('=')[
+                -1])
     except Exception:
         pages = 1
 
@@ -67,7 +69,8 @@ def get_products_urls(category_urls_list: list, headers: dict) -> None:
                 continue
             pages = get_pages(html=html)
 
-            for page in range(1, pages + 1):
+            # for page in range(1, pages + 1):
+            for page in range(1, 2):
                 category_page_url = f"{category_url}?PAGEN_1={page}"
                 try:
                     time.sleep(randint(1, 3))
@@ -123,88 +126,109 @@ def get_products_data(products_urls: list, headers: dict) -> None:
 
             soup = BeautifulSoup(html, 'lxml')
 
+            try:
+                element_list_items = soup.find_all('li', {'class': 'catalog-nav__item', 'itemprop': 'itemListElement'})
+            except Exception as ex:
+                print(f'element_list_items: {ex}')
+                continue
 
+            try:
+                gender_item = element_list_items[2].text.strip()
+            except Exception:
+                gender_item = None
 
+            if gender_item == 'Для неё':
+                gender = 'Женщины'
+            elif gender_item == 'Для него':
+                gender = 'Мужчины'
+            else:
+                gender = None
 
+            try:
+                category_name = element_list_items[3].text.strip()
+            except Exception:
+                category_name = None
 
+            try:
+                subcategory_name = element_list_items[4].text.strip()
+            except Exception:
+                subcategory_name = None
+
+            try:
+                product_section = soup.find('section', class_='product-section')
+            except Exception as ex:
+                print(f'product_section: {ex}')
+                continue
+
+            try:
+                name = product_section.find('h1').text.strip()
+            except Exception:
+                name = None
+
+            try:
+                price = int(''.join(
+                    i for i in product_section.find('div', class_='catalog-product__cost').find('p').text.strip() if
+                    i.isdigit()))
+            except Exception:
+                price = None
+
+            try:
+                description = product_section.find('div',
+                                                   class_='d-flex flex-column gap-4 gap-sm-0 flex-sm-row justify-content-between'
+                                                   ).find_next_sibling('p').text.strip()
+            except Exception:
+                description = None
+
+            try:
+                color = ', '.join(k for k in (c.get('title') for c in product_section.find(
+                    'div', class_='filter-color__wrapper').find_all('label')) if k.isalpha())
+            except Exception:
+                color = ' '
 
             result_data.append(
                 {
-                    '№': None,
-                    'Артикул': product_id,
-                    'Название товара оригинальное': product_name_original,
-                    'Название товара': product_name,
-                    'Цена, руб.*': price,
-                    'Цена до скидки, руб.': price,
-                    'НДС, %*': None,
-                    'Включить продвижение': None,
-                    'Ozon ID': product_id,
-                    'Штрихкод (Серийный номер / EAN)': None,
-                    'Вес в упаковке, г*': None,
-                    'Ширина упаковки, мм*': None,
-                    'Высота упаковки, мм*': None,
-                    'Длина упаковки, мм*': None,
-                    'Ссылка на главное фото*': main_image_url,
-                    'Ссылки на дополнительные фото': additional_images_urls,
-                    'Ссылки на фото 360': None,
-                    'Артикул фото': None,
-                    'Бренд в одежде и обуви*': brand,
-                    'Объединить на одной карточке*': product_id,
-                    'Цвет товара*': None,
-                    'Российский размер*': size,
-                    'Размер производителя': size,
-                    'Статус наличия': status_size,
-                    'Название цвета': None,
-                    'Тип*': category_name,
-                    'Пол*': None,
-                    'Размер пеленки': None,
-                    'ТН ВЭД коды ЕАЭС': None,
-                    'Ключевые слова': None,
-                    'Сезон': None,
-                    'Рост модели на фото': None,
-                    'Параметры модели на фото': None,
-                    'Размер товара на фото': None,
-                    'Коллекция': None,
-                    'Страна-изготовитель': None,
-                    'Вид принта': None,
-                    'Аннотация': description,
-                    'Инструкция по уходу': None,
-                    'Серия в одежде и обуви': None,
-                    'Материал': None,
-                    'Состав материала': None,
-                    'Материал подклада/внутренней отделки': None,
-                    'Материал наполнителя': None,
-                    'Утеплитель, гр': None,
-                    'Диапазон температур, °С': None,
-                    'Стиль': None,
-                    'Вид спорта': None,
-                    'Вид одежды': None,
-                    'Тип застежки': None,
-                    'Длина рукава': None,
-                    'Талия': None,
-                    'Для беременных или новорожденных': None,
-                    'Тип упаковки одежды': None,
-                    'Количество в упаковке': None,
-                    'Состав комплекта': None,
-                    'Рост': None,
-                    'Длина изделия, см': None,
-                    'Длина подола': None,
-                    'Форма воротника/горловины': None,
-                    'Детали': None,
-                    'Таблица размеров JSON': None,
-                    'Rich-контент JSON': None,
-                    'Плотность, DEN': None,
-                    'Количество пар в упаковке': None,
-                    'Класс компрессии': None,
-                    'Персонаж': None,
-                    'Праздник': None,
-                    'Тематика карнавальных костюмов': None,
-                    'Признак 18+': None,
-                    'Назначение спецодежды': None,
-                    'HS-код': None,
-                    'Количество заводских упаковок': None,
-                    'Ошибка': None,
-                    'Предупреждение': None,
+                    'UUID': None,
+                    'Тип': category_name,
+                    'Группы': subcategory_name,
+                    'Пол': gender,
+                    'Код': None,
+                    'Наименование': name,
+                    'Внешний код': product_url,
+                    'Артикул': None,
+                    'Единица измерения': None,
+                    'Вес': None,
+                    'Объем': None,
+                    'Весовой товар': None,
+                    'Разливной товар': None,
+                    'Цена товара': price,
+                    'Валюта (Цена продажи)': 'руб',
+                    'Закупочная цена': None,
+                    'Валюта (Закупочная цена)': 'руб',
+                    'Неснижаемый остаток': None,
+                    'Штрихкод EAN13': None,
+                    'Штрихкод EAN8': None,
+                    'Штрихкод Code128': None,
+                    'Штрихкод UPC': None,
+                    'Описание': description,
+                    'Признак предмета расчета': 'Товар',
+                    'Запретить скидки при продаже в розницу': None,
+                    'Минимальная цена': None,
+                    'Валюта (Минимальная цена)': 'руб',
+                    'Страна': 'Россия',
+                    'НДС': None,
+                    'Система налогообложения': None,
+                    'Поставщик': None,
+                    'Остаток': None,
+                    'Изображение(файл)': None,
+                    'Изображение(ссылка)': None,
+                    'ГТД': None,
+                    'Код товара модификации': None,
+                    'Характеристика:эко': None,
+                    'Характеристика:Цвет': color,
+                    'Упаковка:мешок': None,
+                    'Упаковка(ШК):мешок:EAN8': None,
+                    'Алкогольная продукция': None,
+                    'Содержит акцизную марку': None,
                 }
             )
 
@@ -214,7 +238,7 @@ def get_products_data(products_urls: list, headers: dict) -> None:
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, region: str) -> None:
+def save_excel(data: list) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -222,15 +246,15 @@ def save_excel(data: list, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_products_arkonasports_{region}.xlsx'
+    file_path = f'{directory}/result_data_products_meetropol.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
         with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='ОЗОН', index=False)
+            DataFrame().to_excel(writer, sheet_name='Data', index=False)
 
     # Загружаем данные из файла
-    df = read_excel(file_path, sheet_name='ОЗОН')
+    df = read_excel(file_path, sheet_name='Data')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -240,7 +264,7 @@ def save_excel(data: list, region: str) -> None:
 
     with ExcelWriter(file_path, mode='a',
                      if_sheet_exists='overlay') as writer:
-        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='Data',
                            index=False)
 
     print(f'Данные сохранены в файл "{file_path}"')
