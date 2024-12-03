@@ -130,7 +130,10 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
     directory = 'data'
     file_path = f'{directory}/url_products_list_{value}.txt'
 
-    processed_urls = get_unique_urls(file_path=file_path)
+    try:
+        processed_urls = get_unique_urls(file_path=file_path)
+    except FileNotFoundError:
+        processed_urls = set()
 
     with Session() as session:
         for brand_dict in category_data_list:
