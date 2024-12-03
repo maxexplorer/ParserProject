@@ -23,6 +23,7 @@ from functions import colors_format
 from functions import sizes_format
 from functions import translator
 from functions import get_exchange_rate
+from functions import get_unique_urls
 
 start_time = datetime.now()
 
@@ -129,11 +130,7 @@ def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, va
     directory = 'data'
     file_path = f'{directory}/url_products_list_{value}.txt'
 
-    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(file_path, 'r', encoding='utf-8') as file:
-        processed_urls = set(line.strip() for line in file)
-
-    # processed_urls = set()
+    processed_urls = get_unique_urls(file_path=file_path)
 
     with Session() as session:
         for brand_dict in category_data_list:
@@ -578,6 +575,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str) -> None
 
 def main():
     # get_category_urls(url="https://www.zalando.pl/odziez-dziecieca/?gender=5", headers=headers)
+
     try:
         input_value = input(
             'Введите значение:\n1 - Tommy Hilfiger\n2 - Jack & Jones\n3 - Pepe Jeans\n4 - Calvin Klein\n'
