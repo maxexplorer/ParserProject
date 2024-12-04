@@ -69,8 +69,7 @@ def get_products_urls(category_urls_list: list, headers: dict) -> None:
                 continue
             pages = get_pages(html=html)
 
-            # for page in range(1, pages + 1):
-            for page in range(1, 2):
+            for page in range(1, pages + 1):
                 category_page_url = f"{category_url}?PAGEN_1={page}"
                 try:
                     time.sleep(randint(1, 3))
