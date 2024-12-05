@@ -68,6 +68,7 @@ def process_excel(input_file, interval=5):
     try:
         brand_column = headers.index('Номенклатура.Производитель') + 1  # Индексы в openpyxl начинаются с 1
         code_column = headers.index('Артикул') + 1
+        old_price_column = headers.index('Цена') + 1
         price_column = headers.index('Новая цена') + 1
     except ValueError as e:
         print(f"Ошибка: не найдены необходимые столбцы. {e}")
@@ -77,6 +78,7 @@ def process_excel(input_file, interval=5):
     for row_idx in range(11, work_sheet.max_row + 1):
         brand = work_sheet.cell(row=row_idx, column=brand_column).value
         code = work_sheet.cell(row=row_idx, column=code_column).value
+        old_price = work_sheet.cell(row=row_idx, column=old_price_column).value
 
         if brand is None or code is None:
             continue
@@ -93,7 +95,7 @@ def process_excel(input_file, interval=5):
             if min_price is not None:
                 work_sheet.cell(row=row_idx, column=price_column).value = min_price
             else:
-                work_sheet.cell(row=row_idx, column=price_column).value = None  # Если цена не найдена
+                work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если цена не найдена
         else:
             work_sheet.cell(row=row_idx, column=price_column).value = None  # Если данных нет, записываем None
 
