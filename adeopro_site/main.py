@@ -95,9 +95,9 @@ def process_excel(input_file, interval=5):
             if min_price is not None:
                 work_sheet.cell(row=row_idx, column=price_column).value = min_price
             else:
-                work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если цена не найдена
+                work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если цена не найдена записываем старую цену
         else:
-            work_sheet.cell(row=row_idx, column=price_column).value = None  # Если данных нет, записываем None
+            work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если данных нет, записываем старую цену
 
         # Интервал между запросами
         time.sleep(interval)
