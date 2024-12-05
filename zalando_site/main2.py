@@ -62,18 +62,26 @@ def init_chromedriver(headless_mode: bool = False) -> Chrome:
 
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
+    count = 0
+
     try:
         response = session.get(url=url, headers=headers, timeout=60)
 
         if response.status_code != 200:
             # raise Exception(f'status_code: {response.status_code}')
             print(f'status_code: {response.status_code}')
-            exit(1)
+
+            count += 1
+
+            if count > 5:
+                exit(1)
 
         html = response.text
         return html
     except Exception as ex:
         print(f'get_html: {ex}')
+
+
 
 
 # Получаем количество страниц
