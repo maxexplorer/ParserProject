@@ -21,7 +21,7 @@ workbook = openpyxl.load_workbook("data/data1.xlsm")
 
 
 # Функция получения ссылок товаров
-def get_products_urls(pages: int, input_text: str):
+def get_products_urls(pages: int, text: str):
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -33,23 +33,25 @@ def get_products_urls(pages: int, input_text: str):
         time.sleep(3)
 
         try:
-            input_text = driver.find_element(By.NAME, 'loginname')
+            input_text = driver.find_element(By.CSS_SELECTOR, 'input[placeholder="Искать на Ozon"]')
             input_text.clear()
-            # input_email.send_keys('alp.location.chx@gmail.com')
-            input_text.send_keys('alp.location.chx@gmail.com')
+            input_text.send_keys(text)
             time.sleep(3)
         except Exception as ex:
             print(f'input_email: {ex}')
 
         try:
-            submit_email = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
-            submit_email.click()
+            search_text = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
+            search_text.click()
             time.sleep(3)
         except Exception as ex:
             print(f'summit_email: {ex}')
 
+        current_url = driver.current_url
+
+
         for page in range(1, pages + 1):
-            page_url = f"https://www.ozon.ru/brand/apple-26303000/?page={page}&seller=0"
+            page_url = f"{current_url}?page={page}"
             try:
                 driver.get(url=page_url)
                 time.sleep(3)
