@@ -88,8 +88,6 @@ def get_products_urls(pages: int, input_text: str):
         driver.quit()
 
 
-
-
 def ozon_parser(workbook):
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ОЗОН']
