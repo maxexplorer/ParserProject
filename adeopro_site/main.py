@@ -1,10 +1,7 @@
 import time
-
 import requests
-
 import pandas as pd
 import xml.etree.ElementTree as ET
-
 
 # Функция для отправки одного запроса
 def get_price_from_api(login: str, password: str, code: int, brand: str, force_online: int = 0,
@@ -41,8 +38,21 @@ def get_price_from_api(login: str, password: str, code: int, brand: str, force_o
         return None
 
 
+# Функция для извлечения минимальной цены из XML ответа
+def extract_min_price_from_response(xml_data):
+    # Парсим XML-ответ
+    try:
+        root = ET.fromstring(xml_data)
+        prices = [float(detail.find('price').text) for detail in root.findall('detail')]
+        min_price = min(prices) if prices else None
+        return min_price
+    except Exception as e:
+        print(f"Ошибка при парсинге XML: {e}")
+        return None
+
+
 # Основная функция
-def process_excel(input_file, output_file, interval=5):
+def process_excel(input_file, interval=5):
     # Загружаем данные из входного файла
     try:
         df = pd.read_excel(input_file, sheet_name=0, skiprows=9, header=0)
@@ -51,7 +61,7 @@ def process_excel(input_file, output_file, interval=5):
         return
 
     # Обработка каждой строки
-    for index, row in df.iterrows():
+    for index, row in df.iloc[:10].iterrows():
         brand = row.loc['Номенклатура.Производитель']
         code = row.loc['Артикул']
 
@@ -63,22 +73,20 @@ def process_excel(input_file, output_file, interval=5):
         price_data = get_price_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
 
         if price_data:
-            # Здесь нужно парсить ответ и извлекать нужную информацию, например цену
-            # Пример парсинга: (зависит от структуры ответа)
-            # price = extract_price_from_response(price_data)
-            # Для примера запишем весь ответ
-            price = price_data
+            # Извлекаем минимальную цену из ответа
+            min_price = extract_min_price_from_response(price_data)
 
-            # Обновляем цену в DataFrame
-            df.at[index, "Цена"] = price
+            # Если минимальная цена найдена, записываем её в DataFrame
+            if min_price is not None:
+                df.at[index, "Новая цена"] = min_price
 
         # Интервал между запросами
         time.sleep(interval)
 
-    # Сохраняем результаты в новый файл
+    # Записываем результаты в тот же файл
     try:
-        df.to_excel(output_file, index=False)
-        print(f"Результаты сохранены в {output_file}")
+        df.to_excel(input_file, index=False)  # Перезаписываем тот же файл
+        print(f"Результаты сохранены в {input_file}")
     except Exception as e:
         print(f"Ошибка записи файла: {e}")
 
@@ -87,7 +95,6 @@ def process_excel(input_file, output_file, interval=5):
 if __name__ == "__main__":
     # Укажите путь к файлу с артикулами и брендами
     input_file = "data/data.xlsx"  # Входной файл
-    output_file = "result/result.xlsx"  # Файл с результатами
-    interval = 5  # Интервал между запросами в секундах
+    interval = 3  # Интервал между запросами в секундах
 
-    process_excel(input_file, output_file, interval)
+    process_excel(input_file, interval)
