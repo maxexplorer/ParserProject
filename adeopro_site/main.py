@@ -1,16 +1,21 @@
-import pandas as pd
-import requests
 import time
 
+import requests
+
+import pandas as pd
+import xml.etree.ElementTree as ET
+
+
 # Функция для отправки одного запроса
-def get_price_from_api(code, brand, force_online=0, crosses="disallow", force_diler_replace=0):
+def get_price_from_api(login: str, password: str, code: int, brand: str, force_online: int = 0,
+                       crosses: str = "disallow", force_diler_replace: int = 0):
     # Формируем XML-запрос
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
     <message>
       <param>
         <action>price</action>
-        <login>MegaParts</login>
-        <password>a1B4vP</password>
+        <login>{login}</login>
+        <password>{password}</password>
         <code>{code}</code>
         <brand>{brand}</brand>
         <crosses>{crosses}</crosses>
@@ -35,24 +40,27 @@ def get_price_from_api(code, brand, force_online=0, crosses="disallow", force_di
         print(f"Ошибка подключения: {e}")
         return None
 
+
 # Основная функция
 def process_excel(input_file, output_file, interval=5):
     # Загружаем данные из входного файла
     try:
-        df = pd.read_excel(input_file, sheet_name=0, skiprows=10)
+        df = pd.read_excel(input_file, sheet_name=0, skiprows=9, header=0)
     except Exception as e:
         print(f"Ошибка чтения файла: {e}")
         return
 
     # Обработка каждой строки
     for index, row in df.iterrows():
-        brand = row.iloc[0]
-        code = row.iloc[3]
+        brand = row.loc['Номенклатура.Производитель']
+        code = row.loc['Артикул']
 
+        if pd.isna(brand) or pd.isna(code):
+            continue
 
         # Выполняем запрос к API
         print(f"Отправляем запрос для артикула: {code}, бренд: {brand}")
-        price_data = get_price_from_api(code=code, brand=brand)
+        price_data = get_price_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
 
         if price_data:
             # Здесь нужно парсить ответ и извлекать нужную информацию, например цену
@@ -73,6 +81,7 @@ def process_excel(input_file, output_file, interval=5):
         print(f"Результаты сохранены в {output_file}")
     except Exception as e:
         print(f"Ошибка записи файла: {e}")
+
 
 # Точка входа
 if __name__ == "__main__":
