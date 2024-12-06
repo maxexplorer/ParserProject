@@ -20,12 +20,17 @@ start_time = datetime.now()
 workbook = openpyxl.load_workbook("data/data1.xlsm")
 
 
-# Функция получения ссылок товаров
-def get_products_urls(pages: int, text: str):
+# Функция инициализации объекта chromedriver
+def init_undetected_chromedriver():
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
 
+    return driver
+
+
+# Функция получения ссылок товаров
+def get_products_urls(driver: Chrome, pages: int, text: str) -> list[str]:
     products_urls = []
 
     try:
@@ -38,17 +43,16 @@ def get_products_urls(pages: int, text: str):
             input_text.send_keys(text)
             time.sleep(3)
         except Exception as ex:
-            print(f'input_email: {ex}')
+            print(f'input_text: {ex}')
 
         try:
-            search_text = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
-            search_text.click()
+            search_product = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
+            search_product.click()
             time.sleep(3)
         except Exception as ex:
-            print(f'summit_email: {ex}')
+            print(f'search_product: {ex}')
 
         current_url = driver.current_url
-
 
         for page in range(1, pages + 1):
             page_url = f"{current_url}?page={page}"
@@ -66,7 +70,8 @@ def get_products_urls(pages: int, text: str):
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data_items = soup.find('div', class_='widget-search-result-container').find_all('div', class_='tile-root')
+                data_items = soup.find('div', class_='widget-search-result-container').find_all('div',
+                                                                                                class_='tile-root')
             except Exception as ex:
                 print(f'data_items: {page_url} - {ex}')
                 continue
@@ -81,6 +86,8 @@ def get_products_urls(pages: int, text: str):
 
             print(f'Обработано: {page}/{pages} страниц')
 
+        print(len(products_urls))
+
         return products_urls
 
     except Exception as ex:
@@ -90,16 +97,14 @@ def get_products_urls(pages: int, text: str):
         driver.quit()
 
 
-def ozon_parser(workbook):
+def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ОЗОН']
 
-    driver = Chrome()
-    driver.maximize_window()
-    driver.implicitly_wait(15)
-
     try:
         for row in ws.iter_rows(min_row=4):
+            text = row[1].value
+            product_urls = get_products_urls(driver=driver, pages=pages, text=text)
             for cell in row:
                 # Проверяем, что ячейка содержит строку
                 if isinstance(cell.value, str) and 'https://' in cell.value:
@@ -283,20 +288,25 @@ def wildberries_parser(workbook):
 
 
 def main():
-    value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
+    try:
+        value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
+
+        pages = int(input('Введите количество страниц'))
+
+    except Exception:
+        raise 'Введено неправильное значение'
+
+    driver = init_undetected_chromedriver()
 
     if value == '1':
-        pages = input('Введите количество страниц')
         print('Сбор данных Ozon')
-        ozon_parser(workbook=workbook, pages=pages)
+        ozon_parser(driver=driver, workbook=workbook, pages=pages)
         print('Сбор данных Ozon завершен')
     elif value == '2':
-        pages = input('Введите количество страниц')
         print('Сбор данных Wildberries')
         wildberries_parser(workbook=workbook)
         print('Сбор данных Wildberries завершен')
     elif value == '3':
-        pages = input('Введите количество страниц')
         print('Сбор данных Ozon')
         ozon_parser(workbook=workbook)
         print('Сбор данных Ozon завершен')
