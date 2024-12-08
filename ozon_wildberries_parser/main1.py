@@ -30,8 +30,8 @@ def init_undetected_chromedriver():
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, pages: int, text: str) -> list[str]:
-    products_urls = []
+def get_products_urls(driver: Chrome, scroll: int, text: str) -> set[str]:
+    products_urls = set()
 
     try:
         driver.get(url="https://www.ozon.ru/")
@@ -52,20 +52,15 @@ def get_products_urls(driver: Chrome, pages: int, text: str) -> list[str]:
         except Exception as ex:
             print(f'search_product: {ex}')
 
-        current_url = driver.current_url
+        for i in range(scroll):
+            driver.execute_script("window.scrollTo(0, 4000);")
+            time.sleep(randint(2, 3))
 
-        for page in range(1, pages + 1):
-            page_url = f"{current_url}?page={page}"
-            try:
-                driver.get(url=page_url)
-                time.sleep(3)
-                html = driver.page_source
-            except Exception as ex:
-                print(f"{page_url} - {ex}")
-                continue
+            driver.refresh()
 
-            if not html:
-                continue
+            time.sleep(randint(2, 3))
+
+            html = driver.page_source
 
             soup = BeautifulSoup(html, 'lxml')
 
@@ -73,7 +68,7 @@ def get_products_urls(driver: Chrome, pages: int, text: str) -> list[str]:
                 data_items = soup.find('div', class_='widget-search-result-container').find_all('div',
                                                                                                 class_='tile-root')
             except Exception as ex:
-                print(f'data_items: {page_url} - {ex}')
+                print(f'data_items: - {ex}')
                 continue
 
             for item in data_items:
@@ -82,11 +77,9 @@ def get_products_urls(driver: Chrome, pages: int, text: str) -> list[str]:
                 except Exception:
                     product_url = ''
 
-                products_urls.append(product_url)
+                products_urls.add(product_url)
 
-            print(f'Обработано: {page}/{pages} страниц')
-
-        print(len(products_urls))
+            print(len(products_urls))
 
         return products_urls
 
@@ -104,7 +97,8 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     try:
         for row in ws.iter_rows(min_row=4):
             text = row[1].value
-            product_urls = get_products_urls(driver=driver, pages=pages, text=text)
+            product_urls = get_products_urls(driver=driver, scroll=pages, text=text)
+            print(product_urls)
             for cell in row:
                 # Проверяем, что ячейка содержит строку
                 if isinstance(cell.value, str) and 'https://' in cell.value:
@@ -291,10 +285,10 @@ def main():
     try:
         value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
 
-        pages = int(input('Введите количество страниц'))
+        pages = int(input('Введите количество страниц: \n'))
 
     except Exception:
-        raise 'Введено неправильное значение'
+        raise 'Введено неправильное значение:\n'
 
     driver = init_undetected_chromedriver()
 
