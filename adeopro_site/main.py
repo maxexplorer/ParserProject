@@ -67,9 +67,12 @@ def process_excel(input_file, interval=5):
 
     # Индексы столбцов для "Номенклатура.Производитель" и "Артикул" по названиям
     try:
-        brand_column = headers.index('Номенклатура.Производитель') + 1  # Индексы в openpyxl начинаются с 1
-        code_column = headers.index('Артикул') + 1
-        old_price_column = headers.index('Цена') + 1
+        # brand_column = headers.index('Номенклатура.Производитель') + 1  # Индексы в openpyxl начинаются с 1
+        # code_column = headers.index('Артикул') + 1
+        # old_price_column = headers.index('Цена') + 1
+        brand_column = 1
+        code_column = 4
+        old_price_column = 10
         price_column = 11
     except ValueError as e:
         print(f"Ошибка: не найдены необходимые столбцы. {e}")
