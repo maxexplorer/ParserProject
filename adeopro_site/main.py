@@ -69,13 +69,13 @@ def process_excel(input_file, interval=5):
         brand_column = headers.index('Номенклатура.Производитель') + 1  # Индексы в openpyxl начинаются с 1
         code_column = headers.index('Артикул') + 1
         old_price_column = headers.index('Цена') + 1
-        price_column = headers.index('Новая цена') + 1
+        price_column = 11
     except ValueError as e:
         print(f"Ошибка: не найдены необходимые столбцы. {e}")
         return
 
     # Обрабатываем строки (начиная с 11-й строки, т.к. 10-я - это заголовки)
-    for row_idx in range(11, work_sheet.max_row + 1):
+    for row_idx in range(12, work_sheet.max_row + 1):
         brand = work_sheet.cell(row=row_idx, column=brand_column).value
         code = work_sheet.cell(row=row_idx, column=code_column).value
         old_price = work_sheet.cell(row=row_idx, column=old_price_column).value
