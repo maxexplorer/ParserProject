@@ -3,6 +3,7 @@ import requests
 import xml.etree.ElementTree as ET
 from openpyxl import load_workbook
 
+
 # Функция для отправки одного запроса
 def get_price_from_api(login: str, password: str, code: int, brand: str, force_online: int = 0,
                        crosses: str = "disallow", force_diler_replace: int = 0):
@@ -93,11 +94,14 @@ def process_excel(input_file, interval=5):
 
             # Если минимальная цена найдена, записываем её в Excel
             if min_price is not None:
+                min_price = min_price * 0.8
                 work_sheet.cell(row=row_idx, column=price_column).value = min_price
             else:
-                work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если цена не найдена записываем старую цену
+                work_sheet.cell(row=row_idx,
+                                column=price_column).value = old_price  # Если цена не найдена записываем старую цену
         else:
-            work_sheet.cell(row=row_idx, column=price_column).value = old_price  # Если данных нет, записываем старую цену
+            work_sheet.cell(row=row_idx,
+                            column=price_column).value = old_price  # Если данных нет, записываем старую цену
 
         # Интервал между запросами
         time.sleep(interval)
