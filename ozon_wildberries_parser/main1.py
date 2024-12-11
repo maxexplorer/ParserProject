@@ -3,6 +3,7 @@ import re
 import time
 from datetime import datetime
 from random import randint
+from urllib.parse import urlparse, urlunparse
 
 from undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
@@ -29,9 +30,21 @@ def init_undetected_chromedriver():
     return driver
 
 
+def get_cleaned_url(product_url: str) -> str:
+    # Парсим ссылку
+    parsed_url = urlparse(product_url)
+
+    # Собираем только основные части: схема, домен и путь
+    cleaned_url = urlunparse((parsed_url.scheme, parsed_url.netloc, parsed_url.path, '', '', ''))
+
+    product_id = cleaned_url.rstrip('/').split('-')[-1]
+
+    return product_id
+
+
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, scroll: int, text: str) -> set[str]:
-    products_urls = set()
+def get_products_ids(driver: Chrome, pages: int, text: str) -> list[str]:
+    products_ids = set()
 
     try:
         driver.get(url="https://www.ozon.ru/")
@@ -52,8 +65,9 @@ def get_products_urls(driver: Chrome, scroll: int, text: str) -> set[str]:
         except Exception as ex:
             print(f'search_product: {ex}')
 
-        for i in range(scroll):
-            driver.execute_script("window.scrollTo(0, 4000);")
+        for i in range(pages):
+            driver.execute_script("window.scrollTo(0, 12000);")
+
             time.sleep(randint(2, 3))
 
             driver.refresh()
@@ -69,42 +83,61 @@ def get_products_urls(driver: Chrome, scroll: int, text: str) -> set[str]:
                                                                                                 class_='tile-root')
             except Exception as ex:
                 print(f'data_items: - {ex}')
-                continue
+                data_items = []
 
             for item in data_items:
                 try:
                     product_url = f"https://www.ozon.ru{item.find('a').get('href')}"
+
+                    product_id = get_cleaned_url(product_url=product_url)
+
                 except Exception:
-                    product_url = ''
+                    continue
 
-                products_urls.add(product_url)
+                products_ids.add(product_id)
 
-            print(len(products_urls))
+            print(len(products_ids))
 
-        return products_urls
+        # if not os.path.exists('data'):
+        #     os.makedirs('data')
+        #
+        # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
+        #     print(*products_ids, file=file, sep='\n')
+
+        return products_ids
 
     except Exception as ex:
         print(f'get_products_urls: {ex}')
-    finally:
-        driver.close()
-        driver.quit()
 
 
 def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ОЗОН']
 
+    # Словарь для хранения уже обработанных текстов и их product_ids
+    processed_texts = {}
+
     try:
         for row in ws.iter_rows(min_row=4):
             text = row[1].value
-            product_urls = get_products_urls(driver=driver, scroll=pages, text=text)
-            print(product_urls)
+
+            if not text:
+                continue
+
+            # Если text уже обработан, берем product_ids из словаря, иначе вызываем функцию
+            if text in processed_texts:
+                product_ids = processed_texts[text]
+            else:
+                product_ids = get_products_ids(driver=driver, pages=pages, text=text)
+                processed_texts[text] = product_ids
+
             for cell in row:
                 # Проверяем, что ячейка содержит строку
                 if isinstance(cell.value, str) and 'https://' in cell.value:
                     try:
-                        url = cell.value
-                        driver.get(url=url)
+                        product_url = cell.value
+
+                        driver.get(url=product_url)
 
                         time.sleep(randint(3, 5))
 
@@ -129,10 +162,23 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                             row[cell.column - 4].value = ''
                             row[cell.column - 3].value = 'Такой страницы не существует'
                             row[cell.column - 2].value = ''
-                            print(f'{url}: Такой страницы не существует')
+                            print(f'{product_url}: Такой страницы не существует')
                             continue
                     except Exception:
                         pass
+
+                    try:
+                        product_id = get_cleaned_url(product_url=product_url)
+                    except Exception as ex:
+                        product_id = ''
+
+                    if product_id:
+                        try:
+                            product_position = product_ids.index(product_id) + 1
+                        except Exception as ex:
+                            # print(f'product_position: {product_url} - {ex}')
+                            product_position = ''
+                        row[cell.column + 2].value = product_position
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
@@ -197,15 +243,12 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         # print(f'button_del2: {ex}')
                         continue
 
-                    print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
+                    print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
     except Exception as ex:
         print(ex)
     finally:
         workbook.save('data/result_data.xlsx')
-        driver.close()
-        driver.quit()
-
 
 def wildberries_parser(workbook):
     headers = {
@@ -292,24 +335,31 @@ def main():
 
     driver = init_undetected_chromedriver()
 
-    if value == '1':
-        print('Сбор данных Ozon')
-        ozon_parser(driver=driver, workbook=workbook, pages=pages)
-        print('Сбор данных Ozon завершен')
-    elif value == '2':
-        print('Сбор данных Wildberries')
-        wildberries_parser(workbook=workbook)
-        print('Сбор данных Wildberries завершен')
-    elif value == '3':
-        print('Сбор данных Ozon')
-        ozon_parser(workbook=workbook)
-        print('Сбор данных Ozon завершен')
+    try:
+        if value == '1':
+            print('Сбор данных Ozon')
+            ozon_parser(driver=driver, workbook=workbook, pages=pages)
+            print('Сбор данных Ozon завершен')
+        elif value == '2':
+            print('Сбор данных Wildberries')
+            wildberries_parser(workbook=workbook)
+            print('Сбор данных Wildberries завершен')
+        elif value == '3':
+            print('Сбор данных Ozon')
+            ozon_parser(workbook=workbook)
+            print('Сбор данных Ozon завершен')
 
-        print('Сбор данных Wildberries')
-        wildberries_parser(workbook=workbook)
-        print('Сбор данных Wildberries завершен')
-    else:
-        print('Введено неправильное значение')
+            print('Сбор данных Wildberries')
+            wildberries_parser(workbook=workbook)
+            print('Сбор данных Wildberries завершен')
+        else:
+            print('Введено неправильное значение')
+
+    except Exception as ex:
+        print(f'main: {ex}')
+    finally:
+        driver.close()
+        driver.quit()
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
