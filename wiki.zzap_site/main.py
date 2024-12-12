@@ -5,8 +5,7 @@ from openpyxl import load_workbook
 
 
 # Функция для отправки одного запроса
-def get_price_from_api(login: str, password: str, code: int, brand: str, api_key: int):
-
+def get_price_from_api(login: str, password: str, code: int, brand: str, api_key: int) -> dict | None:
     # URL API
     url = "https://api.zzap.pro/webservice/datasharing.asmx/GetSearchResultLight"
 
@@ -31,15 +30,16 @@ def get_price_from_api(login: str, password: str, code: int, brand: str, api_key
         try:
             # Парсинг JSON-ответа
             json_data = response.json()
+            return json_data
 
         except ValueError as e:
             print("Ошибка парсинга JSON:", e)
             print(response.text)  # Для диагностики можно вывести сырой текст ответа
+            return None
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
-
-    return json_data
+        return None
 
 
 # Функция для извлечения минимальной цены из XML ответа
