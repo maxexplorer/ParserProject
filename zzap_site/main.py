@@ -40,7 +40,7 @@ def get_regions(api_key: str):
 
 
 # Функция для отправки одного запроса
-def get_price_from_api(code: str, brand: str, api_key: str) -> str | None:
+def get_data_from_api(code: str, brand: str, api_key: str) -> str | None:
     # URL API
     url = "https://api.zzap.pro/webservice/datasharing.asmx/GetSearchResultLight"
 
@@ -126,7 +126,7 @@ def process_excel(input_file: str, api_key: str, interval: int = 5):
 
         # Выполняем запрос к API
         print(f'Отправляем запрос для артикула: {code}, бренд: {brand}')
-        xml_data = get_price_from_api(code=code, brand=brand, api_key=api_key)
+        xml_data = get_data_from_api(code=code, brand=brand, api_key=api_key)
 
         if xml_data:
             # Извлекаем минимальную цену из ответа
@@ -134,7 +134,6 @@ def process_excel(input_file: str, api_key: str, interval: int = 5):
 
             # Если минимальная цена найдена, записываем её в Excel
             if min_price is not None:
-
                 work_sheet.cell(row=row_idx, column=price_column).value = min_price
             else:
                 work_sheet.cell(row=row_idx,
