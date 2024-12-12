@@ -7,6 +7,9 @@ from openpyxl import load_workbook
 # Функция для отправки одного запроса
 def get_price_from_api(login: str, password: str, code: str, brand: str, force_online: str = "0",
                        crosses: str = "disallow", force_diler_replace: str = "0"):
+    # URL API
+    url = "https://xml.adeo.pro/pricedetals2.php"
+
     # Формируем XML-запрос
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
     <message>
@@ -22,11 +25,9 @@ def get_price_from_api(login: str, password: str, code: str, brand: str, force_o
       </param>
     </message>'''
 
-    url = "https://xml.adeo.pro/pricedetals2.php"
-
     try:
         # Отправляем запрос к API
-        response = requests.post(url, data={'xml': xml}, timeout=60)
+        response = requests.post(url=url, data={'xml': xml}, timeout=60)
 
         # Проверяем успешность запроса
         if response.status_code == 200:
