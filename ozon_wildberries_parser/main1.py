@@ -66,7 +66,7 @@ def get_products_ids(driver: Chrome, pages: int, text: str) -> list[str]:
             print(f'search_product: {ex}')
 
         for i in range(pages):
-            driver.execute_script("window.scrollTo(0, 12000);")
+            driver.execute_script("window.scrollTo(0, 4000);")
 
             time.sleep(randint(2, 3))
 
