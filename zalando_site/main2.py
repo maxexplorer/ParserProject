@@ -136,7 +136,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 def get_product_urls(driver: Chrome, category_data_list: list, headers: dict, value: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{value}.txt'
+    file_path = f'{directory}/url_products_list_{value}_Одежда.txt'
 
     try:
         processed_urls = get_unique_urls(file_path=file_path)
@@ -560,7 +560,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str) -> None
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}_Одежда.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -585,7 +585,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str) -> None
 
 
 def main():
-    # get_category_urls(url="https://www.zalando.pl/torby-plecaki-szkolne/", headers=headers)
+    # get_category_urls(url="https://en.zalando.de/womens-shoes/", headers=headers)
 
     try:
         input_value = input(
