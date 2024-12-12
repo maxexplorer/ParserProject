@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 
 
 # Функция для отправки одного запроса
-def get_price_from_api(login: str, password: str, code: int, brand: str, force_online: int = 0,
+def get_price_from_api(login: str, password: str, code: str, brand: str, force_online: str = "0",
                        crosses: str = "disallow", force_diler_replace: int = 0):
     # Формируем XML-запрос
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
