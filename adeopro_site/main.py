@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 
 # Функция для отправки одного запроса
 def get_price_from_api(login: str, password: str, code: str, brand: str, force_online: str = "0",
-                       crosses: str = "disallow", force_diler_replace: str = "0"):
+                       crosses: str = "disallow", force_diler_replace: str = "0") -> str | None:
     # URL API
     url = "https://xml.adeo.pro/pricedetals2.php"
 
@@ -90,11 +90,11 @@ def process_excel(input_file, interval=5):
 
         # Выполняем запрос к API
         print(f"Отправляем запрос для артикула: {code}, бренд: {brand}")
-        price_data = get_price_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
+        xml_data = get_price_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
 
-        if price_data:
+        if xml_data:
             # Извлекаем минимальную цену из ответа
-            min_price = extract_min_price_from_response(price_data)
+            min_price = extract_min_price_from_response(xml_data)
 
             # Если минимальная цена найдена, записываем её в Excel
             if min_price is not None:
