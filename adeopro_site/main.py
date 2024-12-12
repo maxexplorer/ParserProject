@@ -33,10 +33,10 @@ def get_price_from_api(login: str, password: str, code: str, brand: str, force_o
         if response.status_code == 200:
             return response.text  # Возвращаем текст ответа
         else:
-            print(f"Ошибка {response.status_code}: {response.text}")
+            print(f'Ошибка {response.status_code}: {response.text}')
             return None
     except requests.exceptions.RequestException as e:
-        print(f"Ошибка подключения: {e}")
+        print(f'Ошибка подключения: {e}')
         return None
 
 
@@ -49,7 +49,7 @@ def extract_min_price_from_response(xml_data):
         min_price = min(prices) if prices else None
         return min_price
     except Exception as e:
-        print(f"Ошибка при парсинге XML: {e}")
+        print(f'Ошибка при парсинге XML: {e}')
         return None
 
 
@@ -60,13 +60,13 @@ def process_excel(input_file, interval=5):
         workbook = load_workbook(input_file)
         work_sheet = workbook.active  # Доступ к активному листу
     except Exception as e:
-        print(f"Ошибка чтения файла: {e}")
+        print(f'Ошибка чтения файла: {e}')
         return
 
     # Получаем заголовки из 10-й строки
     headers = [cell.value for cell in work_sheet[10]]  # Заголовки столбцов находятся в 10-й строке
 
-    # Индексы столбцов для "Номенклатура.Производитель" и "Артикул" по названиям
+    # Индексы столбцов для "Номенклатура.Производитель", "Артикул", "Цена" по названиям
     try:
         # brand_column = headers.index('Номенклатура.Производитель') + 1  # Индексы в openpyxl начинаются с 1
         # code_column = headers.index('Артикул') + 1
@@ -76,7 +76,7 @@ def process_excel(input_file, interval=5):
         old_price_column = 10
         price_column = 11
     except ValueError as e:
-        print(f"Ошибка: не найдены необходимые столбцы. {e}")
+        print(f'Ошибка: не найдены необходимые столбцы. {e}')
         return
 
     # Обрабатываем строки (начиная с 11-й строки, т.к. 10-я - это заголовки)
@@ -89,7 +89,7 @@ def process_excel(input_file, interval=5):
             continue
 
         # Выполняем запрос к API
-        print(f"Отправляем запрос для артикула: {code}, бренд: {brand}")
+        print(f'Отправляем запрос для артикула: {code}, бренд: {brand}')
         xml_data = get_price_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
 
         if xml_data:
@@ -113,15 +113,15 @@ def process_excel(input_file, interval=5):
     # Сохраняем изменения в тот же файл
     try:
         workbook.save(input_file)  # Сохраняем в исходный файл
-        print(f"Результаты сохранены в {input_file}")
+        print(f'Результаты сохранены в {input_file}')
     except Exception as e:
-        print(f"Ошибка записи файла: {e}")
+        print(f'Ошибка записи файла: {e}')
 
 
 # Точка входа
-if __name__ == "__main__":
+if __name__ == '__main__':
     # Укажите путь к файлу с артикулами и брендами
-    input_file = "data/data.xlsx"  # Входной файл
+    input_file = 'data/data.xlsx'  # Входной файл
     interval = 2  # Интервал между запросами в секундах
 
     process_excel(input_file, interval)
