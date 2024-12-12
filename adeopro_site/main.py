@@ -79,7 +79,7 @@ def process_excel(input_file, interval=5):
         print(f'Ошибка: не найдены необходимые столбцы. {e}')
         return
 
-    # Обрабатываем строки (начиная с 11-й строки, т.к. 10-я - это заголовки)
+    # Обрабатываем строки (начиная с 12-й строки, т.к. 11-я - это заголовки)
     for row_idx in range(12, work_sheet.max_row + 1):
         brand = work_sheet.cell(row=row_idx, column=brand_column).value
         code = work_sheet.cell(row=row_idx, column=code_column).value
