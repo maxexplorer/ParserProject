@@ -85,7 +85,11 @@ def extract_min_price_from_response(xml_data):
         dict_data = json.loads(json_data)
 
         min_price = dict_data.get('price_min_instock')
-        return min_price
+
+        if min_price:
+            return min_price
+        return None
+
     except Exception as e:
         print(f'Ошибка при парсинге JSON: {e}')
         return None
