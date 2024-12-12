@@ -3,9 +3,42 @@ import requests
 import xml.etree.ElementTree as ET
 from openpyxl import load_workbook
 
+import requests
+
+
+def get_regions(login: str, password: str, api_key: str):
+    url = "https://api.zzap.pro/webservice/datasharing.asmx/GetRegionsV2"
+
+    # Формируем параметры запроса
+    params = {
+        "login": {login},
+        "password": {password},
+        "api_key": api_key,
+    }
+
+    try:
+        # Выполняем POST-запрос
+        response = requests.post(url, data=params)
+
+        # Проверяем статус код
+        if response.status_code != 200:
+            return {"error": f"HTTP error: {response.status_code}"}
+
+        # Преобразуем ответ в JSON
+        json_data = response.json()
+
+        # Проверяем на наличие ошибок в ответе
+        if json_data.get("error"):
+            return {"error": json_data["error"]}
+
+        return json_data  # Возвращаем данные о регионах
+
+    except Exception as e:
+        return {"error": str(e)}
+
 
 # Функция для отправки одного запроса
-def get_price_from_api(login: str, password: str, code: int, brand: str, api_key: int) -> dict | None:
+def get_price_from_api(login: str, password: str, code: str, brand: str, api_key: str) -> dict | None:
     # URL API
     url = "https://api.zzap.pro/webservice/datasharing.asmx/GetSearchResultLight"
 
