@@ -11,17 +11,17 @@ def read_avito_data(avito_file):
     return avito_dict
 
 
-def process_data_files(data_folder, avito_dict, new_ws):
+def process_data_files(data_folder, avito_dict, new_ws, new_wb):
     """Обработка файлов из папки data и обновление цен"""
     # Итерация по файлам в папке data
     for file_name in os.listdir(data_folder):
-        file_path = os.path.join(data_folder, file_name)
+        data_file_path = os.path.join(data_folder, file_name)
 
         # Проверяем, что это Excel-файл
         if file_name.endswith(('.xlsx', '.xlsm')):
             try:
                 # Загружаем книгу
-                workbook = load_workbook(file_path)
+                workbook = load_workbook(data_file_path)
                 sheet_names = workbook.sheetnames
             except Exception as e:
                 raise f'Ошибка чтения файла: {e}'
@@ -59,15 +59,22 @@ def process_data_files(data_folder, avito_dict, new_ws):
                         new_ws.append([article_cell, new_price, sheet_name])
 
             # Сохраняем изменения в исходный файл
-            workbook.save(file_path)
+            workbook.save(data_file_path)
+
+            # Сохраняем результаты
+            save_results(new_wb=new_wb, file_name=file_name)
 
 
-def save_results(new_wb):
+def save_results(new_wb, file_name):
     """Сохранение результатов в файл"""
-    if not os.path.exists('results'):
-        os.mkdir('results')
+    data = 'results'
 
-    new_wb.save('results/updated_prices.xlsx')
+    if not os.path.exists(data):
+        os.mkdir(data)
+
+    result_file_path = f'results/updated_prices_{file_name}'
+
+    new_wb.save(result_file_path)
 
 
 def main():
@@ -75,8 +82,8 @@ def main():
     start_time = datetime.now()
 
     # Путь к файлу avito.xlsx
-    avito_file = 'avito/avito.xlsx'
-    avito_dict = read_avito_data(avito_file)
+    avito_file_path = 'avito/avito.xlsx'
+    avito_dict = read_avito_data(avito_file_path)
 
     # Папка с файлами data
     data_folder = 'data'
@@ -87,10 +94,7 @@ def main():
     new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
 
     # Обрабатываем файлы
-    process_data_files(data_folder, avito_dict, new_ws)
-
-    # Сохраняем результаты
-    save_results(new_wb)
+    process_data_files(data_folder=data_folder, avito_dict=avito_dict, new_ws=new_ws, new_wb=new_wb)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
