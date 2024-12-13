@@ -44,6 +44,9 @@ def get_data_from_api(code: str, brand: str, api_key: str) -> str | None:
     # URL API
     url = "https://api.zzap.pro/webservice/datasharing.asmx/GetSearchResultLight"
 
+    if brand == 'OEM':
+        brand = 'O E M'
+
     # Параметры запроса
     params = {
         'login': '',
