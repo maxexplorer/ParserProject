@@ -1,23 +1,28 @@
 import os
+from datetime import datetime
+
 from openpyxl import load_workbook, Workbook
 
+start_time = datetime.now()
+
 # Путь к файлу avito.xlsx
-avito_file = "avito.xlsx"
+avito_file = 'avito/avito.xlsx'
 
 # Загружаем данные из avito.xlsx
 wb_avito = load_workbook(avito_file)
 ws_avito = wb_avito.active
 
 # Считываем артикулы и цены в словарь
-avito_dict = {row[0].value: row[1].value for row in ws_avito.iter_rows(min_row=2, max_col=2)}
+avito_dict = {row[1].value: row[3].value for row in ws_avito.iter_rows(min_row=3, max_col=5)}
+
 
 # Папка с файлами data
-data_folder = "data"
+data_folder = 'data'
 
 # Создаем новую книгу для записи найденных данных
 new_wb = Workbook()
 new_ws = new_wb.active
-new_ws.append(["Артикул", "Цена"])  # Заголовки
+new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
 
 # Итерация по файлам в папке data
 for file_name in os.listdir(data_folder):
@@ -25,9 +30,13 @@ for file_name in os.listdir(data_folder):
 
     # Проверяем, что это Excel-файл
     if file_name.endswith(('.xlsx', '.xlsm')):
-        # Загружаем книгу
-        workbook = load_workbook(file_path)
-        sheet_names = workbook.sheetnames
+        try:
+            # Загружаем книгу
+            workbook = load_workbook(file_path)
+            sheet_names = workbook.sheetnames
+        except Exception as e:
+            raise f'Ошибка чтения файла: {e}'
+
 
         # Проходим по листам, начиная со второго
         for i, sheet_name in enumerate(sheet_names):
@@ -36,21 +45,41 @@ for file_name in os.listdir(data_folder):
 
             sheet = workbook[sheet_name]
 
-            # Поиск и обновление цены
-            for row in sheet.iter_rows(min_row=2):  # min_row=2 пропускает заголовок
-                article_cell = row[0]  # Первая колонка с артикулом
-                price_cell = row[1]  # Вторая колонка с ценой
+            # Получаем заголовки из первой строки (предположим, заголовки находятся в первой строке)
+            headers = [cell.value for cell in sheet[2]]
 
-                if article_cell.value in avito_dict:
+            # Находим индексы колонок с нужными заголовками
+            try:
+                oem_column_index = headers.index("OEM")  # Ищем столбец "OEM"
+                price_column_index = headers.index("Price")  # Ищем столбец "Price"
+            except Exception as ex:
+                print(f'{sheet}: {ex}')
+                continue
+
+            # Поиск и обновление цены
+            for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
+                article_cell = row[oem_column_index].value  # Колонка с артикулом
+                price_cell = row[price_column_index].value  # Колонка с ценой
+
+                if article_cell in avito_dict:
                     # Обновляем цену
-                    new_price = avito_dict[article_cell.value]
-                    price_cell.value = new_price
+                    new_price = avito_dict[article_cell]
+                    price_cell = new_price
+
+                    print(f'Обработано: {article_cell}: {price_cell}')
 
                     # Записываем в новый файл
-                    new_ws.append([article_cell.value, new_price])
+                    new_ws.append([article_cell, new_price, sheet_name])
 
         # Сохраняем изменения в исходный файл
         workbook.save(file_path)
 
+if not os.path.exists('results'):
+    os.mkdir('results')
+
 # Сохраняем новый файл с найденными данными
-new_wb.save("updated_prices.xlsx")
+new_wb.save('results/updated_prices.xlsx')
+
+execution_time = datetime.now() - start_time
+print('Сбор данных завершен!')
+print(f'Время работы программы: {execution_time}')

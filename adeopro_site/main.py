@@ -64,7 +64,7 @@ def process_excel(input_file, interval=5):
         return
 
     # Получаем заголовки из 10-й строки
-    headers = [cell.value for cell in work_sheet[10]]  # Заголовки столбцов находятся в 10-й строке
+    headers = [cell.value for cell in work_sheet[11]]  # Заголовки столбцов находятся в 11-й строке
 
     # Индексы столбцов для "Номенклатура.Производитель", "Артикул", "Цена" по названиям
     try:
