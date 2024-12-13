@@ -59,14 +59,13 @@ for file_name in os.listdir(data_folder):
             # Поиск и обновление цены
             for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
                 article_cell = row[oem_column_index].value  # Колонка с артикулом
-                price_cell = row[price_column_index].value  # Колонка с ценой
 
                 if article_cell in avito_dict:
                     # Обновляем цену
                     new_price = avito_dict[article_cell]
-                    price_cell = new_price
+                    row[price_column_index].value = new_price  # Колонка с ценой
 
-                    print(f'Обработано: {article_cell}: {price_cell}')
+                    print(f'Обработано: {article_cell}: {new_price}')
 
                     # Записываем в новый файл
                     new_ws.append([article_cell, new_price, sheet_name])

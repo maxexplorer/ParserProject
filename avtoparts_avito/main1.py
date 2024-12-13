@@ -2,12 +2,14 @@ import os
 from datetime import datetime
 from openpyxl import load_workbook, Workbook
 
+
 def read_avito_data(avito_file):
     """Чтение данных из файла avito.xlsx"""
     wb_avito = load_workbook(avito_file)
     ws_avito = wb_avito.active
     avito_dict = {row[1].value: row[3].value for row in ws_avito.iter_rows(min_row=3, max_col=5)}
     return avito_dict
+
 
 def process_data_files(data_folder, avito_dict, new_ws):
     """Обработка файлов из папки data и обновление цен"""
@@ -45,14 +47,13 @@ def process_data_files(data_folder, avito_dict, new_ws):
                 # Поиск и обновление цены
                 for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
                     article_cell = row[oem_column_index].value  # Колонка с артикулом
-                    price_cell = row[price_column_index].value  # Колонка с ценой
 
                     if article_cell in avito_dict:
                         # Обновляем цену
                         new_price = avito_dict[article_cell]
-                        price_cell = new_price
+                        row[price_column_index].value = new_price  # Колонка с ценой
 
-                        print(f'Обработано: {article_cell}: {price_cell}')
+                        print(f'Обработано: {article_cell}: {new_price}')
 
                         # Записываем в новый файл
                         new_ws.append([article_cell, new_price, sheet_name])
@@ -60,12 +61,14 @@ def process_data_files(data_folder, avito_dict, new_ws):
             # Сохраняем изменения в исходный файл
             workbook.save(file_path)
 
+
 def save_results(new_wb):
     """Сохранение результатов в файл"""
     if not os.path.exists('results'):
         os.mkdir('results')
 
     new_wb.save('results/updated_prices.xlsx')
+
 
 def main():
     """Основная точка входа в программу"""
@@ -92,6 +95,7 @@ def main():
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
+
 
 if __name__ == "__main__":
     main()

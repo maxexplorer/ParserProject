@@ -80,15 +80,18 @@ def get_products_ids(driver: Chrome, pages: int, text: str) -> set[str]:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data_items = soup.find('div', class_='widget-search-result-container').find_all('div',
-                                                                                                class_='tile-root')
+                # data_items = soup.find('div', class_='widget-search-result-container').find_all('div',
+                #                                                                                 class_='tile-root')
+
+                data_items = driver.find_elements(By.CSS_SELECTOR, 'div[class="z1i_23"] a')
+
             except Exception as ex:
                 print(f'data_items: - {ex}')
                 data_items = []
 
             for item in data_items:
                 try:
-                    product_url = f"https://www.ozon.ru{item.find('a').get('href')}"
+                    product_url = f"https://www.ozon.ru{item.get_attribute('href')}"
 
                     product_id = get_cleaned_url(product_url=product_url)
 
