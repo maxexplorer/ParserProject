@@ -82,8 +82,6 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         print(f'get_html: {ex}')
 
 
-
-
 # Получаем количество страниц
 def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
@@ -548,11 +546,12 @@ def get_products_data(products_data_list: list[dict], processed_urls: set, value
                 print(f'Обработано: {i}/{count_products} товаров!')
 
         if result_data:
-            save_excel(data=result_data, species='products', brand=value, category_name=category_name)
+            save_excel(data=result_data, species='products', brand=value, category_name=category_name,
+                       subcategory_name=subcategory_name)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, species: str, brand: str, category_name: str) -> None:
+def save_excel(data: list, species: str, brand: str, category_name: str, subcategory_name: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -560,7 +559,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str) -> None
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}_Одежда.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}_{subcategory_name}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
