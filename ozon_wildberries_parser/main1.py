@@ -43,8 +43,9 @@ def get_cleaned_url(product_url: str) -> str:
 
 
 # Функция получения ссылок товаров
-def get_products_ids(driver: Chrome, pages: int, text: str) -> set[str]:
-    products_ids = set()
+def get_products_ids(driver: Chrome, pages: int, text: str) -> list[str]:
+    products_ids_list = list()
+    products_ids_set = set()
 
     try:
         driver.get(url="https://www.ozon.ru/")
@@ -66,41 +67,31 @@ def get_products_ids(driver: Chrome, pages: int, text: str) -> set[str]:
             print(f'search_product: {ex}')
 
         for i in range(pages):
-            # driver.execute_script("window.scrollTo(0, 4000);")
-            driver.execute_script("window.scrollBy(0, window.innerHeight);")
+            driver.execute_script("window.scrollTo(0, 4000);")
+            # driver.execute_script("window.scrollBy(0, window.innerHeight);")
 
             time.sleep(randint(2, 3))
 
-            driver.refresh()
+        try:
+            data_items = driver.find_elements(By.CSS_SELECTOR, 'a[data-prerender="true"].tile-clickable-element')
 
-            time.sleep(randint(2, 3))
+        except Exception as ex:
+            print(f'data_items: - {ex}')
+            data_items = []
 
-            html = driver.page_source
-
-            soup = BeautifulSoup(html, 'lxml')
-
+        for item in data_items:
             try:
-                # data_items = soup.find('div', class_='widget-search-result-container').find_all('div',
-                #                                                                                 class_='tile-root')
+                product_url = f"https://www.ozon.ru{item.get_attribute('href')}"
 
-                data_items = driver.find_elements(By.CSS_SELECTOR, 'div[class="z1i_23"] a')
+                product_id = get_cleaned_url(product_url=product_url)
 
-            except Exception as ex:
-                print(f'data_items: - {ex}')
-                data_items = []
+            except Exception:
+                continue
 
-            for item in data_items:
-                try:
-                    product_url = f"https://www.ozon.ru{item.get_attribute('href')}"
+            products_ids_list.append(product_id)
+            products_ids_set.add(product_id)
 
-                    product_id = get_cleaned_url(product_url=product_url)
-
-                except Exception:
-                    continue
-
-                products_ids.add(product_id)
-
-            print(len(products_ids))
+        print(f'Получено: {len(products_ids_set)} ids')
 
         # if not os.path.exists('data'):
         #     os.makedirs('data')
@@ -108,7 +99,7 @@ def get_products_ids(driver: Chrome, pages: int, text: str) -> set[str]:
         # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
         #     print(*products_ids, file=file, sep='\n')
 
-        return products_ids
+        return products_ids_list
 
     except Exception as ex:
         print(f'get_products_urls: {ex}')
