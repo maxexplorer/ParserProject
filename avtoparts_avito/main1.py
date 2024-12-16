@@ -47,16 +47,19 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
                 # Поиск и обновление цены
                 for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
                     article_cell = row[oem_column_index].value  # Колонка с артикулом
+                    price_cell = row[price_column_index].value  # Колонка с ценой
 
                     if article_cell in avito_dict:
                         # Обновляем цену
                         new_price = avito_dict[article_cell]
-                        row[price_column_index].value = new_price  # Колонка с ценой
 
-                        print(f'Обработано: {article_cell}: {new_price}')
+                        if price_cell != new_price:
+                            row[price_column_index].value = new_price  # Колонка с ценой
 
-                        # Записываем в новый файл
-                        new_ws.append([article_cell, new_price, sheet_name])
+                            print(f'Обработано: {article_cell}: {new_price}')
+
+                            # Записываем в новый файл
+                            new_ws.append([article_cell, new_price, sheet_name])
 
             # Сохраняем изменения в исходный файл
             workbook.save(data_file_path)
