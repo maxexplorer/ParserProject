@@ -5,6 +5,8 @@ from datetime import datetime
 from random import randint
 from urllib.parse import urlparse, urlunparse
 
+from requests import Session
+
 from undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -43,7 +45,7 @@ def get_cleaned_url(product_url: str) -> str:
 
 
 # Функция получения ссылок товаров
-def get_products_ids(driver: Chrome, pages: int, text: str) -> list[str]:
+def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
     products_ids_list = list()
     products_ids_set = set()
 
@@ -93,16 +95,67 @@ def get_products_ids(driver: Chrome, pages: int, text: str) -> list[str]:
 
         print(f'Получено: {len(products_ids_set)} ids')
 
-        # if not os.path.exists('data'):
-        #     os.makedirs('data')
-        #
-        # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
-        #     print(*products_ids, file=file, sep='\n')
-
         return products_ids_list
 
     except Exception as ex:
         print(f'get_products_urls: {ex}')
+
+
+# Функция получения ссылок товаров
+def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
+    products_ids_list = list()
+
+    with Session() as session:
+        for page in range(1, pages + 1):
+            params = {
+                'ab_testing': 'false',
+                'appType': '1',
+                'curr': 'rub',
+                'dest': '-5856841',
+                'hide_dtype': '10',
+                'lang': 'ru',
+                'page': page,
+                'query': text,
+                'resultset': 'catalog',
+                'sort': 'popular',
+                'spp': '30',
+                'suppressSpellcheck': 'false',
+            }
+
+            try:
+                time.sleep(1)
+                response = session.get(
+                    f'https://search.wb.ru/exactmatch/ru/common/v9/search',
+                    params=params,
+                    headers=headers,
+                    timeout=60
+                )
+
+                if response.status_code != 200:
+                    print(f'get_products_ids_wb: status_code {response.status_code}')
+
+            except Exception as ex:
+                print(f'get_products_ids_wb: {ex}')
+                continue
+
+            data = response.json()
+
+            try:
+                for item in data['data']['products']:
+                    product_id = item.get('id')
+                    products_ids_list.append(str(product_id))
+            except Exception as ex:
+                print(f'products_ids: {ex}')
+
+    print(f'Получено: {len(products_ids_list)} ids')
+
+    # if not os.path.exists('data'):
+    #     os.makedirs('data')
+    #
+    # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
+    #     print(*products_ids_list, file=file, sep='\n')
+
+    return products_ids_list
 
 
 def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
@@ -123,7 +176,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
             if text in processed_texts:
                 product_ids = processed_texts[text]
             else:
-                product_ids = get_products_ids(driver=driver, pages=pages, text=text)
+                product_ids = get_products_ids_ozon(driver=driver, pages=pages, text=text)
                 processed_texts[text] = product_ids
 
             for cell in row:
@@ -144,9 +197,9 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         out_of_stock = soup.find('h2', string=re.compile('Этот товар закончился'))
                         if out_of_stock:
                             # print(f'{url}: Этот товар закончился')
-                            row[cell.column - 4].value = ''
+                            row[cell.column - 4].value = None
                             row[cell.column - 3].value = 0
-                            row[cell.column - 2].value = ''
+                            row[cell.column - 2].value = None
                             continue
                     except Exception:
                         pass
@@ -154,9 +207,9 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     try:
                         no_such_page = soup.find('h2', string=re.compile('Такой страницы не существует'))
                         if no_such_page:
-                            row[cell.column - 4].value = ''
+                            row[cell.column - 4].value = None
                             row[cell.column - 3].value = 'Такой страницы не существует'
-                            row[cell.column - 2].value = ''
+                            row[cell.column - 2].value = None
                             print(f'{product_url}: Такой страницы не существует')
                             continue
                     except Exception:
@@ -165,22 +218,22 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     try:
                         product_id = get_cleaned_url(product_url=product_url)
                     except Exception as ex:
-                        product_id = ''
+                        product_id = None
 
                     if product_id:
                         try:
                             product_position = product_ids.index(product_id) + 1
                         except Exception as ex:
                             # print(f'product_position: {product_url} - {ex}')
-                            product_position = ''
-                        row[cell.column + 2].value = product_position
+                            product_position = None
+                        row[cell.column].value = product_position
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
                             'c Ozon Картой')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
-                        price = ''
+                        price = None
                     row[cell.column - 4].value = price
 
                     try:
@@ -189,7 +242,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
                     except Exception as ex:
                         # print(f'storage - {ex}')
-                        storage = ''
+                        storage = None
                     row[cell.column - 2].value = storage
 
                     try:
@@ -216,7 +269,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         quantity = items[0].get('max')
                     except Exception as ex:
                         # print(f'quantity - {ex}')
-                        quantity = ''
+                        quantity = None
                     row[cell.column - 3].value = quantity
 
                     try:
@@ -245,48 +298,65 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     finally:
         workbook.save('data/result_data.xlsx')
 
-def wildberries_parser(workbook):
+
+def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     headers = {
-        'Accept': '*/*',
-        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Connection': 'keep-alive',
-        'Origin': 'https://www.wildberries.ru',
-        'Referer': 'https://www.wildberries.ru/catalog/18172488/detail.aspx',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                      ' (KHTML like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14931',
-        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+        'accept': '*/*',
+        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'origin': 'https://www.wildberries.ru',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wildberries.ru/catalog/0/search.aspx?page=2&sort=popular&search=%D0%90%D0%B4%D0%B0%D0%BF%D1%82%D0%B5%D1%80+%D0%B4%D0%BB%D1%8F+%D0%BB%D0%B5%D0%B4%D0%BE%D0%B1%D1%83%D1%80%D0%B0+%D0%BF%D0%BE%D0%B4+%D1%88%D1%83%D1%80%D1%83%D0%BF%D0%BE%D0%B2%D0%B5%D1%80%D1%82',
+        'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'cross-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'x-captcha-id': 'Catalog 1|1|1735552359|AA==|a6f18c61b0294d8ba02a586682aff8af|qu70L9GzbKiDtAGAmUj706n64xrt2myDgFhNnlaiV8u',
+        'x-queryid': 'qid143023290172907954520241216095355',
     }
 
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ВБ']
 
+    # Словарь для хранения уже обработанных текстов и их product_ids
+    processed_texts = {}
+
     for row in ws.iter_rows(min_row=4):
+        text = row[1].value
+
+        if not text:
+            continue
+
+        # Если text уже обработан, берем product_ids из словаря, иначе вызываем функцию
+        if text in processed_texts:
+            product_ids = processed_texts[text]
+        else:
+            product_ids = get_products_ids_wb(headers=headers, pages=pages, text=text)
+            processed_texts[text] = product_ids
+
         for cell in row:
             # Проверяем, что ячейка содержит строку
             if isinstance(cell.value, str) and 'https://' in cell.value:
-                url = cell.value
-                prod_id = url.split('catalog')[-1].split('detail')[0].strip('/')
+                product_url = cell.value
+                product_id = product_url.split('catalog')[-1].split('detail')[0].strip('/')
 
                 params = {
                     'appType': '1',
                     'curr': 'rub',
                     'dest': '-1257786',
                     'spp': '30',
-                    'nm': {prod_id},
+                    'nm': {product_id},
                 }
 
                 try:
                     time.sleep(randint(1, 3))
                     response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
                     if response.status_code != 200:
-                        print(f'{url}: {response.status_code}')
+                        print(f'{product_url}: {response.status_code}')
                 except Exception as ex:
-                    print(f'{url}: ex')
+                    print(f'{product_url}: ex')
                     continue
 
                 data = response.json()
@@ -295,11 +365,20 @@ def wildberries_parser(workbook):
                     quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
                     row[cell.column - 3].value = quantity
                 except Exception:
-                    print(f'{url}: Этот товар закончился')
+                    print(f'{product_url}: Этот товар закончился')
                     row[cell.column - 4].value = ''
                     row[cell.column - 3].value = 0
                     row[cell.column - 2].value = ''
                     continue
+
+                try:
+                    product_position = product_ids.index(product_id)
+                except Exception as ex:
+                    # print(f'product_position: {product_url} - {ex}')
+                    product_position = None
+
+                if product_position:
+                    row[cell.column].value = product_position + 1
 
                 try:
                     storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
@@ -309,12 +388,12 @@ def wildberries_parser(workbook):
                 row[cell.column - 2].value = storage
 
                 try:
-                    price = str(data['data']['products'][0]['salePriceU']).rstrip('00')
+                    price = data['data']['products'][0]['salePriceU'] // 100
                 except Exception:
                     price = None
                 row[cell.column - 4].value = price
 
-                print(f'{url}: price - {price}, quantity - {quantity}, storage - {storage}')
+                print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
     workbook.save('data/result_data.xlsx')
 
@@ -323,8 +402,6 @@ def main():
     try:
         value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
 
-        pages = int(input('Введите количество страниц: \n'))
-
     except Exception:
         raise 'Введено неправильное значение:\n'
 
@@ -332,20 +409,25 @@ def main():
 
     try:
         if value == '1':
+            pages = int(input('Введите количество страниц Ozon: \n'))
             print('Сбор данных Ozon')
             ozon_parser(driver=driver, workbook=workbook, pages=pages)
             print('Сбор данных Ozon завершен')
         elif value == '2':
+            pages = int(input('Введите количество страниц Wildberries: \n'))
             print('Сбор данных Wildberries')
-            wildberries_parser(workbook=workbook)
+            wildberries_parser(workbook=workbook, pages=pages)
             print('Сбор данных Wildberries завершен')
         elif value == '3':
+            pages_ozon = int(input('Введите количество страниц Ozon: \n'))
+            pages_wb = int(input('Введите количество страниц Wildberries: \n'))
+
             print('Сбор данных Ozon')
-            ozon_parser(workbook=workbook)
+            ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
             print('Сбор данных Ozon завершен')
 
             print('Сбор данных Wildberries')
-            wildberries_parser(workbook=workbook)
+            wildberries_parser(workbook=workbook, pages=pages_wb)
             print('Сбор данных Wildberries завершен')
         else:
             print('Введено неправильное значение')
