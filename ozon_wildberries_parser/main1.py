@@ -95,6 +95,12 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
 
         print(f'Получено: {len(products_ids_set)} ids')
 
+        if not os.path.exists('data'):
+            os.makedirs('data')
+
+        with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
+            print(*products_ids_list, file=file, sep='\n')
+
         return products_ids_list
 
     except Exception as ex:
@@ -401,42 +407,50 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 def main():
     try:
         value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
-
     except Exception:
         raise 'Введено неправильное значение:\n'
 
-    driver = init_undetected_chromedriver()
-
-    try:
-        if value == '1':
-            pages = int(input('Введите количество страниц Ozon: \n'))
+    if value == '1':
+        pages = int(input('Введите количество страниц Ozon: \n'))
+        driver = init_undetected_chromedriver()
+        try:
             print('Сбор данных Ozon')
             ozon_parser(driver=driver, workbook=workbook, pages=pages)
             print('Сбор данных Ozon завершен')
-        elif value == '2':
+        except Exception as ex:
+            print(f'main: {ex}')
+        finally:
+            driver.close()
+            driver.quit()
+    elif value == '2':
+        try:
             pages = int(input('Введите количество страниц Wildberries: \n'))
             print('Сбор данных Wildberries')
             wildberries_parser(workbook=workbook, pages=pages)
             print('Сбор данных Wildberries завершен')
-        elif value == '3':
-            pages_ozon = int(input('Введите количество страниц Ozon: \n'))
-            pages_wb = int(input('Введите количество страниц Wildberries: \n'))
-
+        except Exception as ex:
+            print(f'main: {ex}')
+    elif value == '3':
+        pages_ozon = int(input('Введите количество страниц Ozon: \n'))
+        pages_wb = int(input('Введите количество страниц Wildberries: \n'))
+        driver = init_undetected_chromedriver()
+        try:
             print('Сбор данных Ozon')
             ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
             print('Сбор данных Ozon завершен')
-
+        except Exception as ex:
+            print(f'main: {ex}')
+        finally:
+            driver.close()
+            driver.quit()
+        try:
             print('Сбор данных Wildberries')
             wildberries_parser(workbook=workbook, pages=pages_wb)
             print('Сбор данных Wildberries завершен')
-        else:
-            print('Введено неправильное значение')
-
-    except Exception as ex:
-        print(f'main: {ex}')
-    finally:
-        driver.close()
-        driver.quit()
+        except Exception as ex:
+            print(f'main: {ex}')
+    else:
+        print('Введено неправильное значение')
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
