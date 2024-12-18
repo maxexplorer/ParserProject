@@ -20,7 +20,7 @@ import requests
 start_time = datetime.now()
 
 # Открываем файл Excel
-workbook = openpyxl.load_workbook("data/data1.xlsm")
+workbook = openpyxl.load_workbook("data/data.xlsm")
 
 
 # Функция инициализации объекта chromedriver
@@ -95,11 +95,11 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
 
         print(f'Получено: {len(products_ids_set)} ids')
 
-        if not os.path.exists('data'):
-            os.makedirs('data')
-
-        with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
-            print(*products_ids_list, file=file, sep='\n')
+        # if not os.path.exists('data'):
+        #     os.makedirs('data')
+        #
+        # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
+        #     print(*products_ids_list, file=file, sep='\n')
 
         return products_ids_list
 
@@ -158,7 +158,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
     # if not os.path.exists('data'):
     #     os.makedirs('data')
     #
-    # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
+    # with open(f'data/products_ids_list_wb.txt', 'a', encoding='utf-8') as file:
     #     print(*products_ids_list, file=file, sep='\n')
 
     return products_ids_list
@@ -172,7 +172,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     processed_texts = {}
 
     try:
-        for row in ws.iter_rows(min_row=4):
+        for row in ws.iter_rows(min_row=4, max_row=60, max_col=33):
             text = row[1].value
 
             if not text:
