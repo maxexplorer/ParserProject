@@ -7,7 +7,7 @@ def read_avito_data(avito_file):
     """Чтение данных из файла avito.xlsx"""
     wb_avito = load_workbook(avito_file)
     ws_avito = wb_avito.active
-    avito_dict = {row[1].value: row[3].value for row in ws_avito.iter_rows(min_row=3, max_col=5)}
+    avito_dict = {row[1].value: int(row[3].value) for row in ws_avito.iter_rows(min_row=3, max_col=5)}
     return avito_dict
 
 
@@ -98,20 +98,26 @@ def main():
     """Основная точка входа в программу"""
     start_time = datetime.now()
 
-    # Путь к файлу avito.xlsx
-    avito_file_path = 'avito/avito.xlsx'
-    avito_dict = read_avito_data(avito_file_path)
+    try:
 
-    # Папка с файлами data
-    data_folder = 'data'
 
-    # Создаем новую книгу для записи найденных данных
-    new_wb = Workbook()
-    new_ws = new_wb.active
-    new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
+        # Путь к файлу avito.xlsx
+        avito_file_path = 'avito/avito.xlsx'
+        avito_dict = read_avito_data(avito_file_path)
 
-    # Обрабатываем файлы
-    process_data_files(data_folder=data_folder, avito_dict=avito_dict, new_ws=new_ws, new_wb=new_wb)
+        # Папка с файлами data
+        data_folder = 'data'
+
+        # Создаем новую книгу для записи найденных данных
+        new_wb = Workbook()
+        new_ws = new_wb.active
+        new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
+
+        # Обрабатываем файлы
+        process_data_files(data_folder=data_folder, avito_dict=avito_dict, new_ws=new_ws, new_wb=new_wb)
+    except Exception as ex:
+        print(f'main: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
