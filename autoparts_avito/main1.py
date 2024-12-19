@@ -78,8 +78,6 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
                             if price_cell != new_price:
                                 row[price_column_index].value = new_price  # Колонка с ценой
 
-                                print(f'Артикул: {article_cell} Цена: {new_price}')
-
                                 # Записываем в новый файл
                                 new_ws.append([article_cell, new_price, sheet_name])
                         else:
