@@ -7,14 +7,6 @@ def read_avito_data(avito_file):
     """Чтение данных из файла avito.xlsx"""
     wb_avito = load_workbook(avito_file)
     ws_avito = wb_avito.active
-    avito_dict = {row[1].value: int(row[3].value) for row in ws_avito.iter_rows(min_row=3, max_col=5)}
-    return avito_dict
-
-
-def read_avito_data(avito_file):
-    """Чтение данных из файла avito.xlsx"""
-    wb_avito = load_workbook(avito_file)
-    ws_avito = wb_avito.active
     avito_dict = {}
 
     for row in ws_avito.iter_rows(min_row=3, max_col=5):
