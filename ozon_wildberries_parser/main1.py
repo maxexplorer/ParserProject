@@ -401,7 +401,10 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
                 print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
 
-    workbook.save('data/result_data.xlsx')
+    if not os.path.exists('results'):
+        os.makedirs('results')
+
+    workbook.save('results/result_data.xlsx')
 
 
 def main():
