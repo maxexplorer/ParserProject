@@ -22,7 +22,7 @@ def read_avito_data(avito_file):
     return avito_dict
 
 
-def process_data_files(data_folder, avito_dict, new_ws, new_wb):
+def process_data_files(data_folder, avito_dict):
     """Обработка файлов из папки data и обновление цен"""
     # Итерация по файлам в папке data
     for file_name in os.listdir(data_folder):
@@ -39,9 +39,14 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
             except Exception as e:
                 raise f'Ошибка чтения файла: {e}'
 
+            # Создаем новую книгу для записи результатов конкретного файла
+            new_wb = Workbook()
+            new_ws = new_wb.active
+            new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
+
             # Проходим по листам, начиная со второго
-            for i, sheet_name in enumerate(sheet_names):
-                if i == 0:  # Пропускаем первый лист
+            for sheet_name in sheet_names:
+                if sheet_name == 'Инструкция':  # Пропускаем первый лист
                     continue
 
                 sheet = workbook[sheet_name]
@@ -116,13 +121,8 @@ def main():
         # Папка с файлами data
         data_folder = 'data'
 
-        # Создаем новую книгу для записи найденных данных
-        new_wb = Workbook()
-        new_ws = new_wb.active
-        new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
-
         # Обрабатываем файлы
-        process_data_files(data_folder=data_folder, avito_dict=avito_dict, new_ws=new_ws, new_wb=new_wb)
+        process_data_files(data_folder=data_folder, avito_dict=avito_dict)
     except Exception as ex:
         print(f'main: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
