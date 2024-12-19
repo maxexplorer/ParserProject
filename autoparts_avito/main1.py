@@ -11,6 +11,25 @@ def read_avito_data(avito_file):
     return avito_dict
 
 
+def read_avito_data(avito_file):
+    """Чтение данных из файла avito.xlsx"""
+    wb_avito = load_workbook(avito_file)
+    ws_avito = wb_avito.active
+    avito_dict = {}
+
+    for row in ws_avito.iter_rows(min_row=3, max_col=5):
+        key = row[1].value  # Ключ находится во второй колонке
+        value = row[3].value  # Значение находится в четвертой колонке
+
+        try:
+            avito_dict[key] = int(value)
+        except Exception as ex:
+            print(f'read_avito_data: {key} error: {ex}')
+            continue
+
+    return avito_dict
+
+
 def process_data_files(data_folder, avito_dict, new_ws, new_wb):
     """Обработка файлов из папки data и обновление цен"""
     # Итерация по файлам в папке data
@@ -56,7 +75,7 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
                     try:
                         price_cell = int(row[price_column_index].value)  # Колонка с ценой
                     except Exception as ex:
-                        print(f'price_cell: {ex}')
+                        print(f'price_cell: {article_cell} error: {ex}')
                         continue
 
                     if article_cell in avito_dict:
@@ -99,7 +118,6 @@ def main():
     start_time = datetime.now()
 
     try:
-
 
         # Путь к файлу avito.xlsx
         avito_file_path = 'avito/avito.xlsx'
