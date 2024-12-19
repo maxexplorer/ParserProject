@@ -17,6 +17,8 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
     for file_name in os.listdir(data_folder):
         data_file_path = os.path.join(data_folder, file_name)
 
+        print(f'Обрабатывается файл: {file_name}')
+
         # Проверяем, что это Excel-файл
         if file_name.endswith(('.xlsx', '.xlsm')):
             try:
@@ -41,25 +43,37 @@ def process_data_files(data_folder, avito_dict, new_ws, new_wb):
                     oem_column_index = headers.index("OEM")  # Ищем столбец "OEM"
                     price_column_index = headers.index("Price")  # Ищем столбец "Price"
                 except Exception as ex:
-                    print(f'{sheet}: {ex}')
+                    # print(f'{sheet}: {ex}')
                     continue
 
                 # Поиск и обновление цены
                 for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
-                    article_cell = row[oem_column_index].value  # Колонка с артикулом
-                    price_cell = row[price_column_index].value  # Колонка с ценой
+                    try:
+                        article_cell = row[oem_column_index].value  # Колонка с артикулом
+                    except Exception:
+                        continue
+
+                    try:
+                        price_cell = int(row[price_column_index].value)  # Колонка с ценой
+                    except Exception as ex:
+                        print(f'price_cell: {ex}')
+                        continue
 
                     if article_cell in avito_dict:
                         # Обновляем цену
                         new_price = avito_dict[article_cell]
 
-                        if price_cell != new_price:
-                            row[price_column_index].value = new_price  # Колонка с ценой
+                        if isinstance(price_cell, int) and isinstance(new_price, int):
+                            if price_cell != new_price:
+                                row[price_column_index].value = new_price  # Колонка с ценой
 
-                            print(f'Обработано: {article_cell}: {new_price}')
+                                print(f'Артикул: {article_cell} Цена: {new_price}')
 
-                            # Записываем в новый файл
-                            new_ws.append([article_cell, new_price, sheet_name])
+                                # Записываем в новый файл
+                                new_ws.append([article_cell, new_price, sheet_name])
+                        else:
+                            print(
+                                f"Не удалось сравнить значения: {price_cell} ({type(price_cell)}), {new_price} ({type(new_price)})")
 
             # Сохраняем изменения в исходный файл
             workbook.save(data_file_path)
