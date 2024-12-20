@@ -231,7 +231,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                             product_position = product_ids.index(product_id) + 1
                         except Exception as ex:
                             # print(f'product_position: {product_url} - {ex}')
-                            product_position = None
+                            product_position = '-'
                         row[cell.column].value = product_position
 
                     try:
@@ -239,7 +239,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                             'c Ozon Картой')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
-                        price = None
+                        price = '-'
                     row[cell.column - 4].value = price
 
                     try:
@@ -381,7 +381,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                     product_position = product_ids.index(product_id)
                 except Exception as ex:
                     # print(f'product_position: {product_url} - {ex}')
-                    product_position = None
+                    product_position = '-'
 
                 if product_position:
                     row[cell.column].value = product_position + 1
@@ -396,7 +396,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 try:
                     price = data['data']['products'][0]['salePriceU'] // 100
                 except Exception:
-                    price = None
+                    price = '-'
                 row[cell.column - 4].value = price
 
                 print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
