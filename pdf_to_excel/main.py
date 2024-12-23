@@ -15,14 +15,14 @@ start_time = datetime.now()
 def collect_pdfs(source_dir):
     count = 1
 
-    if not os.path.exists('data2'):
-        os.makedirs('data2')
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
     for root, dirs, files in os.walk(source_dir):
         for file in files:
             if file.endswith('.pdf'):
                 src_file = os.path.join(root, file)
-                dst_file = os.path.join('data2', file)
+                dst_file = os.path.join('data', file)
                 shutil.copy(src_file, dst_file)
         print(f'Обработано: {count}')
 
@@ -111,13 +111,13 @@ def save_excel(data: list) -> None:
     if not os.path.exists('results'):
         os.makedirs('results')
 
-    if not os.path.exists('results/result_data2.xlsx'):
+    if not os.path.exists('results/result_data.xlsx'):
         # Если файл не существует, создаем его с пустым DataFrame
-        with ExcelWriter('results/result_data2.xlsx', mode='w') as writer:
+        with ExcelWriter('results/result_data.xlsx', mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='data', index=False)
 
     # Загружаем данные из файла
-    df = read_excel('results/result_data2.xlsx', sheet_name='data')
+    df = read_excel('results/result_data.xlsx', sheet_name='data')
 
     # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
@@ -125,7 +125,7 @@ def save_excel(data: list) -> None:
     # Добавляем новые данные
     dataframe = DataFrame(data)
 
-    with ExcelWriter('results/result_data2.xlsx', mode='a', if_sheet_exists='overlay') as writer:
+    with ExcelWriter('results/result_data.xlsx', mode='a', if_sheet_exists='overlay') as writer:
         dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='data',
                            index=False)
 
@@ -133,12 +133,12 @@ def save_excel(data: list) -> None:
 
 
 def main():
-    # source_directory = "C:\\Users\\mv\\Downloads\\Telegram Desktop\\PDF1\\"
+    # source_directory = "C:\\Users\\mv\\Downloads\\Telegram Desktop\\PDF\\"
     #
     # collect_pdfs(source_directory)
 
     # Перебор всех PDF-файлов в директории
-    pdf_dir = 'data2'
+    pdf_dir = 'data'
     for filename in os.listdir(pdf_dir):
         if filename.endswith('.pdf'):
             pdf_path = os.path.join(pdf_dir, filename)
