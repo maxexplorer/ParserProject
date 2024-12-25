@@ -14,7 +14,7 @@ def read_avito_data(avito_file):
         value = row[3].value  # Значение находится в четвертой колонке
 
         try:
-            avito_dict[key] = int(value)
+            avito_dict[key.replace('-', '')] = int(value)
         except Exception as ex:
             print(f'read_avito_data: {key} error: {ex}')
             continue
@@ -66,6 +66,7 @@ def process_data_files(data_folder, avito_dict):
                 for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
                     try:
                         article_cell = row[oem_column_index].value  # Колонка с артикулом
+                        article_cell = article_cell.replace('-', '')
                     except Exception:
                         continue
 
