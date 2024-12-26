@@ -38,9 +38,15 @@ def get_products_urls(driver: undetectedChrome, sellers_urls: list) -> list:
 
         while True:
             # Сохраняем текущие ссылки
-            items = driver.find_elements(By.XPATH, "//a[contains(@href, '/item/')]")  # Задайте точный XPath
-            for item in items:
-                products_urls_set.add(item.get_attribute("href"))
+            urls_items = driver.find_elements(By.CSS_SELECTOR, 'a[itemprop="url"]')
+            for url_item in urls_items:
+                try:
+                    product_url = url_item.get_attribute("href")
+                except Exception as ex:
+                    print(ex)
+                    continue
+
+                products_urls_set.add(product_url)
 
             # Скроллим вниз
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -53,8 +59,8 @@ def get_products_urls(driver: undetectedChrome, sellers_urls: list) -> list:
                 break
             last_height = new_height
 
-    print(f"Всего найдено товаров: {len(products_urls_set)}")
-    return list(products_urls_set)
+        print(f"Всего найдено товаров: {len(products_urls_set)}")
+        return list(products_urls_set)
 
 
 def main():
