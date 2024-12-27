@@ -226,13 +226,12 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     except Exception as ex:
                         product_id = None
 
-                    if product_id:
-                        try:
-                            product_position = product_ids.index(product_id) + 1
-                        except Exception as ex:
-                            # print(f'product_position: {product_url} - {ex}')
-                            product_position = '-'
-                        row[cell.column].value = product_position
+                    try:
+                        product_position = product_ids.index(product_id) + 1
+                    except Exception as ex:
+                        # print(f'product_position: {product_url} - {ex}')
+                        product_position = '-'
+                    row[cell.column].value = product_position
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
@@ -297,7 +296,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         # print(f'button_del2: {ex}')
                         continue
 
-                    print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
+                    print(f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
 
     except Exception as ex:
         print(ex)
@@ -378,13 +377,12 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                     continue
 
                 try:
-                    product_position = product_ids.index(product_id)
+                    product_position = product_ids.index(product_id) + 1
                 except Exception as ex:
                     # print(f'product_position: {product_url} - {ex}')
                     product_position = '-'
 
-                if product_position:
-                    row[cell.column].value = product_position + 1
+                row[cell.column].value = product_position
 
                 try:
                     storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
@@ -399,7 +397,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                     price = '-'
                 row[cell.column - 4].value = price
 
-                print(f'{product_url}: price - {price}, quantity - {quantity}, storage - {storage}')
+                print(f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
 
     if not os.path.exists('results'):
         os.makedirs('results')
@@ -422,6 +420,7 @@ def main():
             print('Сбор данных Ozon завершен')
         except Exception as ex:
             print(f'main: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
         finally:
             driver.close()
             driver.quit()
@@ -433,6 +432,7 @@ def main():
             print('Сбор данных Wildberries завершен')
         except Exception as ex:
             print(f'main: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
     elif value == '3':
         pages_ozon = int(input('Введите количество страниц Ozon: \n'))
         pages_wb = int(input('Введите количество страниц Wildberries: \n'))
@@ -443,6 +443,7 @@ def main():
             print('Сбор данных Ozon завершен')
         except Exception as ex:
             print(f'main: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
         finally:
             driver.close()
             driver.quit()
@@ -452,6 +453,7 @@ def main():
             print('Сбор данных Wildberries завершен')
         except Exception as ex:
             print(f'main: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
     else:
         print('Введено неправильное значение')
 
