@@ -109,7 +109,7 @@ def get_products_cards(driver: undetectedChrome, products_urls_list: list, num_p
                 print('Ссылка на товар не обработана!')
                 count += 1
 
-                if count == 5:
+                if count == 10:
                     raise 'Программа остановлена!'
 
 
