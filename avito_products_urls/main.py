@@ -79,8 +79,8 @@ def get_products_urls(driver: undetectedChrome, num_passes: int) -> None:
 def is_product_page(driver: undetectedChrome):
     try:
         # Проверяем наличие заголовка или названия товара
-        product_name = driver.find_element(By.CSS_SELECTOR, 'h1[itemprop="name"]').text.strip()
-        return product_name
+        driver.find_element(By.CSS_SELECTOR, 'h1[itemprop="name"]')
+        return True
     except NoSuchElementException:
         return None
 
@@ -97,20 +97,19 @@ def get_products_cards(driver: undetectedChrome, products_urls_list: list, num_p
 
                 time.sleep(randint(1, 3))
 
+                # Проверяем, является ли страница страницей товара
+                if not is_product_page(driver):
+                    print(f"Не удалось загрузить товар: {product_url}. Возможно, капча!")
+                    count += 1
+
+                    if count == 5:
+                        raise 'Программа остановлена!'
+
             except Exception as ex:
                 print(f'{product_url}: {ex}')
                 continue
 
-            product_name = is_product_page(driver=driver)
-
-            if product_name:
-                print(f'{product_name}: {i}/{len(products_urls_list)}')
-            else:
-                print('Ссылка на товар не обработана!')
-                count += 1
-
-                if count == 10:
-                    raise 'Программа остановлена!'
+            print(f'Обработано: {i}/{len(products_urls_list)}')
 
 
 def main():
