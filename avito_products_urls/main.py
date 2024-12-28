@@ -4,6 +4,7 @@ from random import randint
 from undetected_chromedriver import Chrome as undetectedChrome
 from undetected_chromedriver import ChromeOptions
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 
 # Создаём объект undetected_chromedriver
@@ -18,6 +19,7 @@ def init_undetected_chromedriver(headless_mode=False):
         driver.maximize_window()
         driver.implicitly_wait(15)
     return driver
+
 
 # Функция получения ссылок на товары
 def get_products_urls(driver: undetectedChrome, num_passes: int) -> None:
@@ -73,8 +75,20 @@ def get_products_urls(driver: undetectedChrome, num_passes: int) -> None:
 
         get_products_cards(driver=driver, products_urls_list=products_urls_list, num_passes=num_passes)
 
+
+def is_product_page(driver: undetectedChrome):
+    try:
+        # Проверяем наличие заголовка или названия товара
+        product_name = driver.find_element(By.CSS_SELECTOR, 'h1[itemprop="name"]').text.strip()
+        return product_name
+    except NoSuchElementException:
+        return None
+
+
 # Функция получения карточки товара
 def get_products_cards(driver: undetectedChrome, products_urls_list: list, num_passes: int) -> None:
+    count = 0
+
     for pass_num in range(num_passes):
         print(f"Прохождение: {pass_num + 1}/{num_passes}")
         for i, product_url in enumerate(products_urls_list, 1):
@@ -87,7 +101,16 @@ def get_products_cards(driver: undetectedChrome, products_urls_list: list, num_p
                 print(f'{product_url}: {ex}')
                 continue
 
-            print(f'Обработано: {i}/{len(products_urls_list)}')
+            product_name = is_product_page(driver=driver)
+
+            if product_name:
+                print(f'{product_name}: {i}/{len(products_urls_list)}')
+            else:
+                print('Ссылка на товар не обработана!')
+                count += 1
+
+                if count == 5:
+                    raise 'Программа остановлена!'
 
 
 def main():
