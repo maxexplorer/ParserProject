@@ -172,7 +172,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     processed_texts = {}
 
     try:
-        for row in ws.iter_rows(min_row=4, max_row=60, max_col=33):
+        for row in ws.iter_rows(min_row=4):
             text = row[1].value
 
             if not text:
