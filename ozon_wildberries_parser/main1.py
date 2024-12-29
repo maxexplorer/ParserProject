@@ -296,7 +296,8 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         # print(f'button_del2: {ex}')
                         continue
 
-                    print(f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
+                    print(f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, '
+                          f'storage - {storage}')
 
     except Exception as ex:
         print(ex)
@@ -397,7 +398,8 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                     price = '-'
                 row[cell.column - 4].value = price
 
-                print(f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
+                print(
+                    f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
 
     if not os.path.exists('results'):
         os.makedirs('results')
