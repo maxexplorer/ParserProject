@@ -311,7 +311,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'origin': 'https://www.wildberries.ru',
         'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/catalog/0/search.aspx?page=2&sort=popular&search=%D0%90%D0%B4%D0%B0%D0%BF%D1%82%D0%B5%D1%80+%D0%B4%D0%BB%D1%8F+%D0%BB%D0%B5%D0%B4%D0%BE%D0%B1%D1%83%D1%80%D0%B0+%D0%BF%D0%BE%D0%B4+%D1%88%D1%83%D1%80%D1%83%D0%BF%D0%BE%D0%B2%D0%B5%D1%80%D1%82',
+        'referer': 'https://www.wildberries.ru/catalog/0/search.aspx?search=%D0%90%D0%B4%D0%B0%D0%BF%D1%82%D0%B5%D1%80%20%D0%B4%D0%BB%D1%8F%20%D0%BB%D0%B5%D0%B4%D0%BE%D0%B1%D1%83%D1%80%D0%B0%20%D0%BF%D0%BE%D0%B4%20%D1%88%D1%83%D1%80%D1%83%D0%BF%D0%BE%D0%B2%D0%B5%D1%80%D1%82',
         'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
@@ -319,8 +319,8 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'cross-site',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'x-captcha-id': 'Catalog 1|1|1735552359|AA==|a6f18c61b0294d8ba02a586682aff8af|qu70L9GzbKiDtAGAmUj706n64xrt2myDgFhNnlaiV8u',
-        'x-queryid': 'qid143023290172907954520241216095355',
+        'x-captcha-id': 'Catalog 1|1|1736789784|AA==|18c80ddab4a14b82a082d5e7fdf98129|GXI5dMYyydzSesbILU6LXcVaoP1cUJEul4oHpBfLu4P',
+        'x-queryid': 'qid143023290172907954520241230172925',
     }
 
     # Выбираем активный лист (или любой другой лист)
