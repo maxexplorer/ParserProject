@@ -33,6 +33,9 @@ def get_products_urls(driver: undetectedChrome, num_passes: int) -> None:
     for seller_url in sellers_urls:
         products_urls_set = set()
 
+        if not seller_url:
+            continue
+
         try:
             driver.get(url=seller_url)
             time.sleep(3)  # Дождаться загрузки страницы
@@ -95,7 +98,11 @@ def get_products_cards(driver: undetectedChrome, products_urls_list: list, num_p
             try:
                 driver.get(url=product_url)
 
-                time.sleep(randint(1, 3))
+                time.sleep(randint(3, 5))
+
+                driver.execute_script("window.scrollTo(0, 4000);")
+
+                time.sleep(randint(3, 5))
 
                 # Проверяем, является ли страница страницей товара
                 if not is_product_page(driver):
@@ -116,7 +123,7 @@ def main():
     # Запрашиваем у пользователя количество проходов по ссылкам
     num_passes = int(input("Введите количество проходов по ссылкам: "))
 
-    driver = init_undetected_chromedriver(headless_mode=True)
+    driver = init_undetected_chromedriver(headless_mode=False)
 
     try:
         get_products_urls(driver=driver, num_passes=num_passes)
