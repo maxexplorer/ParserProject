@@ -307,20 +307,21 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
 def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     headers = {
-        'accept': '*/*',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'origin': 'https://www.wildberries.ru',
-        'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/catalog/0/search.aspx?search=%D0%90%D0%B4%D0%B0%D0%BF%D1%82%D0%B5%D1%80%20%D0%B4%D0%BB%D1%8F%20%D0%BB%D0%B5%D0%B4%D0%BE%D0%B1%D1%83%D1%80%D0%B0%20%D0%BF%D0%BE%D0%B4%20%D1%88%D1%83%D1%80%D1%83%D0%BF%D0%BE%D0%B2%D0%B5%D1%80%D1%82',
-        'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        'cache-control': 'max-age=0',
+        # 'cookie': '_wbauid=1430232901729079545; wbx-validation-key=042261a8-d7e3-4266-8343-31fb35d5a295',
+        'priority': 'u=0, i',
+        'referer': 'https://www.wildberries.ru/',
+        'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'cross-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'x-captcha-id': 'Catalog 1|1|1736789784|AA==|18c80ddab4a14b82a082d5e7fdf98129|GXI5dMYyydzSesbILU6LXcVaoP1cUJEul4oHpBfLu4P',
-        'x-queryid': 'qid143023290172907954520241230172925',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'same-origin',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
     }
 
     # Выбираем активный лист (или любой другой лист)
