@@ -93,7 +93,7 @@ def get_pages_pl(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('nav', {'aria-label': 'Paginacja'}).find_all('li')[-2].text.strip())
+        pages = int(soup.find('nav', {'aria-labelledby': 'pagination-accessibility-label'}).find_all('li')[-2].text.strip())
     except Exception:
         pages = 1
 
