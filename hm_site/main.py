@@ -91,7 +91,8 @@ def get_pages_pl(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('nav', {'aria-labelledby': 'pagination-accessibility-label'}).find_all('li')[-2].text.strip())
+        pages = int(
+            soup.find('nav', {'aria-labelledby': 'pagination-accessibility-label'}).find_all('li')[-2].text.strip())
     except Exception:
         pages = 1
 
@@ -217,30 +218,35 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
 
                         print(f'Обработано: {page}/{pages} страниц')
 
-                    if not os.path.exists(directory):
-                        os.makedirs(directory)
+                        # Проверяем кратность 10 или достижение последней страницы
+                        if page % 10 == 0 or page == pages:
+                            products_data_list.append(
+                                {
+                                    (category_name, subcategory_name): products_urls
+                                }
+                            )
 
-                    with open(file_path, 'a', encoding='utf-8') as file:
-                        print(*products_urls, file=file, sep='\n')
+                            if region == 'Германия':
+                                get_products_data(driver=driver, products_data_list=products_data_list,
+                                                  processed_urls=processed_urls,
+                                                  brand=brand, region=region, size_model_title='Größe des Models')
+                            elif region == 'Турция':
+                                get_products_data(driver=driver, products_data_list=products_data_list,
+                                                  processed_urls=processed_urls,
+                                                  brand=brand, region=region, size_model_title='Model bedeni')
+                            elif region == 'Польша':
+                                get_products_data(driver=driver, products_data_list=products_data_list,
+                                                  processed_urls=processed_urls,
+                                                  brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
 
-                    products_data_list.append(
-                        {
-                            (category_name, subcategory_name): products_urls
-                        }
-                    )
+                            if not os.path.exists(directory):
+                                os.makedirs(directory)
 
-                    if region == 'Германия':
-                        get_products_data(driver=driver, products_data_list=products_data_list,
-                                          processed_urls=processed_urls,
-                                          brand=brand, region=region, size_model_title='Größe des Models')
-                    elif region == 'Турция':
-                        get_products_data(driver=driver, products_data_list=products_data_list,
-                                          processed_urls=processed_urls,
-                                          brand=brand, region=region, size_model_title='Model bedeni')
-                    elif region == 'Польша':
-                        get_products_data(driver=driver, products_data_list=products_data_list,
-                                          processed_urls=processed_urls,
-                                          brand=brand, region=region, size_model_title='Rozmiar modela/modelki')
+                            with open(file_path, 'a', encoding='utf-8') as file:
+                                print(*products_urls, file=file, sep='\n')
+
+                            products_urls = []  # Очищаем список после обработки
+                            products_data_list = []  # Очищаем накопленные данные
 
 
 # Функция получения данных товаров
@@ -881,6 +887,7 @@ def main():
             raise ValueError('Введено неправильное значение')
     except Exception as ex:
         print(f'main: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
     finally:
         driver.close()
         driver.quit()
