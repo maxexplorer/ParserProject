@@ -15,8 +15,6 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_data_list_de
-from data.data import category_data_list_tr
 from data.data import category_data_list_pl
 from data.data import colors_dict_de
 from data.data import sizes_dict
@@ -855,7 +853,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_de,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl,
                               brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
@@ -864,7 +862,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс TRY/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_tr,
+            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl,
                               brand=brand, region=region)
         elif value == '3':
             region = 'Польша'
