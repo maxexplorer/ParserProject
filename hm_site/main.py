@@ -154,6 +154,15 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
 # Функция получения ссылок товаров
 def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, brand: str,
                       region: str) -> None:
+    # Путь к файлу для сохранения URL продуктов
+    directory = 'data'
+    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+
+    try:
+        processed_urls = get_unique_urls(file_path=file_path)
+    except FileNotFoundError:
+        processed_urls = set()
+
     with Session() as session:
         for category_dict in category_data_list:
             for category_name, category_list in category_dict.items():
@@ -181,6 +190,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
+                    # for page in range(41, pages + 1):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
@@ -210,21 +220,12 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                         print(f'Обработано: {page}/{pages} страниц')
 
                         # Проверяем кратность 10 или достижение последней страницы
-                        if page % 10 == 0 or page == pages:
+                        if page % 1 == 0 or page == pages:
                             products_data_list.append(
                                 {
                                     (category_name, subcategory_name): products_urls
                                 }
                             )
-
-                            # Путь к файлу для сохранения URL продуктов
-                            directory = 'data'
-                            file_path = f'{directory}/url_products_list_{brand}_{category_name}_{region}.txt'
-
-                            try:
-                                processed_urls = get_unique_urls(file_path=file_path)
-                            except FileNotFoundError:
-                                processed_urls = set()
 
                             if region == 'Германия':
                                 get_products_data(driver=driver, products_data_list=products_data_list,
@@ -430,8 +431,15 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
             try:
                 sizes_items = data.find('div', {'data-testid': 'size-selector'}).find_all('li')
 
+                if not sizes_items:
+                    sizes_items = ' '
+
                 for size_item in sizes_items:
-                    size_eur = size_item.find('input').get('id')
+                    try:
+                        size_eur = size_item.find('input').get('id')
+                    except Exception:
+                        size_eur = ''
+
                     try:
                         size_availability = size_item.find('label').find('span').text.strip()
                     except Exception:
@@ -808,7 +816,7 @@ def get_products_data1(driver: Chrome, products_data_list: list[dict], processed
 
             print(f'Обработано: {i}/{count_products} товаров!')
 
-        save_excel(data=result_data, species='products', brand=brand, region=region)
+        save_excel(data=result_data, species='products', brand=brand, category_name=category_name, region=region)
 
 
 # Функция для записи данных в формат xlsx
