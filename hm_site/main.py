@@ -190,7 +190,6 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                     print(f'В категории {category_name}/{subcategory_name}: {pages} страниц')
 
                     for page in range(1, pages + 1):
-                    # for page in range(41, pages + 1):
                         page_product_url = f"{category_url}?page={page}"
                         try:
                             time.sleep(1)
