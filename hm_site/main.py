@@ -219,7 +219,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                         print(f'Обработано: {page}/{pages} страниц')
 
                         # Проверяем кратность 10 или достижение последней страницы
-                        if page % 1 == 0 or page == pages:
+                        if page % 10 == 0 or page == pages:
                             products_data_list.append(
                                 {
                                     (category_name, subcategory_name): products_urls
