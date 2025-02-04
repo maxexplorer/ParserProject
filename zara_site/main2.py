@@ -350,17 +350,12 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
+                description = size_item.get('description', '')
+                size = f'{size_eur} {description}'
                 status_size = size_item.get('availability')
-                price = size_item.get('price')
+                price = size_item.get('price') // 100
 
-                if size_eur.isdigit():
-                    size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
-                elif not size_eur.isdigit():
-                    size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
-                else:
-                    size_rus = size_eur
-
-                id_product_size = f"{reference}/{id_color}/{size_eur}"
+                id_product_size = f"{reference}/{id_color}/{size}"
 
                 result_data.append(
                     {
@@ -385,8 +380,8 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                         'Объединить на одной карточке*': reference,
                         'Цвет товара*': color_ru,
                         'Код цвета': id_color,
-                        'Российский размер*': size_rus,
-                        'Размер производителя': size_eur,
+                        'Российский размер*': size,
+                        'Размер производителя': size,
                         'Статус наличия': status_size,
                         'Название цвета': color_original,
                         'Тип*': subcategory_name,
