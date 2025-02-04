@@ -53,18 +53,27 @@ def get_id_categories(headers: dict, params: dict) -> None:
         category_items = main_category_item.get('subcategories')
         for category_item in category_items:
             category_name = category_item.get('name')
-            subcategory_items = category_item.get('subcategories')
-            if not subcategory_items:
+            subcategory_items1 = category_item.get('subcategories')
+            if not subcategory_items1:
                 category_id = category_item['id']
                 id_categories_data.append(
                     (translator(category_name).capitalize(), category_id))
-            for subcategory_item in subcategory_items:
-                subcategory_name = subcategory_item.get('name')
-                if subcategory_name == 'VIEW ALL':
-                    continue
-                subcategory_id = subcategory_item.get('id')
-                id_categories_data.append(
-                    (translator(subcategory_name).capitalize(), subcategory_id))
+            for subcategory_item1 in subcategory_items1:
+                subcategory_items2 = subcategory_item1.get('subcategories')
+                if not subcategory_items2:
+                    subcategory_name1 = subcategory_item1.get('name')
+                    if subcategory_name1 == 'VIEW ALL':
+                        continue
+                    subcategory_id = subcategory_item1.get('id')
+                    id_categories_data.append(
+                        (translator(subcategory_name1).capitalize(), subcategory_id))
+                for subcategory_item2 in subcategory_items2:
+                    subcategory_name2 = subcategory_item2.get('name')
+                    if subcategory_name2 == 'VIEW ALL':
+                        continue
+                    subcategory_id = subcategory_item2.get('id')
+                    id_categories_data.append(
+                        (translator(subcategory_name2).capitalize(), subcategory_id))
 
     with open('data/id_categories_list_home_tr.txt', 'w', encoding='utf-8') as file:
         print(*id_categories_data, file=file, sep=',\n')
@@ -236,16 +245,6 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             continue
 
         try:
-            old_price = int(item['detail']['colors'][0]['oldPrice']) / 100
-        except Exception:
-            old_price = None
-
-        try:
-            price = int(item['detail']['colors'][0]['price']) / 100
-        except Exception:
-            price = None
-
-        try:
             id_color = item['detail']['colors'][0]['id']
         except Exception:
             id_color = ''
@@ -352,13 +351,9 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             for size_item in sizes_items:
                 size_eur = size_item.get('name')
                 status_size = size_item.get('availability')
+                price = size_item.get('price')
 
-                if category_name == 'Девочки' or category_name == 'Мальчики' or category_name == 'Девочки;Мальчики':
-                    size_rus = ''.join(
-                        i for i in size_eur.split()[-1].lstrip('(').rstrip('cm)').strip().replace('-', ';'))
-                elif subcategory_name == 'Обувь' or subcategory_name == 'Аксессуары' or subcategory_name == 'Сумка':
-                    size_rus = size_eur
-                elif size_eur.isdigit():
+                if size_eur.isdigit():
                     size_rus = sizes_format(format='digit', gender=category_name, size_eur=size_eur)
                 elif not size_eur.isdigit():
                     size_rus = sizes_format(format='alpha', gender=category_name, size_eur=size_eur)
@@ -373,7 +368,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                         'Артикул': id_product_size,
                         'Название товара': product_name,
                         'Цена, руб.*': price,
-                        'Цена до скидки, руб.': old_price,
+                        'Цена до скидки, руб.': None,
                         'НДС, %*': None,
                         'Включить продвижение': None,
                         'Ozon ID': id_product_size,
