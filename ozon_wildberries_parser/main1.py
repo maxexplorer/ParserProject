@@ -7,7 +7,7 @@ from urllib.parse import urlparse, urlunparse
 
 from requests import Session
 
-from undetected_chromedriver import Chrome
+from new_undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -260,8 +260,9 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                         continue
 
                     try:
-                        in_basket = driver.find_element(By.XPATH, '//span[contains(text(), "Корзина")]')
-                        in_basket.click()
+                        in_basket = driver.find_element(By.XPATH, '//span[contains(text(), "В корзине")]')
+                        parent_element = in_basket.find_element(By.XPATH, "../../..")
+                        parent_element.click()
                         time.sleep(randint(3, 5))
 
                     except Exception as ex:
