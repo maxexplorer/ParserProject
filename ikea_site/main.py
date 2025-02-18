@@ -421,7 +421,7 @@ def save_excel(data: list, brand: str, category: str, region: str) -> None:
 
 def main():
     brand = 'IKEA'
-    category = 'посуда'
+    category = 'HOME'
 
     # driver = init_chromedriver(headless_mode=True)
 
@@ -447,16 +447,17 @@ def main():
         target_currency = 'RUB'
         currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
         print(f'Курс PLN/RUB: {currency}')
-        # get_products_urls(driver=driver, category_urls_list=category_urls_list_cookware_pl, headers=headers, brand=brand,
-        #                   category=category, region=region)
-        directory = 'data'
-        file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
-        with open(file_path, 'r', encoding='utf-8') as file:
-            products_urls = [line.strip() for line in file.readlines()]
-
-        get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
     else:
         raise ValueError('Введено неправильное значение')
+
+    # get_products_urls(driver=driver, category_urls_list=category_urls_list_cookware_pl, headers=headers, brand=brand,
+    #                   category=category, region=region)
+    directory = 'data'
+    file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
+    with open(file_path, 'r', encoding='utf-8') as file:
+        products_urls = [line.strip() for line in file.readlines()]
+
+    get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
