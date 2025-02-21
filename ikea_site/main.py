@@ -533,11 +533,28 @@ def get_products_data_tr(products_urls: list, headers: dict, brand: str, categor
                     'Uzunluk')).text.strip().split(':')[1]))) * 10
             except Exception:
                 pack_length = None
+
             try:
-                pack_weight =  int(''.join(filter(lambda x: x.isdigit(), package_dimensions.find('p', string=re.compile(
-                    'Ağırlık')).text.strip().split(':')[1]))) * 1000
+                pack_weight_gross_text = package_dimensions.find('p', string=re.compile(
+                    'Toplam ağırlık')).text.strip()
+                if 'kg' in pack_weight_gross_text:
+                    pack_weight = int(float(pack_weight_gross_text.split(':')[1].split()[0]) * 1000)
+                else:
+                    pack_weight = int(pack_weight_gross_text.split(':')[1].split()[0])
             except Exception:
                 pack_weight = None
+
+            if not pack_weight:
+                try:
+                    pack_weight_text = package_dimensions.find('p', string=re.compile('Ağırlık')).text.strip()
+                    if 'kg' in pack_weight_text:
+                        pack_weight = int(float(pack_weight_text.split(':')[1].split()[0]) * 1000)
+                    else:
+                        pack_weight = int(pack_weight_text.split(':')[1].split()[0])
+
+                except Exception:
+                    pack_weight = None
+
 
             result_data.append(
                 {
@@ -562,7 +579,7 @@ def get_products_data_tr(products_urls: list, headers: dict, brand: str, categor
                     'Объединить на одной карточке*': id_product,
                     'Цвет товара*': color_rus,
                     'Российский размер*': product_dimensions,
-                    'Размер производителя': package_dimensions,
+                    'Размер производителя': product_dimensions,
                     'Статус наличия': None,
                     'Название цвета': color_original,
                     'Тип*': subcategory,
