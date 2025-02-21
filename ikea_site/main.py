@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from datetime import datetime
 from math import ceil
@@ -16,6 +17,7 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_urls_list_cookware_pl
+from data.data import category_urls_list_textile_tr
 from data.data import id_region_dict
 
 from functions import translator
@@ -76,7 +78,8 @@ def get_pages(html: str) -> int:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, category: str, region: str) -> None:
+def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, brand: str, category: str,
+                      region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
@@ -92,7 +95,11 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
-            pages = get_pages(html=html)
+
+            if region == 'Польша':
+                pages = get_pages(html=html)
+            elif region == 'Турция':
+                pages = 20
 
             for page in range(1, pages + 1):
                 category_page_url = f"{category_url}?page={page}"
@@ -100,8 +107,8 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
                     driver.get(url=category_page_url)
                     driver.execute_script("window.scrollTo(0, 2000);")
                     time.sleep(1)
-                    # driver.execute_script("window.scrollTo(0, 4000);")
-                    # time.sleep(1)
+                    driver.execute_script("window.scrollTo(0, 4000);")
+                    time.sleep(1)
                     html = driver.page_source
                 except Exception as ex:
                     print(f"{category_page_url} - {ex}")
@@ -113,11 +120,17 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    product_items = soup.find('div', class_='plp-product-list__products').find_all('div',
-                                                                                                   class_='plp-fragment-wrapper')
+                    # product_items = soup.find('div', class_='plp-product-list__products').find_all('div',
+                    #                                                                                class_='plp-fragment-wrapper')
+
+                    product_items = soup.find_all('div', class_='product-item-text')
+
+                    if not product_items:
+                        break
+
                     for product_item in product_items:
                         try:
-                            product_url = product_item.find('a').get('href')
+                            product_url = f"https://www.ikea.com.tr{product_item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -133,13 +146,13 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
             with open(file_path, 'a', encoding='utf-8') as file:
                 print(*products_urls, file=file, sep='\n')
 
-            get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
-
-            print(f'Обработано: {category_url}')
+            # get_products_data_tr(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
+            #
+            # print(f'Обработано: {category_url}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_urls: list, headers: dict, brand: str, category: str, region: str) -> None:
+def get_products_data_pl(products_urls: list, headers: dict, brand: str, category: str, region: str) -> None:
     result_data = []
     batch_size = 100
 
@@ -386,6 +399,237 @@ def get_products_data(products_urls: list, headers: dict, brand: str, category: 
             save_excel(data=result_data, brand=brand, category=category, region=region)
 
 
+# Функция получения данных товаров
+def get_products_data_tr(products_urls: list, headers: dict, brand: str, category: str, region: str) -> None:
+    result_data = []
+    batch_size = 100
+
+    count_urls = len(products_urls)
+
+    print(f'Всего: {count_urls} товаров!')
+
+    with Session() as session:
+        for i, product_url in enumerate(products_urls, 1):
+            try:
+                time.sleep(1)
+                html = get_html(url=product_url, headers=headers, session=session)
+
+            except Exception as ex:
+                print(f"{product_url} - {ex}")
+                continue
+
+            if not html:
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+            #
+            # with open('data/index.html', 'w', encoding='utf-8') as file:
+            #     file.write(soup.prettify())
+
+            try:
+                item_list_element = soup.find_all('li', {'itemprop': 'itemListElement'})
+            except Exception:
+                item_list_element = None
+
+            try:
+                subcategory = item_list_element[-2].text.strip().capitalize()
+            except Exception:
+                subcategory = None
+
+            try:
+                product_name_original = f'IKEA {item_list_element[-1].text.strip().capitalize()}'
+            except Exception:
+                product_name_original = None
+
+            try:
+                product_name_rus = translator(product_name_original)
+            except Exception:
+                product_name_rus = None
+
+            data = soup.find('div', class_='product-detail-wrapper')
+
+            try:
+                id_product = data.find('div', class_='product-code').text.strip()
+            except Exception:
+                id_product = None
+
+            try:
+                price = ''.join(filter(lambda x: x.isdigit(), data.find('span', class_='price-box').text.strip()))
+            except Exception:
+                price = None
+
+            try:
+                color_original = data.find('span', class_='product-color-name').text.strip()
+            except Exception:
+                color_original = None
+            try:
+                color_rus = translator(color_original)
+            except Exception:
+                color_rus = None
+
+            try:
+                product_dimensions = soup.find('span', string=re.compile('Ölçü')).find_next().text.strip()
+            except Exception:
+                product_dimensions = None
+
+            try:
+                images_urls_list = []
+                product_gallery = data.find('div', class_='product-detail-img').find_all('li')
+                for item_gallery in product_gallery:
+                    image_url = item_gallery.find('img').get('src')
+                    images_urls_list.append(image_url)
+                main_image_url = images_urls_list[0]
+                additional_images_urls = '; '.join(images_urls_list)
+            except Exception:
+                main_image_url = None
+                additional_images_urls = None
+
+            try:
+                description_original = ''.join(
+                    item.text.strip() for item in data.find('div', class_='product-description').find_all('p'))
+            except Exception:
+                description_original = None
+
+            try:
+                description_rus = translator(description_original)
+            except Exception:
+                description_rus = None
+
+            try:
+                materials_original = soup.find('h4', string=re.compile('Malzeme')).find_next().text.strip()
+                materials_rus = translator(materials_original)
+            except Exception:
+                materials_rus = None
+
+            try:
+                material_original = materials_original.split()[1].rstrip(',')
+                material_rus = translator(material_original)
+            except Exception:
+                material_rus = None
+
+            try:
+                care_original = soup.find('h3', string=re.compile('Bakım Talimatları')).find_next().text.strip()
+                care_rus = translator(care_original)
+            except Exception:
+                care_rus = None
+
+            try:
+                package_dimensions = soup.find('h3', string=re.compile('Paket Ölçüleri')).find_next()
+            except Exception:
+                package_dimensions = None
+
+            try:
+                pack_width = int(''.join(filter(lambda x: x.isdigit(), package_dimensions.find('p', string=re.compile(
+                    'Genişlik')).text.strip().split(':')[1]))) * 10
+            except Exception:
+                pack_width = None
+            try:
+                pack_height = int(''.join(filter(lambda x: x.isdigit(), package_dimensions.find('p', string=re.compile(
+                    'Yükseklik')).text.strip().split(':')[1]))) * 10
+            except Exception:
+                pack_height = None
+            try:
+                pack_length =  int(''.join(filter(lambda x: x.isdigit(), package_dimensions.find('p', string=re.compile(
+                    'Uzunluk')).text.strip().split(':')[1]))) * 10
+            except Exception:
+                pack_length = None
+            try:
+                pack_weight =  int(''.join(filter(lambda x: x.isdigit(), package_dimensions.find('p', string=re.compile(
+                    'Ağırlık')).text.strip().split(':')[1]))) * 1000
+            except Exception:
+                pack_weight = None
+
+            result_data.append(
+                {
+                    '№': product_name_original,
+                    'Артикул': id_product,
+                    'Название товара': product_name_rus,
+                    'Цена, руб.*': price,
+                    'Цена до скидки, руб.': None,
+                    'НДС, %*': None,
+                    'Включить продвижение': None,
+                    'Ozon ID': id_product,
+                    'Штрихкод (Серийный номер / EAN)': None,
+                    'Вес в упаковке, г*': pack_weight,
+                    'Ширина упаковки, мм*': pack_width,
+                    'Высота упаковки, мм*': pack_height,
+                    'Длина упаковки, мм*': pack_length,
+                    'Ссылка на главное фото*': main_image_url,
+                    'Ссылки на дополнительные фото': additional_images_urls,
+                    'Ссылки на фото 360': None,
+                    'Артикул фото': None,
+                    'Бренд в одежде и обуви*': brand,
+                    'Объединить на одной карточке*': id_product,
+                    'Цвет товара*': color_rus,
+                    'Российский размер*': product_dimensions,
+                    'Размер производителя': package_dimensions,
+                    'Статус наличия': None,
+                    'Название цвета': color_original,
+                    'Тип*': subcategory,
+                    'Пол*': 'Tekstil',
+                    'Размер пеленки': None,
+                    'ТН ВЭД коды ЕАЭС': None,
+                    'Ключевые слова': None,
+                    'Сезон': None,
+                    'Рост модели на фото': None,
+                    'Параметры модели на фото': None,
+                    'Размер товара на фото': None,
+                    'Коллекция': None,
+                    'Страна-изготовитель': None,
+                    'Вид принта': description_original,
+                    'Аннотация': description_rus,
+                    'Инструкция по уходу': care_rus,
+                    'Серия в одежде и обуви': None,
+                    'Материал': material_rus,
+                    'Состав материала': materials_rus,
+                    'Материал подклада/внутренней отделки': None,
+                    'Материал наполнителя': None,
+                    'Утеплитель, гр': None,
+                    'Диапазон температур, °С': None,
+                    'Стиль': None,
+                    'Вид спорта': None,
+                    'Вид одежды': None,
+                    'Тип застежки': None,
+                    'Длина рукава': None,
+                    'Талия': None,
+                    'Для беременных или новорожденных': None,
+                    'Тип упаковки одежды': None,
+                    'Количество в упаковке': None,
+                    'Состав комплекта': None,
+                    'Рост': None,
+                    'Длина изделия, см': None,
+                    'Длина подола': None,
+                    'Форма воротника/горловины': None,
+                    'Детали': None,
+                    'Таблица размеров JSON': None,
+                    'Rich-контент JSON': None,
+                    'Плотность, DEN': None,
+                    'Количество пар в упаковке': None,
+                    'Класс компрессии': None,
+                    'Персонаж': None,
+                    'Праздник': None,
+                    'Тематика карнавальных костюмов': None,
+                    'Признак 18+': None,
+                    'Назначение спецодежды': None,
+                    'HS-код': None,
+                    'Количество заводских упаковок': None,
+                    'Ошибка': None,
+                    'Предупреждение': None,
+                }
+            )
+
+            print(f'Обработано: {i}/{count_urls} товаров!')
+
+            # Записываем данные в Excel каждые 100 URL
+            if len(result_data) >= batch_size:
+                save_excel(data=result_data, brand=brand, category=category, region=region)
+                result_data.clear()  # Очищаем список для следующей партии
+
+        # Записываем оставшиеся данные в Excel
+        if result_data:
+            save_excel(data=result_data, brand=brand, category=category, region=region)
+
+
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, brand: str, category: str, region: str) -> None:
     directory = 'results'
@@ -421,7 +665,7 @@ def save_excel(data: list, brand: str, category: str, region: str) -> None:
 
 def main():
     brand = 'IKEA'
-    category = 'HOME'
+    category = 'Tekstil'
 
     # driver = init_chromedriver(headless_mode=True)
 
@@ -450,14 +694,14 @@ def main():
     else:
         raise ValueError('Введено неправильное значение')
 
-    # get_products_urls(driver=driver, category_urls_list=category_urls_list_cookware_pl, headers=headers, brand=brand,
+    # get_products_urls(driver=driver, category_urls_list=category_urls_list_textile_tr, headers=headers, brand=brand,
     #                   category=category, region=region)
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{category}_{region}.txt'
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls = [line.strip() for line in file.readlines()]
 
-    get_products_data(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
+    get_products_data_tr(products_urls=products_urls, headers=headers, brand=brand, category=category, region=region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

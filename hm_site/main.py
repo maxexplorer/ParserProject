@@ -842,7 +842,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str, region:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_{category_name}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_HOME_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
