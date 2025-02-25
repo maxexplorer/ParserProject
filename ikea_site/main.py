@@ -86,7 +86,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
 
     with Session() as session:
         for category_url in category_urls_list:
-            products_urls = []
+            products_urls = set()
 
             print(f'Обрабатывается категория: {category_url}')
 
@@ -134,7 +134,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict, b
                         except Exception as ex:
                             print(ex)
                             continue
-                        products_urls.append(product_url)
+                        products_urls.add(product_url)
                 except Exception as ex:
                     print(ex)
 
@@ -422,9 +422,6 @@ def get_products_data_tr(products_urls: list, headers: dict, brand: str, categor
                 continue
 
             soup = BeautifulSoup(html, 'lxml')
-            #
-            # with open('data/index.html', 'w', encoding='utf-8') as file:
-            #     file.write(soup.prettify())
 
             try:
                 item_list_element = soup.find_all('li', {'itemprop': 'itemListElement'})
@@ -710,7 +707,7 @@ def main():
         print(f'Курс PLN/RUB: {currency}')
     else:
         raise ValueError('Введено неправильное значение')
-
+    #
     # get_products_urls(driver=driver, category_urls_list=category_urls_list_textile_tr, headers=headers, brand=brand,
     #                   category=category, region=region)
     directory = 'data'
