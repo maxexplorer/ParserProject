@@ -15,7 +15,19 @@ start_time = datetime.now()
 
 headers = {
     'accept': 'application/json, text/plain, */*',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'content-type': 'application/json;charset=UTF-8',
+    'origin': 'https://navigator.sk.ru',
+    'priority': 'u=1, i',
+    'referer': 'https://navigator.sk.ru/?q=N4IgZiBcoC4IYHMDOB9GBPADgUyiA9gE4gA0IAloQDZShiH4C2epIM%2BLAvmY9beA2aQQrdlzIw%2B0AUxYSOwkNxBIArgCNG5GAGF8qgHYwoARjIBjJpjgH0KQtgBu2A6tzT6sxfPEhzUukE5NgURTmUkPABaRmxGdWxCFCRyA3NcMkxTTiA',
+    'sec-ch-ua': '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'cookie': 'navigator_session_logs=92ef0c5ffd7ac9b106be177f7dea5e58; navigator_session=eyJfZnJlc2giOmZhbHNlLCJ1c2VyX2lkIjowfQ.Z73AIw.QxW5p2A-Mf_ytB31ZmVIvNq62Pc; spid=1740482256992_4b68d3c9dc7e1a2556ce419c4726c7ca_w4urgjo2cvqbmofd; _ym_uid=1728550747944351283; _ym_d=1740482260; _ym_isad=2; spsc=1740488734687_37e21651eeaaf4829ff0077beff9ab2b_e6cfb3ea8f0a0fa28cc6ebefdcae8ea5; _ym_visorc=w',
 }
 
 # Функция получения данных товаров
@@ -113,6 +125,12 @@ def get_data(headers: dict) -> None:
                 except Exception:
                     pass
 
+
+                try:
+                    average_number_of_employees = item['average_number_of_employees']
+                except Exception:
+                    average_number_of_employees = None
+
                 result_data.append(
                     {
                         'Название компании: RU': company_name_ru,
@@ -125,6 +143,7 @@ def get_data(headers: dict) -> None:
                         'Чистая прибыль за 2023 (убыток)': profit2023,
                         'Чистая прибыль за 2022 (убыток)': profit2022,
                         'Чистая прибыль за 2021 (убыток)': profit2021,
+                        'Количество сотрудников': average_number_of_employees
                     }
                 )
 
@@ -150,7 +169,7 @@ def save_excel(data: list) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data.xlsx'
+    file_path = f'{directory}/result_data1.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
