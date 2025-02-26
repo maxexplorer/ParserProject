@@ -99,7 +99,7 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
                     print(f'{product_url}: {ex}')
                     continue
 
-            print(f'Обработано: {i}/{count_urls}')
+            print(f'Обработана категория {category_url}: {i}/{count_urls}')
 
     if not os.path.exists('data'):
         os.makedirs('data')
@@ -291,7 +291,7 @@ def download_imgs(file_path: str, headers: dict) -> None:
         with open(f'{directory}/{image_title}', 'wb') as file:
             file.write(response.content)
 
-        print(f'Обработано: {k}/{count_urls}')
+        print(f'Обработано изображений: {k}/{count_urls}')
 
 
 # Функция для записи данных в формат xlsx
@@ -326,6 +326,7 @@ def main():
     new_products_urls_list = get_products_urls(category_urls_list=category_urls_list, headers=headers)
 
     if new_products_urls_list:
+        print(f'Получено {len(new_products_urls_list)} новых товаров!')
         result_data_products = get_products_data(products_urls_list=new_products_urls_list, headers=headers)
         save_excel(data=result_data_products, species='products')
         download_imgs(file_path="data/images_urls_list.txt", headers=headers)
