@@ -296,12 +296,14 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str) -> None:
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
     directory = 'results'
 
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    file_path = f'{directory}/result_data_{species}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{cur_date}.xlsx'
 
     dataframe = DataFrame(data)
 
