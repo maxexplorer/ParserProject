@@ -140,7 +140,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
             for category_name, category_list in category_dict.items():
                 for product_tuple in category_list:
                     products_data_list = []
-                    products_urls = set()
+                    products_urls = []
                     subcategory_name, category_url = product_tuple
 
                     try:
@@ -182,7 +182,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                                 except Exception as ex:
                                     print(ex)
                                     continue
-                                products_urls.add(product_url)
+                                products_urls.append(product_url)
                         except Exception:
                             pass
 
@@ -196,9 +196,9 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                                 }
                             )
 
-                            get_products_data(driver=driver, products_data_list=products_data_list,
+                            get_products_data(products_data_list=products_data_list,
                                               processed_urls=processed_urls,
-                                              brand=brand, region=region, size_model_title='Model bedeni')
+                                              brand=brand, region=region)
 
                             if not os.path.exists(directory):
                                 os.makedirs(directory)
@@ -211,7 +211,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
 
 
 # Функция получения данных товаров
-def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
+def get_products_data(products_data_list: list[dict], processed_urls: set, brand: str,
                       region: str, size_model_title: str) -> None:
     result_data = []
 
