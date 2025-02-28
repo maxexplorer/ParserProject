@@ -370,7 +370,7 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                                 'Инструкция по уходу': care_rus,
                                 'Серия в одежде и обуви': None,
                                 'Материал': composition_rus,
-                                'Состав материала': colour_rus,
+                                'Состав материала': composition_rus,
                                 'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
