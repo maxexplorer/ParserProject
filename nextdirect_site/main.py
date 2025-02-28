@@ -42,19 +42,6 @@ headers = {
 }
 
 
-# Функция для создания объекта chromedriver
-def init_undetected_chromedriver(headless_mode: bool = False) -> Chrome:
-    options = ChromeOptions()
-    if headless_mode:
-        options.add_argument("--headless")
-    driver = Chrome(options=options)
-    if not headless_mode:
-        driver.maximize_window()
-    driver.implicitly_wait(15)
-
-    return driver
-
-
 # Получаем html разметку страницы
 def get_html(url: str, headers: dict, session: Session) -> str:
     try:
@@ -67,19 +54,6 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         return html
     except Exception as ex:
         print(f'get_html: {ex}')
-
-
-# Получаем количество страниц
-def get_pages(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        pages = int(
-            soup.find('ul', class_='s_paging__item pagination d-flex mb-2 mb-sm-3').find_all('li')[-2].text.strip())
-    except Exception:
-        pages = 1
-
-    return pages
 
 
 # Функция получения количества страниц
@@ -123,10 +97,8 @@ def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, brand: str,
+def get_products_urls(category_data_list: list, headers: dict, brand: str,
                       region: str) -> None:
-    batch_size = 100
-
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
@@ -144,17 +116,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                     products_urls = []
                     subcategory_name, category_url = product_tuple
 
-                    # try:
-                    #     time.sleep(1)
-                    #     html = get_html(url=category_url, headers=headers, session=session)
-                    # except Exception as ex:
-                    #     print(f"{category_url} - {ex}")
-                    #     continue
-
-                    # with open('data/index.html', 'w', encoding='utf-8') as file:
-                    #     file.write(html)
-
-                    pages = 1
+                    pages = 100
 
                     for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?p={page}"
@@ -209,7 +171,7 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                                 print(*products_urls, file=file, sep='\n')
 
                             products_urls.clear()  # Очищаем список после обработки
-                            products_data_list = []  # Очищаем накопленные данные
+                            products_data_list.clear()  # Очищаем накопленные данные
 
 
 # Функция получения данных товаров
@@ -485,11 +447,7 @@ def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
 
 
 def main():
-    # driver = init_undetected_chromedriver(headless_mode=True)
-
-    driver = None
-
-    brand = 'NEXT'
+    brand = 'Next'
 
     region = 'Турция'
     base_currency = 'TRY'
@@ -497,8 +455,7 @@ def main():
     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
     print(f'Курс TRY/RUB: {currency}')
 
-    get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_tr,
-                      brand=brand, region=region)
+    get_products_urls(category_data_list=category_data_list_tr, headers=headers, brand=brand, region=region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
