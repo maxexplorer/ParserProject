@@ -407,7 +407,7 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                             }
                         )
 
-            print(f'Обработано: {i}/{count_products} товаров!')
+                print(f'Обработано: {i}/{count_products} товаров!')
 
         if result_data:
             save_excel(data=result_data, brand=brand, category_name=category_name, region=region)
