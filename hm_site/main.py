@@ -254,11 +254,11 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
 # Функция получения данных товаров
 def get_products_data(driver: Chrome, products_data_list: list[dict], processed_urls: set, brand: str,
                       region: str, size_model_title: str) -> None:
-    result_data = []
 
     count = 0
 
     for dict_item in products_data_list:
+        result_data = []
         product_urls = []
         key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
 
