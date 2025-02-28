@@ -290,7 +290,7 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                     except Exception as ex:
                         print(f'color: {product_url} - {ex}')
                         colour_original = None
-                        colour_original = None
+                        colour_rus = None
 
                     try:
                         images_urls_list = []
@@ -311,16 +311,16 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                         item_description = None
 
                     try:
-                        description = item_description['toneOfVoiceSanitised']
-                        description_rus = translator(description)
+                        sanitised_description = item_description['toneOfVoiceSanitised']
+                        sanitised_description_rus = translator(sanitised_description)
                     except Exception:
-                        description = None
-                        description_rus = None
+                        sanitised_description = None
+                        sanitised_description_rus = None
 
                     try:
                         logos_items = data['itemDescription']['logos']
                         logos_description = ' '.join(i['description'] for i in logos_items)
-                        logos_description_rus = translator(logos_description_rus)
+                        logos_description_rus = translator(logos_description)
                     except Exception:
                         logos_description = None
                         logos_description_rus = None
@@ -333,76 +333,52 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                         measurements_description = None
                         measurements_description_rus = None
 
-                    try:
-                        section_material_description = data.find('div', id='section-materialsAndSuppliersAccordion')
-                    except Exception:
-                        section_material_description = None
+                    description_original = f'{sanitised_description} {logos_description} {measurements_description}'
+                    description_rus = f'{sanitised_description_rus} {logos_description_rus} {measurements_description_rus}'
 
                     try:
-                        composition_outer_shell = section_material_description.find('li').find('p').text
-                        composition = translator(composition_outer_shell)
-                        material_outer_shell = composition_outer_shell.split()[0]
-                        material = translator(material_outer_shell)
+                        composition = item_description['composition']
+                        composition_rus = translator(composition)
                     except Exception:
-                        composition = None
-                        material = None
+                        composition_rus = None
 
                     try:
-                        section_care = data.find('div', id='section-careGuideAccordion').find('ul').find_all('li')
+                        care = item_description['washingInstructions']
+                        care_rus = translator(care)
                     except Exception:
-                        section_care = None
+                        care_rus = None
 
                     try:
-                        care = '. '.join(i.text for i in section_care)
-                        care = translator(care)
-                    except Exception:
-                        care = None
-
-                    try:
-                        sizes_items = data.find('div', {'data-testid': 'size-selector'}).find_all('li')
+                        sizes_items = data['options']['options']
                     except Exception:
                         sizes_items = None
 
-                    try:
-                        sizes = data.find('div', {'data-testid': 'size_list_name'}).text.strip()
-                    except Exception:
-                        sizes = None
-
-                    if not sizes_items:
-                        sizes_items = ' '
-
                     for size_item in sizes_items:
                         try:
-                            size_eur = size_item.find('input').get('id')
+                            size = size_item['name']
                         except Exception:
-                            size_eur = ''
+                            size = ''
 
                         try:
-                            size_availability = size_item.find('label').find('span').text.strip()
+                            stock_status = size_item['stockStatus']
                         except Exception:
-                            size_availability = None
+                            stock_status = None
 
-                        if not size_availability:
-                            status_size = 'в наличии'
-                        else:
-                            status_size = translator(size_availability).lower()
-
-                        if not size_eur:
-                            size_eur = sizes
-                            size_rus = translator(sizes)
-
-                        id_product_size = f"{id_product}/{size_eur}"
+                        try:
+                            price = size_item['priceUnformatted']
+                        except Exception:
+                            price = None
 
                         result_data.append(
                             {
                                 '№': product_name,
-                                'Артикул': id_product_size,
+                                'Артикул': id_product,
                                 'Название товара': product_name_rus,
                                 'Цена, руб.*': price,
-                                'Цена до скидки, руб.': old_price,
+                                'Цена до скидки, руб.': None,
                                 'НДС, %*': None,
                                 'Включить продвижение': None,
-                                'Ozon ID': id_product_size,
+                                'Ozon ID': id_product,
                                 'Штрихкод (Серийный номер / EAN)': None,
                                 'Вес в упаковке, г*': None,
                                 'Ширина упаковки, мм*': None,
@@ -414,28 +390,28 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                                 'Артикул фото': None,
                                 'Бренд в одежде и обуви*': brand,
                                 'Объединить на одной карточке*': id_product,
-                                'Цвет товара*': color_rus,
-                                'Российский размер*': size_rus,
-                                'Размер производителя': size_eur,
-                                'Статус наличия': status_size,
-                                'Название цвета': color_original,
+                                'Цвет товара*': colour_rus,
+                                'Российский размер*': size,
+                                'Размер производителя': size,
+                                'Статус наличия': stock_status,
+                                'Название цвета': colour_original,
                                 'Тип*': category_name,
                                 'Пол*': subcategory_name,
                                 'Размер пеленки': None,
                                 'ТН ВЭД коды ЕАЭС': None,
                                 'Ключевые слова': None,
                                 'Сезон': None,
-                                'Рост модели на фото': model_height,
+                                'Рост модели на фото': None,
                                 'Параметры модели на фото': None,
-                                'Размер товара на фото': model_size,
+                                'Размер товара на фото': None,
                                 'Коллекция': None,
                                 'Страна-изготовитель': None,
-                                'Вид принта': description,
+                                'Вид принта': description_original,
                                 'Аннотация': description_rus,
-                                'Инструкция по уходу': care,
+                                'Инструкция по уходу': care_rus,
                                 'Серия в одежде и обуви': None,
-                                'Материал': material,
-                                'Состав материала': composition,
+                                'Материал': composition_rus,
+                                'Состав материала': colour_rus,
                                 'Материал подклада/внутренней отделки': None,
                                 'Материал наполнителя': None,
                                 'Утеплитель, гр': None,
