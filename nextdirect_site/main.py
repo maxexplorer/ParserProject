@@ -231,7 +231,7 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                             data = None
                 if data:
                     try:
-                        id_product = data['productCode']
+                        id_product = data['itemNumber']
                     except Exception:
                         id_product = None
 
