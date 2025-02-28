@@ -244,9 +244,6 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
 
                 soup = BeautifulSoup(html, 'lxml')
 
-                # with open('data/index.html', 'w', encoding='utf-8') as file:
-                #     file.write(soup.prettify())
-
                 try:
                     data_json = soup.find('script', id='__NEXT_DATA__', type='application/json').text.strip()
                 except Exception:
@@ -333,8 +330,8 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
                         measurements_description = None
                         measurements_description_rus = None
 
-                    description_original = f'{sanitised_description} {logos_description} {measurements_description}'
-                    description_rus = f'{sanitised_description_rus} {logos_description_rus} {measurements_description_rus}'
+                    description_original = f'{sanitised_description} {measurements_description} {logos_description}'
+                    description_rus = f'{sanitised_description_rus} {measurements_description_rus} {logos_description_rus} '
 
                     try:
                         composition = item_description['composition']
