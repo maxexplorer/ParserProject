@@ -118,7 +118,7 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
 
                     pages = 100
 
-                    for page in range(1, pages + 1):
+                    for page in range(21, pages + 1):
                         page_product_url = f"{category_url}?p={page}"
                         try:
                             time.sleep(1)
@@ -413,7 +413,14 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
             save_excel(data=result_data, brand=brand, category_name=category_name, region=region)
 
 
-# Функция для записи данных в формат xlsx
+# Функция для очистки данных от некорректных символов
+def clean_text(text):
+    """Очистка текста от неподдерживаемых символов."""
+    if isinstance(text, str):
+        return text.encode('utf-8', 'ignore').decode('utf-8')  # Убираем невалидные символы
+    return text
+
+
 def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
     directory = 'results'
 
@@ -432,16 +439,20 @@ def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
     # Загружаем данные из файла
     df = read_excel(file_path, sheet_name='ОЗОН')
 
-    # Определение количества уже записанных строк
+    # Определяем количество уже записанных строк
     num_existing_rows = len(df.index)
 
-    # Добавляем новые данные
-    dataframe = DataFrame(data)
+    # Применяем clean_text() ко всем строковым значениям перед записью
+    cleaned_data = [{k: clean_text(v) for k, v in row.items()} for row in data]
 
-    with ExcelWriter(file_path, mode='a',
-                     if_sheet_exists='overlay') as writer:
-        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
-                           index=False)
+    # Преобразуем входные данные в DataFrame
+    dataframe = DataFrame(cleaned_data)
+
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(
+            writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
+            sheet_name='ОЗОН', index=False
+        )
 
     print(f'Данные сохранены в файл "{file_path}"')
 
