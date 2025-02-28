@@ -118,7 +118,7 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
 
                     pages = 100
 
-                    for page in range(21, pages + 1):
+                    for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?p={page}"
                         try:
                             time.sleep(1)
