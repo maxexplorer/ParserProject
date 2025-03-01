@@ -56,52 +56,12 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         print(f'get_html: {ex}')
 
 
-# Функция получения количества страниц
-def get_category_urls(driver: Chrome, region: str, id_region: str) -> None:
-    # Путь к файлу для сохранения URL продуктов
-    directory = 'data'
-    file_path = f'{directory}/category_data_list_{region}.txt'
-
-    category_data_list = []
-
-    url = f"https://www2.hm.com/{id_region}/index.html"
-
-    driver.get(url=url)
-    html = driver.page_source
-
-    soup = BeautifulSoup(html, 'lxml')
-
-    try:
-        data = soup.find_all('li', {'data-level': "3"})
-
-        for item in data:
-            category_name = item.text
-            try:
-                category_url = f"https://www2.hm.com{item.find('a').get('href')}"
-            except Exception as ex:
-                print(f' category_url: {ex}')
-                continue
-
-            category_data_list.append(
-                (category_name, category_url)
-            )
-
-    except Exception as ex:
-        print(f':get_category_urls: {ex}')
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    with open(file_path, 'w', encoding='utf-8') as file:
-        print(*category_data_list, file=file, sep='\n')
-
-
 # Функция получения ссылок товаров
 def get_products_urls(category_data_list: list, headers: dict, brand: str,
                       region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+    file_path = f'{directory}/url_products_list_{brand}_Home_{region}.txt'
 
     try:
         processed_urls = get_unique_urls(file_path=file_path)
