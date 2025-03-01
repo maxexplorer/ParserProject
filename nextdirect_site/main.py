@@ -57,8 +57,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(category_data_list: list, headers: dict, brand: str,
-                      region: str) -> None:
+def get_products_urls(category_data_list: list, headers: dict, brand: str, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
     file_path = f'{directory}/url_products_list_{brand}_Home_{region}.txt'
@@ -76,7 +75,8 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
                     products_urls = []
                     subcategory_name, category_url = product_tuple
 
-                    pages = 100
+                    pages = 100  # Максимальное число страниц
+                    last_page_with_products = 0  # Запоминаем последнюю страницу, где были товары
 
                     for page in range(1, pages + 1):
                         page_product_url = f"{category_url}?p={page}"
@@ -93,11 +93,12 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
                         soup = BeautifulSoup(html, 'lxml')
 
                         try:
-                            product_items = soup.find('div', {'data-testid': 'plp-product-grid'}).find_all(
-                                'div', {'data-testid': 'plp-product-grid-item'})
+                            product_items = soup.find_all(
+                                'div', {'data-testid': 'plp-product-grid-item'}
+                            )
 
-                            if not product_items:
-                                break
+                            if not product_items:  # Если товаров нет, завершаем обработку категории
+                                last_page_with_products = page  # Обновляем страницу, где были товары
 
                             for product_item in product_items:
                                 try:
@@ -106,13 +107,14 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
                                     print(ex)
                                     continue
                                 products_urls.append(product_url)
+
                         except Exception:
                             pass
 
                         print(f'Обработано: {page}/{pages} страниц')
 
-                        # Проверяем кратность 10 или достижение последней страницы
-                        if page % 10 == 0 or page == pages:
+                        # Проверяем кратность 10 или достижение последней страницы с товарами
+                        if page % 10 == 0 or page == last_page_with_products:
                             products_data_list.append(
                                 {
                                     (category_name, subcategory_name): products_urls
@@ -132,6 +134,10 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str,
 
                             products_urls.clear()  # Очищаем список после обработки
                             products_data_list.clear()  # Очищаем накопленные данные
+                            break
+
+                    print(
+                        f'✅ Завершена обработка {category_name}/{subcategory_name}')
 
 
 # Функция получения данных товаров
