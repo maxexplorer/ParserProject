@@ -237,8 +237,8 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
 
                     try:
                         name = data['title']
-                        product_name = f'H&M {name.lower()}'
-                        product_name_rus = f'H&M {translator(name).lower()}'
+                        product_name = f'Next {name.lower()}'
+                        product_name_rus = f'Next {translator(name).lower()}'
                     except Exception:
                         product_name = None
                         product_name_rus = None
