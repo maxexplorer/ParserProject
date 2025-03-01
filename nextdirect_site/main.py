@@ -16,7 +16,7 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_data_list_tr
+from data.data import category_data_list_home_tr
 from data.data import id_region_dict
 
 from functions import translator
@@ -466,7 +466,7 @@ def main():
     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
     print(f'Курс TRY/RUB: {currency}')
 
-    get_products_urls(category_data_list=category_data_list_tr, headers=headers, brand=brand, region=region)
+    get_products_urls(category_data_list=category_data_list_home_tr, headers=headers, brand=brand, region=region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
