@@ -15,7 +15,6 @@ from pandas import DataFrame
 from pandas import ExcelWriter
 from pandas import read_excel
 
-from data.data import category_data_list_pl
 from data.data import category_data_list_tr
 from data.data import colors_dict_de
 from data.data import sizes_dict
@@ -247,8 +246,8 @@ def get_products_urls(driver: Chrome, headers: dict, category_data_list: list, b
                             with open(file_path, 'a', encoding='utf-8') as file:
                                 print(*products_urls, file=file, sep='\n')
 
-                            products_urls = []  # Очищаем список после обработки
-                            products_data_list = []  # Очищаем накопленные данные
+                            products_urls.clear()  # Очищаем список после обработки
+                            products_data_list.clear()  # Очищаем накопленные данные
 
 
 # Функция получения данных товаров
@@ -413,7 +412,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
                 section_material_description = None
 
             try:
-                composition_outer_shell = section_material_description.find('li').find('p').text
+                composition_outer_shell = section_material_description.find('li').text
                 composition = translator(composition_outer_shell)
                 material_outer_shell = composition_outer_shell.split()[0]
                 material = translator(material_outer_shell)
@@ -842,7 +841,7 @@ def save_excel(data: list, species: str, brand: str, category_name: str, region:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{species}_{brand}_HOME_{region}.xlsx'
+    file_path = f'{directory}/result_data_{species}_{brand}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -881,7 +880,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс EUR/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl,
+            get_products_urls(driver=driver, headers=headers, category_data_list=[],
                               brand=brand, region=region)
         elif value == '2':
             region = 'Турция'
@@ -902,7 +901,7 @@ def main():
             currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
             print(f'Курс PLN/RUB: {currency}')
 
-            get_products_urls(driver=driver, headers=headers, category_data_list=category_data_list_pl,
+            get_products_urls(driver=driver, headers=headers, category_data_list=[],
                               brand=brand, region=region)
         else:
             raise ValueError('Введено неправильное значение')
