@@ -554,7 +554,7 @@ def get_products_data(driver: Chrome, products_data_list: list[dict], processed_
             print(f'Обработано: {i}/{count_products} товаров!')
 
         if result_data:
-            save_excel(data=result_data, species='products', brand=brand, category_name=category_name, region=region)
+            save_excel(data=result_data, brand=brand, category_name=category_name, region=region)
 
 
 # Функция получения данных товаров
