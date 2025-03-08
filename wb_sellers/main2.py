@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from requests import Session
@@ -12,7 +13,7 @@ start_time = datetime.now()
 def get_inn(session: Session, headers: dict, id_seller: str) -> str:
     try:
         response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{id_seller}.json',
-                                headers=headers)
+                               headers=headers)
         json_data = response.json()
 
     except Exception as ex:
@@ -26,9 +27,24 @@ def get_inn(session: Session, headers: dict, id_seller: str) -> str:
     return inn
 
 
-
 # Функция для получения данных о наличии товаров у продавца
-def get_data_registration_date() -> None:
+def get_registration_date() -> None:
+    headers = {
+        'accept': '*/*',
+        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'origin': 'https://www.wildberries.ru',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wildberries.ru/seller/177',
+        'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+        'x-client-name': 'site',
+    }
+
     df = read_excel("D:\\PycharmProjects\\ParserProject\\wb_sellers\\data\\wb_sellers.xlsx", sheet_name='Лист1')
 
     result_list = []
@@ -42,23 +58,8 @@ def get_data_registration_date() -> None:
             url = row.iloc[0]
             id_seller = row.iloc[0].split('/')[-1]
 
-            headers = {
-                'accept': '*/*',
-                'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                'origin': 'https://www.wildberries.ru',
-                'priority': 'u=1, i',
-                'referer': 'https://www.wildberries.ru/seller/177',
-                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-site',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-                'x-client-name': 'site',
-            }
-
             try:
+                time.sleep(1)
                 response = session.get(f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{id_seller}',
                                        headers=headers, timeout=60)
 
@@ -71,34 +72,30 @@ def get_data_registration_date() -> None:
             processed_count += 1
             print(f'Обработано URL: {processed_count}')  # Вывод количества обработанных URL
 
-
             registration_date = json_data.get('registrationDate')
 
             sale_item_quantity = json_data.get('saleItemQuantity')
 
             if registration_date and sale_item_quantity:
-                if registration_date and sale_item_quantity:
-                    reg_date = datetime.strptime(registration_date, '%Y-%m-%dT%H:%M:%SZ')
-                    years_on_wb = (datetime.now() - reg_date).days // 365
+                reg_date = datetime.strptime(registration_date, '%Y-%m-%dT%H:%M:%SZ')
+                years_on_wb = (datetime.now() - reg_date).days // 365
 
-                    if (years_on_wb == 1 and 1000 <= sale_item_quantity <= 4000) or \
-                            (years_on_wb == 2 and 4001 <= sale_item_quantity <= 9000) or \
-                            (years_on_wb >= 3 and sale_item_quantity >= 9001):
+                if (years_on_wb == 1 and 1000 <= sale_item_quantity <= 4000) or \
+                        (years_on_wb == 2 and 4001 <= sale_item_quantity <= 9000) or \
+                        (years_on_wb >= 3 and sale_item_quantity >= 9001):
+                    inn = get_inn(session=session, headers=headers, id_seller=id_seller)
 
-                        inn = get_inn(session=session, headers=headers, id_seller=id_seller)
-
-                        result_list.append(
-                            {
-                                'Ссылка': url,
-                                'ИНН': inn
-                            }
-                        )
-
+                    result_list.append(
+                        {
+                            'Ссылка': url,
+                            'ИНН': inn
+                        }
+                    )
 
             # Записываем данные в Excel каждые 100 URL
             if len(result_list) >= batch_size:
                 save_excel(result_list)
-                result_list.clear() # Очищаем список для следующей партии
+                result_list.clear()  # Очищаем список для следующей партии
 
     # Записываем оставшиеся данные в Excel
     if result_list:
@@ -136,8 +133,9 @@ def save_excel(data: list) -> None:
 
     print(f'Данные сохранены в файл: {file_path}')
 
+
 def main():
-    get_data_products_wb()
+    get_registration_date()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
