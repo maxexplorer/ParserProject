@@ -9,7 +9,7 @@ start_time = datetime.now()
 
 api_url_explain = "https://api.usersbox.ru/v1/explain"
 api_url_search = "https://api.usersbox.ru/v1/search"
-TOKEN = "YOUR API TOKEN"  # Замените на ваш токен
+TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoxNzQxMjYxNzQxLCJhcHBfaWQiOjE3NDEyNjE3NDF9.rHw8gQT2uYHS-n-zgQAyWqnY5mI2L2JShADeN_wkEZQ"  # Замените на ваш токен
 
 headers = {
     "Authorization": TOKEN
