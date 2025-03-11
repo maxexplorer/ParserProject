@@ -73,7 +73,7 @@ def get_registration_date(session: Session, url: str, id_seller: str) -> tuple[s
 
 # Функция для получения данных о наличии товаров у продавца
 def get_data_products() -> None:
-    df = read_excel("D:\\PycharmProjects\\ParserProject\\wb_sellers\\data\\wb_sellers1.xlsx", sheet_name='Sellers')
+    df = read_excel("data\\wb_sellers.xlsx", sheet_name='Sellers')
 
     headers = {
         'accept': '*/*',
