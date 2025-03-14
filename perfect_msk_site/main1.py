@@ -238,7 +238,11 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
         with Session() as session:
             time.sleep(1)
-            response = session.get(url=img_url, headers=headers)
+            try:
+                response = session.get(url=img_url, headers=headers)
+            except Exception as ex:
+                print(f'{img_url}: {ex}')
+                continue
 
         with open(f"images/{image_title}", "wb") as file:
             file.write(response.content)
@@ -275,8 +279,8 @@ def get_unique_urls(file_path_input: str, file_path_output: str) -> None:
 
 def main():
     driver = init_chromedriver(headless_mode=True)
-    # get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    # get_unique_urls(file_path_input="data/products_urls_list.txt", file_path_output="data/unique_urls_list.txt")
+    get_products_urls(category_urls_list=category_urls_list, headers=headers)
+    get_unique_urls(file_path_input="data/products_urls_list.txt", file_path_output="data/unique_urls_list.txt")
 
     try:
         result_data = get_products_data(driver=driver, file_path="data/products_urls_list.txt")
