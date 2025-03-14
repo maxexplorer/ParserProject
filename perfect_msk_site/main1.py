@@ -30,21 +30,7 @@ category_urls_list = [
 ]
 
 headers = {
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'cache-control': 'max-age=0',
-    'priority': 'u=0, i',
-    'referer': 'https://perfect-msk.ru/catalog/karnizy/',
-    'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'document',
-    'sec-fetch-mode': 'navigate',
-    'sec-fetch-site': 'same-origin',
-    'sec-fetch-user': '?1',
-    'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-    'cookie': 'PHPSESSID=rwm7XqGIeiYG2IxLlmlTg0mpxtRIP5oN; _ym_uid=1741932321309156308; _ym_d=1741932321; BX_USER_ID=87d2ffc09204b51cc425ec723e01e9f4; _ym_isad=2; BITRIX_CONVERSION_CONTEXT_s1=%7B%22ID%22%3A5%2C%22EXPIRE%22%3A1741985940%2C%22UNIQUE%22%3A%5B%22conversion_visit_day%22%2C%22sale_cart_add_day%22%5D%7D',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
 }
 
 
@@ -199,7 +185,6 @@ def get_products_data(driver: Chrome, file_path: str) -> list[dict]:
 
         try:
             description = soup.find('div', class_='card__content').text.strip()
-            print(description)
         except Exception:
             description = None
 
