@@ -88,10 +88,11 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
+
             pages = get_pages(html=html)
 
             for page in range(1, pages + 1):
-                product_url = f"{category_url}page/{page}/"
+                product_url = f"{category_url}?PAGEN_1={page}/"
                 try:
                     time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
@@ -105,10 +106,11 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    data = soup.find('div', class_='catalogbox__wrapper').find_all('div', class_='catalogbox__title')
+                    data = soup.find('div', class_='products-list products-list--three').find_all('div',
+                                                                                                  class_='product')
                     for item in data:
                         try:
-                            product_url = f"https://bellodeco.ru/{item.find('a').get('href')}"
+                            product_url = f"https://perfect-msk.ru{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -132,112 +134,86 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
     return new_products_urls_list
 
 
-def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
+def get_products_data(driver: Chrome, products_urls_list: list) -> list[dict]:
     count_urls = len(products_urls_list)
     result_data = []
     images_urls_list = []
 
-    with Session() as session:
-        for j, product_url in enumerate(products_urls_list, 1):
-            try:
-                time.sleep(1)
-                html = get_html(url=product_url, headers=headers, session=session)
-            except Exception as ex:
-                print(f"{product_url} - {ex}")
-                continue
+    for j, product_url in enumerate(products_urls_list, 1):
+        product_images_urls_list = []
+        try:
+            time.sleep(1)
+            driver.get(url=product_url)
+        except Exception as ex:
+            print(f"{product_url} - {ex}")
+            continue
 
-            if not html:
-                continue
+        html = driver.page_source
 
-            soup = BeautifulSoup(html, 'lxml')
+        if not html:
+            continue
 
-            try:
-                title = soup.find('h1').text.strip()
-            except Exception:
-                title = None
+        soup = BeautifulSoup(html, 'lxml')
 
-            try:
-                price = int(
-                    ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='catalogbox__price').text.strip())))
-            except Exception:
-                price = None
+        try:
+            sku = soup.find('div', class_='card__code').text.strip()
+        except Exception:
+            sku = None
 
-            try:
-                images_items = soup.find('div', class_='catalogbox__galbox js-catalog-detail-fotorama-wrap').find_all(
-                    'a')
-                for image_item in images_items:
-                    image_url = f"https://bellodeco.ru/{image_item.get('href')}"
-                    images_urls_list.append(image_url)
-                main_image_url = images_urls_list[0]
-                additional_images_urls = '; '.join(images_urls_list[1:])
-            except Exception:
-                main_image_url = None
-                additional_images_urls = None
+        try:
+            title = soup.find('div', class_='title-page').find('h1', class_='h1').text.strip()
+        except Exception:
+            title = None
 
-            try:
-                description = soup.find('div', class_='catalogbox__description').text.strip().splitlines()[-1]
-            except Exception:
-                description = None
+        try:
+            price = int(soup.find('span', itemprop='price').text)
+        except Exception:
+            price = None
 
-            try:
-                models = soup.find('div', class_='b-model-list').find_all('div', class_='model-list__item')
-                try:
-                    model_fbx = models[0].find('a').get('href')
-                except Exception:
-                    model_fbx = None
-                try:
-                    model_obj = models[1].find('a').get('href')
-                except Exception:
-                    model_obj = None
-                try:
-                    model_3ds = models[2].find('a').get('href')
-                except Exception:
-                    model_3ds = None
-            except Exception:
-                pass
+        try:
+            images_items = soup.find('div', class_='card__slider-main').find_all('img', class_='card__slider-image')
+            for image_item in images_items:
+                src = image_item.get('src')
+                image_url = f"https://perfect-msk.ru{src}"
+                images_urls_list.append(image_url)
+                product_images_urls_list.append(image_url)
+            main_image_url = product_images_urls_list[0]
+            additional_images_urls = '; '.join(product_images_urls_list[1:])
+        except Exception:
+            main_image_url = None
+            additional_images_urls = None
 
-            result_dict = {
-                'Название товара': title,
-                'Ссылка': product_url,
-                'Цена': price,
-                'Главное изображение': main_image_url,
-                'Дополнительные изображения': additional_images_urls,
-                'Описание': description,
-                'Модель fbs': model_fbx,
-                'Модель obj': model_obj,
-                'Модель 3ds': model_3ds,
-            }
+        try:
+            description = soup.find('div', class_='card__content').text.strip()
+        except Exception:
+            description = None
 
-            # Сбор параметров товара
-            product_parameters = {}
-            try:
-                parameters_items = soup.find('div', class_='catalogbox__param__left').find_all('div')
-                for parameter_item in parameters_items:
-                    attribute_name = parameter_item.text.split(':')[0].strip()
-                    attribute_value = parameter_item.text.split(':')[1].strip()
-                    product_parameters[attribute_name] = attribute_value
-            except Exception:
-                pass
+        result_dict = {
+            'Артикул': sku,
+            'Название товара': title,
+            'Ссылка': product_url,
+            'Цена': price,
+            'Главное изображение': main_image_url,
+            'Дополнительные изображения': additional_images_urls,
+            'Описание': description,
+        }
 
-            # Сбор характеристик товара
-            product_characteristics = {}
-            try:
-                characteristics_items = soup.find('div', id='tabs-obj_description').find_all('tr')
-                for characteristic_item in characteristics_items:
-                    characteristic = characteristic_item.find_all('td')
-                    attribute_name = characteristic[0].text.strip()
-                    attribute_value = characteristic[1].text.strip()
-                    product_characteristics[attribute_name] = attribute_value
-            except Exception:
-                pass
+        # Сбор параметров товара
+        product_parameters = {}
+        try:
+            parameters_items = soup.find('div', class_='card__details').find_all('div')
+            for parameter_item in parameters_items:
+                attribute_name = parameter_item.text.split(':')[0].strip()
+                attribute_value = parameter_item.text.split(':')[1].strip()
+                product_parameters[attribute_name] = attribute_value
+        except Exception:
+            pass
 
-            product_attributes = {**product_parameters, **product_characteristics}
+        result_dict.update(product_parameters)
 
-            result_dict.update(product_attributes)
+        result_data.append(result_dict)
 
-            result_data.append(result_dict)
-
-            print(f'Обработано: {j}/{count_urls}')
+        print(f'Обработано: {j}/{count_urls}')
 
     if not os.path.exists('data'):
         os.mkdir('data')
@@ -246,7 +222,6 @@ def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
         print(*images_urls_list, file=file, sep='\n')
 
     return result_data
-
 
 def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
     count_urls = len(products_urls_list)
@@ -267,14 +242,8 @@ def get_products_price(products_urls_list: list, headers: dict) -> list[dict]:
 
             soup = BeautifulSoup(html, 'lxml')
 
-            # try:
-            #     title = soup.find('h1').text.strip()
-            # except Exception:
-            #     title = None
-
             try:
-                price = int(
-                    ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='catalogbox__price').text.strip())))
+                price = int(soup.find('span', itemprop='price').text)
             except Exception:
                 price = None
 
@@ -337,7 +306,7 @@ def save_excel(data: list, species: str) -> None:
 
 def main():
     # Считываем Excel-файл
-    excel_data = read_excel('data/data.xlsx', sheet_name=0)  # sheet_name=0 для первой страницы
+    excel_data = read_excel('data/data.xlsx', sheet_name=0, header=None)  # sheet_name=0 для первой страницы
 
     # Преобразуем в список списков
     data_list = excel_data.values.tolist()
@@ -350,8 +319,9 @@ def main():
     new_products_urls_list = get_products_urls(category_urls_list=category_urls_list, headers=headers)
 
     if new_products_urls_list:
+        driver = init_chromedriver(headless_mode=True)
         print(f'Получено {len(new_products_urls_list)} новых товаров!')
-        result_data_products = get_products_data(products_urls_list=new_products_urls_list, headers=headers)
+        result_data_products = get_products_data(driver=driver, products_urls_list=new_products_urls_list)
         save_excel(data=result_data_products, species='products')
         download_imgs(file_path="data/images_urls_list.txt", headers=headers)
 
