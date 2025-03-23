@@ -1,14 +1,9 @@
 import os
-import re
 import time
 from datetime import datetime
-from random import randint
 import json
 
 from requests import Session
-
-from new_undetected_chromedriver import Chrome
-from new_undetected_chromedriver import ChromeOptions
 
 from bs4 import BeautifulSoup
 
@@ -17,7 +12,6 @@ from pandas import ExcelWriter
 from pandas import read_excel
 
 from data.data import category_data_list_tr
-from data.data import id_region_dict
 
 from functions import translator
 from functions import get_exchange_rate
