@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 import json
+import re
 
 from requests import Session
 
@@ -68,10 +69,10 @@ def get_category_urls(url: str) -> None:
 
 
 # Функция получения ссылок товаров
-def get_products_urls(category_data_list: list, headers: dict, brand: str, region: str) -> None:
+def get_products_urls(category_data_list: list, headers: dict, site: str, region: str) -> None:
     # Путь к файлу для сохранения URL продуктов
     directory = 'data'
-    file_path = f'{directory}/url_products_list_{brand}_{region}.txt'
+    file_path = f'{directory}/url_products_list_{site}_{region}.txt'
 
     try:
         processed_urls = get_unique_urls(file_path=file_path)
@@ -79,89 +80,97 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str, regio
         processed_urls = set()
 
     with Session() as session:
-        for category_name, category_url in category_data_list:
-            products_data_list = []
-            products_urls = []
+        for category_dict in category_data_list:
+            for category_name, category_list in category_dict.items():
+                for product_tuple in category_list:
+                    products_data_list = []
+                    products_urls = []
+                    subcategory_name, category_url = product_tuple
 
-            print(f'Обрабатывается категория: {category_url}')
+                    print(f'Обрабатывается категория: {category_url}')
 
-            try:
-                html = get_html(url=category_url, headers=headers, session=session)
-            except Exception as ex:
-                print(f"{category_url} - {ex}")
-                continue
+                    try:
+                        html = get_html(url=category_url, headers=headers, session=session)
+                    except Exception as ex:
+                        print(f"{category_url} - {ex}")
+                        continue
 
-            pages = get_pages(html=html)
+                    pages = get_pages(html=html)
 
-            for page in range(1, pages + 1):
-                page_product_url = f"{category_url}?pg={page}"
-                try:
-                    time.sleep(1)
-                    html = get_html(url=page_product_url, headers=headers, session=session)
-                except Exception as ex:
-                    print(f"{page_product_url} - {ex}")
-                    continue
-
-                if not html:
-                    continue
-
-                soup = BeautifulSoup(html, 'lxml')
-
-                try:
-                    product_items = soup.find('div', {'class': 'col-12', 'data-selector': '.product-detail-card'
-                                                      }).find_all('a', class_='col-12 product-title')
-                    for product_item in product_items:
+                    for page in range(1, pages + 1):
+                        page_product_url = f"{category_url}?pg={page}"
                         try:
-                            product_url = f"https://www.kozmela.com{product_item.get('href')}"
+                            time.sleep(1)
+                            html = get_html(url=page_product_url, headers=headers, session=session)
                         except Exception as ex:
-                            print(ex)
+                            print(f"{page_product_url} - {ex}")
                             continue
-                        products_urls.append(product_url)
-                except Exception:
-                    pass
 
-                print(f'Обработано: {page}/{pages} страниц')
+                        if not html:
+                            continue
 
-                # Проверяем кратность 10 или достижение последней страницы с товарами
-                if page % 10 == 0 or page == pages:
-                    products_data_list.append(
-                        (
-                            category_name, products_urls
-                        )
-                    )
+                        soup = BeautifulSoup(html, 'lxml')
 
-                    get_products_data(products_data_list=products_data_list,
-                                      headers=headers,
-                                      processed_urls=processed_urls,
-                                      brand=brand, region=region)
+                        try:
+                            product_items = soup.find('div', {'class': 'col-12', 'data-selector': '.product-detail-card'
+                                                              }).find_all('a', class_='col-12 product-title')
+                            for product_item in product_items:
+                                try:
+                                    product_url = f"https://www.kozmela.com{product_item.get('href')}"
+                                except Exception as ex:
+                                    print(ex)
+                                    continue
+                                products_urls.append(product_url)
+                        except Exception:
+                            pass
 
-                    if not os.path.exists(directory):
-                        os.makedirs(directory)
+                        print(f'Обработано: {page}/{pages} страниц')
 
-                    with open(file_path, 'a', encoding='utf-8') as file:
-                        print(*products_urls, file=file, sep='\n')
+                        # Проверяем кратность 10 или достижение последней страницы с товарами
+                        if page % 10 == 0 or page == pages:
+                            products_data_list.append(
+                                {
+                                    (category_name, subcategory_name): products_urls
+                                }
+                            )
 
-                    products_urls.clear()  # Очищаем список после обработки
-                    products_data_list.clear()  # Очищаем накопленные данные
+                            get_products_data(products_data_list=products_data_list,
+                                              headers=headers,
+                                              processed_urls=processed_urls,
+                                              site=site,
+                                              region=region)
 
-            print(f'✅ Завершена обработка {category_name}')
+                            if not os.path.exists(directory):
+                                os.makedirs(directory)
+
+                            with open(file_path, 'a', encoding='utf-8') as file:
+                                print(*products_urls, file=file, sep='\n')
+
+                            products_urls.clear()  # Очищаем список после обработки
+                            products_data_list.clear()  # Очищаем накопленные данные
+
+                    print(f'✅ Завершена обработка {category_name}')
 
 
 # Функция получения данных товаров
-def get_products_data(products_data_list: list[tuple], headers: dict, processed_urls: set, brand: str,
-                      region: str) -> None:
-    for category_name, product_urls in products_data_list:
+def get_products_data(products_data_list: list[dict], headers: dict, processed_urls: set, site: str, region: str) -> None:
+    for dict_item in products_data_list:
         result_data = []
-        unique_product_urls = []
-        for product_url in product_urls:
+        product_urls = []
+        key, values = list(dict_item.keys())[0], list(dict_item.values())[0]
+
+        for product_url in values:
             if product_url not in processed_urls:
                 processed_urls.add(product_url)
-                unique_product_urls.append(product_url)
-        count_products = len(unique_product_urls)
-        print(f'В категории {category_name}: {count_products} товаров!')
+                product_urls.append(product_url)
+        category_name = key[0]
+        subcategory_name = key[1]
+
+        count_products = len(product_urls)
+        print(f'В категории {category_name}/{subcategory_name}: {count_products} товаров!')
 
         with Session() as session:
-            for i, product_url in enumerate(unique_product_urls, 1):
+            for i, product_url in enumerate(product_urls, 1):
                 try:
                     time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
@@ -178,6 +187,11 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
                     data = soup.find('div', id='product-detail')
                 except Exception:
                     continue
+
+                try:
+                    brand = data.find('div', string='Marka').find_next_sibling().text.strip()
+                except Exception:
+                    brand = None
 
                 try:
                     name = data.find('h1', class_='product-title').text.strip()
@@ -256,7 +270,7 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
                         'Статус наличия': None,
                         'Название цвета': colour_original,
                         'Тип*': category_name,
-                        'Пол*': None,
+                        'Пол*': subcategory_name,
                         'Размер пеленки': None,
                         'ТН ВЭД коды ЕАЭС': None,
                         'Ключевые слова': None,
@@ -311,11 +325,11 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
                 print(f'Обработано: {i}/{count_products} товаров!')
 
             if result_data:
-                save_excel(data=result_data, brand=brand, region=region)
+                save_excel(data=result_data, site=site, region=region)
 
 
 # Функция для записи данных в формат xlsx
-def save_excel(data: list, brand: str, region: str) -> None:
+def save_excel(data: list, site: str, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -323,7 +337,7 @@ def save_excel(data: list, brand: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{brand}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{site}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -348,15 +362,14 @@ def save_excel(data: list, brand: str, region: str) -> None:
 
 
 def main():
-    brand = 'Kozmela'
-
+    site = 'Kozmela'
     region = 'Турция'
     base_currency = 'TRY'
     target_currency = 'RUB'
     currency = get_exchange_rate(base_currency=base_currency, target_currency=target_currency)
     print(f'Курс TRY/RUB: {currency}')
 
-    get_products_urls(category_data_list=category_data_list_tr, headers=headers, brand=brand, region=region)
+    get_products_urls(category_data_list=category_data_list_tr, headers=headers, site=site, region=region)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
