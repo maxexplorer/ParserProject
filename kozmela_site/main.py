@@ -199,7 +199,8 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
                     price_not_discounted = None
 
                 try:
-                    price = data.find('div', class_='product-current-price fw-black').find('span', class_='product-price').text.strip()
+                    price = data.find('div', class_='product-current-price fw-black').find('span',
+                                                                                           class_='product-price').text.strip()
                 except Exception:
                     price = None
 
@@ -310,18 +311,11 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
                 print(f'Обработано: {i}/{count_products} товаров!')
 
             if result_data:
-                save_excel(data=result_data, brand=brand, category_name=category_name, region=region)
+                save_excel(data=result_data, brand=brand, region=region)
 
 
-# Функция для очистки данных от некорректных символов
-def clean_text(text):
-    """Очистка текста от неподдерживаемых символов."""
-    if isinstance(text, str):
-        return text.encode('utf-8', 'ignore').decode('utf-8')  # Убираем невалидные символы
-    return text
-
-
-def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
+# Функция для записи данных в формат xlsx
+def save_excel(data: list, brand: str, region: str) -> None:
     directory = 'results'
 
     # Создаем директорию, если она не существует
@@ -329,7 +323,7 @@ def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
         os.makedirs(directory)
 
     # Путь к файлу для сохранения данных
-    file_path = f'{directory}/result_data_{brand}_{category_name}_{region}.xlsx'
+    file_path = f'{directory}/result_data_{brand}_{region}.xlsx'
 
     # Если файл не существует, создаем его с пустым DataFrame
     if not os.path.exists(file_path):
@@ -339,20 +333,16 @@ def save_excel(data: list, brand: str, category_name: str, region: str) -> None:
     # Загружаем данные из файла
     df = read_excel(file_path, sheet_name='ОЗОН')
 
-    # Определяем количество уже записанных строк
+    # Определение количества уже записанных строк
     num_existing_rows = len(df.index)
 
-    # Применяем clean_text() ко всем строковым значениям перед записью
-    cleaned_data = [{k: clean_text(v) for k, v in row.items()} for row in data]
+    # Добавляем новые данные
+    dataframe = DataFrame(data)
 
-    # Преобразуем входные данные в DataFrame
-    dataframe = DataFrame(cleaned_data)
-
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        dataframe.to_excel(
-            writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
-            sheet_name='ОЗОН', index=False
-        )
+    with ExcelWriter(file_path, mode='a',
+                     if_sheet_exists='overlay') as writer:
+        dataframe.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0), sheet_name='ОЗОН',
+                           index=False)
 
     print(f'Данные сохранены в файл "{file_path}"')
 
