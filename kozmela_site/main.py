@@ -93,8 +93,7 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str, regio
 
             pages = get_pages(html=html)
 
-            # for page in range(1, pages + 1):
-            for page in range(1, 2):
+            for page in range(1, pages + 1):
                 page_product_url = f"{category_url}?pg={page}"
                 try:
                     time.sleep(1)
@@ -124,7 +123,7 @@ def get_products_urls(category_data_list: list, headers: dict, brand: str, regio
                 print(f'Обработано: {page}/{pages} страниц')
 
                 # Проверяем кратность 10 или достижение последней страницы с товарами
-                if page % 10 == 0 or page == 1:
+                if page % 10 == 0 or page == pages:
                     products_data_list.append(
                         (
                             category_name, products_urls
@@ -162,7 +161,7 @@ def get_products_data(products_data_list: list[tuple], headers: dict, processed_
         print(f'В категории {category_name}: {count_products} товаров!')
 
         with Session() as session:
-            for i, product_url in enumerate(unique_product_urls[:1], 1):
+            for i, product_url in enumerate(unique_product_urls, 1):
                 try:
                     time.sleep(1)
                     html = get_html(url=product_url, headers=headers, session=session)
