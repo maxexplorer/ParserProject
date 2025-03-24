@@ -211,9 +211,11 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
         try:
             name = item['nameEn']
-            product_name = f'Pull&Bear {translator(name).lower()}'
+            product_name = f'Pull&Bear {name.lower()}'
+            product_name_rus = f'Pull&Bear {translator(name).lower()}'
         except Exception:
             product_name = None
+            product_name_rus = None
 
         if not product_name:
             continue
@@ -298,9 +300,10 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
         try:
             description = item['detail']['longDescription']
-            description = translator(description)
+            description_rus = translator(description)
         except Exception:
             description = None
+            description_rus = None
 
         try:
             care_items = item['bundleProductSummaries'][0]['detail']['care']
@@ -358,9 +361,9 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
 
                 result_data.append(
                     {
-                        '№': None,
+                        '№': product_name,
                         'Артикул': id_product_size,
-                        'Название товара': product_name,
+                        'Название товара': product_name_rus,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
@@ -394,8 +397,8 @@ def get_products_data_en(products_data: dict, species: str, brand: str, region: 
                         'Размер товара на фото': model_size,
                         'Коллекция': None,
                         'Страна-изготовитель': None,
-                        'Вид принта': None,
-                        'Аннотация': description,
+                        'Вид принта': description,
+                        'Аннотация': description_rus,
                         'Инструкция по уходу': care,
                         'Серия в одежде и обуви': None,
                         'Материал': material,

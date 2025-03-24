@@ -248,7 +248,8 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
         try:
             name = item['name']
-            product_name = f'Zara {translator(name).lower()}'
+            product_name = f'Zara {name.lower()}'
+            product_name_rus = f'Zara {translator(name).lower()}'
         except Exception:
             product_name = None
 
@@ -310,10 +311,11 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             gender = None
 
         try:
-            raw_description = ' '.join(item['detail']['colors'][0]['rawDescription'].split())
-            description = translator(raw_description)
+            description = ' '.join(item['detail']['colors'][0]['rawDescription'].split())
+            description_rus = translator(description)
         except Exception:
             description = None
+            description_rus = None
 
         care = "Машинная стирка при температуре до 30ºC с коротким циклом отжима. Отбеливание запрещено. " \
                "Гладить при температуре до 110ºC. Не использовать машинную сушку. Стирать отдельно."
@@ -389,9 +391,9 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
 
                 result_data.append(
                     {
-                        '№': None,
+                        '№': product_name,
                         'Артикул': id_product_size,
-                        'Название товара': product_name,
+                        'Название товара': product_name_rus,
                         'Цена, руб.*': price,
                         'Цена до скидки, руб.': old_price,
                         'НДС, %*': None,
@@ -425,8 +427,8 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
                         'Размер товара на фото': None,
                         'Коллекция': None,
                         'Страна-изготовитель': None,
-                        'Вид принта': None,
-                        'Аннотация': description,
+                        'Вид принта': description,
+                        'Аннотация': description_rus,
                         'Инструкция по уходу': care,
                         'Серия в одежде и обуви': None,
                         'Материал': material,
