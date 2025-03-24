@@ -152,11 +152,11 @@ def get_products_data(products_data_list: list[dict], headers: dict, processed_u
         count_products = len(product_urls)
         print(f'В категории: {category_name}/{subcategory_name} - {count_products} товаров!')
 
-        with Session() as saession:
+        with Session() as session:
             for i, product_url in enumerate(product_urls, 1):
                 try:
                     time.sleep(1)
-                    html = get_html(url=product_url, headers=headers, session=saession)
+                    html = get_html(url=product_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{product_url} - {ex}")
                     continue
