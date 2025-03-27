@@ -252,6 +252,7 @@ def get_products_data_en(products_data: dict, brand: str, category_name: str, su
             product_name_rus = f'Zara {translator(name).lower()}'
         except Exception:
             product_name = None
+            product_name_rus = None
 
         if not product_name:
             continue
