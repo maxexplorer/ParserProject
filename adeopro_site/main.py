@@ -3,10 +3,12 @@ import requests
 import xml.etree.ElementTree as ET
 from openpyxl import load_workbook
 
+from data.data import login, password
+
 
 # Функция для отправки одного запроса
 def get_data_from_api(login: str, password: str, code: str, brand: str, force_online: str = "0",
-                       crosses: str = "disallow", force_diler_replace: str = "0") -> str | None:
+                      crosses: str = "disallow", force_diler_replace: str = "0") -> str | None:
     # URL API
     url = "https://xml.adeo.pro/pricedetals2.php"
 
@@ -40,14 +42,29 @@ def get_data_from_api(login: str, password: str, code: str, brand: str, force_on
         return None
 
 
-# Функция для извлечения минимальной цены из XML ответа
+# Функция для извлечения минимальной цены из XML ответа, пропуская поставщиков с "Cella2108" в stock
 def extract_min_price_from_response(xml_data):
-    # Парсим XML-ответ
     try:
         root = ET.fromstring(xml_data)
-        prices = [float(detail.find('price').text) for detail in root.findall('detail')]
-        min_price = min(prices) if prices else None
-        return min_price
+        prices = []
+
+        for detail in root.findall('detail'):
+            stock_element = detail.find('stock')
+            price_element = detail.find('price')
+
+            # Проверяем, есть ли `stock`, и пропускаем записи, содержащие "Cella2108"
+            if stock_element is not None and "Cella2108" in stock_element.text:
+                continue
+
+            # Извлекаем цену, если она существует и является числом
+            if price_element is not None:
+                try:
+                    prices.append(float(price_element.text))
+                except ValueError:
+                    continue  # Если значение цены некорректное, пропускаем эту запись
+
+        return min(prices) if prices else None
+
     except Exception as e:
         print(f'Ошибка при парсинге XML: {e}')
         return None
@@ -90,7 +107,7 @@ def process_excel(input_file, interval=5):
 
         # Выполняем запрос к API
         print(f'Отправляем запрос для артикула: {code}, бренд: {brand}')
-        xml_data = get_data_from_api(login='pheonix1', password='pPHOENIX11', code=code, brand=brand)
+        xml_data = get_data_from_api(login=login, password=password, code=code, brand=brand)
 
         if xml_data:
             # Извлекаем минимальную цену из ответа
