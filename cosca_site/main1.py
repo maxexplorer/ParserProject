@@ -151,7 +151,7 @@ def get_products_data(file_path: str) -> list[dict]:
                 color = None
 
             try:
-                price = data.find('div', class_='price').find('span', class_='price__value')
+                price = data.find('div', class_='price').find('span', class_='price__value').text.strip()
             except Exception:
                 price = None
 
@@ -198,7 +198,7 @@ def get_products_data(file_path: str) -> list[dict]:
 
             result_data.append(result_dict)
 
-            print(f'Обработано: {j}/{count_urls}')
+            print(f'Обработано товаров: {j}/{count_urls}')
 
     if not os.path.exists('data'):
         os.mkdir('data')
@@ -228,7 +228,7 @@ def download_imgs(file_path: str, headers: dict) -> None:
         with open(f"images/{image_title}", "wb") as file:
             file.write(response.content)
 
-        print(f'Обработано: {k}/{count_urls}')
+        print(f'Обработано изображений: {k}/{count_urls}')
 
 
 # Функция для записи данных в формат xlsx
