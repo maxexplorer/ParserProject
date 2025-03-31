@@ -122,7 +122,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
     products_urls_list = []
 
-    for i, category_url in enumerate(category_urls_list, 1):
+    for i, category_url in enumerate(category_urls_list[:1], 1):
         try:
             driver.get(url=category_url)
             html = driver.page_source
@@ -142,7 +142,8 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
         pages = get_pages(html=html)
 
-        for page in range(1, pages + 1):
+        # for page in range(1, pages + 1):
+        for page in range(1, 2):
             product_url = f"{category_url}?page={page}"
             try:
                 driver.get(url=category_url)
@@ -180,7 +181,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
         products_urls_list.clear()
 
-        print(f'Обработано: {i}/{count_urls}')
+        print(f'Обработано категорий: {i}/{count_urls}')
 
 
 def get_products_data(file_path: str) -> list[dict]:
@@ -207,7 +208,7 @@ def get_products_data(file_path: str) -> list[dict]:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                data = soup.find('div', class_='page product')
+                data = soup.find('section', class_='prod-info-wrap')
             except Exception:
                 continue
 
@@ -217,19 +218,20 @@ def get_products_data(file_path: str) -> list[dict]:
                 title = None
 
             try:
-                type = data.find('div', class_='prod-info-type-option active').text.strip()
-            except Exception:
-                type = None
-
-            try:
-                price = data.find('h2', class_='prod-info-price')
+                price = int(
+                    ''.join(filter(lambda x: x.isdigit(), soup.find('h2', class_='prod-info-price').text.strip()))) // 100
             except Exception:
                 price = None
 
             try:
-                images_items = soup.find('div', class_='product__main-photo').find_all('img')
+                type_option = data.find('a', class_='prod-info-type-option active').text.strip()
+            except Exception:
+                type_option = None
+
+            try:
+                images_items = soup.find('div', class_='sp-slides').find_all('img')
                 for image_item in images_items:
-                    image_url = f"https://cosca.ru{image_item.get('src')}"
+                    image_url = f"https://evroplast.ru{image_item.get('src')}"
                     images_urls_list.append(image_url)
                     product_images_urls_list.append(image_url)
                 main_image_url = product_images_urls_list[0]
@@ -238,29 +240,22 @@ def get_products_data(file_path: str) -> list[dict]:
                 main_image_url = None
                 additional_images_urls = None
 
-            try:
-                description = data.find('div', class_='product__descr').text.strip()
-            except Exception:
-                description = None
-
             result_dict = {
-                'Артикул': sku,
                 'Ссылка': product_url,
                 'Название товара': title,
-                'Цвет': color,
                 'Цена': price,
+                'Тип': type_option,
                 'Главное изображение': main_image_url,
                 'Дополнительные изображения': additional_images_urls,
-                'Описание': description,
             }
 
             # Сбор параметров товара
             product_parameters = {}
             try:
-                parameters_items = data.find('div', class_='param-tbl').find_all('div', class_='param-tbl__item')
+                parameters_items = data.find('div', class_='prod-info-params-cont').find_all('div', class_='prod-info-param-item')
                 for parameter_item in parameters_items:
-                    parameter_name = parameter_item.find('div', class_='param-tbl__param').text.strip()
-                    parameter_value = parameter_item.find('div', class_='param-tbl__value').text.strip()
+                    parameter_name = parameter_item.find('span', class_='prod-info-param-name').text.strip()
+                    parameter_value = parameter_item.find('span', class_='prod-info-param-val').text.strip()
                     product_parameters[parameter_name] = parameter_value
             except Exception:
                 pass
