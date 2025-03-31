@@ -4,16 +4,19 @@ from datetime import datetime
 
 from requests import Session
 
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options
+
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter
 
 start_time = datetime.now()
 
 category_urls_list = [
-    "https://evroplast.ru/arochnyy-element/",
-    "https://evroplast.ru/kaminy/",
-    "https://evroplast.ru/dekorativnye-elementy/",
-    "https://evroplast.ru/dopolnitelnye-elementy/",
+    # "https://evroplast.ru/arochnyy-element/",
+    # "https://evroplast.ru/kaminy/",
+    # "https://evroplast.ru/dekorativnye-elementy/",
+    # "https://evroplast.ru/dopolnitelnye-elementy/",
     "https://evroplast.ru/karnizy/",
     "https://evroplast.ru/karnizy/gibkie/",
     "https://evroplast.ru/karnizy/?mat=pf,pps",
@@ -68,8 +71,24 @@ category_urls_list = [
 ]
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
 }
+
+
+# Функция инициализации объекта chromedriver
+def init_chromedriver(headless_mode: bool = False) -> Chrome:
+    options = Options()
+    options.add_argument(
+        'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36')
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    if headless_mode:
+        options.add_argument("--headless=new")
+    driver = Chrome(options=options)
+    if not headless_mode:
+        driver.maximize_window()
+    driver.implicitly_wait(15)
+
+    return driver
 
 
 # Получаем html разметку страницы
@@ -91,14 +110,14 @@ def get_pages(html: str) -> int:
     soup = BeautifulSoup(html, 'lxml')
 
     try:
-        pages = int(soup.find('ul', class_='pagination').find_all('a', class_='pagination__link')[-1].text.strip())
+        pages = int(soup.find('div', class_='pagination').find_all('a', class_='page-link')[-2].text.strip())
     except Exception:
         pages = 1
 
     return pages
 
 
-def get_products_urls(category_urls_list: list, headers: dict):
+def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
     count_urls = len(category_urls_list)
 
     products_urls_list = []
@@ -106,10 +125,22 @@ def get_products_urls(category_urls_list: list, headers: dict):
     with Session() as session:
         for i, category_url in enumerate(category_urls_list, 1):
             try:
-                html = get_html(url=category_url, headers=headers, session=session)
+                driver.get(url=category_url)
+                html = driver.page_source
+
+                if not os.path.exists('data'):
+                    os.mkdir('data')
+
+                with open('data/index.html', 'w', encoding='utf-8') as file:
+                    file.write(html)
+
             except Exception as ex:
                 print(f"{category_url} - {ex}")
                 continue
+
+            if not html:
+                continue
+
             pages = get_pages(html=html)
 
             for page in range(1, pages + 1):
@@ -127,10 +158,10 @@ def get_products_urls(category_urls_list: list, headers: dict):
                 soup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    data = soup.find('div', id='products').find_all('div', class_='item-product')
+                    data = soup.find('div', class_='cat-items')
                     for item in data:
                         try:
-                            product_url = f"https://cosca.ru{item.find('a').get('href')}"
+                            product_url = f"https://evroplast.ru{item.find('a').get('href')}"
                         except Exception as ex:
                             print(ex)
                             continue
@@ -293,8 +324,29 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
+def get_unique_urls(file_path_input: str, file_path_output: str) -> None:
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path_input, 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(file_path_output, 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
+
 def main():
-    get_products_urls(category_urls_list=category_urls_list, headers=headers)
+    driver = init_chromedriver(headless_mode=True)
+
+    try:
+        get_products_urls(driver=driver, category_urls_list=category_urls_list, headers=headers)
+    except Exception as ex:
+        print(f'main: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
+    finally:
+        driver.close()
+        driver.quit()
+
+    get_unique_urls(file_path_input="data/products_urls_list.txt", file_path_output="data/unique_urls_list.txt")
     result_data = get_products_data(file_path="data/products_urls_list.txt")
     save_excel(data=result_data, species='products')
     download_imgs(file_path="data/images_urls_list.txt", headers=headers)

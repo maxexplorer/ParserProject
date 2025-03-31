@@ -267,23 +267,27 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
-def get_unique_urls(file_path_input: str, file_path_output: str) -> None:
+def get_unique_urls(file_path: str) -> None:
     # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(file_path_input, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         unique_urls = set(line.strip() for line in file)
 
     # Сохраняем уникальные URL-адреса обратно в файл
-    with open(file_path_output, 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         print(*unique_urls, file=file, sep='\n')
 
 
 def main():
-    driver = init_chromedriver(headless_mode=True)
+    file_path_urls = "data/products_urls_list.txt"
+    file_path_images = "data/images_urls_list.txt"
+
     get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    get_unique_urls(file_path_input="data/products_urls_list.txt", file_path_output="data/unique_urls_list.txt")
+    get_unique_urls(file_path=file_path_urls)
+
+    driver = init_chromedriver(headless_mode=True)
 
     try:
-        result_data = get_products_data(driver=driver, file_path="data/products_urls_list.txt")
+        result_data = get_products_data(driver=driver, file_path=file_path_urls)
     except Exception as ex:
         print(f'main: {ex}')
         result_data = None
@@ -293,7 +297,9 @@ def main():
 
     if result_data:
         save_excel(data=result_data, species='products')
-    download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+
+    get_unique_urls(file_path=file_path_images)
+    download_imgs(file_path=file_path_images, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

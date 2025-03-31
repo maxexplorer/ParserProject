@@ -23,7 +23,7 @@ category_urls_list = [
 ]
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
 }
 
 
@@ -248,11 +248,27 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
+def get_unique_urls(file_path: str) -> None:
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(file_path, 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
+
 def main():
+    file_path_urls = "data/products_urls_list.txt"
+    file_path_images = "data/images_urls_list.txt"
+
     get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    result_data = get_products_data(file_path="data/products_urls_list.txt")
+
+    result_data = get_products_data(file_path=file_path_urls)
     save_excel(data=result_data, species='products')
-    download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+
+    get_unique_urls(file_path=file_path_images)
+    download_imgs(file_path=file_path_images, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
