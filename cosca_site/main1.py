@@ -96,7 +96,6 @@ def get_products_urls(category_urls_list: list, headers: dict):
 
                 print(f'Обработано страниц: {page}/{pages}')
 
-
             if not os.path.exists('data'):
                 os.makedirs('data')
 
