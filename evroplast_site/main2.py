@@ -122,16 +122,10 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
     products_urls_list = []
 
-    for i, category_url in enumerate(category_urls_list[:1], 1):
+    for i, category_url in enumerate(category_urls_list, 1):
         try:
             driver.get(url=category_url)
             html = driver.page_source
-
-            # if not os.path.exists('data'):
-            #     os.mkdir('data')
-            #
-            # with open('data/index.html', 'w', encoding='utf-8') as file:
-            #     file.write(html)
 
         except Exception as ex:
             print(f"{category_url} - {ex}")
@@ -142,8 +136,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
         pages = get_pages(html=html)
 
-        # for page in range(1, pages + 1):
-        for page in range(1, 2):
+        for page in range(1, pages + 1):
             product_url = f"{category_url}?page={page}"
             try:
                 driver.get(url=category_url)
@@ -219,7 +212,8 @@ def get_products_data(file_path: str) -> list[dict]:
 
             try:
                 price = int(
-                    ''.join(filter(lambda x: x.isdigit(), soup.find('h2', class_='prod-info-price').text.strip()))) // 100
+                    ''.join(
+                        filter(lambda x: x.isdigit(), soup.find('h2', class_='prod-info-price').text.strip()))) // 100
             except Exception:
                 price = None
 
@@ -252,7 +246,8 @@ def get_products_data(file_path: str) -> list[dict]:
             # Сбор параметров товара
             product_parameters = {}
             try:
-                parameters_items = data.find('div', class_='prod-info-params-cont').find_all('div', class_='prod-info-param-item')
+                parameters_items = data.find('div', class_='prod-info-params-cont').find_all('div',
+                                                                                             class_='prod-info-param-item')
                 for parameter_item in parameters_items:
                     parameter_name = parameter_item.find('span', class_='prod-info-param-name').text.strip()
                     parameter_value = parameter_item.find('span', class_='prod-info-param-val').text.strip()
