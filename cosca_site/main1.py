@@ -20,6 +20,9 @@ category_urls_list = [
     "https://cosca.ru/catalog/perforirovannye-paneli",
     "https://cosca.ru/catalog/mezhkomnatnye-arki",
     "https://cosca.ru/catalog/dekorativnye-balki-i-brus-cosca-decor",
+    "https://cosca.ru/catalog/soputstvuyushchie-tovary",
+    "https://cosca.ru/catalog/naturalnye-pokrytiya",
+    "https://cosca.ru/catalog/sale",
 ]
 
 headers = {
@@ -256,6 +259,15 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
+def get_unique_urls(file_path: str) -> None:
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(file_path, 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
 
 def main():
     file_path_urls = "data/products_urls_list.txt"
@@ -267,6 +279,7 @@ def main():
         result_data = get_products_data(file_path=file_path_urls)
         save_excel(data=result_data, species='products')
 
+        get_unique_urls(file_path=file_path_images)
         download_imgs(file_path=file_path_images, headers=headers)
     except Exception as ex:
         print(f'main/: {ex}')
