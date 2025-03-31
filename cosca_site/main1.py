@@ -131,6 +131,12 @@ def get_products_data(file_path: str) -> list[dict]:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
+                category = soup.find('ol', class_='breadcrumb__list').find_all('li', class_='breadcrumb__item')[
+                    2].text.strip()
+            except Exception:
+                category = None
+
+            try:
                 data = soup.find('div', class_='page product')
             except Exception:
                 continue
@@ -159,8 +165,9 @@ def get_products_data(file_path: str) -> list[dict]:
                 images_items = soup.find('div', class_='product__main-photo').find_all('img')
                 for image_item in images_items:
                     image_url = f"https://cosca.ru{image_item.get('src')}"
-                    images_urls_list.append(image_url)
-                    product_images_urls_list.append(image_url)
+                    if '.jpg' in image_url or '.png' in image_url or '.webp' in image_url:
+                        images_urls_list.append(image_url)
+                        product_images_urls_list.append(image_url)
                 main_image_url = product_images_urls_list[0]
                 additional_images_urls = '; '.join(product_images_urls_list[1:])
             except Exception:
@@ -173,8 +180,9 @@ def get_products_data(file_path: str) -> list[dict]:
                 description = None
 
             result_dict = {
-                'Артикул': sku,
                 'Ссылка': product_url,
+                'Категория': category,
+                'Артикул': sku,
                 'Название товара': title,
                 'Цвет': color,
                 'Цена': price,
@@ -248,15 +256,6 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
-def get_unique_urls(file_path: str) -> None:
-    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(file_path, 'r', encoding='utf-8') as file:
-        unique_urls = set(line.strip() for line in file)
-
-    # Сохраняем уникальные URL-адреса обратно в файл
-    with open(file_path, 'w', encoding='utf-8') as file:
-        print(*unique_urls, file=file, sep='\n')
-
 
 def main():
     file_path_urls = "data/products_urls_list.txt"
@@ -268,7 +267,6 @@ def main():
         result_data = get_products_data(file_path=file_path_urls)
         save_excel(data=result_data, species='products')
 
-        get_unique_urls(file_path=file_path_images)
         download_imgs(file_path=file_path_images, headers=headers)
     except Exception as ex:
         print(f'main/: {ex}')
