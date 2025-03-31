@@ -102,6 +102,8 @@ def get_products_urls(category_urls_list: list, headers: dict):
             with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
                 print(*products_urls_list, file=file, sep='\n')
 
+            products_urls_list.clear()
+
             print(f'Обработано: {i}/{count_urls}')
 
 
