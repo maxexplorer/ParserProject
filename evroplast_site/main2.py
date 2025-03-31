@@ -328,18 +328,22 @@ def main():
     try:
         get_products_urls(driver=driver, category_urls_list=category_urls_list, headers=headers)
     except Exception as ex:
-        print(f'main: {ex}')
+        print(f'main/get_products_urls: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
     finally:
         driver.close()
         driver.quit()
 
-    get_unique_urls(file_path=file_path_urls)
-    result_data = get_products_data(file_path=file_path_urls)
-    save_excel(data=result_data, species='products')
+    try:
+        get_unique_urls(file_path=file_path_urls)
+        result_data = get_products_data(file_path=file_path_urls)
+        save_excel(data=result_data, species='products')
 
-    get_unique_urls(file_path=file_path_images)
-    download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+        get_unique_urls(file_path=file_path_images)
+        download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+    except Exception as ex:
+        print(f'main/get_products_data: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
