@@ -122,65 +122,65 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
 
     products_urls_list = []
 
-    with Session() as session:
-        for i, category_url in enumerate(category_urls_list, 1):
+    for i, category_url in enumerate(category_urls_list, 1):
+        try:
+            driver.get(url=category_url)
+            html = driver.page_source
+
+            # if not os.path.exists('data'):
+            #     os.mkdir('data')
+            #
+            # with open('data/index.html', 'w', encoding='utf-8') as file:
+            #     file.write(html)
+
+        except Exception as ex:
+            print(f"{category_url} - {ex}")
+            continue
+
+        if not html:
+            continue
+
+        pages = get_pages(html=html)
+
+        for page in range(1, pages + 1):
+            product_url = f"{category_url}?page={page}"
             try:
                 driver.get(url=category_url)
+                time.sleep(1)
                 html = driver.page_source
-
-                if not os.path.exists('data'):
-                    os.mkdir('data')
-
-                with open('data/index.html', 'w', encoding='utf-8') as file:
-                    file.write(html)
-
             except Exception as ex:
-                print(f"{category_url} - {ex}")
+                print(f"{product_url} - {ex}")
                 continue
 
             if not html:
                 continue
 
-            pages = get_pages(html=html)
+            soup = BeautifulSoup(html, 'lxml')
 
-            for page in range(1, pages + 1):
-                product_url = f"{category_url}?page={page}"
-                try:
-                    time.sleep(1)
-                    html = get_html(url=product_url, headers=headers, session=session)
-                except Exception as ex:
-                    print(f"{product_url} - {ex}")
-                    continue
+            try:
+                data = soup.find('div', class_='cat-items').find_all('a')
+                for item in data:
+                    try:
+                        product_url = f"https://evroplast.ru{item.get('href')}"
+                    except Exception as ex:
+                        print(ex)
+                        continue
+                    products_urls_list.append(product_url)
+            except Exception as ex:
+                print(f'{product_url}: {ex}')
+                continue
 
-                if not html:
-                    continue
+            print(f'Обработано страниц: {page}/{pages}')
 
-                soup = BeautifulSoup(html, 'lxml')
+        if not os.path.exists('data'):
+            os.makedirs('data')
 
-                try:
-                    data = soup.find('div', class_='cat-items')
-                    for item in data:
-                        try:
-                            product_url = f"https://evroplast.ru{item.find('a').get('href')}"
-                        except Exception as ex:
-                            print(ex)
-                            continue
-                        products_urls_list.append(product_url)
-                except Exception as ex:
-                    print(f'{product_url}: {ex}')
-                    continue
+        with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
+            print(*products_urls_list, file=file, sep='\n')
 
-                print(f'Обработано страниц: {page}/{pages}')
+        products_urls_list.clear()
 
-            if not os.path.exists('data'):
-                os.makedirs('data')
-
-            with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
-                print(*products_urls_list, file=file, sep='\n')
-
-            products_urls_list.clear()
-
-            print(f'Обработано: {i}/{count_urls}')
+        print(f'Обработано: {i}/{count_urls}')
 
 
 def get_products_data(file_path: str) -> list[dict]:
@@ -212,22 +212,17 @@ def get_products_data(file_path: str) -> list[dict]:
                 continue
 
             try:
-                sku = data.find('div', class_='product__art').text.strip()
-            except Exception:
-                sku = None
-
-            try:
-                title = data.find('h1', class_='product__title').text.strip()
+                title = data.find('h2', class_='product-title').text.strip()
             except Exception:
                 title = None
 
             try:
-                color = data.find('div', class_='product__color').text.strip()
+                type = data.find('div', class_='prod-info-type-option active').text.strip()
             except Exception:
-                color = None
+                type = None
 
             try:
-                price = data.find('div', class_='price').find('span', class_='price__value').text.strip()
+                price = data.find('h2', class_='prod-info-price')
             except Exception:
                 price = None
 
@@ -324,17 +319,20 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
-def get_unique_urls(file_path_input: str, file_path_output: str) -> None:
+def get_unique_urls(file_path: str) -> None:
     # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
-    with open(file_path_input, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         unique_urls = set(line.strip() for line in file)
 
     # Сохраняем уникальные URL-адреса обратно в файл
-    with open(file_path_output, 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         print(*unique_urls, file=file, sep='\n')
 
 
 def main():
+    file_path_urls = "data/products_urls_list.txt"
+    file_path_images = "data/images_urls_list.txt"
+
     driver = init_chromedriver(headless_mode=True)
 
     try:
@@ -346,9 +344,11 @@ def main():
         driver.close()
         driver.quit()
 
-    get_unique_urls(file_path_input="data/products_urls_list.txt", file_path_output="data/unique_urls_list.txt")
-    result_data = get_products_data(file_path="data/products_urls_list.txt")
+    get_unique_urls(file_path=file_path_urls)
+    result_data = get_products_data(file_path=file_path_urls)
     save_excel(data=result_data, species='products')
+
+    get_unique_urls(file_path=file_path_images)
     download_imgs(file_path="data/images_urls_list.txt", headers=headers)
 
     execution_time = datetime.now() - start_time

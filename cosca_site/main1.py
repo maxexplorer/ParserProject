@@ -54,7 +54,7 @@ def get_pages(html: str) -> int:
 
 
 def get_products_urls(category_urls_list: list, headers: dict):
-    count_urls = len(category_urls_list)
+    category_count_urls = len(category_urls_list)
 
     products_urls_list = []
 
@@ -104,7 +104,7 @@ def get_products_urls(category_urls_list: list, headers: dict):
 
             products_urls_list.clear()
 
-            print(f'Обработано: {i}/{count_urls}')
+            print(f'Обработано категорий: {i}/{category_count_urls}')
 
 
 def get_products_data(file_path: str) -> list[dict]:
