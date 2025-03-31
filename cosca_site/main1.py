@@ -94,13 +94,16 @@ def get_products_urls(category_urls_list: list, headers: dict):
                     print(f'{product_url}: {ex}')
                     continue
 
+                print(f'Обработано страниц: {page}/{pages}')
+
+
+            if not os.path.exists('data'):
+                os.makedirs('data')
+
+            with open('data/products_urls_list.txt', 'a', encoding='utf-8') as file:
+                print(*products_urls_list, file=file, sep='\n')
+
             print(f'Обработано: {i}/{count_urls}')
-
-    if not os.path.exists('data'):
-        os.makedirs('data')
-
-    with open('data/products_urls_list.txt', 'w', encoding='utf-8') as file:
-        print(*products_urls_list, file=file, sep='\n')
 
 
 def get_products_data(file_path: str) -> list[dict]:
@@ -170,9 +173,9 @@ def get_products_data(file_path: str) -> list[dict]:
 
             result_dict = {
                 'Артикул': sku,
+                'Ссылка': product_url,
                 'Название товара': title,
                 'Цвет': color,
-                'Ссылка': product_url,
                 'Цена': price,
                 'Главное изображение': main_image_url,
                 'Дополнительные изображения': additional_images_urls,
