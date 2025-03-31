@@ -13,10 +13,10 @@ from pandas import DataFrame, ExcelWriter
 start_time = datetime.now()
 
 category_urls_list = [
-    # "https://evroplast.ru/arochnyy-element/",
-    # "https://evroplast.ru/kaminy/",
-    # "https://evroplast.ru/dekorativnye-elementy/",
-    # "https://evroplast.ru/dopolnitelnye-elementy/",
+    "https://evroplast.ru/arochnyy-element/",
+    "https://evroplast.ru/kaminy/",
+    "https://evroplast.ru/dekorativnye-elementy/",
+    "https://evroplast.ru/dopolnitelnye-elementy/",
     "https://evroplast.ru/karnizy/",
     "https://evroplast.ru/karnizy/gibkie/",
     "https://evroplast.ru/karnizy/?mat=pf,pps",
