@@ -162,11 +162,6 @@ def get_products_data(file_path: str) -> list[dict]:
             except Exception:
                 main_image_url = None
                 additional_images_urls = None
-            #
-            # try:
-            #     description_data = soup.find('div', class_='product__info')
-            # except Exception:
-            #     description_data = None
 
             try:
                 description = data.find('div', class_='product__descr').text.strip()
