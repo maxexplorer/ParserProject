@@ -243,6 +243,7 @@ def get_products_data(file_path: str) -> list[dict]:
             result_dict = {
                 'Ссылка': product_url,
                 'Категория': category,
+                'Артикул': title,
                 'Название товара': title,
                 'Цена': price,
                 'Тип': type_option,
