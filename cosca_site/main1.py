@@ -282,7 +282,7 @@ def main():
         get_unique_urls(file_path=file_path_images)
         download_imgs(file_path=file_path_images, headers=headers)
     except Exception as ex:
-        print(f'main/: {ex}')
+        print(f'main: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
