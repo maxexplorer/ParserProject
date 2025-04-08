@@ -92,12 +92,12 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
             pages = get_pages(html=html)
 
             for page in range(1, pages + 1):
-                product_url = f"{category_url}?PAGEN_1={page}/"
+                page_url = f"{category_url}?PAGEN_1={page}/"
                 try:
                     time.sleep(1)
-                    html = get_html(url=product_url, headers=headers, session=session)
+                    html = get_html(url=page_url, headers=headers, session=session)
                 except Exception as ex:
-                    print(f"{product_url} - {ex}")
+                    print(f"{page_url} - {ex}")
                     continue
 
                 if not html:
@@ -111,14 +111,12 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
                     for item in data:
                         try:
                             product_url = f"https://perfect-msk.ru{item.find('a').get('href')}"
-                        except Exception as ex:
-                            print(ex)
+                        except Exception:
                             continue
 
                         if product_url in exception_urls_list:
                             continue
                         new_products_urls_list.append(product_url)
-
                 except Exception as ex:
                     print(f'{product_url}: {ex}')
                     continue

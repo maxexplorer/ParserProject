@@ -116,7 +116,7 @@ def get_pages(html: str) -> int:
     return pages
 
 
-def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
+def get_products_urls(driver: Chrome, category_urls_list: list):
     count_urls = len(category_urls_list)
 
     products_urls_list = []
@@ -136,13 +136,13 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
         pages = get_pages(html=html)
 
         for page in range(1, pages + 1):
-            product_url = f"{category_url}?page={page}"
+            page_url = f"{category_url}?page={page}"
             try:
-                driver.get(url=category_url)
+                driver.get(url=page_url)
                 time.sleep(1)
                 html = driver.page_source
             except Exception as ex:
-                print(f"{product_url} - {ex}")
+                print(f"{page_url} - {ex}")
                 continue
 
             if not html:
@@ -155,8 +155,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list, headers: dict):
                 for item in data:
                     try:
                         product_url = f"https://evroplast.ru{item.get('href')}"
-                    except Exception as ex:
-                        print(ex)
+                    except Exception:
                         continue
                     products_urls_list.append(product_url)
             except Exception as ex:
@@ -332,7 +331,7 @@ def main():
     driver = init_chromedriver(headless_mode=True)
 
     try:
-        get_products_urls(driver=driver, category_urls_list=category_urls_list, headers=headers)
+        get_products_urls(driver=driver, category_urls_list=category_urls_list)
     except Exception as ex:
         print(f'main/get_products_urls: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
