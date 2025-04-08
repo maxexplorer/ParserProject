@@ -277,28 +277,32 @@ def get_unique_urls(file_path: str) -> None:
 
 
 def main():
-    file_path_urls = "data/products_urls_list.txt"
-    file_path_images = "data/images_urls_list.txt"
-
-    get_products_urls(category_urls_list=category_urls_list, headers=headers)
-    get_unique_urls(file_path=file_path_urls)
-
-    driver = init_chromedriver(headless_mode=True)
-
     try:
-        result_data = get_products_data(driver=driver, file_path=file_path_urls)
+        file_path_urls = "data/products_urls_list.txt"
+        file_path_images = "data/images_urls_list.txt"
+
+        get_products_urls(category_urls_list=category_urls_list, headers=headers)
+        get_unique_urls(file_path=file_path_urls)
+
+        driver = init_chromedriver(headless_mode=True)
+
+        try:
+            result_data = get_products_data(driver=driver, file_path=file_path_urls)
+        except Exception as ex:
+            print(f'main: {ex}')
+            result_data = None
+        finally:
+            driver.close()
+            driver.quit()
+
+        if result_data:
+            save_excel(data=result_data, species='products')
+
+        get_unique_urls(file_path=file_path_images)
+        download_imgs(file_path=file_path_images, headers=headers)
     except Exception as ex:
         print(f'main: {ex}')
-        result_data = None
-    finally:
-        driver.close()
-        driver.quit()
-
-    if result_data:
-        save_excel(data=result_data, species='products')
-
-    get_unique_urls(file_path=file_path_images)
-    download_imgs(file_path=file_path_images, headers=headers)
+        input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')

@@ -74,6 +74,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
 }
 
+
 # Функция инициализации объекта chromedriver
 def init_chromedriver(headless_mode: bool = False) -> Chrome:
     options = Options()
@@ -177,7 +178,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list):
         print(f'Обработано категорий: {i}/{count_urls}')
 
 
-def get_products_data(file_path: str) -> list[dict]:
+def get_products_data(file_path: str, headers: dict) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls_list = [line.strip() for line in file.readlines()]
 
@@ -201,7 +202,8 @@ def get_products_data(file_path: str) -> list[dict]:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                category = soup.find('ul', itemprop='breadcrumb').find_all('li', itemprop='itemListElement')[2].text.strip()
+                category = soup.find('ul', itemprop='breadcrumb').find_all('li', itemprop='itemListElement')[
+                    2].text.strip()
             except Exception:
                 category = None
 
@@ -216,9 +218,8 @@ def get_products_data(file_path: str) -> list[dict]:
                 title = None
 
             try:
-                price = int(
-                    ''.join(
-                        filter(lambda x: x.isdigit(), soup.find('h2', class_='prod-info-price').text.strip()))) // 100
+                price = int(''.join(
+                    filter(lambda x: x.isdigit(), soup.find('h2', class_='prod-info-price').text.strip()))) // 100
             except Exception:
                 price = None
 
@@ -326,29 +327,30 @@ def get_unique_urls(file_path: str) -> None:
     with open(file_path, 'w', encoding='utf-8') as file:
         print(*unique_urls, file=file, sep='\n')
 
+
 def main():
-    file_path_urls = "data/products_urls_list.txt"
-    file_path_images = "data/images_urls_list.txt"
-
-    driver = init_chromedriver(headless_mode=True)
-
     try:
-        get_products_urls(driver=driver, category_urls_list=category_urls_list)
-    except Exception as ex:
-        print(f'main/get_products_urls: {ex}')
-        input("Нажмите Enter, чтобы закрыть программу...")
-    finally:
-        driver.close()
-        driver.quit()
+        file_path_urls = "data/products_urls_list.txt"
+        file_path_images = "data/images_urls_list.txt"
 
-    try:
-        result_data = get_products_data(file_path=file_path_urls)
+        driver = init_chromedriver(headless_mode=True)
+
+        try:
+            get_products_urls(driver=driver, category_urls_list=category_urls_list)
+        except Exception as ex:
+            print(f'main/get_products_urls: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
+        finally:
+            driver.close()
+            driver.quit()
+
+        result_data = get_products_data(file_path=file_path_urls, headers=headers)
         save_excel(data=result_data, species='products')
 
         get_unique_urls(file_path=file_path_images)
         download_imgs(file_path=file_path_images, headers=headers)
     except Exception as ex:
-        print(f'main/get_products_data: {ex}')
+        print(f'main: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time

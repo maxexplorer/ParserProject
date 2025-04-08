@@ -109,7 +109,7 @@ def get_products_urls(category_urls_list: list, headers: dict):
             print(f'Обработано категорий: {i}/{category_count_urls}')
 
 
-def get_products_data(file_path: str) -> list[dict]:
+def get_products_data(file_path: str, headers: dict) -> list[dict]:
     with open(file_path, 'r', encoding='utf-8') as file:
         products_urls_list = [line.strip() for line in file.readlines()]
 
@@ -275,7 +275,7 @@ def main():
     try:
         get_products_urls(category_urls_list=category_urls_list, headers=headers)
 
-        result_data = get_products_data(file_path=file_path_urls)
+        result_data = get_products_data(file_path=file_path_urls, headers=headers)
         save_excel(data=result_data, species='products')
 
         get_unique_urls(file_path=file_path_images)

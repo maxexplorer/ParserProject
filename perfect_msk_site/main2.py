@@ -305,25 +305,38 @@ def save_excel(data: list, species: str) -> None:
 
 
 def main():
-    # Считываем Excel-файл
-    excel_data = read_excel('data/data.xlsx', sheet_name=0, header=None)  # sheet_name=0 для первой страницы
+    try:
+        # Считываем Excel-файл
+        excel_data = read_excel('data/data.xlsx', sheet_name=0, header=None)  # sheet_name=0 для первой страницы
 
-    # Преобразуем в список списков
-    data_list = excel_data.values.tolist()
+        # Преобразуем в список списков
+        data_list = excel_data.values.tolist()
 
-    # Собираем цены товаров
-    result_data_price = get_products_price(products_urls_list=data_list, headers=headers)
-    save_excel(data=result_data_price, species='price')
+        # Собираем цены товаров
+        result_data_price = get_products_price(products_urls_list=data_list, headers=headers)
+        save_excel(data=result_data_price, species='price')
 
-    # Собираем новые URL
-    new_products_urls_list = get_products_urls(category_urls_list=category_urls_list, headers=headers)
+        # Собираем новые URL
+        new_products_urls_list = get_products_urls(category_urls_list=category_urls_list, headers=headers)
 
-    if new_products_urls_list:
-        driver = init_chromedriver(headless_mode=True)
-        print(f'Получено {len(new_products_urls_list)} новых товаров!')
-        result_data_products = get_products_data(driver=driver, products_urls_list=new_products_urls_list)
-        save_excel(data=result_data_products, species='products')
-        download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+        if new_products_urls_list:
+            driver = init_chromedriver(headless_mode=True)
+            try:
+                print(f'Получено {len(new_products_urls_list)} новых товаров!')
+                result_data_products = get_products_data(driver=driver, products_urls_list=new_products_urls_list)
+            except Exception as ex:
+                print(f'main: {ex}')
+                result_data_products = None
+            finally:
+                driver.close()
+                driver.quit()
+
+            if result_data_products:
+                save_excel(data=result_data_products, species='products')
+                download_imgs(file_path="data/images_urls_list.txt", headers=headers)
+    except Exception as ex:
+        print(f'main: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
