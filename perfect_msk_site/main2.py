@@ -123,6 +123,8 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
                     print(f'{product_url}: {ex}')
                     continue
 
+                print(f'Обработано страниц: {page}/{pages}')
+
             print(f'Обработана категория {category_url}: {i}/{count_urls}')
 
     if not os.path.exists('data'):
