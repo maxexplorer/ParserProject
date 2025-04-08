@@ -167,7 +167,7 @@ def get_products_data(file_path: str, headers: dict) -> list[dict]:
                 images_items = soup.find('div', class_='product__main-photo').find_all('img')
                 for image_item in images_items:
                     image_url = f"https://cosca.ru{image_item.get('src')}"
-                    if '.jpg' in image_url or '.png' in image_url or '.webp' in image_url:
+                    if image_url.lower().endswith(('.jpg', '.png', '.webp')):
                         images_urls_list.append(image_url)
                         product_images_urls_list.append(image_url)
                 main_image_url = product_images_urls_list[0]

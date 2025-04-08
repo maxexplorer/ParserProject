@@ -232,7 +232,7 @@ def get_products_data(file_path: str, headers: dict) -> list[dict]:
                 images_items = soup.find('div', class_='sp-slides').find_all('img')
                 for image_item in images_items:
                     image_url = f"https://evroplast.ru{image_item.get('src')}"
-                    if '.jpg' in image_url or '.png' in image_url or '.webp' in image_url:
+                    if image_url.lower().endswith(('.jpg', '.png', '.webp')):
                         images_urls_list.append(image_url)
                         product_images_urls_list.append(image_url)
                 main_image_url = product_images_urls_list[0]
@@ -288,7 +288,7 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
     count_urls = len(image_urls_list)
 
-    for k, img_url in enumerate(image_urls_list[1300:], 1):
+    for k, img_url in enumerate(image_urls_list, 1):
         image_title = img_url.split('/')[-1]
 
         with Session() as session:
@@ -338,8 +338,7 @@ def main():
         try:
             get_products_urls(driver=driver, category_urls_list=category_urls_list)
         except Exception as ex:
-            print(f'main/get_products_urls: {ex}')
-            input("Нажмите Enter, чтобы закрыть программу...")
+            print(f'main: {ex}')
         finally:
             driver.close()
             driver.quit()

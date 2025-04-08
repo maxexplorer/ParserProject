@@ -237,7 +237,7 @@ def get_products_data(products_urls_list: list, headers: dict) -> list[dict]:
                 images_items = soup.find('div', class_='sp-slides').find_all('img')
                 for image_item in images_items:
                     image_url = f"https://evroplast.ru{image_item.get('src')}"
-                    if '.jpg' in image_url or '.png' in image_url or '.webp' in image_url:
+                    if image_url.lower().endswith(('.jpg', '.png', '.webp')):
                         images_urls_list.append(image_url)
                         product_images_urls_list.append(image_url)
                 main_image_url = product_images_urls_list[0]
@@ -368,8 +368,6 @@ def save_excel(data: list, species: str) -> None:
 
 def main():
     try:
-        driver = init_chromedriver(headless_mode=True)
-
         # Считываем Excel-файл
         excel_data = read_excel('data/data.xlsx', sheet_name=0, header=None)  # sheet_name=0 для первой страницы
 
@@ -380,8 +378,17 @@ def main():
         result_data_price = get_products_price(products_urls_list=data_list, headers=headers)
         save_excel(data=result_data_price, species='price')
 
-        # Собираем новые URL
-        new_products_urls_list = get_products_urls(category_urls_list=category_urls_list)
+        driver = init_chromedriver(headless_mode=True)
+
+        try:
+            # Собираем новые URL
+            new_products_urls_list = get_products_urls(driver=driver, category_urls_list=category_urls_list)
+        except Exception as ex:
+            print(f'main: {ex}')
+            new_products_urls_list = None
+        finally:
+            driver.close()
+            driver.quit()
 
         if new_products_urls_list:
             print(f'Получено {len(new_products_urls_list)} новых товаров!')
