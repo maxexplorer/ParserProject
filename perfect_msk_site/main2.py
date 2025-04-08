@@ -78,7 +78,7 @@ def get_products_urls(category_urls_list: list, headers: dict) -> list:
 
     new_products_urls_list = []
 
-    with open('data/exception_urls_list.txt', 'r', encoding='utf-8') as file:
+    with open('data/exceptions_urls_list.txt', 'r', encoding='utf-8') as file:
         exception_urls_list = [line.strip() for line in file]
 
     with Session() as session:
