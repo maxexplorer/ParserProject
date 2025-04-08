@@ -124,6 +124,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list):
     for i, category_url in enumerate(category_urls_list, 1):
         try:
             driver.get(url=category_url)
+            time.sleep(1)
             html = driver.page_source
 
         except Exception as ex:
@@ -134,6 +135,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list):
             continue
 
         pages = get_pages(html=html)
+        print(f'category_url: {category_url} pages: {pages}')
 
         for page in range(1, pages + 1):
             page_url = f"{category_url}?page={page}"
