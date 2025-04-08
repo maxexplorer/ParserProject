@@ -279,12 +279,12 @@ def download_imgs(file_path: str, headers: dict) -> None:
 
     count_urls = len(image_urls_list)
 
-    for k, img_url in enumerate(image_urls_list, 1):
-        image_title = img_url.split('/')[-1]
+    for k, image_url in enumerate(image_urls_list, 1):
+        image_title = image_url.split('/')[-1]
 
         with Session() as session:
             time.sleep(1)
-            response = session.get(url=img_url, headers=headers)
+            response = session.get(url=image_url, headers=headers)
 
         with open(f'{directory}/{image_title}', 'wb') as file:
             file.write(response.content)
