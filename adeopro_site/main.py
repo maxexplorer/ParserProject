@@ -142,11 +142,12 @@ if __name__ == '__main__':
         else:
             value_percent = int(user_input)
     except ValueError:
-        raise ValueError('Введено неправильное значение. Значение должно быть целым числом.')
+        raise ValueError(
+            '''Введено неправильное значение. Значение должно быть целым числом или 
+            нажмите Enter для установки значения по умолчанию.''')
 
     # Укажите путь к файлу с артикулами и брендами
     input_file = 'data/data.xlsx'  # Входной файл
     interval = 2  # Интервал между запросами в секундах
 
     process_excel(input_file=input_file, interval=interval, value_percent=value_percent)
-
