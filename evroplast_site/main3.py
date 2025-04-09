@@ -121,6 +121,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list) -> list:
     count_urls = len(category_urls_list)
 
     new_products_urls_list = []
+    processed_urls_set = set()
 
     with open('data/exceptions_urls_list.txt', 'r', encoding='utf-8') as file:
         exception_urls_list = [line.strip() for line in file]
@@ -164,9 +165,10 @@ def get_products_urls(driver: Chrome, category_urls_list: list) -> list:
                     except Exception:
                         continue
 
-                    if product_url in exception_urls_list:
+                    if product_url in exception_urls_list or product_url in processed_urls_set:
                         continue
                     new_products_urls_list.append(product_url)
+                    processed_urls_set.add(product_url)
 
             except Exception as ex:
                 print(f'{product_url}: {ex}')
