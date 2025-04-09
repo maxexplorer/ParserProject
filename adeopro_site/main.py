@@ -37,8 +37,8 @@ def get_data_from_api(login: str, password: str, code: str, brand: str, force_on
         else:
             print(f'Ошибка {response.status_code}: {response.text}')
             return None
-    except requests.exceptions.RequestException as e:
-        print(f'Ошибка подключения: {e}')
+    except requests.exceptions.RequestException as ex:
+        print(f'Ошибка подключения: {ex}')
         return None
 
 
@@ -65,19 +65,18 @@ def extract_min_price_from_response(xml_data):
 
         return min(prices) if prices else None
 
-    except Exception as e:
-        print(f'Ошибка при парсинге XML: {e}')
+    except Exception as ex:
+        print(f'Ошибка при парсинге XML: {ex}')
         return None
 
 
 # Основная функция
-def process_excel(input_file, interval=5):
-    # Загружаем рабочую книгу и активный лист
+def process_excel(input_file: str, interval: int = 5, value_percent: int = 80):
     try:
         workbook = load_workbook(input_file)
         work_sheet = workbook.active  # Доступ к активному листу
-    except Exception as e:
-        print(f'Ошибка чтения файла: {e}')
+    except Exception as ex:
+        print(f'Ошибка чтения файла: {ex}')
         return
 
     # Получаем заголовки из 10-й строки
@@ -115,7 +114,7 @@ def process_excel(input_file, interval=5):
 
             # Если минимальная цена найдена, записываем её в Excel
             if min_price is not None:
-                min_price = min_price * 0.8
+                min_price = round(min_price * (value_percent / 100), 2)
                 work_sheet.cell(row=row_idx, column=price_column).value = min_price
             else:
                 work_sheet.cell(row=row_idx,
@@ -131,14 +130,23 @@ def process_excel(input_file, interval=5):
     try:
         workbook.save(input_file)  # Сохраняем в исходный файл
         print(f'Результаты сохранены в {input_file}')
-    except Exception as e:
-        print(f'Ошибка записи файла: {e}')
+    except Exception as ex:
+        print(f'Ошибка записи файла: {ex}')
 
 
-# Точка входа
 if __name__ == '__main__':
+    try:
+        user_input = input('Введите значение процентов от цены (по умолчанию 80): ')
+        if user_input == '':
+            value_percent = 80
+        else:
+            value_percent = int(user_input)
+    except ValueError:
+        raise ValueError('Введено неправильное значение. Значение должно быть целым числом.')
+
     # Укажите путь к файлу с артикулами и брендами
     input_file = 'data/data.xlsx'  # Входной файл
     interval = 2  # Интервал между запросами в секундах
 
-    process_excel(input_file, interval)
+    process_excel(input_file=input_file, interval=interval, value_percent=value_percent)
+
