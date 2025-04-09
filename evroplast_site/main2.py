@@ -121,6 +121,7 @@ def get_products_urls(driver: Chrome, category_urls_list: list):
     count_urls = len(category_urls_list)
 
     products_urls_list = []
+    processed_urls_set = set()
 
     for i, category_url in enumerate(category_urls_list, 1):
         try:
@@ -160,7 +161,12 @@ def get_products_urls(driver: Chrome, category_urls_list: list):
                         product_url = f"https://evroplast.ru{item.get('href')}"
                     except Exception:
                         continue
+
+                    if product_url in processed_urls_set:
+                        continue
+
                     products_urls_list.append(product_url)
+                    processed_urls_set.add(product_url)
             except Exception as ex:
                 print(f'{product_url}: {ex}')
                 continue
