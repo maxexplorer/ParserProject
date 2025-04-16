@@ -147,3 +147,5 @@ xlrd==2.0.1
 yarl==1.8.2
 zope.event==4.6
 zope.interface==6.0
+
+Telethon==1.39.0
