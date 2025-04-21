@@ -4,9 +4,6 @@ from datetime import datetime
 
 from requests import Session
 
-from selenium.webdriver import Chrome
-from selenium.webdriver.chrome.options import Options
-
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
