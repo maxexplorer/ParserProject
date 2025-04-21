@@ -1,6 +1,8 @@
-from telethon import TelegramClient, events
-from configs.config import api_id, api_hash, session_name, token, chat_id
 from aiogram import Bot
+from telethon import TelegramClient, events
+
+from configs.config import api_id, api_hash, session_name, token, chat_id
+
 
 class TelegramKeywordParser:
     def __init__(self, keywords: list[str], chats: list[str]):
@@ -11,21 +13,26 @@ class TelegramKeywordParser:
         self.chat_ids = set()
 
     async def run(self):
+        # Подключаемся к чату и начинаем отслеживать новые сообщения
         await self._resolve_chat_ids()
 
+        # Обработчик для новых сообщений
         @self.client.on(events.NewMessage(chats=list(self.chat_ids)))
         async def handler(event):
             message = event.message
             if message and message.message:
                 lowered = message.message.lower()
+                # Если ключевое слово найдено в сообщении
                 if any(keyword in lowered for keyword in self.keywords):
                     await self._send_result(message)
 
+        # Запускаем парсер и ждем новых сообщений
         print("[✓] Мониторинг новых сообщений запущен...\n")
         async with self.client:
             await self.client.run_until_disconnected()
 
     async def _resolve_chat_ids(self):
+        # Получаем ID чатов для мониторинга
         async with self.client:
             for chat in self.chats:
                 try:
@@ -35,10 +42,12 @@ class TelegramKeywordParser:
                     print(f"[!] Не удалось получить чат {chat}: {e}")
 
     async def _send_result(self, message):
+        # Отправляем сообщение в бот
         sender = getattr(message.sender, 'username', None)
         sender_id = message.sender_id or "—"
         chat_title = getattr(message.chat, 'title', 'Unknown Chat')
 
+        # Генерируем ссылки на чат и сообщение
         entity = message.chat
         chat_username = getattr(entity, 'username', None)
         chat_link = f"https://t.me/{chat_username}" if chat_username else None
@@ -50,6 +59,7 @@ class TelegramKeywordParser:
         user_link = f"@{sender}" if sender else f"ID: {sender_id}"
         date_time = message.date.astimezone().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Форматируем сообщение
         chat_line = f'Чат: <a href="{chat_link}">{chat_title}</a>' if chat_link else f"Чат: {chat_title}"
 
         formatted = (
@@ -61,6 +71,7 @@ class TelegramKeywordParser:
             f"--------------------\n\n"
         )
 
+        # Отправляем результат в указанный чат
         try:
             await self.bot.send_message(chat_id=chat_id, text=formatted, parse_mode='HTML')
         except Exception as e:
