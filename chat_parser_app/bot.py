@@ -1,20 +1,40 @@
 import re
-
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiogram.utils import executor
-
 from configs.config import token
-
+from parser import TelegramKeywordParser  # Предположим, что у нас есть класс парсера в parser.py
 
 bot = Bot(token=token)
 dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
+
 
 # Хэндлер на команду /start
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
+    # Получаем chat_id пользователя (чата с ботом)
+    chat_id = message.chat.id
+
     await message.reply("Привет! Я бот для мониторинга сообщений.")
+
+    # Загружаем чаты и ключевые слова из файлов
+    try:
+        with open('data/chats.txt', 'r', encoding='utf-8') as file:
+            chats = [line.strip() for line in file.readlines()]
+    except FileNotFoundError:
+        chats = []
+
+    try:
+        with open('data/keywords.txt', 'r', encoding='utf-8') as file:
+            keywords = [line.strip() for line in file.readlines()]
+    except FileNotFoundError:
+        keywords = []
+
+    # Создаем экземпляр парсера и передаем chat_id
+    parser = TelegramKeywordParser(keywords, chats, bot, chat_id)
+
+    # Запускаем парсер в фоновом режиме (через asyncio)
+    await parser.run()
+
 
 # Хэндлер на добавление ключевых слов с помощью символа "+"
 @dp.message_handler(lambda message: message.text.startswith('+'))
@@ -27,6 +47,7 @@ async def add_keywords(message: types.Message):
         await message.reply(f"Ключевые слова {', '.join(keywords)} добавлены.")
     else:
         await message.reply("Пожалуйста, укажите ключевые слова после символа +.")
+
 
 # Хэндлер на удаление ключевых слов с помощью символа "-"
 @dp.message_handler(lambda message: message.text.startswith('-'))
@@ -45,6 +66,7 @@ async def remove_keywords(message: types.Message):
     else:
         await message.reply("Пожалуйста, укажите ключевые слова после символа -.")
 
+
 # Хэндлер на добавление чатов
 @dp.message_handler(lambda message: message.text.startswith("Добавить чаты"))
 async def add_chats(message: types.Message):
@@ -57,7 +79,7 @@ async def add_chats(message: types.Message):
     else:
         await message.reply("Пожалуйста, укажите чаты для добавления.")
 
+
 # Запуск бота
-async def start_bot():
-    print("Бот запускается...")
-    executor.start_polling(dp, skip_updates=True)
+if __name__ == '__main__':
+    executor.start_polling(dp)
