@@ -73,7 +73,7 @@ async def remove_keywords(message: types.Message):
 
 
 # Хэндлер на добавление чатов
-@dp.message_handler(lambda message: message.text.lower().startswith("+чаты"))
+@dp.message_handler(lambda message: message.text.lower().startswith("чат"))
 async def add_chats(message: types.Message):
     chats = [chat.strip() for chat in re.split('[, \n]+', message.text[5:].strip()) if chat.strip()]
 
