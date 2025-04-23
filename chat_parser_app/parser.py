@@ -61,10 +61,10 @@ class TelegramKeywordParser:
         formatted = (
             f"{chat_line}\n"
             f"Автор: {user_link}\n"
-            f"Дата: {date_time}\n"
-            f"Ссылка: <a href=\"{message_link}\">{message_link}</a>\n"
+            f"Ссылка на сообщение: <a href=\"{message_link}\">Ссылка</a>\n"
             f"Сообщение:\n{message.text}\n\n"
-            f"--------------------\n\n"
+            f"Дата: {date_time}\n"
+            # f"--------------------\n\n"
         )
 
         # Отправляем результат в указанный чат

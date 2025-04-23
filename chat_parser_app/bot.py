@@ -41,9 +41,9 @@ async def start(message: types.Message):
 async def add_keywords(message: types.Message):
     keywords = [kw.strip() for kw in re.split('[, \n]+', message.text[1:]) if kw.strip()]
     if keywords:
-        with open("keywords.txt", "a", encoding="utf-8") as f:
+        with open("data/keywords.txt", "a", encoding="utf-8") as file:
             for keyword in keywords:
-                f.write(keyword + "\n")
+                file.write(keyword + "\n")
         await message.reply(f"Ключевые слова {', '.join(keywords)} добавлены.")
     else:
         await message.reply("Пожалуйста, укажите ключевые слова после символа +.")
@@ -52,15 +52,18 @@ async def add_keywords(message: types.Message):
 # Хэндлер на удаление ключевых слов с помощью символа "-"
 @dp.message_handler(lambda message: message.text.startswith('-'))
 async def remove_keywords(message: types.Message):
-    keywords = [kw.strip() for kw in re.split('[, \n]+', message.text[1:]) if kw.strip()]
+    keywords = [kw.strip().lower() for kw in re.split('[, \n]+', message.text[1:]) if kw.strip()]
     if keywords:
-        with open("keywords.txt", "r", encoding="utf-8") as f:
-            existing_keywords = f.readlines()
+        try:
+            with open('data/keywords.txt', 'r', encoding='utf-8') as file:
+                existing_keywords = [line.strip().lower() for line in file.readlines()]
+        except FileNotFoundError as ex:
+            raise ex
 
-        with open("keywords.txt", "w", encoding="utf-8") as f:
+        with open('data/keywords.txt', 'w', encoding='utf-8') as file:
             for line in existing_keywords:
-                if line.strip("\n") not in keywords:
-                    f.write(line)
+                if line not in keywords:
+                    file.write(line + '\n')
 
         await message.reply(f"Ключевые слова {', '.join(keywords)} удалены.")
     else:
@@ -72,14 +75,15 @@ async def remove_keywords(message: types.Message):
 async def add_chats(message: types.Message):
     chats = [chat.strip() for chat in re.split('[, \n]+', message.text.split(" ", 1)[1]) if chat.strip()]
     if chats:
-        with open("chats.txt", "a", encoding="utf-8") as f:
+        with open("data/chats.txt", "a", encoding="utf-8") as file:
             for chat in chats:
-                f.write(chat + "\n")
+                file.write(chat + "\n")
         await message.reply(f"Чаты {', '.join(chats)} добавлены.")
     else:
         await message.reply("Пожалуйста, укажите чаты для добавления.")
 
 
 # Запуск бота
-if __name__ == '__main__':
+def start_bot():
     executor.start_polling(dp)
+
