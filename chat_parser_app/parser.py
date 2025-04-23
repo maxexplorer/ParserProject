@@ -1,3 +1,5 @@
+# parser.py
+
 from aiogram import Bot
 from telethon import TelegramClient, events
 

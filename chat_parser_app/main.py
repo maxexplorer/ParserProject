@@ -1,6 +1,5 @@
-import asyncio
+# main.py
 
-from parser import TelegramKeywordParser
 from bot import start_bot  # Импортируем запуск бота
 
 
