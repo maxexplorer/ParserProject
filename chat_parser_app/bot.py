@@ -1,92 +1,118 @@
 # bot.py
 
-import re
-from aiogram import Bot, Dispatcher, types, executor
+import os
+import asyncio
+from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from configs.config import token
-from parser import TelegramKeywordParser  # Предположим, что у нас есть класс парсера в parser.py
+from parser import TelegramKeywordParser
+from user_data import load_user_data, update_keywords, update_chats
 
 bot = Bot(token=token)
 dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
+
+active_parsers = {}
 
 
-# Хэндлер на команду /start
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
-    # Получаем chat_id пользователя (чата с ботом)
-    chat_id = message.chat.id
+    chat_id = str(message.chat.id)
+    await message.answer("Привет! Я бот для мониторинга сообщений.")
 
-    await message.reply("Привет! Я бот для мониторинга сообщений.")
-
-    # Загружаем чаты и ключевые слова из файлов
-    try:
-        with open('data/chats.txt', 'r', encoding='utf-8') as file:
-            chats = [line.strip() for line in file.readlines()]
-    except FileNotFoundError:
-        chats = []
-
-    try:
-        with open('data/keywords.txt', 'r', encoding='utf-8') as file:
-            keywords = [line.strip() for line in file.readlines()]
-    except FileNotFoundError:
-        keywords = []
-
-    # Создаем экземпляр парсера и передаем chat_id
-    parser = TelegramKeywordParser(keywords, chats, bot, chat_id)
-
-    # Запускаем парсер в фоновом режиме (через asyncio)
-    await parser.run()
+    user_data = load_user_data(chat_id)
+    parser = TelegramKeywordParser(
+        keywords=user_data.get("keywords", []),
+        chats=user_data.get("chats", []),
+        bot=bot,
+        chat_id=chat_id
+    )
+    active_parsers[chat_id] = asyncio.create_task(parser.run())
 
 
-# Хэндлер на добавление ключевых слов с помощью символа "+"
-@dp.message_handler(lambda message: message.text.startswith('+'))
+@dp.message_handler(lambda msg: msg.text.startswith("+") and not msg.text.startswith("+чат"))
 async def add_keywords(message: types.Message):
-    keywords = [kw.strip() for kw in re.split('[, \n]+', message.text[1:].strip()) if kw.strip()]
-    if keywords:
-        with open("data/keywords.txt", "a", encoding="utf-8") as file:
-            for keyword in keywords:
-                file.write(keyword + "\n")
-        await message.reply(f"Ключевые слова {', '.join(keywords)} добавлены.")
-    else:
-        await message.reply("Пожалуйста, укажите ключевые слова после символа +.")
+    chat_id = str(message.chat.id)
+    keywords = [kw.strip().lower() for kw in message.text[1:].split()]
+    update_keywords(chat_id, keywords, add=True)
+
+    # Обновляем парсер с новыми ключевыми словами
+    if chat_id in active_parsers:
+        active_parsers[chat_id].update_keywords(
+            keywords=load_user_data(chat_id).get("keywords", []),
+        )
+
+    await message.answer(f"Добавлены ключевые слова: {', '.join(keywords)}")
 
 
-# Хэндлер на удаление ключевых слов с помощью символа "-"
-@dp.message_handler(lambda message: message.text.startswith('-'))
+@dp.message_handler(lambda msg: msg.text.startswith("-") and not msg.text.startswith("-чат"))
 async def remove_keywords(message: types.Message):
-    keywords = [kw.strip().lower() for kw in re.split('[, \n]+', message.text[1:].strip()) if kw.strip()]
-    if keywords:
-        try:
-            with open('data/keywords.txt', 'r', encoding='utf-8') as file:
-                existing_keywords = [line.strip().lower() for line in file.readlines()]
-        except FileNotFoundError as ex:
-            raise ex
+    chat_id = str(message.chat.id)
+    keywords = [kw.strip().lower() for kw in message.text[1:].split()]
+    update_keywords(chat_id, keywords, add=False)
 
-        with open('data/keywords.txt', 'w', encoding='utf-8') as file:
-            for line in existing_keywords:
-                if line not in keywords:
-                    file.write(line + '\n')
+    # Обновляем парсер с новыми ключевыми словами
+    if chat_id in active_parsers:
+        active_parsers[chat_id].update_keywords(
+            keywords=load_user_data(chat_id).get("keywords", []),
+        )
 
-        await message.reply(f"Ключевые слова {', '.join(keywords)} удалены.")
-    else:
-        await message.reply("Пожалуйста, укажите ключевые слова после символа -.")
+    await message.answer(f"Удалены ключевые слова: {', '.join(keywords)}")
 
 
-# Хэндлер на добавление чатов
-@dp.message_handler(lambda message: message.text.lower().startswith("чат"))
+@dp.message_handler(lambda msg: msg.text.lower().startswith("+чат"))
 async def add_chats(message: types.Message):
-    chats = [chat.strip() for chat in re.split('[, \n]+', message.text[5:].strip()) if chat.strip()]
+    chat_id = str(message.chat.id)
+    chats = [chat.strip().replace("https://t.me/", "").lstrip("@") for chat in message.text[4:].split()]
+    update_chats(chat_id, chats)
 
-    if chats:
-        with open("data/chats.txt", "a", encoding="utf-8") as file:
-            for chat in chats:
-                file.write(chat + "\n")
-        await message.reply(f"Чаты {', '.join(chats)} добавлены.")
+    # Обновляем парсер с новыми чатами
+    if chat_id in active_parsers:
+        active_parsers[chat_id].update_chats(
+            chats=load_user_data(chat_id).get("chats", [])
+        )
+
+    await message.answer(f"Добавлены чаты: {', '.join(chats)}")
+
+
+@dp.message_handler(lambda msg: msg.text.lower().startswith("-чат"))
+async def remove_chats(message: types.Message):
+    chat_id = str(message.chat.id)
+    chats = [chat.strip().replace("https://t.me/", "").lstrip("@") for chat in message.text[5:].split()]
+
+    # Удаляем чаты
+    update_chats(chat_id, chats, add=False)
+
+    # Обновляем парсер с новыми чатами
+    if chat_id in active_parsers:
+        active_parsers[chat_id].update_chats(
+            chats=load_user_data(chat_id).get("chats", [])
+        )
+
+    await message.answer(f"Удалены чаты: {', '.join(chats)}")
+
+
+@dp.message_handler(lambda msg: msg.text.lower().startswith("показать слова"))
+async def show_keywords(message: types.Message):
+    chat_id = str(message.chat.id)
+    user_data = load_user_data(chat_id)
+    keywords = user_data.get("keywords", [])
+    if keywords:
+        await message.answer(f"Ключевые слова: {', '.join(keywords)}")
     else:
-        await message.reply("Пожалуйста, укажите чаты для добавления.")
+        await message.answer("У вас нет добавленных ключевых слов.")
 
 
-# Запуск бота
+@dp.message_handler(lambda msg: msg.text.lower().startswith("показать чаты"))
+async def show_chats(message: types.Message):
+    chat_id = str(message.chat.id)
+    user_data = load_user_data(chat_id)
+    chats = user_data.get("chats", [])
+    if chats:
+        await message.answer(f"Добавленные чаты: {', '.join(chats)}")
+    else:
+        await message.answer("У вас нет добавленных чатов.")
+
+
 def start_bot():
     executor.start_polling(dp)
-
