@@ -15,9 +15,15 @@ dp.middleware.setup(LoggingMiddleware())
 active_parsers = {}
 
 
+def process_chat_url(chat_url):
+    """Вспомогательная функция для обработки URL чатов"""
+    return chat_url.strip().replace("https://t.me/", "").lstrip("@")
+
+
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     chat_id = str(message.chat.id)
+    print(chat_id)
     await message.answer("Привет! Я бот для мониторинга сообщений.")
 
     user_data = load_user_data(chat_id)
@@ -27,7 +33,10 @@ async def start(message: types.Message):
         bot=bot,
         chat_id=chat_id
     )
-    active_parsers[chat_id] = asyncio.create_task(parser.run())
+    # active_parsers[chat_id] = asyncio.create_task(parser.run())
+    active_parsers[chat_id] = parser
+    asyncio.create_task(parser.run())  # запускаем отдельно
+
 
 
 @dp.message_handler(lambda msg: msg.text.startswith("+") and not msg.text.startswith("+чат"))
@@ -38,9 +47,7 @@ async def add_keywords(message: types.Message):
 
     # Обновляем парсер с новыми ключевыми словами
     if chat_id in active_parsers:
-        active_parsers[chat_id].update_keywords(
-            keywords=load_user_data(chat_id).get("keywords", []),
-        )
+        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
     await message.answer(f"Добавлены ключевые слова: {', '.join(keywords)}")
 
@@ -53,9 +60,7 @@ async def remove_keywords(message: types.Message):
 
     # Обновляем парсер с новыми ключевыми словами
     if chat_id in active_parsers:
-        active_parsers[chat_id].update_keywords(
-            keywords=load_user_data(chat_id).get("keywords", []),
-        )
+        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
     await message.answer(f"Удалены ключевые слова: {', '.join(keywords)}")
 
@@ -63,14 +68,12 @@ async def remove_keywords(message: types.Message):
 @dp.message_handler(lambda msg: msg.text.lower().startswith("+чат"))
 async def add_chats(message: types.Message):
     chat_id = str(message.chat.id)
-    chats = [chat.strip().replace("https://t.me/", "").lstrip("@") for chat in message.text[4:].split()]
+    chats = [process_chat_url(chat) for chat in message.text[4:].split()]
     update_chats(chat_id, chats)
 
     # Обновляем парсер с новыми чатами
     if chat_id in active_parsers:
-        active_parsers[chat_id].update_chats(
-            chats=load_user_data(chat_id).get("chats", [])
-        )
+        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
     await message.answer(f"Добавлены чаты: {', '.join(chats)}")
 
@@ -78,16 +81,14 @@ async def add_chats(message: types.Message):
 @dp.message_handler(lambda msg: msg.text.lower().startswith("-чат"))
 async def remove_chats(message: types.Message):
     chat_id = str(message.chat.id)
-    chats = [chat.strip().replace("https://t.me/", "").lstrip("@") for chat in message.text[5:].split()]
+    chats = [process_chat_url(chat) for chat in message.text[5:].split()]
 
     # Удаляем чаты
     update_chats(chat_id, chats, add=False)
 
     # Обновляем парсер с новыми чатами
     if chat_id in active_parsers:
-        active_parsers[chat_id].update_chats(
-            chats=load_user_data(chat_id).get("chats", [])
-        )
+        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
     await message.answer(f"Удалены чаты: {', '.join(chats)}")
 
@@ -98,7 +99,7 @@ async def show_keywords(message: types.Message):
     user_data = load_user_data(chat_id)
     keywords = user_data.get("keywords", [])
     if keywords:
-        await message.answer(f"Ключевые слова: {', '.join(keywords)}")
+        await message.answer(f"Ключевые слова:\n{chr(10).join(keywords)}")
     else:
         await message.answer("У вас нет добавленных ключевых слов.")
 
@@ -109,7 +110,7 @@ async def show_chats(message: types.Message):
     user_data = load_user_data(chat_id)
     chats = user_data.get("chats", [])
     if chats:
-        await message.answer(f"Добавленные чаты: {', '.join(chats)}")
+        await message.answer(f"Чаты:\n{chr(10).join(chats)}")
     else:
         await message.answer("У вас нет добавленных чатов.")
 

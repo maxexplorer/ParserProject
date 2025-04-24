@@ -13,6 +13,8 @@ class TelegramKeywordParser:
         self.bot = bot
         self.chat_id = chat_id
         self.client = TelegramClient(f"{session_name}_{chat_id}", api_id, api_hash)
+        # self.client = TelegramClient(session_name, api_id, api_hash)
+
 
     async def run(self):
         await self.client.start()
@@ -67,10 +69,7 @@ class TelegramKeywordParser:
         except Exception as e:
             print(f"[!] Ошибка при отправке: {e}")
 
-    def update_chats(self, chats):
-        """Метод для обновления ключевых слов и чатов в процессе работы"""
-        self.chats = [chat.lower().lstrip("@") for chat in chats]
-
-    def update_keywords(self, keywords):
-        """Метод для обновления ключевых слов и чатов в процессе работы"""
-        self.keywords = [kw.lower() for kw in keywords]
+    def load_data_from_file(self, user_data):
+        """Метод для загрузки актуальных данных из файла"""
+        self.keywords = [kw.lower() for kw in user_data.get("keywords", [])]
+        self.chats = [chat.lower().lstrip("@") for chat in user_data.get("chats", [])]

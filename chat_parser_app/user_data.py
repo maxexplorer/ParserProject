@@ -9,7 +9,7 @@ os.makedirs(USER_DATA_DIR, exist_ok=True)
 
 
 def get_user_file(chat_id):
-    return os.path.join(USER_DATA_DIR, f"{chat_id}.txt")
+    return os.path.join(USER_DATA_DIR, f"{chat_id}.json")
 
 
 def load_user_data(chat_id):
