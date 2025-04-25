@@ -13,7 +13,6 @@ class TelegramKeywordParser:
         self.bot = bot
         self.chat_id = chat_id
         self.client = TelegramClient(f"{session_name}_{chat_id}", api_id, api_hash)
-        # self.client = TelegramClient(session_name, api_id, api_hash)
 
 
     async def run(self):
