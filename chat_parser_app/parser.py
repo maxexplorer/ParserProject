@@ -43,7 +43,7 @@ class TelegramKeywordParser:
 
     async def _send_result(self, chat_id, message):
         sender = getattr(message.sender, 'username', None)
-        sender_id = message.sender_id or "—"
+        sender_id = message.sender_id or '—'
         chat = await message.get_chat()
 
         chat_title = getattr(chat, 'title', str(chat_id))
