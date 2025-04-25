@@ -27,6 +27,10 @@ class TelegramKeywordParser:
         if not message.message:
             return
 
+        # Пропускаем сообщения от ботов
+        if message.sender and getattr(message.sender, 'bot', False):
+            return
+
         msg_text = message.message.lower()
         chat = await event.get_chat()
         chat_username = getattr(chat, 'username', None)
