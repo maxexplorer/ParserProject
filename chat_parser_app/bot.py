@@ -1,9 +1,13 @@
 # bot.py
 
 import os
+
+from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+
 import asyncio
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
 from configs.config import token
 from parser import TelegramKeywordParser
 from user_data import load_user_data, update_keywords, update_chats
@@ -33,7 +37,7 @@ async def start(message: types.Message):
         bot=bot,
         chat_id=chat_id
     )
-    # active_parsers[chat_id] = asyncio.create_task(parser.run())
+
     active_parsers[chat_id] = parser
     asyncio.create_task(parser.run())  # запускаем отдельно
 
@@ -69,13 +73,25 @@ async def remove_keywords(message: types.Message):
 async def add_chats(message: types.Message):
     chat_id = str(message.chat.id)
     chats = [process_chat_url(chat) for chat in message.text[4:].split()]
+
+    # Пытаемся подписаться на каждый чат через Telethon
+    if chat_id in active_parsers:
+        client = active_parsers[chat_id].client
+        for chat in chats:
+            try:
+                await client(JoinChannelRequest(chat))
+                await asyncio.sleep(1)  # небольшая задержка, чтобы избежать флуд-лимита
+            except Exception as e:
+                print(f"[!] Ошибка подписки на {chat}: {e}")
+
+    # Обновляем локальные данные
     update_chats(chat_id, chats)
 
-    # Обновляем парсер с новыми чатами
+    # Перезагружаем данные в парсер
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-    await message.answer(f"Добавлены чаты: {', '.join(chats)}")
+    await message.answer(f"Добавлены и подписаны на чаты:\n{chr(10).join(chats)}")
 
 
 @dp.message_handler(lambda msg: msg.text.lower().startswith("-чат"))
@@ -83,17 +99,27 @@ async def remove_chats(message: types.Message):
     chat_id = str(message.chat.id)
     chats = [process_chat_url(chat) for chat in message.text[5:].split()]
 
-    # Удаляем чаты
+    # Пытаемся отписаться от каждого чата через Telethon
+    if chat_id in active_parsers:
+        client = active_parsers[chat_id].client
+        for chat in chats:
+            try:
+                await client(LeaveChannelRequest(chat))
+                await asyncio.sleep(1)  # чтобы не попасть под лимиты
+            except Exception as e:
+                print(f"[!] Ошибка отписки от {chat}: {e}")
+
+    # Обновляем локальные данные
     update_chats(chat_id, chats, add=False)
 
-    # Обновляем парсер с новыми чатами
+    # Перезагружаем данные в парсер
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-    await message.answer(f"Удалены чаты: {', '.join(chats)}")
+    await message.answer(f"Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("показать слова"))
+@dp.message_handler(lambda msg: msg.text.lower().startswith("слова"))
 async def show_keywords(message: types.Message):
     chat_id = str(message.chat.id)
     user_data = load_user_data(chat_id)
@@ -104,7 +130,7 @@ async def show_keywords(message: types.Message):
         await message.answer("У вас нет добавленных ключевых слов.")
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("показать чаты"))
+@dp.message_handler(lambda msg: msg.text.lower().startswith("чаты"))
 async def show_chats(message: types.Message):
     chat_id = str(message.chat.id)
     user_data = load_user_data(chat_id)
