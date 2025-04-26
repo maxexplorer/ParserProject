@@ -34,7 +34,7 @@ async def start(message: types.Message):
     chat_id = str(message.chat.id)
     session_path = f"{session_name}_{chat_id}.session"
     if not os.path.exists(session_path):
-        await message.answer("Для начала работы нужно авторизоваться. Напиши /login")
+        await message.answer("Для начала работы нужно авторизоваться.\nНапиши или нажмите:\n/login")
         return
 
     await message.answer("Привет! Я бот для мониторинга сообщений.")
