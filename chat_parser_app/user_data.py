@@ -15,9 +15,13 @@ def get_user_file(chat_id):
 def load_user_data(chat_id):
     file_path = get_user_file(chat_id)
     if not os.path.exists(file_path):
-        return {"keywords": [], "chats": []}
+        return {"keywords": [], "chats": [], "exceptions": []}
     with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    # На случай, если старый файл без "exceptions"
+    if "exceptions" not in data:
+        data["exceptions"] = []
+    return data
 
 
 def save_user_data(chat_id, data):
@@ -48,3 +52,13 @@ def update_chats(chat_id, chats, add=True):
     data["chats"] = list(current)
     save_user_data(chat_id, data)
 
+
+def update_exceptions(chat_id, user_ids, add=True):
+    data = load_user_data(chat_id)
+    current = set(data.get("exceptions", []))
+    if add:
+        current.update(user_ids)
+    else:
+        current.difference_update(user_ids)
+    data["exceptions"] = list(current)
+    save_user_data(chat_id, data)

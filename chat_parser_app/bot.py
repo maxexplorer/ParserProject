@@ -6,15 +6,13 @@ from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelReque
 
 import asyncio
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from configs.config import token
 from parser import TelegramKeywordParser
-from user_data import load_user_data, update_keywords, update_chats
+from user_data import load_user_data, update_keywords, update_chats, update_exceptions
 
 bot = Bot(token=token)
 dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
 
 active_parsers = {}
 
@@ -34,13 +32,13 @@ async def start(message: types.Message):
     parser = TelegramKeywordParser(
         keywords=user_data.get("keywords", []),
         chats=user_data.get("chats", []),
+        exceptions=user_data.get("exceptions", []),
         bot=bot,
         chat_id=chat_id
     )
 
     active_parsers[chat_id] = parser
     asyncio.create_task(parser.run())  # запускаем отдельно
-
 
 
 @dp.message_handler(lambda msg: msg.text.startswith("+") and not msg.text.startswith("+чат"))
@@ -117,6 +115,24 @@ async def remove_chats(message: types.Message):
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
     await message.answer(f"Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
+
+
+@dp.message_handler(lambda msg: msg.text.lower() == "спам")
+async def add_exception(message: types.Message):
+    if not message.reply_to_message:
+        await message.answer("Пожалуйста, ответьте на сообщение, которое хотите пометить как спам.")
+        return
+
+    spam_sender_id = message.reply_to_message.from_user.id
+    chat_id = str(message.chat.id)
+
+    update_exceptions(chat_id, [spam_sender_id], add=True)
+
+    if chat_id in active_parsers:
+        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
+
+    await message.answer(f"Пользователь {spam_sender_id} добавлен в список исключений.")
+
 
 
 @dp.message_handler(lambda msg: msg.text.lower().startswith("слова"))

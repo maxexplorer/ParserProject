@@ -7,9 +7,10 @@ from configs.config import api_id, api_hash, session_name
 
 
 class TelegramKeywordParser:
-    def __init__(self, keywords, chats, bot: Bot, chat_id):
+    def __init__(self, keywords, chats, bot: Bot, chat_id, exceptions):
         self.keywords = [kw.lower() for kw in keywords]
         self.chats = [chat.lower().lstrip("@") for chat in chats]
+        self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
         self.client = TelegramClient(f"{session_name}_{chat_id}", api_id, api_hash)
@@ -19,6 +20,11 @@ class TelegramKeywordParser:
         await self.client.start()
         self.client.add_event_handler(self._new_message_handler, events.NewMessage())
         print(f"[→] Парсер запущен для chat_id={self.chat_id}")
+
+        # print("\n[→] Список всех доступных чатов:")
+        # async for dialog in self.client.iter_dialogs():
+        #     print(f"- {dialog.name} | ID: {dialog.id} | Username: {getattr(dialog.entity, 'username', None)}")
+
         await self.client.run_until_disconnected()
 
     async def _new_message_handler(self, event):
@@ -28,6 +34,11 @@ class TelegramKeywordParser:
 
         # Пропускаем сообщения от ботов
         if message.sender and getattr(message.sender, 'bot', False):
+            return
+
+        # Проверка на исключение по sender_id
+        sender_id = message.sender_id
+        if sender_id in self.exceptions:
             return
 
         msg_text = message.message.lower()
@@ -45,8 +56,10 @@ class TelegramKeywordParser:
             await self._send_result(event.chat_id, message)
 
     async def _send_result(self, chat_id, message):
-        sender = getattr(message.sender, 'username', None)
-        sender_id = message.sender_id or '—'
+        sender = await message.get_sender()
+        sender_username = getattr(sender, 'username', None)
+        sender_id = sender.sender_id or '—'
+
         chat = await message.get_chat()
 
         chat_title = getattr(chat, 'title', str(chat_id))
@@ -56,7 +69,7 @@ class TelegramKeywordParser:
             f"https://t.me/{chat_username}/{message.id}"
             if chat_username else f"https://t.me/c/{str(chat.id)[4:]}/{message.id}"
         )
-        user_link = f"@{sender}" if sender else f"ID: {sender_id}"
+        user_link = f"@{sender_username}" if sender_username else f"ID: {sender_id}"
 
         chat_line = f'Чат: <a href="{chat_link}">{chat_title}</a>' if chat_link else f"Чат: {chat_title}"
 
@@ -76,3 +89,5 @@ class TelegramKeywordParser:
         """Метод для загрузки актуальных данных из файла"""
         self.keywords = [kw.lower() for kw in user_data.get("keywords", [])]
         self.chats = [chat.lower().lstrip("@") for chat in user_data.get("chats", [])]
+        self.exceptions = user_data.get("exceptions", [])
+
