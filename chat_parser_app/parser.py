@@ -7,13 +7,14 @@ from configs.config import api_id, api_hash, session_name
 
 
 class TelegramKeywordParser:
-    def __init__(self, keywords, chats, bot: Bot, chat_id, exceptions):
+    def __init__(self, keywords, chats, bot: Bot, chat_id, exceptions, print_dialog=False):
         self.keywords = [kw.lower() for kw in keywords]
         self.chats = [chat.lower().lstrip("@") for chat in chats]
         self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
         self.client = TelegramClient(f"{session_name}_{chat_id}", api_id, api_hash)
+        self.print_dialog = print_dialog
 
     async def run(self):
         try:
@@ -21,10 +22,9 @@ class TelegramKeywordParser:
             self.client.add_event_handler(self._new_message_handler, events.NewMessage())
             print(f"[→] Парсер запущен для chat_id={self.chat_id}")
 
-            # print("\n[→] Список всех доступных чатов:")
-            # async for dialog in self.client.iter_dialogs():
-            #     print(f"- {dialog.name} | ID: {dialog.id} | Username: {getattr(dialog.entity, 'username', None)}")
-
+            if self.print_dialog:
+                # Вызов функции для получения списка всех чатов
+                await self.print_all_dialogs()
 
             await self.client.run_until_disconnected()
         except Exception as e:
@@ -96,6 +96,16 @@ class TelegramKeywordParser:
             )
         except Exception as e:
             print(f"[!] Ошибка отправки уведомления: {e}")
+
+    async def print_all_dialogs(self):
+        """Функция для вывода всех доступных чатов"""
+        print("\n[→] Список всех доступных чатов:")
+        async for dialog in self.client.iter_dialogs():
+            chat = dialog.entity
+            chat_username = getattr(chat, 'username', None)
+            chat_name = dialog.name
+            chat_id = dialog.id
+            print(f"- {chat_name} | ID: {chat_id} | Username: {chat_username or '—'}")
 
     def load_data_from_file(self, user_data):
         """Обновляет данные из файла"""

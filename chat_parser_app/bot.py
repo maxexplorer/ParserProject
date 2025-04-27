@@ -36,7 +36,8 @@ async def start(message: Message):
         chats=user_data.get("chats", []),
         exceptions=user_data.get("exceptions", []),
         bot=bot,
-        chat_id=chat_id
+        chat_id=chat_id,
+        print_dialog=False
     )
 
     active_parsers[chat_id] = parser
