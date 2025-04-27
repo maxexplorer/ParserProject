@@ -58,7 +58,8 @@ class TelegramKeywordParser:
     async def _send_result(self, chat_id, message):
         sender = await message.get_sender()
         sender_username = getattr(sender, 'username', None)
-        sender_id = sender.id or '—'
+        # sender_id = sender.id or '—'
+        sender_id = message.sender_id or '—'
 
         chat = await message.get_chat()
 

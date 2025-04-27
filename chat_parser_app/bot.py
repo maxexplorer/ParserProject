@@ -123,16 +123,18 @@ async def add_exception(message: types.Message):
         await message.answer("Пожалуйста, ответьте на сообщение, которое хотите пометить как спам.")
         return
 
-    spam_sender_id = message.reply_to_message.from_user.id
-    chat_id = str(message.chat.id)
+    spam_sender_id = get_user_id_from_message(message.reply_to_message)
+    if spam_sender_id is None:
+        await message.answer("❗ Невозможно определить пользователя (скрытый отправитель).")
+        return
 
+    chat_id = str(message.chat.id)
     update_exceptions(chat_id, [spam_sender_id], add=True)
 
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-    await message.answer(f"Пользователь {spam_sender_id} добавлен в список исключений.")
-
+    await message.answer(f"Пользователь с ID {spam_sender_id} добавлен в список исключений.")
 
 
 @dp.message_handler(lambda msg: msg.text.lower().startswith("слова"))
@@ -155,6 +157,16 @@ async def show_chats(message: types.Message):
         await message.answer(f"Чаты:\n{chr(10).join(chats)}")
     else:
         await message.answer("У вас нет добавленных чатов.")
+
+
+def get_user_id_from_message(message: types.Message) -> int | None:
+    """Возвращает ID пользователя из сообщения, если возможно."""
+    # if message.forward_from:
+    #     return message.forward_from.id  # Переслано и ID доступен
+    if message.reply_to_message:
+        return message.reply_to_message.from_user.id  # Ответ на сообщение
+    else:
+        return message.from_user.id  # Просто автор сообщения
 
 
 def start_bot():
