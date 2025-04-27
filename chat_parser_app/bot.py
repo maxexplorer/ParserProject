@@ -1,31 +1,33 @@
-# bot.py
-
-import os
-
-from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+# parser.py
 
 import asyncio
-from aiogram import Bot, Dispatcher, executor, types
-
+from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import Command
+from aiogram.types import Message
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties  # <-- Добавлено
 from configs.config import token
 from parser import TelegramKeywordParser
 from user_data import load_user_data, update_keywords, update_chats, update_exceptions
 
-bot = Bot(token=token)
-dp = Dispatcher(bot)
+bot = Bot(
+    token=token,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)  # <-- Новый формат
+)
+dp = Dispatcher()
 
 active_parsers = {}
 
 
-def process_chat_url(chat_url):
-    """Вспомогательная функция для обработки URL чатов"""
-    return chat_url.strip().replace("https://t.me/", "").lstrip("@")
+def process_chat_url(chat_url: str) -> str:
+    """Обрабатывает URL чата, убирая ненужные части."""
+    return chat_url.strip().replace("https://t.me/", "").replace("@", "")
 
 
-@dp.message_handler(commands=["start"])
-async def start(message: types.Message):
+@dp.message(Command("start"))
+async def start(message: Message):
     chat_id = str(message.chat.id)
-    print(chat_id)
     await message.answer("Привет! Я бот для мониторинга сообщений.")
 
     user_data = load_user_data(chat_id)
@@ -38,37 +40,35 @@ async def start(message: types.Message):
     )
 
     active_parsers[chat_id] = parser
-    asyncio.create_task(parser.run())  # запускаем отдельно
+    asyncio.create_task(parser.run())  # Запуск парсера в фоне
 
 
-@dp.message_handler(lambda msg: msg.text.startswith("+") and not msg.text.startswith("+чат"))
-async def add_keywords(message: types.Message):
+@dp.message(F.text.startswith("+") & ~F.text.startswith("+чат"))
+async def add_keywords(message: Message):
     chat_id = str(message.chat.id)
     keywords = [kw.strip().lower() for kw in message.text[1:].split()]
     update_keywords(chat_id, keywords, add=True)
 
-    # Обновляем парсер с новыми ключевыми словами
     if chat_id in active_parsers:
-        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
+        active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
-    await message.answer(f"Добавлены ключевые слова: {', '.join(keywords)}")
+    await message.answer(f"✅ Добавлены ключевые слова: {', '.join(keywords)}")
 
 
-@dp.message_handler(lambda msg: msg.text.startswith("-") and not msg.text.startswith("-чат"))
-async def remove_keywords(message: types.Message):
+@dp.message(F.text.startswith("-") & ~F.text.startswith("-чат"))
+async def remove_keywords(message: Message):
     chat_id = str(message.chat.id)
     keywords = [kw.strip().lower() for kw in message.text[1:].split()]
     update_keywords(chat_id, keywords, add=False)
 
-    # Обновляем парсер с новыми ключевыми словами
     if chat_id in active_parsers:
-        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
+        active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
-    await message.answer(f"Удалены ключевые слова: {', '.join(keywords)}")
+    await message.answer(f"❌ Удалены ключевые слова: {', '.join(keywords)}")
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("+чат"))
-async def add_chats(message: types.Message):
+@dp.message(F.text.lower().startswith("+чат"))
+async def add_chats(message: Message):
     chat_id = str(message.chat.id)
     chats = [process_chat_url(chat) for chat in message.text[4:].split()]
 
@@ -77,10 +77,12 @@ async def add_chats(message: types.Message):
         client = active_parsers[chat_id].client
         for chat in chats:
             try:
-                await client(JoinChannelRequest(chat))
-                await asyncio.sleep(1)  # небольшая задержка, чтобы избежать флуд-лимита
+                chat_entity = await client.get_entity(chat)
+                if chat_entity:
+                    await client(JoinChannelRequest(chat_entity))
+                    await asyncio.sleep(1)  # небольшая задержка, чтобы избежать флуд-лимита
             except Exception as e:
-                print(f"[!] Ошибка подписки на {chat}: {e}")
+                print(f"⚠️ Ошибка подписки на {chat}: {e}")
 
     # Обновляем локальные данные
     update_chats(chat_id, chats)
@@ -89,11 +91,11 @@ async def add_chats(message: types.Message):
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-    await message.answer(f"Добавлены и подписаны на чаты:\n{chr(10).join(chats)}")
+    await message.answer(f"📌 Добавлены и подписаны на чаты:\n{chr(10).join(chats)}")
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("-чат"))
-async def remove_chats(message: types.Message):
+@dp.message(F.text.lower().startswith("-чат"))
+async def remove_chats(message: Message):
     chat_id = str(message.chat.id)
     chats = [process_chat_url(chat) for chat in message.text[5:].split()]
 
@@ -102,10 +104,12 @@ async def remove_chats(message: types.Message):
         client = active_parsers[chat_id].client
         for chat in chats:
             try:
-                await client(LeaveChannelRequest(chat))
-                await asyncio.sleep(1)  # чтобы не попасть под лимиты
+                chat_entity = await client.get_entity(chat)
+                if chat_entity:
+                    await client(LeaveChannelRequest(chat_entity))
+                    await asyncio.sleep(1)  # чтобы не попасть под лимиты
             except Exception as e:
-                print(f"[!] Ошибка отписки от {chat}: {e}")
+                print(f"⚠️ Ошибка отписки от {chat}: {e}")
 
     # Обновляем локальные данные
     update_chats(chat_id, chats, add=False)
@@ -114,60 +118,37 @@ async def remove_chats(message: types.Message):
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-    await message.answer(f"Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
+    await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
 
 
-@dp.message_handler(lambda msg: msg.text.lower() == "спам")
-async def add_exception(message: types.Message):
+@dp.message(F.text.lower() == "спам")
+async def mark_spam(message: Message):
     if not message.reply_to_message:
-        await message.answer("Пожалуйста, ответьте на сообщение, которое хотите пометить как спам.")
-        return
+        return await message.answer("❌ Ответьте на сообщение, чтобы пометить отправителя как спам.")
 
-    spam_sender_id = get_user_id_from_message(message.reply_to_message)
-    if spam_sender_id is None:
-        await message.answer("❗ Невозможно определить пользователя (скрытый отправитель).")
-        return
-
+    spam_sender_id = message.reply_to_message.from_user.id
     chat_id = str(message.chat.id)
     update_exceptions(chat_id, [spam_sender_id], add=True)
 
     if chat_id in active_parsers:
-        active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
+        active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
-    await message.answer(f"Пользователь с ID {spam_sender_id} добавлен в список исключений.")
+    await message.answer(f"🚫 Пользователь {spam_sender_id} добавлен в исключения.")
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("слова"))
-async def show_keywords(message: types.Message):
+@dp.message(F.text.lower().startswith("слова"))
+async def show_keywords(message: Message):
     chat_id = str(message.chat.id)
-    user_data = load_user_data(chat_id)
-    keywords = user_data.get("keywords", [])
-    if keywords:
-        await message.answer(f"Ключевые слова:\n{chr(10).join(keywords)}")
-    else:
-        await message.answer("У вас нет добавленных ключевых слов.")
+    keywords = load_user_data(chat_id).get("keywords", [])
+    await message.answer("🔍 Ваши ключевые слова:\n" + ("\n".join(keywords) if keywords else "❌ Нет слов."))
 
 
-@dp.message_handler(lambda msg: msg.text.lower().startswith("чаты"))
-async def show_chats(message: types.Message):
+@dp.message(F.text.lower().startswith("чаты"))
+async def show_chats(message: Message):
     chat_id = str(message.chat.id)
-    user_data = load_user_data(chat_id)
-    chats = user_data.get("chats", [])
-    if chats:
-        await message.answer(f"Чаты:\n{chr(10).join(chats)}")
-    else:
-        await message.answer("У вас нет добавленных чатов.")
+    chats = load_user_data(chat_id).get("chats", [])
+    await message.answer("📂 Ваши чаты:\n" + ("\n".join(chats) if chats else "❌ Нет чатов."))
 
 
-def get_user_id_from_message(message: types.Message) -> int | None:
-    """Возвращает ID пользователя из сообщения, если возможно."""
-    # if message.forward_from:
-    #     return message.forward_from.id  # Переслано и ID доступен
-    if message.reply_to_message:
-        return message.reply_to_message.from_user.id  # Ответ на сообщение
-    else:
-        return message.from_user.id  # Просто автор сообщения
-
-
-def start_bot():
-    executor.start_polling(dp)
+async def main():
+    await dp.start_polling(bot)

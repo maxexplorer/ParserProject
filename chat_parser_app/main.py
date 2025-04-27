@@ -1,11 +1,12 @@
 # main.py
 
-from bot import start_bot  # Импортируем запуск бота
+import asyncio
+from bot import bot, dp
+
+
+async def main():
+    await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
-
-    try:
-        start_bot()
-    except Exception as ex:
-        print(f'main: {ex}')
-        input("Нажмите Enter, чтобы закрыть программу...")
+    asyncio.run(main())
