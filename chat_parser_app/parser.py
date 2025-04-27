@@ -7,14 +7,14 @@ from configs.config import api_id, api_hash, session_name
 
 
 class TelegramKeywordParser:
-    def __init__(self, keywords, chats, bot: Bot, chat_id, exceptions, print_dialog=False):
+    def __init__(self, keywords, chats, bot: Bot, chat_id, exceptions, print_dialogs=False):
         self.keywords = [kw.lower() for kw in keywords]
         self.chats = [chat.lower().lstrip("@") for chat in chats]
         self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
         self.client = TelegramClient(f"{session_name}_{chat_id}", api_id, api_hash)
-        self.print_dialog = print_dialog
+        self.print_dialogs = print_dialogs
 
     async def run(self):
         try:
@@ -22,7 +22,7 @@ class TelegramKeywordParser:
             self.client.add_event_handler(self._new_message_handler, events.NewMessage())
             print(f"[→] Парсер запущен для chat_id={self.chat_id}")
 
-            if self.print_dialog:
+            if self.print_dialogs:
                 # Вызов функции для получения списка всех чатов
                 await self.print_all_dialogs()
 
