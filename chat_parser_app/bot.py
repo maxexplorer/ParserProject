@@ -126,19 +126,38 @@ async def remove_chats(message: Message):
     await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
 
 
+import re
+
+
 @dp.message(F.text.lower() == "спам")
 async def mark_spam(message: Message):
     if not message.reply_to_message:
         return await message.answer("❌ Ответьте на сообщение, чтобы пометить отправителя как спам.")
 
-    spam_sender_id = message.reply_to_message.id
-    chat_id = str(message.chat.id)
-    update_exceptions(chat_id, [spam_sender_id], add=True)
+    # Извлекаем сообщение, на которое мы отвечаем
+    replied_message = message.reply_to_message.text
 
+    # Регулярное выражение для поиска ID или username после "Автор: "
+    sender_pattern = r"Автор:\s+(@?[\w\d]+)"  # ищем @username или просто id
+
+    match = re.search(sender_pattern, replied_message)
+
+    if not match:
+        return await message.answer("❌ Не удалось распознать отправителя.")
+
+    sender_value = match.group(1).lstrip("@")  # Убираем @, если оно есть
+
+    chat_id = str(message.chat.id)
+
+    # Обновляем исключения
+    update_exceptions(chat_id, [sender_value], add=True)
+
+    # Если парсер активен для чата, загружаем данные
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
-    await message.answer(f"🚫 Пользователь {spam_sender_id} добавлен в исключения.")
+    # Ответ пользователю
+    await message.answer(f"🚫 Пользователь {sender_value} добавлен в исключения.")
 
 
 @dp.message(F.text.lower().startswith("слова"))
