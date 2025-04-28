@@ -34,50 +34,59 @@ class TelegramKeywordParser:
     async def _new_message_handler(self, event):
         try:
             message = event.message
+            message_id = getattr(message, 'id', None)
+
             if not message.text:
                 return
 
             # Пропускаем ботов и None-отправителей
-            sender = await message.get_sender()
+            sender = await event.get_sender()  # Используем get_sender() через event
             if not sender or getattr(sender, 'bot', False):
                 return
 
+            sender_id = getattr(sender, 'id', None)
+            sender_id_str = str(sender_id)
+            sender_username = getattr(sender, 'username', None)
+
             # Проверка на исключения
-            sender_id = sender.id
-            if sender_id in self.exceptions:
+            if sender_id_str in self.exceptions or sender_username in self.exceptions:
                 return
 
-            msg_text = message.text.lower()
-            chat = await event.get_chat()
+            message_text = message.text
+            message_text_lower = message_text.lower()
+            chat = await event.get_chat()  # Получаем чат один раз
+            chat_id = event.chat_id
+            chat_id_str = str(chat_id)
             chat_username = getattr(chat, 'username', None)
-            chat_id_str = str(event.chat_id)
+            chat_title = getattr(chat, 'title', chat_id_str)
 
             # Проверяем, что чат в списке отслеживаемых
             if (chat_username and chat_username.lower() not in self.chats) and (chat_id_str not in self.chats):
                 return
 
             # Проверяем ключевые слова
-            if any(re.search(rf'\b{re.escape(kw)}\b', msg_text) for kw in self.keywords):
-                await self._send_result(event.chat_id, message)
+            if any(re.search(rf'\b{re.escape(kw)}\b', message_text_lower) for kw in self.keywords):
+                await (self._send_result(
+                    chat_id_str=chat_id_str,
+                    chat_username=chat_username,
+                    chat_title=chat_title,
+                    sender_id=sender_id,
+                    sender_username=sender_username,
+                    message_id=message_id,
+                    message_text=message_text)
+                )
         except Exception as e:
             print(f"[!] Ошибка обработки сообщения: {e}")
 
-    async def _send_result(self, chat_id, message):
+    async def _send_result(self, chat_id_str, chat_username, chat_title, sender_id, sender_username, message_id,
+                           message_text):
         try:
-            sender = await message.get_sender()
-            chat = await message.get_chat()
-
-            sender_username = getattr(sender, 'username', None)
-            sender_id = sender.id if sender else '—'
-            chat_title = getattr(chat, 'title', str(chat_id))
-            chat_username = getattr(chat, 'username', None)
-
             chat_link = f"https://t.me/{chat_username}" if chat_username else None
             message_link = (
-                f"https://t.me/{chat_username}/{message.id}"
-                if chat_username else f"https://t.me/c/{str(chat.id)[4:]}/{message.id}"
+                f"https://t.me/{chat_username}/{message_id}"
+                if chat_username else f"https://t.me/c/{chat_id_str[4:]}/{message_id}"
             )
-            user_link = f"@{sender_username}" if sender_username else f"ID: {sender_id}"
+            user_link = f"@{sender_username}" if sender_username else f"{sender_id}"
 
             chat_line = f'Чат: <a href="{chat_link}">{chat_title}</a>' if chat_link else f"Чат: {chat_title}"
 
@@ -85,7 +94,7 @@ class TelegramKeywordParser:
                 f"{chat_line}\n"
                 f"Автор: {user_link}\n"
                 f"Ссылка: <a href=\"{message_link}\">Сообщение</a>\n"
-                f"Текст:\n{message.text}\n\n"
+                f"Текст:\n{message_text}\n\n"
             )
 
             await self.bot.send_message(

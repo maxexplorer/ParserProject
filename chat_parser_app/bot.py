@@ -47,13 +47,17 @@ async def start(message: Message):
 @dp.message(F.text.startswith("+") & ~F.text.startswith("+чат"))
 async def add_keywords(message: Message):
     chat_id = str(message.chat.id)
-    keywords = [kw.strip().lower() for kw in message.text[1:].split()]
+    raw_text = message.text[1:]
+
+    keywords = [kw.strip().strip('"').lower() for kw in raw_text.split(',') if kw.strip()]
+
     update_keywords(chat_id, keywords, add=True)
 
     if chat_id in active_parsers:
         active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
     await message.answer(f"✅ Добавлены ключевые слова: {', '.join(keywords)}")
+
 
 
 @dp.message(F.text.startswith("-") & ~F.text.startswith("-чат"))
@@ -127,7 +131,7 @@ async def mark_spam(message: Message):
     if not message.reply_to_message:
         return await message.answer("❌ Ответьте на сообщение, чтобы пометить отправителя как спам.")
 
-    spam_sender_id = message.reply_to_message.from_user.id
+    spam_sender_id = message.reply_to_message.id
     chat_id = str(message.chat.id)
     update_exceptions(chat_id, [spam_sender_id], add=True)
 
