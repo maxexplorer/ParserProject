@@ -1,19 +1,22 @@
 # parser.py
 
+import re
+
 import asyncio
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties  # <-- Добавлено
+from aiogram.client.default import DefaultBotProperties
+
 from configs.config import token
 from parser import TelegramKeywordParser
 from user_data import load_user_data, update_keywords, update_chats, update_exceptions
 
 bot = Bot(
     token=token,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)  # <-- Новый формат
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 dp = Dispatcher()
 
@@ -57,7 +60,6 @@ async def add_keywords(message: Message):
         active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
     await message.answer(f"✅ Добавлены ключевые слова: {', '.join(keywords)}")
-
 
 
 @dp.message(F.text.startswith("-") & ~F.text.startswith("-чат"))
@@ -126,9 +128,6 @@ async def remove_chats(message: Message):
     await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
 
 
-import re
-
-
 @dp.message(F.text.lower() == "спам")
 async def mark_spam(message: Message):
     if not message.reply_to_message:
@@ -157,7 +156,7 @@ async def mark_spam(message: Message):
         active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
 
     # Ответ пользователю
-    await message.answer(f"🚫 Пользователь {sender_value} добавлен в исключения.")
+    await message.answer(f"🚫 Пользователь {sender_value} добавлен в спам.")
 
 
 @dp.message(F.text.lower().startswith("слова"))
