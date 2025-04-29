@@ -7,7 +7,7 @@ from configs.config import token
 
 async def main():
     bot = ChatParserBot(token=token)
-    await bot.dp.start_polling(bot)
+    await bot.dp.start_polling(bot.bot)
 
 
 if __name__ == "__main__":
