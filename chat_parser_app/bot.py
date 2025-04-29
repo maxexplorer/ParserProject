@@ -1,4 +1,4 @@
-# parser.py
+# bot.py
 
 import re
 
