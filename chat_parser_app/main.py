@@ -1,11 +1,13 @@
 # main.py
 
 import asyncio
-from bot import bot, dp
+from bot import ChatParserBot
+from configs.config import token
 
 
 async def main():
-    await dp.start_polling(bot)
+    bot = ChatParserBot(token=token)
+    await bot.dp.start_polling(bot)
 
 
 if __name__ == "__main__":
