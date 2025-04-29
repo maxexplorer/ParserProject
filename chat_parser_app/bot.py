@@ -171,7 +171,3 @@ async def show_chats(message: Message):
     chat_id = str(message.chat.id)
     chats = load_user_data(chat_id).get("chats", [])
     await message.answer("📂 Ваши чаты:\n" + ("\n".join(chats) if chats else "❌ Нет чатов."))
-
-
-async def main():
-    await dp.start_polling(bot)
