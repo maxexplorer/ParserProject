@@ -75,7 +75,9 @@ class ChatParserBot:
 
     async def remove_keywords_handler(self, message: Message):
         chat_id = str(message.chat.id)
-        keywords = [kw.strip().lower() for kw in message.text[1:].split()]
+        raw_text = message.text[1:]
+
+        keywords = [kw.strip().lower() for kw in raw_text.split(',') if kw.strip()]
         update_keywords(chat_id, keywords, add=False)
 
         if chat_id in self.active_parsers:
@@ -100,6 +102,7 @@ class ChatParserBot:
                         await asyncio.sleep(1)  # небольшая задержка, чтобы избежать флуд-лимита
                 except Exception as e:
                     await message.answer(f"⚠️ Ошибка подписки на <code>{chat}</code>: {e}")
+                    continue
 
         # Обновляем локальные данные
         update_chats(chat_id, join_chats)
@@ -127,6 +130,7 @@ class ChatParserBot:
                         await asyncio.sleep(1)  # чтобы не попасть под лимиты
                 except Exception as e:
                     await message.answer(f"⚠️ Ошибка отписки на <code>{chat}</code>: {e}")
+                    continue
 
         # Обновляем локальные данные
         update_chats(chat_id, leave_chats, add=False)
