@@ -41,6 +41,11 @@ class ChatParserBot:
 
     async def start_handler(self, message: Message):
         chat_id = str(message.chat.id)
+
+        if chat_id in self.active_parsers:
+            await message.answer("ℹ️ Парсер уже запущен.")
+            return
+
         await message.answer("Привет! Я бот для мониторинга сообщений.")
 
         user_data = load_user_data(chat_id)
@@ -60,7 +65,7 @@ class ChatParserBot:
         chat_id = str(message.chat.id)
         raw_text = message.text[1:]
 
-        keywords = [kw.strip().strip('"').lower() for kw in raw_text.split(',') if kw.strip()]
+        keywords = [kw.strip().strip('"\'').lower() for kw in raw_text.split(',') if kw.strip()]
         update_keywords(chat_id, keywords, add=True)
 
         if chat_id in self.active_parsers:
@@ -103,7 +108,7 @@ class ChatParserBot:
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-        await message.answer(f"📌 Добавлены и подписаны на чаты:\n{chr(10).join(chats)}")
+        await message.answer(f"📌 Добавлены и подписаны на чаты:\n{chr(10).join(join_chats)}")
 
     async def remove_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
@@ -130,7 +135,7 @@ class ChatParserBot:
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-        await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(chats)}")
+        await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(leave_chats)}")
 
     async def mark_spam_handler(self, message: Message):
         if not message.reply_to_message:
