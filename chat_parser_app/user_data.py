@@ -30,12 +30,14 @@ def get_session_path(chat_id):
 def load_user_data(chat_id):
     file_path = get_user_path(chat_id)
     if not os.path.exists(file_path):
-        return {"keywords": [], "chats": [], "exceptions": []}
+        return {"keywords": [], "stopwords": [], "chats": [], "exceptions": []}
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    # На случай, если старый файл без "exceptions"
+    # На случай, если старый файл без "exceptions" и "stopwords"
     if "exceptions" not in data:
         data["exceptions"] = []
+    if "stopwords" not in data:
+        data["stopwords"] = []
     return data
 
 
@@ -52,6 +54,16 @@ def update_keywords(chat_id, keywords, add=True):
     else:
         current.difference_update(keywords)
     data["keywords"] = list(current)
+    save_user_data(chat_id, data)
+
+def update_stopwords(chat_id, stopwords, add=True):
+    data = load_user_data(chat_id)
+    current = set(data.get("stopwords", []))
+    if add:
+        current.update(stopwords)
+    else:
+        current.difference_update(stopwords)
+    data["stopwords"] = list(current)
     save_user_data(chat_id, data)
 
 

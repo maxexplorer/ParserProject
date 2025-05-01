@@ -27,10 +27,20 @@ class ChatParserBot:
     def _register_handlers(self):
         """Регистрация всех хэндлеров"""
         self.dp.message(Command("start"))(self.start_handler)
-        self.dp.message(F.text.startswith("+") & ~F.text.startswith("+чат"))(self.add_keywords_handler)
-        self.dp.message(F.text.startswith("-") & ~F.text.startswith("-чат"))(self.remove_keywords_handler)
+        self.dp.message(
+            F.text.startswith("+") &
+            ~F.text.lower().startswith("+чат") &
+            ~F.text.lower().startswith("+стоп")
+        )(self.add_keywords_handler)
+        self.dp.message(
+            F.text.startswith("-") &
+            ~F.text.lower().startswith("-чат") &
+            ~F.text.lower().startswith("-стоп")
+        )(self.remove_keywords_handler)
         self.dp.message(F.text.lower().startswith("+чат"))(self.add_chats_handler)
         self.dp.message(F.text.lower().startswith("-чат"))(self.remove_chats_handler)
+        self.dp.message(F.text.lower().startswith("+стоп"))(self.add_stopwords_handler)
+        self.dp.message(F.text.lower().startswith("-стоп"))(self.remove_stopwords_handler)
         self.dp.message(F.text.lower() == "спам")(self.mark_spam_handler)
         self.dp.message(F.text.lower().startswith("слова"))(self.show_keywords_handler)
         self.dp.message(F.text.lower().startswith("чаты"))(self.show_chats_handler)
@@ -51,6 +61,7 @@ class ChatParserBot:
         user_data = load_user_data(chat_id)
         parser = TelegramKeywordParser(
             keywords=user_data.get("keywords", []),
+            stopwords=user_data.get("stopwords", []),
             chats=user_data.get("chats", []),
             exceptions=user_data.get("exceptions", []),
             bot=self.bot,
@@ -85,6 +96,30 @@ class ChatParserBot:
 
         await message.answer(f"❌ Удалены ключевые слова: {', '.join(keywords)}")
 
+    async def add_stopwords_handler(self, message: Message):
+        chat_id = str(message.chat.id)
+        raw_text = message.text[5:]
+
+        stopwords = [kw.strip().strip('"\'').lower() for kw in raw_text.split(',') if kw.strip()]
+        update_keywords(chat_id, stopwords, add=True)
+
+        if chat_id in self.active_parsers:
+            self.active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
+
+        await message.answer(f"✅ Добавлены слова исключения: {', '.join(stopwords)}")
+
+    async def remove_stopwords_handler(self, message: Message):
+        chat_id = str(message.chat.id)
+        raw_text = message.text[5:]
+
+        stopwords = [kw.strip().lower() for kw in raw_text.split(',') if kw.strip()]
+        update_keywords(chat_id, stopwords, add=False)
+
+        if chat_id in self.active_parsers:
+            self.active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
+
+        await message.answer(f"❌ Удалены слова исключения: {', '.join(stopwords)}")
+
     async def add_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
         chats = [self.process_chat_url(chat) for chat in message.text[4:].split()]
@@ -115,7 +150,7 @@ class ChatParserBot:
 
     async def remove_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
-        chats = [self.process_chat_url(chat) for chat in message.text[5:].split()]
+        chats = [self.process_chat_url(chat) for chat in message.text[4:].split()]
         leave_chats = []
 
         # Пытаемся отписаться от каждого чата через Telethon
