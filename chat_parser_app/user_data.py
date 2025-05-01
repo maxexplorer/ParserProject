@@ -56,16 +56,6 @@ def update_keywords(chat_id, keywords, add=True):
     data["keywords"] = list(current)
     save_user_data(chat_id, data)
 
-def update_stopwords(chat_id, stopwords, add=True):
-    data = load_user_data(chat_id)
-    current = set(data.get("stopwords", []))
-    if add:
-        current.update(stopwords)
-    else:
-        current.difference_update(stopwords)
-    data["stopwords"] = list(current)
-    save_user_data(chat_id, data)
-
 
 def update_chats(chat_id, chats, add=True):
     data = load_user_data(chat_id)
@@ -77,6 +67,17 @@ def update_chats(chat_id, chats, add=True):
         current.difference_update(chats)
 
     data["chats"] = list(current)
+    save_user_data(chat_id, data)
+
+
+def update_stopwords(chat_id, stopwords, add=True):
+    data = load_user_data(chat_id)
+    current = set(data.get("stopwords", []))
+    if add:
+        current.update(stopwords)
+    else:
+        current.difference_update(stopwords)
+    data["stopwords"] = list(current)
     save_user_data(chat_id, data)
 
 

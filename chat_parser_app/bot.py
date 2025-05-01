@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
 from parser import TelegramKeywordParser
-from user_data import load_user_data, update_keywords, update_chats, update_exceptions
+from user_data import load_user_data, update_keywords, update_chats, update_stopwords, update_exceptions
 
 
 class ChatParserBot:
@@ -22,7 +22,6 @@ class ChatParserBot:
         self.dp = Dispatcher()
         self.active_parsers = {}
         self._register_handlers()  # Регистрация обработчиков
-
 
     def _register_handlers(self):
         """Регистрация всех хэндлеров"""
@@ -102,7 +101,7 @@ class ChatParserBot:
         raw_text = message.text[5:]
 
         stopwords = [kw.strip().strip('"\'').lower() for kw in raw_text.split(',') if kw.strip()]
-        update_keywords(chat_id, stopwords, add=True)
+        update_stopwords(chat_id, stopwords, add=True)
 
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
@@ -114,7 +113,7 @@ class ChatParserBot:
         raw_text = message.text[5:]
 
         stopwords = [kw.strip().lower() for kw in raw_text.split(',') if kw.strip()]
-        update_keywords(chat_id, stopwords, add=False)
+        update_stopwords(chat_id, stopwords, add=False)
 
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(load_user_data(chat_id))
@@ -206,17 +205,20 @@ class ChatParserBot:
         # Ответ пользователю
         await message.answer(f"🚫 Пользователь {sender_value} добавлен в спам.")
 
-    async def show_keywords_handler(self, message: Message):
+    @staticmethod
+    async def show_keywords_handler(message: Message):
         chat_id = str(message.chat.id)
         keywords = load_user_data(chat_id).get("keywords", [])
         await message.answer("🔍 Ваши ключевые слова:\n" + ("\n".join(keywords) if keywords else "❌ Нет слов."))
 
-    async def show_stopwords_handler(self, message: Message):
-        chat_id = str(message.chat.id)
-        stopwords = load_user_data(chat_id).get("stopwords", [])
-        await message.answer("🔍 Ваши слова исключения:\n" + ("\n".join(stopwords) if stopwords else "❌ Нет слов."))
-
-    async def show_chats_handler(self, message: Message):
+    @staticmethod
+    async def show_chats_handler(message: Message):
         chat_id = str(message.chat.id)
         chats = load_user_data(chat_id).get("chats", [])
         await message.answer("📂 Ваши чаты:\n" + ("\n".join(chats) if chats else "❌ Нет чатов."))
+
+    @staticmethod
+    async def show_stopwords_handler(message: Message):
+        chat_id = str(message.chat.id)
+        stopwords = load_user_data(chat_id).get("stopwords", [])
+        await message.answer("🔍 Ваши слова исключения:\n" + ("\n".join(stopwords) if stopwords else "❌ Нет слов."))
