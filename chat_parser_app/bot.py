@@ -44,6 +44,7 @@ class ChatParserBot:
         self.dp.message(F.text.lower() == "спам")(self.mark_spam_handler)
         self.dp.message(F.text.lower().startswith("слова"))(self.show_keywords_handler)
         self.dp.message(F.text.lower().startswith("чаты"))(self.show_chats_handler)
+        self.dp.message(F.text.lower().startswith("исключения"))(self.show_stopwords_handler)
 
     def process_chat_url(self, chat_url: str) -> str:
         """Обрабатывает URL чата, убирая ненужные части."""
@@ -209,6 +210,11 @@ class ChatParserBot:
         chat_id = str(message.chat.id)
         keywords = load_user_data(chat_id).get("keywords", [])
         await message.answer("🔍 Ваши ключевые слова:\n" + ("\n".join(keywords) if keywords else "❌ Нет слов."))
+
+    async def show_stopwords_handler(self, message: Message):
+        chat_id = str(message.chat.id)
+        stopwords = load_user_data(chat_id).get("stopwords", [])
+        await message.answer("🔍 Ваши слова исключения:\n" + ("\n".join(stopwords) if stopwords else "❌ Нет слов."))
 
     async def show_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)

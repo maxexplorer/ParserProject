@@ -30,14 +30,14 @@ def get_session_path(chat_id):
 def load_user_data(chat_id):
     file_path = get_user_path(chat_id)
     if not os.path.exists(file_path):
-        return {"keywords": [], "stopwords": [], "chats": [], "exceptions": []}
+        return {"keywords": [], "chats": [], "stopwords": [], "exceptions": []}
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    # На случай, если старый файл без "exceptions" и "stopwords"
-    if "exceptions" not in data:
-        data["exceptions"] = []
+    # На случай, если старый файл без "stopwords" и(или) "exceptions"
     if "stopwords" not in data:
         data["stopwords"] = []
+    if "exceptions" not in data:
+        data["exceptions"] = []
     return data
 
 

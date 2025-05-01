@@ -10,8 +10,8 @@ from user_data import get_session_path
 class TelegramKeywordParser:
     def __init__(self, keywords, stopwords, chats, bot: Bot, chat_id, exceptions, print_dialogs=False):
         self.keywords = [kw.lower() for kw in keywords]
-        self.stopwords = [sw.lower() for sw in stopwords]
         self.chats = [chat.lower().lstrip("@") for chat in chats]
+        self.stopwords = [sw.lower() for sw in stopwords]
         self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
@@ -64,6 +64,10 @@ class TelegramKeywordParser:
 
             # Проверяем, что чат в списке отслеживаемых
             if (chat_username and chat_username.lower() not in self.chats) and (chat_id_str not in self.chats):
+                return
+
+            # Проверяем ключевые слова
+            if any(re.search(rf'\b{re.escape(sw)}\b', message_text_lower) for sw in self.stopwords):
                 return
 
             # Проверяем ключевые слова
@@ -121,6 +125,6 @@ class TelegramKeywordParser:
     def load_data_from_file(self, user_data):
         """Обновляет данные из файла"""
         self.keywords = [kw.lower() for kw in user_data.get("keywords", [])]
-        self.stopwords = [sw.lower() for sw in user_data.get("stopwords", [])]
         self.chats = [chat.lower().lstrip("@") for chat in user_data.get("chats", [])]
+        self.stopwords = [sw.lower() for sw in user_data.get("stopwords", [])]
         self.exceptions = user_data.get("exceptions", [])
