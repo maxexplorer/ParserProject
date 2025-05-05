@@ -3,6 +3,7 @@
 import re
 import asyncio
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+from telethon.tl.functions.messages import ImportChatInviteRequest
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -45,9 +46,17 @@ class ChatParserBot:
         self.dp.message(F.text.lower().startswith("чаты"))(self.show_chats_handler)
         self.dp.message(F.text.lower().startswith("исключения"))(self.show_stopwords_handler)
 
-    def process_chat_url(self, chat_url: str) -> str:
-        """Обрабатывает URL чата, убирая ненужные части."""
-        return chat_url.strip().replace("https://t.me/", "").replace("@", "")
+    @staticmethod
+    def process_chat_url(chat_url: str) -> tuple[str, str]:
+        """
+        Возвращает тип ('invite' или 'public') и очищенный идентификатор.
+        """
+        chat_url = chat_url.strip()
+        if 'joinchat/' in chat_url:
+            return 'invite', chat_url.split('joinchat/')[-1]
+        if '"/+"' in chat_url or chat_url.startswith('+'):
+            return 'invite', chat_url.split('/')[-1].lstrip('+')
+        return 'public', chat_url.replace('https://t.me/', '').replace('@', '')
 
     async def start_handler(self, message: Message):
         chat_id = str(message.chat.id)
@@ -122,23 +131,28 @@ class ChatParserBot:
 
     async def add_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
-        chats = [self.process_chat_url(chat) for chat in message.text[4:].split()]
+        chat_inputs = [self.process_chat_url(chat) for chat in message.text[4:].split() if chat.strip()]
+
         join_chats = []
 
-        # Пытаемся подписаться на каждый чат через Telethon
         if chat_id in self.active_parsers:
             client = self.active_parsers[chat_id].client
-            for chat in chats:
-                try:
-                    chat_entity = await client.get_entity(chat)
-                    if chat_entity:
-                        await client(JoinChannelRequest(chat_entity))
-                        join_chats.append(chat)
-                        await asyncio.sleep(1)  # небольшая задержка, чтобы избежать флуд-лимита
-                except Exception as e:
-                    await message.answer(f"⚠️ Ошибка подписки на <code>{chat}</code>: {e}")
-                    continue
 
+            for chat_type, chat_value in chat_inputs:
+                try:
+                    if chat_type == "invite":
+                        await client(ImportChatInviteRequest(chat_value))
+                    else:  # "public"
+                        chat_entity = await client.get_entity(chat_value)
+                        if chat_entity:
+                            await client(JoinChannelRequest(chat_entity))
+
+                    join_chats.append(chat_value)
+                    await asyncio.sleep(3)
+
+                except Exception as e:
+                    await message.answer(f"⚠️ Ошибка подписки на <code>{chat_value}</code>: {e}")
+                    continue
         # Обновляем локальные данные
         update_chats(chat_id, join_chats)
 
@@ -146,7 +160,9 @@ class ChatParserBot:
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-        await message.answer(f"📌 Добавлены и подписаны на чаты:\n{chr(10).join(join_chats)}")
+        if join_chats:
+            await message.answer(f"📌 Добавлены и подписаны на чаты:\n" +
+                                 "\n".join(f"<code>{chat}</code>" for chat in join_chats))
 
     async def remove_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
