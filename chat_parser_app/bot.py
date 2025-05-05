@@ -166,21 +166,26 @@ class ChatParserBot:
 
     async def remove_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
-        chats = [self.process_chat_url(chat) for chat in message.text[4:].split()]
+        chat_inputs = [self.process_chat_url(chat) for chat in message.text[4:].split()]
         leave_chats = []
 
-        # Пытаемся отписаться от каждого чата через Telethon
         if chat_id in self.active_parsers:
             client = self.active_parsers[chat_id].client
-            for chat in chats:
+            for chat_type, chat_value in chat_inputs:
+                if chat_type == "invite":
+                    await message.answer(
+                        f"⚠️ Невозможно отписаться от чата по пригласительной ссылке <code>{chat_value}</code>. "
+                        "Для отписки укажите username или ссылку на канал.")
+                    continue
+
                 try:
-                    chat_entity = await client.get_entity(chat)
+                    chat_entity = await client.get_entity(chat_value)
                     if chat_entity:
                         await client(LeaveChannelRequest(chat_entity))
-                        leave_chats.append(chat)
-                        await asyncio.sleep(1)  # чтобы не попасть под лимиты
+                        leave_chats.append(chat_value)
+                        await asyncio.sleep(1)
                 except Exception as e:
-                    await message.answer(f"⚠️ Ошибка отписки на <code>{chat}</code>: {e}")
+                    await message.answer(f"⚠️ Ошибка отписки от <code>{chat_value}</code>: {e}")
                     continue
 
         # Обновляем локальные данные
@@ -190,7 +195,9 @@ class ChatParserBot:
         if chat_id in self.active_parsers:
             self.active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
-        await message.answer(f"🗑️ Удалены и отписаны от чатов:\n{chr(10).join(leave_chats)}")
+        if leave_chats:
+            await message.answer(f"📌 🗑️ Удалены и отписаны от чатов:\n" +
+                                 "\n".join(f"<code>{chat}</code>" for chat in leave_chats))
 
     async def mark_spam_handler(self, message: Message):
         if not message.reply_to_message:
