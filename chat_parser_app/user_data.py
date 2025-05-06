@@ -90,3 +90,21 @@ def update_exceptions(chat_id, user_ids, add=True):
         current.difference_update(user_ids)
     data["exceptions"] = list(current)
     save_user_data(chat_id, data)
+
+
+def split_message_by_lines(header: str, lines: list[str], max_length: int = 4096) -> list[str]:
+    parts = []
+    current = header + "\n"
+
+    for line in lines:
+        # +1 за \n
+        if len(current) + len(line) + 1 < max_length:
+            current += line + "\n"
+        else:
+            parts.append(current.strip())
+            current = line + "\n"
+
+    if current.strip():
+        parts.append(current.strip())
+
+    return parts

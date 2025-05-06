@@ -15,7 +15,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
 from parser import TelegramKeywordParser
-from user_data import load_user_data, update_keywords, update_chats, update_stopwords, update_exceptions
+from user_data import load_user_data, update_keywords, update_chats, update_stopwords, update_exceptions, split_message_by_lines
 
 
 class ChatParserBot:
@@ -250,16 +250,38 @@ class ChatParserBot:
     async def show_keywords_handler(message: Message):
         chat_id = str(message.chat.id)
         keywords = load_user_data(chat_id).get("keywords", [])
-        await message.answer("🔍 Ваши ключевые слова:\n" + ("\n".join(keywords) if keywords else "❌ Нет слов."))
+
+        if not keywords:
+            await message.answer("❌ Нет слов.")
+            return
+
+        parts = split_message_by_lines("🔍 Ваши ключевые слова:", keywords)
+        for part in parts:
+            await message.answer(part)
 
     @staticmethod
     async def show_chats_handler(message: Message):
         chat_id = str(message.chat.id)
         chats = load_user_data(chat_id).get("chats", [])
-        await message.answer("📂 Ваши чаты:\n" + ("\n".join(chats) if chats else "❌ Нет чатов."))
+
+        if not chats:
+            await message.answer("❌ Нет чатов.")
+            return
+
+        parts = split_message_by_lines("📂 Ваши чаты:", chats)
+        for part in parts:
+            await message.answer(part)
 
     @staticmethod
     async def show_stopwords_handler(message: Message):
         chat_id = str(message.chat.id)
         stopwords = load_user_data(chat_id).get("stopwords", [])
-        await message.answer("🔍 Ваши слова исключения:\n" + ("\n".join(stopwords) if stopwords else "❌ Нет слов."))
+
+        if not stopwords:
+            await message.answer("❌ Нет слов.")
+            return
+
+        parts = split_message_by_lines("🛑 Ваши слова исключения:", stopwords)
+        for part in parts:
+            await message.answer(part)
+
