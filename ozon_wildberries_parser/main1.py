@@ -279,7 +279,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     row[cell.column - 3].value = quantity
 
                     try:
-                        button_del1 = driver.find_element(By.XPATH, '//div[contains(text(), "Удалить выбранные")]')
+                        button_del1 = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[1]/div/div/div[2]/div[4]/div[1]/div[4]/div/div[2]/div/div[1]/div[2]/div/div/div/div/div[2]/div/div[2]/div/div/button[2]')
                         button_del1.click()
                     except Exception as ex:
                         # print(f'button_del1: {ex}')
