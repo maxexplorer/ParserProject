@@ -1,9 +1,13 @@
 # bot.py
 
 import re
+
 import asyncio
+
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from telethon.tl.functions.messages import ImportChatInviteRequest
+from telethon.errors import FloodWaitError
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -132,7 +136,6 @@ class ChatParserBot:
     async def add_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
         chat_inputs = [self.process_chat_url(chat) for chat in message.text[4:].split() if chat.strip()]
-
         join_chats = []
 
         if chat_id in self.active_parsers:
@@ -147,12 +150,25 @@ class ChatParserBot:
                         if chat_entity:
                             await client(JoinChannelRequest(chat_entity))
 
+                    # Добавляем даже если вход в чат еще не подтвержден
                     join_chats.append(chat_value)
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(20)
+
+                except FloodWaitError as e:
+                    await message.answer(f"⏳ Превышен лимит. Ожидаю {e.seconds} секунд перед продолжением...")
+                    await asyncio.sleep(e.seconds)
+                    join_chats.append(chat_value)  # Всё равно добавим, т.к. запрос был отправлен
+                    continue
 
                 except Exception as e:
-                    await message.answer(f"⚠️ Ошибка подписки на <code>{chat_value}</code>: {e}")
+                    # Обработка случая, когда заявка отправлена, но бот ещё не в чате
+                    if "You have successfully requested to join this chat" in str(e):
+                        join_chats.append(chat_value)
+                        await message.answer(f"📬 Заявка на вступление в <code>{chat_value}</code> отправлена.")
+                    else:
+                        await message.answer(f"⚠️ Ошибка подписки на <code>{chat_value}</code>: {e}")
                     continue
+
         # Обновляем локальные данные
         update_chats(chat_id, join_chats)
 
@@ -161,8 +177,10 @@ class ChatParserBot:
             self.active_parsers[chat_id].load_data_from_file(user_data=load_user_data(chat_id))
 
         if join_chats:
-            await message.answer(f"📌 Добавлены и подписаны на чаты:\n" +
-                                 "\n".join(f"<code>{chat}</code>" for chat in join_chats))
+            await message.answer(
+                f"📌 Добавлены и подписаны на чаты:\n" +
+                "\n".join(f"<code>{chat}</code>" for chat in join_chats)
+            )
 
     async def remove_chats_handler(self, message: Message):
         chat_id = str(message.chat.id)
