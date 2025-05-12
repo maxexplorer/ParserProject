@@ -10,19 +10,19 @@ from user_data import get_session_path
 class TelegramKeywordParser:
     def __init__(self, keywords, stopwords, chats, bot: Bot, chat_id, exceptions, print_dialogs=False):
         self.keywords = [kw.lower() for kw in keywords]
-        self.chats = [chat.lower().lstrip("@") for chat in chats]
+        self.chats = [chat.lower().lstrip('@') for chat in chats]
         self.stopwords = [sw.lower() for sw in stopwords]
         self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
-        self.client = TelegramClient(f"{get_session_path(chat_id)}", api_id, api_hash)
+        self.client = TelegramClient(f'{get_session_path(chat_id)}', api_id, api_hash)
         self.print_dialogs = print_dialogs
 
     async def run(self):
         try:
             await self.client.start()
             self.client.add_event_handler(self._new_message_handler, events.NewMessage())
-            print(f"[→] Парсер запущен для chat_id={self.chat_id}")
+            print(f'[→] Парсер запущен для chat_id={self.chat_id}')
 
             if self.print_dialogs:
                 # Вызов функции для получения списка всех чатов
@@ -30,7 +30,7 @@ class TelegramKeywordParser:
 
             await self.client.run_until_disconnected()
         except Exception as e:
-            print(f"[!] Ошибка в парсере: {e}")
+            print(f'[!] Ошибка в парсере: {e}')
             await self.client.disconnect()
 
     async def _new_message_handler(self, event):
@@ -82,49 +82,49 @@ class TelegramKeywordParser:
                     message_text=message_text)
                 )
         except Exception as e:
-            print(f"[!] Ошибка обработки сообщения: {e}")
+            print(f'[!] Ошибка обработки сообщения: {e}')
 
     async def _send_result(self, chat_id_str, chat_username, chat_title, sender_id, sender_username, message_id,
                            message_text):
         try:
-            chat_link = f"https://t.me/{chat_username}" if chat_username else None
+            chat_link = f'https://t.me/{chat_username}' if chat_username else None
             message_link = (
-                f"https://t.me/{chat_username}/{message_id}"
-                if chat_username else f"https://t.me/c/{chat_id_str[4:]}/{message_id}"
+                f'https://t.me/{chat_username}/{message_id}'
+                if chat_username else f'https://t.me/c/{chat_id_str[4:]}/{message_id}'
             )
-            user_link = f"@{sender_username}" if sender_username else f"{sender_id}"
+            user_link = f'@{sender_username}' if sender_username else f'{sender_id}'
 
-            chat_line = f'Чат: <a href="{chat_link}">{chat_title}</a>' if chat_link else f"Чат: {chat_title}"
+            chat_line = f'Чат: <a href="{chat_link}">{chat_title}</a>' if chat_link else f'Чат: {chat_title}'
 
             formatted = (
-                f"{chat_line}\n"
-                f"Автор: {user_link}\n"
-                f"Ссылка: <a href=\"{message_link}\">Сообщение</a>\n"
-                f"Текст:\n{message_text}\n\n"
+                f'{chat_line}\n'
+                f'Автор: {user_link}\n'
+                f'Ссылка: <a href=\'{message_link}\'>Сообщение</a>\n'
+                f'Текст:\n{message_text}\n\n'
             )
 
             await self.bot.send_message(
                 chat_id=self.chat_id,
                 text=formatted,
                 disable_web_page_preview=True,  # Убирает превью ссылки
-                parse_mode="HTML"  # Если нужно форматирование HTML
+                parse_mode='HTML'  # Если нужно форматирование HTML
             )
         except Exception as e:
-            print(f"[!] Ошибка отправки уведомления: {e}")
+            print(f'[!] Ошибка отправки уведомления: {e}')
 
     async def print_all_dialogs(self):
         """Функция для вывода всех доступных чатов"""
-        print("\n[→] Список всех доступных чатов:")
+        print('\n[→] Список всех доступных чатов:')
         async for dialog in self.client.iter_dialogs():
             chat = dialog.entity
             chat_username = getattr(chat, 'username', None)
             chat_name = dialog.name
             chat_id = dialog.id
-            print(f"- {chat_name} | ID: {chat_id} | Username: {chat_username or '—'}")
+            print(f'- {chat_name} | ID: {chat_id} | Username: {chat_username or "—"}')
 
     def load_data_from_file(self, user_data):
         """Обновляет данные из файла"""
-        self.keywords = [kw.lower() for kw in user_data.get("keywords", [])]
-        self.chats = [chat.lower().lstrip("@") for chat in user_data.get("chats", [])]
-        self.stopwords = [sw.lower() for sw in user_data.get("stopwords", [])]
-        self.exceptions = user_data.get("exceptions", [])
+        self.keywords = [kw.lower() for kw in user_data.get('keywords', [])]
+        self.chats = [chat.lower().lstrip('@') for chat in user_data.get('chats', [])]
+        self.stopwords = [sw.lower() for sw in user_data.get('stopwords', [])]
+        self.exceptions = user_data.get('exceptions', [])
