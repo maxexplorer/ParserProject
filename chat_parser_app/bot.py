@@ -16,7 +16,7 @@ from aiogram.client.default import DefaultBotProperties
 
 from parser import TelegramKeywordParser
 from user_data import (load_user_data, update_keywords, update_chats, update_stopwords, update_exceptions,
-                       split_message_by_lines, check_chat_subscription)
+                       split_message_by_lines, check_subscription_chat)
 
 
 class ChatParserBot:
@@ -143,7 +143,7 @@ class ChatParserBot:
             client = self.active_parsers[chat_id].client
 
             for chat_type, chat_value in chat_inputs:
-                if check_chat_subscription(chat_id, chat_value):
+                if check_subscription_chat(chat_id, chat_value):
                     await message.answer(
                         f'🔔 Подписка на чат <code>{chat_value}</code> уже активна.')
                     continue

@@ -110,7 +110,7 @@ def split_message_by_lines(header: str, lines: list[str], max_length: int = 4096
     return parts
 
 
-def check_chat_subscription(chat_id, chat):
+def check_subscription_chat(chat_id, chat):
     chats = load_user_data(chat_id).get('chats', [])
 
     return chat in chats
