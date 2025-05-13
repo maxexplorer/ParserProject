@@ -5,17 +5,17 @@ from datetime import datetime
 from random import randint
 from urllib.parse import urlparse, urlunparse
 
+import requests
 from requests import Session
 
 from new_undetected_chromedriver import Chrome
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 import openpyxl
-
-import requests
 
 start_time = datetime.now()
 
@@ -57,16 +57,17 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
             input_text = driver.find_element(By.CSS_SELECTOR, 'input[placeholder="Искать на Ozon"]')
             input_text.clear()
             input_text.send_keys(text)
+            input_text.send_keys(Keys.ENTER)
             time.sleep(3)
         except Exception as ex:
             print(f'input_text: {ex}')
-
-        try:
-            search_product = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
-            search_product.click()
-            time.sleep(3)
-        except Exception as ex:
-            print(f'search_product: {ex}')
+        #
+        # try:
+        #     search_product = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
+        #     search_product.click()
+        #     time.sleep(3)
+        # except Exception as ex:
+        #     print(f'search_product: {ex}')
 
         for i in range(pages):
             # driver.execute_script("window.scrollTo(0, 4000);")
