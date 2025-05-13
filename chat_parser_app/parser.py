@@ -1,10 +1,11 @@
 # parser.py
 
 import re
+
 from aiogram import Bot
-from telethon import TelegramClient, events
-from configs.config import api_id, api_hash
-from user_data import get_session_path
+from telethon import events
+
+from telegram_client import get_client
 
 
 class TelegramKeywordParser:
@@ -15,7 +16,7 @@ class TelegramKeywordParser:
         self.exceptions = [ex for ex in exceptions]
         self.bot = bot
         self.chat_id = chat_id
-        self.client = TelegramClient(f'{get_session_path(chat_id)}', api_id, api_hash)
+        self.client = get_client(chat_id)
         self.print_dialogs = print_dialogs
 
     async def run(self):

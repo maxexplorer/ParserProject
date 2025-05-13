@@ -17,6 +17,7 @@ from aiogram.client.default import DefaultBotProperties
 from parser import TelegramKeywordParser
 from user_data import (load_user_data, update_keywords, update_chats, update_stopwords, update_exceptions,
                        split_message_by_lines, check_subscription_chat)
+from telegram_client import get_client
 
 
 class ChatParserBot:
@@ -50,6 +51,7 @@ class ChatParserBot:
         self.dp.message(F.text.lower().startswith('слова'))(self.show_keywords_handler)
         self.dp.message(F.text.lower().startswith('чаты'))(self.show_chats_handler)
         self.dp.message(F.text.lower().startswith('исключения'))(self.show_stopwords_handler)
+        self.dp.message(F.text.lower().startswith('диалоги'))(self.show_dialogs_handler)
 
     @staticmethod
     def process_chat_url(chat_url: str) -> tuple[str, str]:
@@ -291,3 +293,23 @@ class ChatParserBot:
         for part in parts:
             await message.answer(part)
 
+    @staticmethod
+    async def show_dialogs_handler(message: Message):
+        chat_id = str(message.chat.id)
+        try:
+            client = get_client(chat_id)
+
+            dialogs = []
+
+            async for dialog in client.iter_dialogs():
+                dialogs.append(dialog.name)
+
+            if dialogs:
+                parts = split_message_by_lines('📋 Ваши диалоги:', dialogs)
+                for part in parts:
+                    await message.answer(part)
+            else:
+                await message.answer('❌ Диалогов не найдено.')
+
+        except Exception as e:
+            await message.answer(f'⚠️ Ошибка при получении диалогов: {e}')
