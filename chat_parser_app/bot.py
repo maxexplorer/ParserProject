@@ -302,7 +302,10 @@ class ChatParserBot:
             dialogs = []
 
             async for dialog in client.iter_dialogs():
-                dialogs.append(dialog.name)
+                chat = dialog.entity
+                chat_username = getattr(chat, 'username', None)
+                chat_name = dialog.name
+                dialogs.append(f'{chat_name}: @{chat_username}' if chat_username else f'{chat_name}: -')
 
             if dialogs:
                 parts = split_message_by_lines('📋 Ваши диалоги:', dialogs)
