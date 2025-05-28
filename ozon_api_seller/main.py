@@ -1,9 +1,10 @@
-import time
 import os
+import time
+from datetime import datetime, timedelta
 
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
+
 from configs.config import CLIENT_ID, API_KEY, API_URL
 
 
@@ -67,10 +68,14 @@ def extract_data(postings: list):
     return data
 
 
-def save_excel(data, filename='results/ozon_orders.xlsx'):
+
+def save_excel(data, filename_prefix='results/ozon_orders'):
+    now_str = datetime.now().strftime('%Y%m%d_%H%M')  # формат: ГГГГММДД_ЧЧММ
+    filename = f"{filename_prefix}_{now_str}.xlsx"
+
     folder = os.path.dirname(filename)
     if folder:
-        os.makedirs(folder, exist_ok=True)  # создаём папку(и), если нет (без лишней проверки)
+        os.makedirs(folder, exist_ok=True)  # создаём папку(и), если нет
 
     df = pd.DataFrame(data)
     df.to_excel(filename, index=False)
