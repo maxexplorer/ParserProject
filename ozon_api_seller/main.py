@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime, timedelta
+import glob
 
 import requests
 import pandas as pd
@@ -9,7 +10,6 @@ from configs.config import CLIENT_ID, API_KEY, API_URL
 
 
 def get_cutoff_range(days: int = 7):
-    """Возвращает дату cutoff_from и cutoff_to в формате ISO8601"""
     cutoff_to = datetime.utcnow()
     cutoff_from = cutoff_to - timedelta(days=days)
     return cutoff_from.isoformat() + 'Z', cutoff_to.isoformat() + 'Z'
@@ -50,17 +50,42 @@ def fetch_orders(cutoff_from: str, cutoff_to: str):
     return None
 
 
-def extract_data(postings: list):
+def load_article_prices_from_excel(folder='data'):
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
+    if not excel_files:
+        print('❗ В папке data/ не найдено .xlsx файлов.')
+        return {}
+
+    path = excel_files[0]  # Берём первый найденный
+    print(f'📄 Загружаю Excel: {path}')
+    df = pd.read_excel(path)
+    df.columns = df.columns.str.strip()
+
+    df = df.dropna(subset=['Артикул', df.columns[2]])
+
+    return {
+        str(row['Артикул']).strip(): row.iloc[2]
+        for _, row in df.iterrows()
+    }
+
+
+def extract_data(postings: list, article_prices: dict):
     data = []
     for post in postings:
         product = post.get('products', [{}])[0]
-        sku = product['sku']
+        offer_id = str(product['offer_id']).strip()
+
+        # Пропускаем, если цены нет в article_prices
+        if offer_id not in article_prices:
+            continue
+
         name = product['name']
-        price = product['price']
         quantity = product['quantity']
 
+        price = article_prices[offer_id]
+
         data.append({
-            'Артикул': sku,
+            'Артикул': offer_id,
             'Цена': price,
             'Наименование': name,
             'Количество': quantity
@@ -70,12 +95,12 @@ def extract_data(postings: list):
 
 
 def save_excel(data, filename_prefix='results/ozon_orders'):
-    now_str = datetime.now().strftime('%Y%m%d_%H%M')  # формат: ГГГГММДД_ЧЧММ
+    now_str = datetime.now().strftime('%Y%m%d_%H%M')
     filename = f"{filename_prefix}_{now_str}.xlsx"
 
     folder = os.path.dirname(filename)
     if folder:
-        os.makedirs(folder, exist_ok=True)  # создаём папку(и), если нет
+        os.makedirs(folder, exist_ok=True)
 
     df = pd.DataFrame(data)
     df.to_excel(filename, index=False)
@@ -96,7 +121,8 @@ def main():
         print('❗ Заказов со статусом "awaiting_packaging" не найдено.')
         return
 
-    data = extract_data(postings)
+    article_prices = load_article_prices_from_excel()
+    data = extract_data(postings, article_prices)
     save_excel(data)
 
 
