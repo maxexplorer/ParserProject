@@ -86,12 +86,11 @@ def extract_data(postings: list, article_prices: dict):
 
         data.append({
             'Артикул': offer_id,
-            'Цена': price,
             'Наименование': name,
+            'Цена': price,
             'Количество': quantity
         })
     return data
-
 
 
 def save_excel(data, filename_prefix='results/ozon_orders'):
