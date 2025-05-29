@@ -107,7 +107,7 @@ def save_result(new_df: DataFrame, output_dir: str = 'results') -> str:
     :return: Путь к сохранённому файлу
     """
     now_str = datetime.now().strftime('%Y%m%d_%H%M')
-    filename = f"result_{now_str}.xlsx"
+    filename = f"compare_tables_{now_str}.xlsx"
     output_path = os.path.join(output_dir, filename)
 
     if output_dir:
