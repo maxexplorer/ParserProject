@@ -75,24 +75,27 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
 
             time.sleep(randint(2, 3))
 
-        try:
-            data_items = driver.find_elements(By.CSS_SELECTOR, 'a[data-prerender="true"].tile-clickable-element')
-
-        except Exception as ex:
-            print(f'data_items: - {ex}')
-            data_items = []
-
-        for item in data_items:
             try:
-                product_url = f"https://www.ozon.ru{item.get_attribute('href')}"
+                data_items = driver.find_elements(By.CSS_SELECTOR, 'a[data-prerender="true"].tile-clickable-element')
 
-                product_id = get_cleaned_url(product_url=product_url)
+            except Exception as ex:
+                print(f'data_items: - {ex}')
+                data_items = []
 
-            except Exception:
-                continue
+            for item in data_items:
+                try:
+                    product_url = f"https://www.ozon.ru{item.get_attribute('href')}"
 
-            products_ids_list.append(product_id)
-            products_ids_set.add(product_id)
+                    product_id = get_cleaned_url(product_url=product_url)
+
+                except Exception:
+                    continue
+
+                if product_id in products_ids_set:
+                    continue
+
+                products_ids_list.append(product_id)
+                products_ids_set.add(product_id)
 
         print(f'Получено: {len(products_ids_set)} ids')
 
@@ -306,7 +309,10 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     except Exception as ex:
         print(ex)
     finally:
-        workbook.save('data/result_data.xlsx')
+        if not os.path.exists('results'):
+            os.makedirs('results')
+
+        workbook.save('results/result_data.xlsx')
 
 
 def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
