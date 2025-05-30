@@ -9,13 +9,19 @@ import pandas as pd
 from configs.config import CLIENT_ID, API_KEY, API_URL
 
 
-def get_cutoff_range(days: int = 7):
+def get_cutoff_range(days: int = 7) -> tuple[str, str]:
+    """
+    Возвращает временной диапазон (от, до) в ISO формате за последние `days` дней.
+    """
     cutoff_to = datetime.utcnow()
     cutoff_from = cutoff_to - timedelta(days=days)
     return cutoff_from.isoformat() + 'Z', cutoff_to.isoformat() + 'Z'
 
 
-def fetch_orders(cutoff_from: str, cutoff_to: str):
+def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
+    """
+    Выполняет POST-запрос к API Ozon для получения заказов со статусом "awaiting_packaging".
+    """
     headers = {
         'Client-Id': CLIENT_ID,
         'Api-Key': API_KEY
@@ -39,7 +45,7 @@ def fetch_orders(cutoff_from: str, cutoff_to: str):
     }
 
     try:
-        time.sleep(1)
+        time.sleep(1)  # Пауза между запросами по требованиям API
         response = requests.post(API_URL, headers=headers, json=json)
         response.raise_for_status()
         return response.json()
@@ -50,17 +56,20 @@ def fetch_orders(cutoff_from: str, cutoff_to: str):
     return None
 
 
-def load_article_prices_from_excel(folder='data'):
+def load_article_prices_from_excel(folder: str = 'data') -> dict:
+    """
+    Загружает артикулы и цены из первого найденного Excel-файла в папке `folder`.
+    Возвращает словарь вида {артикул: цена}.
+    """
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')
         return {}
 
-    path = excel_files[0]  # Берём первый найденный
+    path = excel_files[0]
     print(f'📄 Загружаю Excel: {path}')
     df = pd.read_excel(path)
     df.columns = df.columns.str.strip()
-
     df = df.dropna(subset=['Артикул', df.columns[2]])
 
     return {
@@ -69,31 +78,47 @@ def load_article_prices_from_excel(folder='data'):
     }
 
 
-def extract_data(postings: list, article_prices: dict):
-    data = []
+def extract_data(postings: list, article_prices: dict) -> list[dict]:
+    """
+    Извлекает данные из списка заказов и агрегирует одинаковые товары:
+    если у товаров совпадают артикул, название и цена — их количество суммируется.
+    """
+    grouped = {}
+
     for post in postings:
         product = post.get('products', [{}])[0]
-        offer_id = str(product['offer_id']).strip()
+        offer_id = str(product.get('offer_id', '')).strip()
 
-        # Пропускаем, если цены нет в article_prices
         if offer_id not in article_prices:
-            continue
+            continue  # Пропускаем товары без известной цены
 
-        name = product['name']
-        quantity = product['quantity']
-
+        name = product.get('name', '').strip()
+        quantity = int(product.get('quantity', 0))
         price = article_prices[offer_id]
 
-        data.append({
-            'Артикул': offer_id,
-            'Наименование': name,
-            'Цена': price,
-            'Количество': quantity
-        })
-    return data
+        key = (offer_id, name, price)  # Уникальный ключ для группировки
+
+        if key in grouped:
+            grouped[key] += quantity
+        else:
+            grouped[key] = quantity
+
+    # Преобразуем в список словарей
+    return [
+        {
+            'Артикул': k[0],
+            'Наименование': k[1],
+            'Цена': k[2],
+            'Количество': v
+        }
+        for k, v in grouped.items()
+    ]
 
 
-def save_excel(data, filename_prefix='results/ozon_orders'):
+def save_excel(data: list[dict], filename_prefix: str = 'results/ozon_orders') -> None:
+    """
+    Сохраняет переданные данные в Excel-файл с текущей датой и временем в имени.
+    """
     now_str = datetime.now().strftime('%Y%m%d_%H%M')
     filename = f"{filename_prefix}_{now_str}.xlsx"
 
@@ -106,7 +131,14 @@ def save_excel(data, filename_prefix='results/ozon_orders'):
     print(f'✅ Данные сохранены в {filename}')
 
 
-def main():
+def main() -> None:
+    """
+    Главная функция:
+    - Получает заказы с Ozon
+    - Загружает цены из Excel
+    - Извлекает и агрегирует данные
+    - Сохраняет в Excel
+    """
     print('📦 Получение заказов с Ozon...')
     cutoff_from, cutoff_to = get_cutoff_range(7)
     print(f'⏱ Период: {cutoff_from} → {cutoff_to}')
@@ -122,6 +154,10 @@ def main():
 
     article_prices = load_article_prices_from_excel()
     data = extract_data(postings, article_prices)
+    if not data:
+        print('❗ Нет подходящих товаров для сохранения.')
+        return
+
     save_excel(data)
 
 
