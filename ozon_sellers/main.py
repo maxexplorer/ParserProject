@@ -45,7 +45,7 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
             driver.get(url=page_url)
 
             # Ждём либо нужный элемент, либо текст об ошибке
-            name = WebDriverWait(driver, 15).until(
+            WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, 'header[data-widget="header"]')
                 )
@@ -68,6 +68,11 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
 
         if not products_items:
             continue
+
+        try:
+            name = soup.find('span', class_='tsHeadline600Large').text.strip()
+        except Exception:
+            name = None
 
         try:
             button = driver.find_element(By.XPATH,
