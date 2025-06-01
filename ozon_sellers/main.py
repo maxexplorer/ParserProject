@@ -74,33 +74,10 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
         except Exception:
             name = None
 
-        try:
-            button = driver.find_element(By.XPATH,
-                                         '/html/body/div[1]/div/div[1]/div/div/div/div[1]/div/div/div[2]/button[3]')
-            button.click()
-            WebDriverWait(driver, 15).until(
-                EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Понятно")]'))
-            )
-        except Exception:
-            pass
-
-        try:
-            spans = driver.find_elements(By.XPATH, '//span[contains(@class, "tsBody400Small")]')
-            for span in spans:
-                match = re.search(r'\b\d{13,}\b', span.text)
-                if match:
-                    psrn = match.group()
-                    break
-            else:
-                psrn = None
-        except Exception:
-            psrn = None
-
         result_list.append(
             {
                 'Ссылка': page_url,
                 'Магазин': name,
-                'ОГРН': psrn
             }
         )
 
@@ -112,6 +89,33 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
     # Записываем оставшиеся данные в Excel
     if result_list:
         save_excel(data=result_list)
+
+
+# Функция для получения информации о магазине
+def get_shop_info(driver: undetectedChrome):
+    try:
+        button = driver.find_element(By.XPATH,
+                                     '/html/body/div[1]/div/div[1]/div/div/div/div[1]/div/div/div[2]/button[3]')
+        button.click()
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Понятно")]'))
+        )
+    except Exception:
+        pass
+
+    try:
+        spans = driver.find_elements(By.XPATH, '//span[contains(@class, "tsBody400Small")]')
+        for span in spans:
+            match = re.search(r'\b\d{13,}\b', span.text)
+            if match:
+                psrn = match.group()
+                break
+        else:
+            psrn = None
+    except Exception:
+        psrn = None
+
+    return psrn
 
 
 # Функция для записи данных в формат xlsx
