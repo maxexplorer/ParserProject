@@ -39,7 +39,7 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
     result_list = []
     batch_size = 100
 
-    for page in range(1, 1_000_000):
+    for page in range(1, 100_000):
         page_url = f"{url}{page}"
         try:
             driver.get(url=page_url)
@@ -87,7 +87,7 @@ def get_products_data(driver: undetectedChrome, url: str) -> None:
         try:
             spans = driver.find_elements(By.XPATH, '//span[contains(@class, "tsBody400Small")]')
             for span in spans:
-                match = re.search(r'\b\d{13}\b', span.text)
+                match = re.search(r'\b\d{13,}\b', span.text)
                 if match:
                     psrn = match.group()
                     break
