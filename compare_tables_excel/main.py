@@ -8,32 +8,29 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 
 # Цвета для выделения изменений
-ADDED_FILL = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Зелёный — добавленные строки
-REMOVED_FILL = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")  # Красный — удалённые строки
-CHANGED_FILL = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")  # Жёлтый — изменённые ячейки
+ADDED_FILL = PatternFill(start_color="8ED98E", end_color="8ED98E", fill_type="solid")   # Зелёный — добавленные строки
+REMOVED_FILL = PatternFill(start_color="FF6666", end_color="FF6666", fill_type="solid")   # Красный — удалённые строки
+CHANGED_FILL = PatternFill(start_color="FFD54F", end_color="FFD54F", fill_type="solid")   # Жёлтый — изменённые ячейки
 
+
+# Цвета для процентных изменений цены
+PRICE_CHANGE_GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")   # 1-3%
+PRICE_CHANGE_YELLOW = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")  # 3-5%
+PRICE_CHANGE_RED = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")     # >5%
+
+price_columns = [
+    "Цена при заказе от 10 000 руб.",
+    "Цена при заказе от 100 000 руб.",
+    "Цена при заказе от 300 000 руб."
+]
 
 def load_excel(path: str) -> DataFrame:
-    """
-    Загружает Excel-файл в DataFrame, очищая пробелы в заголовках и заменяя NaN на пустые строки.
-
-    :param path: Путь к Excel-файлу
-    :return: DataFrame с очищенными данными
-    """
     df = pd.read_excel(path, dtype=str)
     df.columns = df.columns.str.strip()
     return df.fillna('')
 
 
 def compare_data(old_df: DataFrame, new_df: DataFrame, key_column: str = 'Артикул') -> tuple:
-    """
-    Сравнивает два DataFrame по ключевому столбцу, определяя добавленные, удалённые и изменённые строки.
-
-    :param old_df: Старый DataFrame
-    :param new_df: Новый DataFrame
-    :param key_column: Название ключевого столбца (по умолчанию 'Артикул')
-    :return: Кортеж из (добавленные ключи, удалённые ключи, словарь изменений)
-    """
     old_df = old_df.set_index(key_column)
     new_df = new_df.set_index(key_column)
 
@@ -56,20 +53,47 @@ def compare_data(old_df: DataFrame, new_df: DataFrame, key_column: str = 'Арт
     return added_keys, removed_keys, changes
 
 
-def apply_formatting(result_path: str, added: list, removed: list, changed: dict, key_column: str = 'Артикул') -> None:
-    """
-    Применяет цветовое форматирование к Excel-файлу на основе сравнения данных.
+def add_price_change_columns_multiple(old_df: DataFrame, new_df: DataFrame, price_columns: list, key_column: str = 'Артикул') -> DataFrame:
+    old_df = old_df.set_index(key_column)
+    new_df = new_df.set_index(key_column)
 
-    :param result_path: Путь к результирующему Excel-файлу
-    :param added: Список добавленных ключей
-    :param removed: Список удалённых ключей
-    :param changed: Словарь изменений по ключам и столбцам
-    :param key_column: Название ключевого столбца (по умолчанию 'Артикул')
-    """
+    for price_col in price_columns:
+        # Имя колонок для первоначальной цены и % изменения
+        suffix = price_col.split("от")[-1].strip()  # например "10 000 руб."
+        base_col = f'Первоначальная цена ({suffix})'
+        change_col = f'Изменение цены % ({suffix})'
+
+        new_df[base_col] = ''
+        new_df[change_col] = ''
+
+        for key in new_df.index:
+            if key in old_df.index:
+                old_price_str = old_df.at[key, price_col] if price_col in old_df.columns else ''
+                new_price_str = new_df.at[key, price_col] if price_col in new_df.columns else ''
+                try:
+                    old_price = float(str(old_price_str).replace(',', '.'))
+                    new_price = float(str(new_price_str).replace(',', '.'))
+                    new_df.at[key, base_col] = old_price
+                    if old_price != 0:
+                        percent_change = (new_price - old_price) / old_price * 100
+                        new_df.at[key, change_col] = round(percent_change, 2)
+                    else:
+                        new_df.at[key, change_col] = 0
+                except Exception:
+                    new_df.at[key, base_col] = ''
+                    new_df.at[key, change_col] = ''
+            else:
+                new_df.at[key, base_col] = ''
+                new_df.at[key, change_col] = ''
+
+    new_df = new_df.reset_index()
+    return new_df
+
+
+def apply_formatting(result_path: str, added: list, removed: list, changed: dict, key_column: str = 'Артикул') -> None:
     wb = load_workbook(result_path)
     ws = wb.active
 
-    # Словарь соответствий названия столбца и индекса
     header = {cell.value: idx for idx, cell in enumerate(ws[1])}
     key_idx = header.get(key_column)
 
@@ -86,6 +110,25 @@ def apply_formatting(result_path: str, added: list, removed: list, changed: dict
                     if col_idx is not None:
                         row[col_idx].fill = CHANGED_FILL
 
+        # Проверяем колонки с процентом изменения цены и выделяем цветом по диапазонам
+        for price_col in price_columns:
+            suffix = price_col.split("от")[-1].strip()
+            change_col_name = f'Изменение цены % ({suffix})'
+            col_idx = header.get(change_col_name)
+            if col_idx is not None:
+                cell = row[col_idx]
+                try:
+                    val = float(cell.value)
+                    abs_val = abs(val)
+                    if 1 <= abs_val < 3:
+                        cell.fill = PRICE_CHANGE_GREEN
+                    elif 3 <= abs_val < 5:
+                        cell.fill = PRICE_CHANGE_YELLOW
+                    elif abs_val >= 5:
+                        cell.fill = PRICE_CHANGE_RED
+                except Exception:
+                    pass
+
     # Добавляем удалённые строки в конец таблицы
     last_row = ws.max_row + 1
     for key in removed:
@@ -99,13 +142,6 @@ def apply_formatting(result_path: str, added: list, removed: list, changed: dict
 
 
 def save_result(new_df: DataFrame, output_dir: str = 'results') -> str:
-    """
-    Сохраняет DataFrame в Excel-файл с названием, содержащим текущую дату и время.
-
-    :param new_df: DataFrame для сохранения
-    :param output_dir: Папка, куда сохранить результат
-    :return: Путь к сохранённому файлу
-    """
     now_str = datetime.now().strftime('%Y%m%d_%H%M')
     filename = f"compare_tables_{now_str}.xlsx"
     output_path = os.path.join(output_dir, filename)
@@ -118,13 +154,6 @@ def save_result(new_df: DataFrame, output_dir: str = 'results') -> str:
 
 
 def main() -> None:
-    """
-    Основной процесс:
-    1. Загружает два Excel-файла из папки `data/`
-    2. Сравнивает их по ключевому столбцу
-    3. Сохраняет результат с текущей датой и временем
-    4. Применяет цветовое форматирование по результатам сравнения
-    """
     folder = 'data'
     excel_files = sorted(glob.glob(os.path.join(folder, '*.xlsx')))
     if len(excel_files) < 2:
@@ -140,6 +169,9 @@ def main() -> None:
 
     print('🔍 Сравнение данных...')
     added, removed, changed = compare_data(old_df, new_df)
+
+    print('➕ Вычисляю изменения цен...')
+    new_df = add_price_change_columns_multiple(old_df, new_df, price_columns=price_columns)
 
     print('💾 Сохраняю результат...')
     result_file = save_result(new_df)
