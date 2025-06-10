@@ -120,7 +120,7 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
 
         print(f'Всего страниц: {pages}')
 
-        for page in range(1, 20):
+        for page in range(1, pages + 1):
             try:
                 time.sleep(1)  # Пауза между запросами, чтобы избежать блокировки
                 # Получаем JSON данные для каждой страницы
