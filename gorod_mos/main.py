@@ -25,6 +25,46 @@ headers = {
 }
 
 
+def get_html(url: str, headers: dict, session: Session) -> str:
+    """
+    Выполняет HTTP GET-запрос и возвращает HTML содержимое страницы.
+
+    :param url: URL страницы
+    :param headers: Заголовки запроса
+    :param session: Сессия requests для повторного использования соединения
+    :return: Строка с HTML содержимым страницы
+    """
+    try:
+        response = session.get(url=url, headers=headers, timeout=60)
+
+        if response.status_code != 200:
+            print(f'status_code: {response.status_code}')
+
+        html = response.text
+        return html
+    except Exception as ex:
+        print(f'get_html: {ex}')
+        return ""
+
+
+def get_pages(html: str) -> int:
+    """
+    Определяет количество страниц пагинации на основе HTML.
+
+    :param html: HTML код страницы
+    :return: Количество страниц (если не найдено — возвращает 55 по умолчанию)
+    """
+    soup = BeautifulSoup(html, 'lxml')
+
+    try:
+        # Ищем последнюю страницу пагинации
+        pages = int(soup.find('ul', class_='pagination').find_all('a')[-2].text.strip())
+    except Exception:
+        pages = 55  # Фолбэк, если структура изменится
+
+    return pages
+
+
 def get_json(headers: dict, session: Session, page: int) -> dict | None:
     """
     Получить JSON с новостями с указанной страницы.
@@ -71,9 +111,16 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
     result_data = []
 
     with Session() as session:
-        for page in range(1, 56):
+        # Получаем HTML содержимое стартовой страницы новостей
+        html = get_html(url="https://gorod.mos.ru/news", headers=headers, session=session)
+
+        # Определяем количество страниц
+        pages = get_pages(html=html)
+
+        for page in range(pages + 1):
             try:
-                time.sleep(1)  # пауза между запросами, чтобы не забанили
+                time.sleep(1)  # Пауза между запросами, чтобы избежать блокировки
+                # Получаем JSON данные для каждой страницы
                 json_response = get_json(headers=headers, session=session, page=page)
             except Exception as ex:
                 print(f"page: {page} - {ex}")
@@ -91,7 +138,7 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
                 text_preview = item.get('clearTextPreview', '')
                 html_content = item.get('text', '')
 
-                # Парсим HTML, чтобы получить чистый текст
+                # Очищаем HTML из полного текста статьи
                 soup = BeautifulSoup(html_content, "html.parser")
                 text = soup.get_text(separator="\n").strip()
 
@@ -103,7 +150,7 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
 
                 count_view = item.get('count_view')
 
-                # Проверяем, что в одной из текстовых частей встречается подстрока 'ТиНАО'
+                # Фильтрация по ключевому слову 'ТиНАО'
                 if not any('ТиНАО' in field for field in (title, text_preview, text) if field):
                     continue
 
