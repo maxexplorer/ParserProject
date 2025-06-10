@@ -1,10 +1,12 @@
 import os
 import time
 from datetime import datetime
+from collections import defaultdict
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter
 from bs4 import BeautifulSoup
+
 
 start_time = datetime.now()
 
@@ -117,7 +119,9 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
         # Определяем количество страниц
         pages = get_pages(html=html)
 
-        for page in range(pages + 1):
+        print(f'Всего страниц: {pages}')
+
+        for page in range(1, 20):
             try:
                 time.sleep(1)  # Пауза между запросами, чтобы избежать блокировки
                 # Получаем JSON данные для каждой страницы
@@ -134,6 +138,7 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
                 continue
 
             for item in data:
+                id_article = item.get('id')
                 title = item.get('title', '')
                 text_preview = item.get('clearTextPreview', '')
                 html_content = item.get('text', '')
@@ -156,6 +161,7 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
 
                 result_data.append(
                     {
+                        'ID статьи': id_article,
                         'Заголовок': title,
                         'Краткое содержание': text_preview,
                         'Дата публикации': date,
@@ -163,27 +169,56 @@ def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
                     }
                 )
 
-            print(f'Обработано страниц : {page}')
+            print(f'Обработано страниц : {page}/{pages}')
 
     return result_data
 
 
 def save_excel(data: list[dict[str, str | int | None]]) -> None:
     """
-    Сохраняет список словарей с данными в Excel файл.
+    Сохраняет список статей и статистику по просмотрам в один Excel-файл.
 
-    :param data: Список словарей с данными
+    :param data: Список словарей со статьями
     """
     directory = 'results'
     os.makedirs(directory, exist_ok=True)
-
     file_path = os.path.join(directory, 'result_data.xlsx')
 
-    dataframe = DataFrame(data)
+    # Основная таблица со статьями
+    df_articles = DataFrame(data)
+
+    # Группировка просмотров по месяцам
+    views_by_month = defaultdict(int)
+    for row in data:
+        date = row.get('Дата публикации', '')
+        views = row.get('Количество просмотров', 0)
+        if not date or not isinstance(views, int):
+            continue
+        try:
+            dt = datetime.strptime(date, '%d.%m.%Y')
+            key = dt.strftime('%m.%Y')  # 'месяц.год'
+            views_by_month[key] += views
+        except ValueError:
+            continue
+
+    # Преобразуем в DataFrame
+    df_stats = DataFrame(
+        sorted(views_by_month.items()),  # сортировка по возрастанию даты
+        columns=['Дата', 'Сумма просмотров']
+    )
+
+    # Добавим строку с общим числом записей
+    total_articles = len(df_articles)
+    df_stats.loc[len(df_stats)] = [f'Всего записей: {total_articles}', '']
+
+    # Сохраняем в два листа Excel-файла
     with ExcelWriter(file_path, mode='w') as writer:
-        dataframe.to_excel(writer, sheet_name='data', index=False)
+        df_articles.to_excel(writer, sheet_name='Статьи', index=False)
+        df_stats.to_excel(writer, sheet_name='Статистика', index=False)
 
     print(f'Данные сохранены в файл {file_path}')
+
+
 
 
 def main() -> None:
