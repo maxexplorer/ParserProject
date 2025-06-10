@@ -7,7 +7,6 @@ from requests import Session
 from pandas import DataFrame, ExcelWriter
 from bs4 import BeautifulSoup
 
-
 start_time = datetime.now()
 
 headers = {
@@ -217,8 +216,6 @@ def save_excel(data: list[dict[str, str | int | None]]) -> None:
         df_stats.to_excel(writer, sheet_name='Статистика', index=False)
 
     print(f'Данные сохранены в файл {file_path}')
-
-
 
 
 def main() -> None:
