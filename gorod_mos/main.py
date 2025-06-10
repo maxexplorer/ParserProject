@@ -1,12 +1,10 @@
 import os
 import time
 from datetime import datetime
-from typing import Optional, List, Dict
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter
 from bs4 import BeautifulSoup
-
 
 start_time = datetime.now()
 
@@ -27,7 +25,7 @@ headers = {
 }
 
 
-def get_json(headers: dict, session: Session, page: int) -> Optional[dict]:
+def get_json(headers: dict, session: Session, page: int) -> dict | None:
     """
     Получить JSON с новостями с указанной страницы.
 
@@ -63,14 +61,14 @@ def convert_timestamp_to_date(timestamp: int) -> str:
     return date.strftime('%d.%m.%Y')
 
 
-def get_articles_data(headers: dict) -> List[Dict[str, Optional[str]]]:
+def get_articles_data(headers: dict) -> list[dict[str, str | int | None]]:
     """
     Собирает данные статей с сайта, фильтруя по ключевому слову 'ТиНАО'.
 
     :param headers: Заголовки HTTP запроса
     :return: Список словарей с информацией по статьям
     """
-    result_data: List[Dict[str, Optional[str]]] = []
+    result_data = []
 
     with Session() as session:
         for page in range(1, 56):
@@ -123,7 +121,7 @@ def get_articles_data(headers: dict) -> List[Dict[str, Optional[str]]]:
     return result_data
 
 
-def save_excel(data: List[Dict[str, Optional[str]]]) -> None:
+def save_excel(data: list[dict[str, str | int | None]]) -> None:
     """
     Сохраняет список словарей с данными в Excel файл.
 
