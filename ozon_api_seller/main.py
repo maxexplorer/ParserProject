@@ -6,7 +6,7 @@ import glob
 import requests
 import pandas as pd
 
-from configs.config import CLIENT_ID, API_KEY, API_URL
+from configs.config import CLIENT_ID, API_KEY, API_URLS
 
 
 def get_cutoff_range(days: int = 7) -> tuple[str, str]:
@@ -46,7 +46,7 @@ def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
 
     try:
         time.sleep(1)  # Пауза между запросами по требованиям API
-        response = requests.post(API_URL, headers=headers, json=json)
+        response = requests.post(API_URLS.get('unfulfilled_list'), headers=headers, json=json)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as err:
