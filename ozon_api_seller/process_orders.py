@@ -12,18 +12,25 @@ from configs.config import CLIENT_ID, API_KEY, API_URLS
 from utils import save_excel
 
 
-def get_cutoff_range(days: int = 7) -> tuple[str, str]:
+def get_cutoff_range(days=7):
     """
-    Возвращает временной диапазон (от, до) в ISO формате за последние `days` дней.
+    Возвращает временной диапазон в ISO-формате за последние `days` дней.
+
+    :param days: Количество дней назад от текущего времени
+    :return: Кортеж строк (от, до)
     """
     cutoff_to = datetime.utcnow()
     cutoff_from = cutoff_to - timedelta(days=days)
     return cutoff_from.isoformat() + 'Z', cutoff_to.isoformat() + 'Z'
 
 
-def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
+def fetch_orders(cutoff_from, cutoff_to):
     """
-    Выполняет POST-запрос к API Ozon для получения заказов со статусом "awaiting_packaging".
+    Получает список заказов со статусом "awaiting_packaging" из Ozon API.
+
+    :param cutoff_from: Начало временного диапазона
+    :param cutoff_to: Конец временного диапазона
+    :return: JSON-ответ от API в виде словаря или None в случае ошибки
     """
     headers = {
         'Client-Id': CLIENT_ID,
@@ -48,7 +55,7 @@ def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
     }
 
     try:
-        time.sleep(1)  # Пауза между запросами по требованиям API
+        time.sleep(1)  # Пауза между запросами для соблюдения лимитов
         response = requests.post(API_URLS.get('unfulfilled_list'), headers=headers, json=json)
         response.raise_for_status()
         return response.json()
@@ -59,10 +66,12 @@ def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
     return None
 
 
-def load_info_from_excel(folder: str = 'data') -> dict:
+def load_info_from_excel(folder='data'):
     """
-    Загружает артикулы и цены из первого найденного Excel-файла в папке `folder`.
-    Возвращает словарь вида {артикул: цена}.
+    Загружает артикулы и цены из первого Excel-файла в указанной папке.
+
+    :param folder: Папка, в которой искать Excel-файл
+    :return: Словарь вида {артикул: цена}
     """
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
@@ -75,16 +84,22 @@ def load_info_from_excel(folder: str = 'data') -> dict:
     df.columns = df.columns.str.strip()
     df = df.dropna(subset=['Артикул', df.columns[2]])
 
-    return {
-        str(row['Артикул']).strip(): row.iloc[2]
-        for _, row in df.iterrows()
-    }
+    article_prices = {}
+    for _, row in df.iterrows():
+        article = str(row['Артикул']).strip()
+        price = row.iloc[2]
+        article_prices[article] = price
+
+    return article_prices
 
 
-def extract_data(postings: list, article_prices: dict) -> list[dict]:
+def extract_data(postings, article_prices):
     """
-    Извлекает данные из списка заказов и агрегирует одинаковые товары:
-    если у товаров совпадают артикул, название и цена — их количество суммируется.
+    Агрегирует товары из заказов по артикулу, названию и цене.
+
+    :param postings: Список заказов от API
+    :param article_prices: Словарь артикулов с ценами
+    :return: Список словарей с полями Артикул, Наименование, Цена, Количество
     """
     grouped = {}
 
@@ -93,37 +108,38 @@ def extract_data(postings: list, article_prices: dict) -> list[dict]:
         offer_id = str(product.get('offer_id', '')).strip()
 
         if offer_id not in article_prices:
-            continue  # Пропускаем товары без известной цены
+            continue  # Пропускаем, если артикул не найден в Excel
 
         name = product.get('name', '').strip()
         quantity = int(product.get('quantity', 0))
         price = article_prices[offer_id]
 
-        key = (offer_id, name, price)  # Уникальный ключ для группировки
-
+        key = (offer_id, name, price)
         if key in grouped:
             grouped[key] += quantity
         else:
             grouped[key] = quantity
 
-    # Преобразуем в список словарей
-    return [
-        {
-            'Артикул': k[0],
-            'Наименование': k[1],
-            'Цена': k[2],
-            'Количество': v
-        }
-        for k, v in grouped.items()
-    ]
+    result = []
+    for key, qty in grouped.items():
+        offer_id, name, price = key
+        result.append({
+            'Артикул': offer_id,
+            'Наименование': name,
+            'Цена': price,
+            'Количество': qty
+        })
+
+    return result
+
 
 def run_order_process():
     """
     Главная функция:
     - Получает заказы с Ozon
-    - Загружает цены из Excel
-    - Извлекает и агрегирует данные
-    - Сохраняет в Excel
+    - Загружает артикулы и цены из Excel
+    - Агрегирует данные
+    - Сохраняет результат в Excel
     """
     print('📦 Получение заказов с Ozon...')
     cutoff_from, cutoff_to = get_cutoff_range(7)
@@ -131,6 +147,7 @@ def run_order_process():
 
     orders = fetch_orders(cutoff_from, cutoff_to)
     if not orders:
+        print('❗ Не удалось получить список заказов.')
         return
 
     postings = orders.get('result', {}).get('postings', [])
@@ -139,6 +156,10 @@ def run_order_process():
         return
 
     article_info = load_info_from_excel()
+    if not article_info:
+        print('❗ Не удалось загрузить данные из Excel.')
+        return
+
     result = extract_data(postings, article_info)
     if not result:
         print('❗ Нет подходящих товаров для сохранения.')

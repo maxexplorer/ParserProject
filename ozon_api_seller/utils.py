@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 
+
 def save_excel(data: list[dict], filename_prefix: str) -> None:
     """
     Сохраняет переданные данные в Excel-файл с текущей датой и временем в имени.
