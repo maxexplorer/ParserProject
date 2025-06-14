@@ -20,6 +20,8 @@ def get_all_products():
     last_id = ''
     limit = 100
 
+    total_printed = False
+
     while True:
         payload = {
             'filter': {
@@ -44,7 +46,9 @@ def get_all_products():
         items = result.get('items', [])
         total = result.get('total')
 
-        print(f'Всего продуктов: {total}')
+        if not total_printed:
+            print(f'Всего продуктов: {total}')
+            total_printed = True
 
         for item in items:
             product_id = item.get('product_id')
