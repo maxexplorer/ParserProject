@@ -93,7 +93,7 @@ def load_info_from_excel(folder='data'):
     return article_prices
 
 
-def extract_data(postings, article_prices):
+def extract_data(postings, article_info):
     """
     Агрегирует товары из заказов по артикулу, названию и цене.
 
@@ -107,12 +107,12 @@ def extract_data(postings, article_prices):
         product = post.get('products', [{}])[0]
         offer_id = str(product.get('offer_id', '')).strip()
 
-        if offer_id not in article_prices:
+        if offer_id not in article_info:
             continue  # Пропускаем, если артикул не найден в Excel
 
         name = product.get('name', '').strip()
         quantity = int(product.get('quantity', 0))
-        price = article_prices[offer_id]
+        price = article_info[offer_id]
 
         key = (offer_id, name, price)
         if key in grouped:
