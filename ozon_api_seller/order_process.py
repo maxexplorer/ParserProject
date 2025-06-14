@@ -3,12 +3,13 @@
 import os
 import time
 from datetime import datetime, timedelta
+import glob
 
 import requests
 import pandas as pd
 
 from configs.config import CLIENT_ID, API_KEY, API_URLS
-from utils import load_article_prices_from_excel
+from utils import save_excel
 
 
 def get_cutoff_range(days: int = 7) -> tuple[str, str]:
@@ -58,6 +59,28 @@ def fetch_orders(cutoff_from: str, cutoff_to: str) -> dict | None:
     return None
 
 
+def load_info_from_excel(folder: str = 'data') -> dict:
+    """
+    Загружает артикулы и цены из первого найденного Excel-файла в папке `folder`.
+    Возвращает словарь вида {артикул: цена}.
+    """
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
+    if not excel_files:
+        print('❗ В папке data/ не найдено .xlsx файлов.')
+        return {}
+
+    path = excel_files[0]
+    print(f'📄 Загружаю Excel: {path}')
+    df = pd.read_excel(path)
+    df.columns = df.columns.str.strip()
+    df = df.dropna(subset=['Артикул', df.columns[2]])
+
+    return {
+        str(row['Артикул']).strip(): row.iloc[2]
+        for _, row in df.iterrows()
+    }
+
+
 def extract_data(postings: list, article_prices: dict) -> list[dict]:
     """
     Извлекает данные из списка заказов и агрегирует одинаковые товары:
@@ -94,24 +117,7 @@ def extract_data(postings: list, article_prices: dict) -> list[dict]:
         for k, v in grouped.items()
     ]
 
-
-def save_excel(data: list[dict], filename_prefix: str = 'results/ozon_orders') -> None:
-    """
-    Сохраняет переданные данные в Excel-файл с текущей датой и временем в имени.
-    """
-    now_str = datetime.now().strftime('%Y%m%d_%H%M')
-    filename = f"{filename_prefix}_{now_str}.xlsx"
-
-    folder = os.path.dirname(filename)
-    if folder:
-        os.makedirs(folder, exist_ok=True)
-
-    df = pd.DataFrame(data)
-    df.to_excel(filename, index=False)
-    print(f'✅ Данные сохранены в {filename}')
-
-
-def main() -> None:
+def run_order_process():
     """
     Главная функция:
     - Получает заказы с Ozon
@@ -123,23 +129,19 @@ def main() -> None:
     cutoff_from, cutoff_to = get_cutoff_range(7)
     print(f'⏱ Период: {cutoff_from} → {cutoff_to}')
 
-    result = fetch_orders(cutoff_from, cutoff_to)
-    if not result:
+    orders = fetch_orders(cutoff_from, cutoff_to)
+    if not orders:
         return
 
-    postings = result.get('result', {}).get('postings', [])
+    postings = orders.get('result', {}).get('postings', [])
     if not postings:
         print('❗ Заказов со статусом "awaiting_packaging" не найдено.')
         return
 
-    article_prices = load_article_prices_from_excel()
-    data = extract_data(postings, article_prices)
-    if not data:
+    article_info = load_info_from_excel()
+    result = extract_data(postings, article_info)
+    if not result:
         print('❗ Нет подходящих товаров для сохранения.')
         return
 
-    save_excel(data)
-
-
-if __name__ == '__main__':
-    main()
+    save_excel(data=result, filename_prefix='results/ozon_orders')

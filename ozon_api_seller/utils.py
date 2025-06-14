@@ -1,25 +1,19 @@
 import os
-import glob
+from datetime import datetime
 
 import pandas as pd
 
-def load_article_prices_from_excel(folder: str = 'data') -> dict:
+def save_excel(data: list[dict], filename_prefix: str) -> None:
     """
-    Загружает артикулы и цены из первого найденного Excel-файла в папке `folder`.
-    Возвращает словарь вида {артикул: цена}.
+    Сохраняет переданные данные в Excel-файл с текущей датой и временем в имени.
     """
-    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
-    if not excel_files:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return {}
+    now_str = datetime.now().strftime('%Y%m%d_%H%M')
+    filename = f"{filename_prefix}_{now_str}.xlsx"
 
-    path = excel_files[0]
-    print(f'📄 Загружаю Excel: {path}')
-    df = pd.read_excel(path)
-    df.columns = df.columns.str.strip()
-    df = df.dropna(subset=['Артикул', df.columns[2]])
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
 
-    return {
-        str(row['Артикул']).strip(): row.iloc[2]
-        for _, row in df.iterrows()
-    }
+    df = pd.DataFrame(data)
+    df.to_excel(filename, index=False)
+    print(f'✅ Данные сохранены в {filename}')
