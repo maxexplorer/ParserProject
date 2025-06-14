@@ -1,4 +1,4 @@
-# product_prices.py
+# calculate_profit.py
 import time
 import os
 import glob

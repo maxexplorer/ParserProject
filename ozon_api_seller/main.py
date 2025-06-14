@@ -1,6 +1,6 @@
 # main.py
-from order_process import run_order_process
-from product_prices import run_product_prices
+from process_orders import run_order_process
+from calculate_profit import run_product_prices
 
 
 def main():
