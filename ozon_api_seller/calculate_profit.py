@@ -149,11 +149,26 @@ def get_prices_and_commissions(offer_id_list, article_info):
             name, price = article_info.get(offer_id, ('', 0))
 
             if name and price:
-                expenses_fbo = price + acquiring + fbo_delivery + fbo_trans_avg
-                net_profit_fbo = marketing_price - expenses_fbo
+                # Расходы FBO
+                expenses_fbo = round(
+                    price * 1.05 +
+                    acquiring * 1.05 +
+                    fbo_delivery * 1.05 +
+                    fbo_trans_avg * 1.10,
+                    2
+                )
+                net_profit_fbo = round(marketing_price - expenses_fbo, 2)
 
-                expenses_fbs = price + acquiring + fbs_delivery + fbs_trans_max + fbs_first_mile
-                net_profit_fbs = marketing_price - expenses_fbs
+                # Расходы FBS
+                expenses_fbs = round(
+                    price * 1.05 +
+                    acquiring * 1.05 +
+                    fbs_delivery * 1.05 +
+                    fbs_trans_max * 1.10 +
+                    fbs_first_mile * 1.05,
+                    2
+                )
+                net_profit_fbs = round(marketing_price - expenses_fbs, 2)
             else:
                 expenses_fbo = expenses_fbs = net_profit_fbo = net_profit_fbs = ''
 
