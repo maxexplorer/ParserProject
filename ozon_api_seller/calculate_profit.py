@@ -100,13 +100,16 @@ def get_prices_and_commissions(article_info):
             if name and cost_price:
                 # Расходы FBO
                 expenses_fbo = round(
+                    marketing_seller_price * 0.27 +
+                    marketing_seller_price * 0.07 +
                     cost_price * 1.05 +
+                    cost_price * 0.5 +
                     acquiring * 1.05 +
                     fbo_delivery * 1.05 +
                     fbo_trans_avg * 1.10,
                     2
                 )
-                net_profit_fbo = round(marketing_price - expenses_fbo, 2)
+                net_profit_fbo = round(marketing_seller_price - expenses_fbo, 2)
 
                 # Расходы FBS
                 expenses_fbs = round(
