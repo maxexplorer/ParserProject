@@ -173,6 +173,24 @@ def main() -> None:
     print('➕ Вычисляю изменения цен...')
     new_df = add_price_change_columns_multiple(old_df, new_df, price_columns=price_columns)
 
+    # Фильтрация по 'Кол-во в наличии' >= 50
+    quantity_col = 'Кол-во в наличии'
+    # Приводим к числу, ошибки заменяем на 0 (чтобы не пропускать)
+    new_df[quantity_col] = pd.to_numeric(new_df[quantity_col], errors='coerce').fillna(0)
+
+    # Фильтруем строки с количеством >= 50
+    filtered_df = new_df[new_df[quantity_col] >= 50]
+
+    # Получаем список артикулов, которые прошли фильтр
+    filtered_keys = set(filtered_df['Артикул'].astype(str).str.strip())
+
+    # Фильтруем added и changed по этим ключам, чтобы не включать товары с количеством < 50
+    added = [k for k in added if str(k).strip() in filtered_keys]
+    changed = {k: v for k, v in changed.items() if str(k).strip() in filtered_keys}
+
+    # Используем отфильтрованный DataFrame
+    new_df = filtered_df.reset_index(drop=True)
+
     print('💾 Сохраняю результат...')
     result_file = save_result(new_df)
 
