@@ -37,7 +37,7 @@ def fetch_orders(cutoff_from, cutoff_to):
         'Api-Key': API_KEY
     }
 
-    json = {
+    data = {
         'dir': 'ASC',
         'filter': {
             'cutoff_from': cutoff_from,
@@ -56,7 +56,7 @@ def fetch_orders(cutoff_from, cutoff_to):
 
     try:
         time.sleep(1)  # Пауза между запросами для соблюдения лимитов
-        response = requests.post(API_URLS.get('unfulfilled_list'), headers=headers, json=json)
+        response = requests.post(API_URLS.get('unfulfilled_list'), headers=headers, json=data)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as err:
@@ -120,17 +120,17 @@ def extract_data(postings, article_info):
         else:
             grouped[key] = quantity
 
-    result = []
+    result_data = []
     for key, qty in grouped.items():
         offer_id, name, price = key
-        result.append({
+        result_data.append({
             'Артикул': offer_id,
             'Наименование': name,
             'Цена': price,
             'Количество': qty
         })
 
-    return result
+    return result_data
 
 
 def run_order_process():

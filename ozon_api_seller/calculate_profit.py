@@ -54,7 +54,7 @@ def get_prices_and_commissions(article_info):
     limit = 100
 
     while True:
-        payload = {
+        data = {
             'cursor': cursor,
             'filter': {
                 'offer_id': [],
@@ -67,7 +67,7 @@ def get_prices_and_commissions(article_info):
         response = requests.post(
             API_URLS.get('product_info_prices'),
             headers=headers,
-            json=payload
+            json=data
         )
 
         if response.status_code != 200:
