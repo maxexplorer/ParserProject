@@ -64,14 +64,17 @@ def get_prices_and_commissions(article_info):
             'limit': limit
         }
 
-        response = requests.post(
-            API_URLS.get('product_info_prices'),
-            headers=headers,
-            json=data
-        )
+        try:
+            time.sleep(1)
+            response = requests.post(
+                API_URLS.get('product_info_prices'),
+                headers=headers,
+                json=data
+            )
 
-        if response.status_code != 200:
-            print('❌ Ошибка:', response.status_code, response.text)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f'❌ Ошибка при запросе информации о цене товаров: {e}')
             break
 
         data = response.json()
@@ -139,8 +142,6 @@ def get_prices_and_commissions(article_info):
         cursor = data.get('cursor', '')
         if not cursor:
             break
-
-        time.sleep(1)
 
     return result_data
 
