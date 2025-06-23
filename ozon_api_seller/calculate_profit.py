@@ -93,17 +93,19 @@ def get_prices_and_commissions(article_info):
             fbo_trans_max = commissions.get('fbo_direct_flow_trans_max_amount', 0)
             fbo_trans_min = commissions.get('fbo_direct_flow_trans_min_amount', 0)
             fbo_trans_avg = (fbo_trans_max + fbo_trans_min) / 2
+            sales_percent_fbo = commissions.get('sales_percent_fbo') / 100
 
             fbs_delivery = commissions.get('fbs_deliv_to_customer_amount', 0)
             fbs_trans_max = commissions.get('fbs_direct_flow_trans_max_amount', 0)
             fbs_first_mile = commissions.get('fbs_first_mile_max_amount', 0)
+            sales_percent_fbs = commissions.get('sales_percent_fbs') / 100
 
             name, cost_price = article_info.get(offer_id, ('', 0))
 
             if name and cost_price:
                 # Расходы FBO
                 expenses_fbo = round(
-                    marketing_seller_price * 0.27 +
+                    marketing_seller_price * sales_percent_fbo +
                     marketing_seller_price * 0.07 +
                     cost_price * 1.05 +
                     cost_price * 0.5 +
@@ -116,7 +118,7 @@ def get_prices_and_commissions(article_info):
 
                 # Расходы FBS
                 expenses_fbs = round(
-                    marketing_seller_price * 0.310 +
+                    marketing_seller_price * sales_percent_fbs +
                     marketing_seller_price * 0.07 +
                     cost_price * 1.05 +
                     cost_price * 0.5 +
