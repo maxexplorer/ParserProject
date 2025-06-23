@@ -1,21 +1,25 @@
 # main.py
 from process_orders import run_order_process
 from calculate_profit import run_product_prices
+from deactivate_actions import
 
 
 def main():
     try:
         while True:
-            print("\n📋 Выберите действие:")
-            print("1 - Получить необработанные заказы")
-            print("2 - Получить остатки на расходы")
-            print("0 - Выход")
-            choice = input("Введите номер действия: ").strip()
+            print('\n📋 Выберите действие:')
+            print('1 - Получить необработанные заказы')
+            print('2 - Получить остатки на расходы')
+            print('3 - Удалить товары из акции')
+            print('0 - Выход')
+            choice = input('Введите номер действия: ').strip()
 
             if choice == '1':
                 run_order_process()
             elif choice == '2':
                 run_product_prices()
+            elif choice == '3':
+
             elif choice == '0':
                 print("👋 Выход из программы.")
                 break
