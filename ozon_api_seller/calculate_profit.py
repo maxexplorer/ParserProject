@@ -116,7 +116,7 @@ def get_prices_and_commissions(article_info):
 
                 # Расходы FBS
                 expenses_fbs = round(
-                    marketing_seller_price * 0.305 +
+                    marketing_seller_price * 0.310 +
                     marketing_seller_price * 0.07 +
                     cost_price * 1.05 +
                     cost_price * 0.5 +
