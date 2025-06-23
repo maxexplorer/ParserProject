@@ -1,7 +1,7 @@
 # main.py
 from process_orders import run_order_process
 from calculate_profit import run_product_prices
-from deactivate_actions import
+from deactivate_actions import run_deactivate_actions
 
 
 def main():
@@ -14,17 +14,18 @@ def main():
             print('0 - Выход')
             choice = input('Введите номер действия: ').strip()
 
-            if choice == '1':
-                run_order_process()
-            elif choice == '2':
-                run_product_prices()
-            elif choice == '3':
-
-            elif choice == '0':
-                print("👋 Выход из программы.")
-                break
-            else:
-                print("❗ Неверный выбор. Попробуйте снова.")
+            match choice:
+                case '1':
+                    run_order_process()
+                case '2':
+                    run_product_prices()
+                case '3':
+                    run_deactivate_actions()
+                case '0':
+                    print("👋 Выход из программы.")
+                    break
+                case _:
+                    print("❗ Неверный выбор. Попробуйте снова.")
     except Exception as ex:
         print(f'main: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
