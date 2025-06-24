@@ -125,7 +125,8 @@ def get_action_products(headers: dict, action_ids: list[int]) -> dict[int, list[
                 response = requests.post(
                     API_URLS.get('action_products'),
                     headers=headers,
-                    json=data
+                    json=data,
+                    timeout=10
                 )
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
@@ -176,7 +177,8 @@ def deactivate_action_products(headers: dict, action_products: dict[int, list[in
             response = requests.post(
                 API_URLS.get('action_products_deactivate'),
                 headers=headers,
-                json=data
+                json=data,
+                timeout=10
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:

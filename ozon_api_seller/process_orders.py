@@ -56,13 +56,21 @@ def fetch_orders(cutoff_from, cutoff_to):
 
     try:
         time.sleep(1)  # Пауза между запросами для соблюдения лимитов
-        response = requests.post(API_URLS.get('unfulfilled_list'), headers=headers, json=data)
+        response = requests.post(
+            API_URLS.get('unfulfilled_list'),
+            headers=headers,
+            json=data,
+            timeout=10
+        )
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as err:
         print(f'❌ Ошибка HTTP: {err}')
+    except ValueError:
+        print('❌ Ошибка при обработке JSON-ответа.')
     except Exception as e:
         print(f'❌ Общая ошибка: {e}')
+
     return None
 
 

@@ -69,7 +69,8 @@ def get_prices_and_commissions(article_info):
             response = requests.post(
                 API_URLS.get('product_info_prices'),
                 headers=headers,
-                json=data
+                json=data,
+                timeout=10
             )
 
             response.raise_for_status()
@@ -77,7 +78,12 @@ def get_prices_and_commissions(article_info):
             print(f'❌ Ошибка при запросе информации о цене товаров: {e}')
             break
 
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError:
+            print(f'❌ Ошибка при декодировании JSON.')
+            break
+
         items = data.get('items', [])
 
         for item in items:
