@@ -68,7 +68,7 @@ def prepare_excel_from_csv(csv_path: str, excel_path: str, column_mapping: dict,
     df = df[target_columns]
 
     # Приводим некоторые столбцы к строковому типу, чтобы убрать кавычки в Excel
-    str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode', 'Объем, л', 'Объемный вес, кг']
+    str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode']
     for col in str_columns:
         if col in df.columns:
             # Убираем возможный ведущий апостроф и пробелы
@@ -77,3 +77,4 @@ def prepare_excel_from_csv(csv_path: str, excel_path: str, column_mapping: dict,
     # Сохраняем в Excel без индексов
     df.to_excel(excel_path, index=False)
     print(f'✅ Excel сохранён в {excel_path}')
+
