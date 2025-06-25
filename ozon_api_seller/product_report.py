@@ -1,10 +1,10 @@
 import time
 from datetime import datetime
+
 import requests
 
 from configs.config import CLIENT_ID, API_KEY, API_URLS
-from utils import save_csv, prepare_excel_from_csv
-from data.data import COLUMN_MAPPING, TARGET_COLUMNS
+from utils import process_and_save_excel_from_csv_content
 
 headers = {
     'Client-Id': CLIENT_ID,
@@ -13,12 +13,6 @@ headers = {
 
 
 def create_products_report(headers: dict) -> str | None:
-    """
-    Запрашивает создание отчёта по всем товарам.
-
-    :param headers: Заголовки с Client-Id и Api-Key
-    :return: Строка с кодом отчёта или None
-    """
     data = {
         'language': 'RU',
         'offer_id': [],
@@ -48,13 +42,6 @@ def create_products_report(headers: dict) -> str | None:
 
 
 def get_report_file_link(headers: dict, report_code: str) -> str | None:
-    """
-    Получает ссылку на файл отчёта по коду.
-
-    :param headers: Заголовки с Client-Id и Api-Key
-    :param report_code: Код отчёта
-    :return: Ссылка на файл или None
-    """
     try:
         response = requests.post(
             API_URLS.get('report_info'),
@@ -77,13 +64,6 @@ def get_report_file_link(headers: dict, report_code: str) -> str | None:
 
 
 def run_product_report() -> None:
-    """
-    Основная функция:
-    - создаёт отчёт
-    - ожидает его готовность
-    - получает ссылку на CSV
-    - сохраняет и форматирует в Excel
-    """
     print('📨 Запрашиваем отчёт по товарам...')
     report_code = create_products_report(headers=headers)
     if not report_code:
@@ -94,12 +74,21 @@ def run_product_report() -> None:
         time.sleep(5)
         file_url = get_report_file_link(headers, report_code)
         if file_url:
+            print('✅ Отчёт готов, загружаем и обрабатываем...')
+
+            try:
+                resp = requests.get(file_url, timeout=10)
+                resp.raise_for_status()
+            except Exception as e:
+                print(f'❌ Ошибка загрузки CSV: {e}')
+                return
+
+            csv_str = resp.content.decode('utf-8')
+
             timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-            csv_path = f'results/ozon_products_{timestamp}.csv'
             excel_path = f'results/ozon_products_{timestamp}.xlsx'
 
-            save_csv(file_url, csv_path)
-            prepare_excel_from_csv(csv_path, excel_path, COLUMN_MAPPING, TARGET_COLUMNS)
+            process_and_save_excel_from_csv_content(csv_str)
             return
 
         print(f'🔁 Попытка {attempt + 1}/10: отчёт не готов.')

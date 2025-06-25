@@ -1,9 +1,11 @@
 import os
 from datetime import datetime
-
-import requests
+from io import StringIO
 
 import pandas as pd
+from openpyxl import load_workbook
+
+from data.data import COLUMN_MAPPING, TARGET_COLUMNS
 
 
 def save_excel(data: list[dict], filename_prefix: str) -> None:
@@ -22,59 +24,67 @@ def save_excel(data: list[dict], filename_prefix: str) -> None:
     print(f'✅ Данные сохранены в {filename}')
 
 
-def save_csv(file_url: str, filename: str) -> None:
+def save_to_excel_template(df: pd.DataFrame, template_path: str, output_path: str,
+                           sheet_name: str = 'Товары и цены') -> None:
     """
-    Сохраняет CSV по ссылке в указанный файл.
+    Записывает DataFrame в шаблон Excel, начиная с 5-й строки, не изменяя первые 4 строки.
+
+    :param df: DataFrame с данными
+    :param template_path: путь к шаблону Excel
+    :param output_path: путь для сохранения итогового файла
+    :param sheet_name: имя листа, куда вставить данные
     """
-    try:
-        response = requests.get(file_url, timeout=10)
-        response.raise_for_status()
+    # Создаём папку для сохранения при необходимости
+    folder = os.path.dirname(output_path)
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
 
-        folder = os.path.dirname(filename)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
+    # Загружаем шаблон
+    wb = load_workbook(template_path)
+    if sheet_name not in wb.sheetnames:
+        raise ValueError(f'❌ В шаблоне отсутствует лист "{sheet_name}"')
 
-        with open(filename, 'wb') as f:
-            f.write(response.content)
+    ws = wb[sheet_name]
 
-        print(f'✅ CSV файл сохранён: {filename}')
-    except requests.exceptions.RequestException as e:
-        print(f'❌ Ошибка загрузки CSV: {e}')
-    except IOError as e:
-        print(f'❌ Ошибка сохранения CSV: {e}')
+    # Пишем данные начиная с 5-й строки
+    start_row = 5
+    for row_idx, row in enumerate(df.itertuples(index=False), start=start_row):
+        for col_idx, value in enumerate(row, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=value)
+
+    wb.save(output_path)
+    print(f'✅ Excel сохранён по шаблону: {output_path}')
 
 
-def prepare_excel_from_csv(csv_path: str, excel_path: str, column_mapping: dict, target_columns: list) -> None:
-    """
-    Загружает CSV, переименовывает колонки, добавляет отсутствующие целевые колонки,
-    приводит некоторые колонки к строковому типу и сохраняет в Excel.
-
-    :param csv_path: путь к исходному CSV-файлу
-    :param excel_path: путь для сохранения Excel
-    :param column_mapping: словарь {исходное_название: целевое_название}
-    :param target_columns: список всех нужных столбцов целевой таблицы
-    """
-    df = pd.read_csv(csv_path, delimiter=';', encoding='utf-8')
+def process_and_save_excel_from_csv_content(csv_content: str) -> None:
+    df = pd.read_csv(StringIO(csv_content), delimiter=';')
 
     # Переименовываем колонки
-    df.rename(columns=column_mapping, inplace=True)
+    df.rename(columns=COLUMN_MAPPING, inplace=True)
 
     # Добавляем отсутствующие целевые колонки пустыми
-    for col in target_columns:
+    for col in TARGET_COLUMNS:
         if col not in df.columns:
             df[col] = ''
 
-    # Перемещаем колонки в нужном порядке (оставляя только нужные)
-    df = df[target_columns]
+    # Копируем цену
+    price_col = 'Текущая цена (со скидкой), руб.'
+    min_price_col = 'Минимальная цена, руб.'
+    if price_col in df.columns:
+        df[min_price_col] = df[price_col]
 
-    # Приводим некоторые столбцы к строковому типу, чтобы убрать кавычки в Excel
-    str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode']
+    # Оставляем только нужные колонки и в нужном порядке
+    df = df[TARGET_COLUMNS]
+
+    # Приводим некоторые колонки к строковому типу
+    str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode', 'Объем, л', 'Объемный вес, кг']
     for col in str_columns:
         if col in df.columns:
-            # Убираем возможный ведущий апостроф и пробелы
             df[col] = df[col].astype(str).str.lstrip("'").str.strip()
 
-    # Сохраняем в Excel без индексов
-    df.to_excel(excel_path, index=False)
-    print(f'✅ Excel сохранён в {excel_path}')
+    # Сохраняем в шаблон
+    template_path = 'data/Шаблон цен.xlsx'
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+    output_path = f'results/ozon_products_{timestamp}.xlsx'
 
+    save_to_excel_template(df, template_path, output_path, sheet_name='Товары и цены')
