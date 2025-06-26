@@ -1,11 +1,12 @@
 import os
 from datetime import datetime
 from io import StringIO
+import glob
 
 import pandas as pd
 from openpyxl import load_workbook
 
-from data.data import COLUMN_MAPPING, TARGET_COLUMNS
+from data.data import COLUMN_MAPPING
 
 
 def save_excel(data: list[dict], filename_prefix: str) -> None:
@@ -22,6 +23,15 @@ def save_excel(data: list[dict], filename_prefix: str) -> None:
     df = pd.DataFrame(data)
     df.to_excel(filename, index=False)
     print(f'✅ Данные сохранены в {filename}')
+
+
+def get_target_columns_from_template(template_path: str, sheet_name: str = 'Товары и цены') -> list[str]:
+    """
+    Считывает названия колонок из строки 3 шаблона Excel.
+    """
+    wb = load_workbook(template_path)
+    ws = wb[sheet_name]
+    return [cell.value for cell in ws[3] if cell.value]
 
 
 def save_to_excel_template(df: pd.DataFrame, template_path: str, output_path: str,
@@ -62,8 +72,13 @@ def process_and_save_excel_from_csv_content(csv_content: str) -> None:
     # Переименовываем колонки
     df.rename(columns=COLUMN_MAPPING, inplace=True)
 
+    # Получаем нужные колонки из шаблона
+    folder = 'templates'
+    template_path = glob.glob(os.path.join(folder, '*.xlsx'))[0]
+    target_columns = get_target_columns_from_template(template_path, sheet_name='Товары и цены')
+
     # Добавляем отсутствующие целевые колонки пустыми
-    for col in TARGET_COLUMNS:
+    for col in target_columns:
         if col not in df.columns:
             df[col] = ''
 
@@ -73,8 +88,11 @@ def process_and_save_excel_from_csv_content(csv_content: str) -> None:
     if price_col in df.columns:
         df[min_price_col] = df[price_col]
 
-    # Оставляем только нужные колонки и в нужном порядке
-    df = df[TARGET_COLUMNS]
+    # Убираем NaN
+    df = df.fillna('')
+
+    # Упорядочиваем колонки
+    df = df[target_columns]
 
     # Приводим некоторые колонки к строковому типу
     str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode', 'Объем, л', 'Объемный вес, кг']
@@ -83,8 +101,8 @@ def process_and_save_excel_from_csv_content(csv_content: str) -> None:
             df[col] = df[col].astype(str).str.lstrip("'").str.strip()
 
     # Сохраняем в шаблон
-    template_path = 'data/Шаблон цен.xlsx'
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-    output_path = f'results/ozon_products_{timestamp}.xlsx'
+    output_path = f'results/product_report_{timestamp}.xlsx'
 
     save_to_excel_template(df, template_path, output_path, sheet_name='Товары и цены')
+

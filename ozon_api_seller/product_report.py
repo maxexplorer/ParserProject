@@ -85,9 +85,6 @@ def run_product_report() -> None:
 
             csv_str = resp.content.decode('utf-8')
 
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-            excel_path = f'results/ozon_products_{timestamp}.xlsx'
-
             process_and_save_excel_from_csv_content(csv_str)
             return
 
