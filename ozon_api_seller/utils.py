@@ -1,7 +1,7 @@
 import os
+import glob
 from datetime import datetime
 from io import StringIO
-import glob
 from copy import copy
 
 import pandas as pd
@@ -11,6 +11,9 @@ from data.data import COLUMN_MAPPING
 
 
 def save_excel(data: list[dict], filename_prefix: str) -> None:
+    """
+    Сохраняет переданные данные в Excel-файл с текущей датой и временем в имени.
+    """
     now_str = datetime.now().strftime('%Y%m%d_%H%M')
     filename = f"{filename_prefix}_{now_str}.xlsx"
     folder = os.path.dirname(filename)
@@ -23,6 +26,9 @@ def save_excel(data: list[dict], filename_prefix: str) -> None:
 
 
 def get_target_columns_from_template(template_path: str, sheet_name: str = 'Товары и цены') -> list[str]:
+    """
+    Считывает названия колонок из строки 3 шаблона Excel.
+    """
     wb = load_workbook(template_path)
     ws = wb[sheet_name]
     return [cell.value for cell in ws[3] if cell.value]
@@ -42,8 +48,9 @@ def copy_cell_style(src_cell, dest_cell):
 def save_to_excel_template(df: pd.DataFrame, template_path: str, output_path: str,
                            sheet_name: str = 'Товары и цены') -> None:
     """
-    Записывает DataFrame в шаблон Excel, начиная с 5-й строки, копируя стили шаблонной строки.
+    Записывает DataFrame в шаблон Excel, начиная с 5-й строки, копируя стили и высоту строк из строки 5 шаблона.
     """
+    # Создаём папку при необходимости
     folder = os.path.dirname(output_path)
     if folder and not os.path.exists(folder):
         os.makedirs(folder, exist_ok=True)
@@ -54,11 +61,12 @@ def save_to_excel_template(df: pd.DataFrame, template_path: str, output_path: st
 
     ws = wb[sheet_name]
 
-    # Шаблонная строка для копирования стилей (5-я строка в шаблоне)
+    # Получаем шаблонную строку и её высоту
     template_row_idx = 5
     template_row = [ws.cell(row=template_row_idx, column=col_idx) for col_idx in range(1, ws.max_column + 1)]
+    template_row_height = ws.row_dimensions[template_row_idx].height
 
-    # Записываем данные начиная с 5-й строки
+    # Записываем данные, начиная с 5-й строки
     start_row = 5
     for row_idx, row in enumerate(df.itertuples(index=False), start=start_row):
         for col_idx, value in enumerate(row, start=1):
@@ -66,22 +74,28 @@ def save_to_excel_template(df: pd.DataFrame, template_path: str, output_path: st
             if col_idx <= len(template_row):
                 copy_cell_style(template_row[col_idx - 1], dest_cell)
 
+        # Применяем высоту строки
+        ws.row_dimensions[row_idx].height = template_row_height
+
     wb.save(output_path)
     print(f'✅ Excel сохранён по шаблону: {output_path}')
 
 
 def process_and_save_excel_from_csv_content(csv_content: str) -> None:
+    """
+    Обрабатывает CSV-строку и сохраняет её в шаблон Excel.
+    """
     df = pd.read_csv(StringIO(csv_content), delimiter=';')
 
     # Переименовываем колонки
     df.rename(columns=COLUMN_MAPPING, inplace=True)
 
-    # Получаем нужные колонки из шаблона
+    # Путь к шаблону
     folder = 'templates'
     template_path = glob.glob(os.path.join(folder, '*.xlsx'))[0]
     target_columns = get_target_columns_from_template(template_path, sheet_name='Товары и цены')
 
-    # Добавляем отсутствующие целевые колонки пустыми
+    # Добавляем отсутствующие колонки
     for col in target_columns:
         if col not in df.columns:
             df[col] = ''
@@ -92,19 +106,19 @@ def process_and_save_excel_from_csv_content(csv_content: str) -> None:
     if price_col in df.columns:
         df[min_price_col] = df[price_col]
 
-    # Убираем NaN
+    # Удаляем NaN
     df = df.fillna('')
 
     # Упорядочиваем колонки
     df = df[target_columns]
 
-    # Приводим некоторые колонки к строковому типу
+    # Преобразуем некоторые колонки в строки
     str_columns = ['Артикул', 'SKU', 'Ozon SKU ID', 'Штрихкод', 'Barcode', 'Объем, л', 'Объемный вес, кг']
     for col in str_columns:
         if col in df.columns:
             df[col] = df[col].astype(str).str.lstrip("'").str.strip()
 
-    # Сохраняем в шаблон
+    # Сохраняем в Excel
     timestamp = datetime.now().strftime('%Y%m%d_%H%M')
     output_path = f'results/product_report_{timestamp}.xlsx'
 
