@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from random import randint
 from urllib.parse import urlparse, urlunparse
+import json
 
 import requests
 from requests import Session
@@ -275,8 +276,20 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
                     try:
                         soup = BeautifulSoup(driver.page_source, 'lxml')
-                        items = soup.find_all('input', inputmode='numeric')
-                        quantity = items[0].get('max')
+
+                        divs = soup.find_all('div', attrs={'data-state': True})
+
+                        quantity = None
+
+                        for div in divs:
+                            data_state = div['data-state']
+                            data_dict = json.loads(data_state)
+                            try:
+                                quantity = data_dict['items'][0]['quantity']['maxQuantity']
+                                if quantity:
+                                    break
+                            except (KeyError, IndexError, TypeError):
+                                continue
                     except Exception as ex:
                         # print(f'quantity - {ex}')
                         quantity = None
