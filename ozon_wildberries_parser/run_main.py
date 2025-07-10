@@ -1,14 +1,18 @@
 from datetime import datetime
 
-from parser import init_undetected_chromedriver, ozon_parser, wildberries_parser, workbook
+from parser import (
+    init_undetected_chromedriver,
+    ozon_parser,
+    wildberries_parser,
+    workbook
+)
+
+from update_price import update_prices_ozon, update_prices_wb
 
 start_time = datetime.now()
 
 
 def main():
-    """
-    Точка входа: выбор парсинга Ozon, WB или обоих
-    """
     try:
         value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
     except Exception:
@@ -19,9 +23,10 @@ def main():
             pages = int(input('Введите количество страниц Ozon: \n'))
             driver = init_undetected_chromedriver()
             try:
-                print('Сбор данных Ozon')
-                ozon_parser(driver, workbook, pages)
-                print('Сбор данных Ozon завершен')
+                print('Сбор данных Ozon...')
+                ozon_parser(driver=driver, workbook=workbook, pages=pages)
+                update_prices_ozon()
+                print('Сбор данных Ozon завершен.')
             except Exception as ex:
                 print(f'main: {ex}')
                 input('Нажмите Enter, чтобы закрыть программу...')
@@ -32,9 +37,10 @@ def main():
         case '2':
             pages = int(input('Введите количество страниц Wildberries: \n'))
             try:
-                print('Сбор данных Wildberries')
-                wildberries_parser(workbook, pages)
-                print('Сбор данных Wildberries завершен')
+                print('Сбор данных Wildberries...')
+                wildberries_parser(workbook=workbook, pages=pages)
+                update_prices_wb()
+                print('Сбор данных Wildberries завершен.')
             except Exception as ex:
                 print(f'main: {ex}')
                 input('Нажмите Enter, чтобы закрыть программу...')
@@ -42,23 +48,23 @@ def main():
         case '3':
             pages_ozon = int(input('Введите количество страниц Ozon: \n'))
             pages_wb = int(input('Введите количество страниц Wildberries: \n'))
-
             driver = init_undetected_chromedriver()
             try:
-                print('Сбор данных Ozon')
-                ozon_parser(driver, workbook, pages_ozon)
-                print('Сбор данных Ozon завершен')
+                print('Сбор данных Ozon...')
+                ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
+                update_prices_ozon()
+                print('Сбор данных Ozon завершен.')
             except Exception as ex:
                 print(f'main: {ex}')
                 input('Нажмите Enter, чтобы закрыть программу...')
             finally:
                 driver.close()
                 driver.quit()
-
             try:
-                print('Сбор данных Wildberries')
-                wildberries_parser(workbook, pages_wb)
-                print('Сбор данных Wildberries завершен')
+                print('Сбор данных Wildberries...')
+                wildberries_parser(workbook=workbook, pages=pages_wb)
+                update_prices_wb()
+                print('Сбор данных Wildberries завершен.')
             except Exception as ex:
                 print(f'main: {ex}')
                 input('Нажмите Enter, чтобы закрыть программу...')

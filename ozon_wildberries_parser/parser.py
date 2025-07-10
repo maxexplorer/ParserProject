@@ -103,12 +103,6 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list | None:
 
         print(f'Получено: {len(products_ids_set)} ids')
 
-        # if not os.path.exists('data'):
-        #     os.makedirs('data')
-        #
-        # with open(f'data/products_ids_list_ozon.txt', 'a', encoding='utf-8') as file:
-        #     print(*products_ids_list, file=file, sep='\n')
-
         return products_ids_list
 
     except Exception as ex:
@@ -164,12 +158,6 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 print(f'products_ids: {ex}')
 
     print(f'Получено: {len(products_ids_list)} ids')
-
-    # if not os.path.exists('data'):
-    #     os.makedirs('data')
-    #
-    # with open(f'data/products_ids_list_wb.txt', 'a', encoding='utf-8') as file:
-    #     print(*products_ids_list, file=file, sep='\n')
 
     return products_ids_list
 
