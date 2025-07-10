@@ -17,12 +17,13 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-
 workbook = openpyxl.load_workbook('data/data.xlsm')
 
 
-# Функция инициализации объекта chromedriver
 def init_undetected_chromedriver():
+    """
+    Инициализирует undetected_chromedriver, возвращает драйвер
+    """
     driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
@@ -31,6 +32,9 @@ def init_undetected_chromedriver():
 
 
 def get_cleaned_url(product_url: str) -> str:
+    """
+    Очищает ссылку Ozon, возвращает product_id
+    """
     # Парсим ссылку
     parsed_url = urlparse(product_url)
 
@@ -42,8 +46,10 @@ def get_cleaned_url(product_url: str) -> str:
     return product_id
 
 
-# Функция получения ссылок товаров
-def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
+def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list | None:
+    """
+    Парсит Ozon, возвращает список product_ids по запросу text
+    """
     products_ids_list = list()
     products_ids_set = set()
 
@@ -109,8 +115,10 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list[str]:
         print(f'get_products_urls: {ex}')
 
 
-# Функция получения ссылок товаров
 def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
+    """
+    Парсит Wildberries, возвращает список product_ids по запросу text
+    """
     products_ids_list = list()
 
     with Session() as session:
@@ -167,6 +175,9 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
 
 
 def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
+    """
+    Основной парсер Ozon: записывает позиции, цены, количество и склад
+    """
     # Выбираем активный лист (или любой другой лист)
     ws = workbook['ОЗОН']
 
@@ -326,6 +337,9 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
 
 def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
+    """
+    Основной парсер Wildberries: записывает позиции, цены, количество и склад
+    """
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -426,4 +440,3 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         os.makedirs('results')
 
     workbook.save('results/result_data.xlsx')
-
