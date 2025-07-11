@@ -1,3 +1,5 @@
+# update_price.py
+
 import os
 import glob
 import time
@@ -21,8 +23,9 @@ def load_article_info_from_excel(folder='data') -> dict:
         print('❗ В папке data/ не найдено .xlsm файлов.')
         return {}
 
-    df = pd.read_excel(excel_files[0], skiprows=3)
+    df = pd.read_excel(excel_files[0], skiprows=2)
     df.columns = df.columns.str.strip()
+
 
     article_info = {}
     for _, row in df.iterrows():
@@ -38,8 +41,7 @@ def load_article_info_from_excel(folder='data') -> dict:
 
         try:
             delta = float(new_price)
-            price_value = float(price) if not pd.isna(price) and price != '' else None
-            article_info[offer_id] = (price_value, delta)
+            article_info[offer_id] = delta
         except Exception as ex:
             print(f'Ошибка преобразования для {offer_id}: {ex}')
             continue
@@ -220,7 +222,6 @@ def update_prices_ozon(article_info: dict) -> None:
             json=prices,
             timeout=20
         )
-        print(f'Ozon API: {response.status_code} {response.text}')
     except Exception as ex:
         print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
 
@@ -257,6 +258,5 @@ def update_prices_wb(article_info: dict) -> None:
             json=payload,
             timeout=20
         )
-        print(f'WB API: {response.status_code} {response.text}')
     except Exception as ex:
         print(f'❌ Ошибка при обновлении цен WB: {ex}')

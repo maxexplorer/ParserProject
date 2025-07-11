@@ -1,3 +1,5 @@
+# main.py
+
 from datetime import datetime
 
 from parser import (
@@ -28,11 +30,11 @@ def main():
     match value:
         case '1':
             pages = int(input('Введите количество страниц Ozon: \n'))
-            driver = init_undetected_chromedriver()
             try:
                 print('Сбор данных Ozon...')
                 update_prices_ozon(article_info=article_info)
                 write_price_to_excel(article_info=article_info)
+                driver = init_undetected_chromedriver()
                 ozon_parser(driver=driver, workbook=workbook, pages=pages)
                 print('Сбор данных Ozon завершен.')
             except Exception as ex:
