@@ -1,14 +1,16 @@
 import os
 import glob
-import json
 import time
+
 import pandas as pd
 import requests
+
+import openpyxl
 
 from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 
 
-def load_article_info_from_excel(folder='data'):
+def load_article_info_from_excel(folder='data') -> dict:
     """
     Загружает артикулы, price и new_price из Excel, начиная с 4 строки.
     Артикул в 1 столбце, price в 5, new_price в 6 столбце.
@@ -45,8 +47,36 @@ def load_article_info_from_excel(folder='data'):
     return article_info
 
 
+def write_price_to_excel(article_info, folder='data') -> None:
+    """
+    Записывает price из словаря {offer_id: (price, delta)} обратно в Excel.
+    Артикул в 1 столбце, price пишется в 5 столбец, начиная с 4 строки.
+    """
+    excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
+    if not excel_files:
+        print('❗ В папке data/ не найдено .xlsm файлов.')
+        return
 
-def get_current_prices_ozon():
+    wb = openpyxl.load_workbook(excel_files[0])
+    ws = wb.active
+
+    for row in ws.iter_rows(min_row=4):
+        cell_article = row[0].value
+        if cell_article and str(cell_article).strip() in article_info:
+            price_value, _ = article_info[str(cell_article).strip()]
+            if price_value is not None:
+                row[4].value = price_value  # 5 столбец
+
+    if not os.path.exists('results'):
+        os.makedirs('results')
+
+    wb.save('results/result_data.xlsx')
+    print('✅ Цены успешно записаны в results/result_data.xlsx')
+
+
+
+
+def get_current_prices_ozon() -> dict:
     """
     Получает текущие маркетинговые цены товаров с Ozon.
     :return: Словарь {offer_id: current_price}
@@ -98,7 +128,7 @@ def get_current_prices_ozon():
     return result
 
 
-def get_current_prices_wb():
+def get_current_prices_wb() -> dict:
     """
     Получает текущие цены товаров с WB.
     :return: Словарь {vendorCode: current_price}
@@ -148,19 +178,18 @@ def get_current_prices_wb():
     return result
 
 
-def update_prices_ozon():
+def update_prices_ozon(article_info: dict) -> None:
     """
     Обновляет цены на Ozon по API.
     """
-    articles = load_article_info_from_excel()
-    if not articles:
+    if not article_info:
         print('Нет данных для обновления цен на Ozon.')
         return
 
     current_prices = get_current_prices_ozon()
     prices = {'prices': []}
 
-    for offer_id, delta in articles.items():
+    for offer_id, delta in article_info.items():
         current_price = current_prices.get(offer_id)
         if current_price is None:
             print(f'❗ Не найдена текущая цена для Ozon offer_id: {offer_id}')
@@ -188,7 +217,7 @@ def update_prices_ozon():
         response = requests.post(
             API_URLS_OZON['import_price'],
             headers=OZON_HEADERS,
-            json=payload,
+            json=prices,
             timeout=20
         )
         print(f'Ozon API: {response.status_code} {response.text}')
@@ -196,19 +225,18 @@ def update_prices_ozon():
         print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
 
 
-def update_prices_wb():
+def update_prices_wb(article_info: dict) -> None:
     """
     Обновляет цены на Wildberries по API.
     """
-    articles = load_article_info_from_excel()
-    if not articles:
+    if not article_info:
         print('Нет данных для обновления цен на WB.')
         return
 
     current_prices = get_current_prices_wb()
     payload = {'data': []}
 
-    for vendor_code, delta in articles.items():
+    for vendor_code, delta in article_info.items():
         current_price = current_prices.get(vendor_code)
         if current_price is None:
             print(f'❗ Не найдена текущая цена для WB vendorCode: {vendor_code}')
