@@ -20,7 +20,6 @@ start_time = datetime.now()
 
 
 def main():
-    article_info = load_article_info_from_excel()
 
     try:
         value = input('Введите значение:\n1 - Ozon\n2 - Wildberries\n3 - Оба сайта\n')
@@ -33,6 +32,7 @@ def main():
             driver = init_undetected_chromedriver()
             try:
                 print('Сбор данных Ozon...')
+                article_info = load_article_info_from_excel(sheet_name='ОЗОН')
                 current_prices = update_prices_ozon(article_info=article_info)
                 write_price_to_excel(current_prices=current_prices, marketplace='ОЗОН')
                 ozon_parser(driver=driver, workbook=workbook, pages=pages)
@@ -48,6 +48,7 @@ def main():
             pages = int(input('Введите количество страниц Wildberries: \n'))
             try:
                 print('Сбор данных Wildberries...')
+                article_info = load_article_info_from_excel(sheet_name='ВБ')
                 current_prices = update_prices_wb(article_info=article_info)
                 write_price_to_excel(current_prices=current_prices, marketplace='ВБ')
                 wildberries_parser(workbook=workbook, pages=pages)
@@ -62,6 +63,7 @@ def main():
             driver = init_undetected_chromedriver()
             try:
                 print('Сбор данных Ozon...')
+                article_info = load_article_info_from_excel(sheet_name='ОЗОН')
                 current_prices = update_prices_ozon(article_info=article_info)
                 write_price_to_excel(current_prices=current_prices, marketplace='ОЗОН')
                 ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
@@ -74,6 +76,7 @@ def main():
                 driver.quit()
             try:
                 print('Сбор данных Wildberries...')
+                article_info = load_article_info_from_excel(sheet_name='ВБ')
                 current_prices = update_prices_wb(article_info=article_info)
                 write_price_to_excel(current_prices=current_prices, marketplace='ВБ')
                 wildberries_parser(workbook=workbook, pages=pages_wb)

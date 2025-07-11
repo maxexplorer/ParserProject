@@ -11,18 +11,19 @@ import openpyxl
 from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 
 
-def load_article_info_from_excel(folder='data') -> dict:
+def load_article_info_from_excel(sheet_name: str) -> dict:
     """
     Загружает артикулы и new_price из Excel, начиная с 3 строки (skiprows=2).
     Артикул в 1 столбце, new_price в 6 столбце.
     Возвращает словарь {offer_id: delta}
     """
+    folder='data'
     excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsm файлов.')
         return {}
 
-    df = pd.read_excel(excel_files[0], skiprows=2)
+    df = pd.read_excel(excel_files[0], sheet_name=sheet_name, skiprows=2)
     df.columns = df.columns.str.strip()
 
     article_info = {}
@@ -68,10 +69,10 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
             if price_value is not None:
                 row[4].value = price_value  # 5 столбец
 
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
-    wb.save('results/result_data.xlsx')
+    wb.save('data/data.xlsm')
     print('✅ Текущие цены успешно записаны в results/result_data.xlsx')
 
 
@@ -229,7 +230,7 @@ def update_prices_wb(article_info: dict) -> dict:
         return {}
 
     vendor_code_to_price, vendor_code_to_nmID = get_current_prices_wb()
-    payload = {'data': []}
+    data = {'data': []}
 
     for vendor_code, delta in article_info.items():
         current_price = vendor_code_to_price.get(vendor_code)
@@ -244,7 +245,7 @@ def update_prices_wb(article_info: dict) -> dict:
 
         new_price = current_price + delta
 
-        payload['data'].append({
+        data['data'].append({
             'nmID': int(nm_id),
             'price': int(new_price),
             'discount': 30
@@ -254,7 +255,7 @@ def update_prices_wb(article_info: dict) -> dict:
         response = requests.post(
             API_URLS_WB['upload_task'],
             headers=WB_HEADERS,
-            json=payload,
+            json=data,
             timeout=20
         )
         response.raise_for_status()
