@@ -30,11 +30,11 @@ def main():
     match value:
         case '1':
             pages = int(input('Введите количество страниц Ozon: \n'))
+            driver = init_undetected_chromedriver()
             try:
                 print('Сбор данных Ozon...')
-                update_prices_ozon(article_info=article_info)
-                write_price_to_excel(article_info=article_info)
-                driver = init_undetected_chromedriver()
+                current_prices = update_prices_ozon(article_info=article_info)
+                write_price_to_excel(current_prices=current_prices, marketplace='ОЗОН')
                 ozon_parser(driver=driver, workbook=workbook, pages=pages)
                 print('Сбор данных Ozon завершен.')
             except Exception as ex:
@@ -48,8 +48,8 @@ def main():
             pages = int(input('Введите количество страниц Wildberries: \n'))
             try:
                 print('Сбор данных Wildberries...')
-                update_prices_wb(article_info=article_info)
-                write_price_to_excel(article_info=article_info)
+                current_prices = update_prices_wb(article_info=article_info)
+                write_price_to_excel(current_prices=current_prices, marketplace='ВБ')
                 wildberries_parser(workbook=workbook, pages=pages)
                 print('Сбор данных Wildberries завершен.')
             except Exception as ex:
@@ -62,8 +62,8 @@ def main():
             driver = init_undetected_chromedriver()
             try:
                 print('Сбор данных Ozon...')
-                update_prices_ozon(article_info=article_info)
-                write_price_to_excel(article_info=article_info)
+                current_prices = update_prices_ozon(article_info=article_info)
+                write_price_to_excel(current_prices=current_prices, marketplace='ОЗОН')
                 ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
                 print('Сбор данных Ozon завершен.')
             except Exception as ex:
@@ -74,8 +74,8 @@ def main():
                 driver.quit()
             try:
                 print('Сбор данных Wildberries...')
-                update_prices_wb(article_info=article_info)
-                write_price_to_excel(article_info=article_info)
+                current_prices = update_prices_wb(article_info=article_info)
+                write_price_to_excel(current_prices=current_prices, marketplace='ВБ')
                 wildberries_parser(workbook=workbook, pages=pages_wb)
                 print('Сбор данных Wildberries завершен.')
             except Exception as ex:

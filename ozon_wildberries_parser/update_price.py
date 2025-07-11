@@ -6,7 +6,6 @@ import time
 
 import pandas as pd
 import requests
-
 import openpyxl
 
 from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
@@ -14,9 +13,9 @@ from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 
 def load_article_info_from_excel(folder='data') -> dict:
     """
-    Загружает артикулы, price и new_price из Excel, начиная с 4 строки.
-    Артикул в 1 столбце, price в 5, new_price в 6 столбце.
-    Возвращает словарь {offer_id: (price, delta)}
+    Загружает артикулы и new_price из Excel, начиная с 3 строки (skiprows=2).
+    Артикул в 1 столбце, new_price в 6 столбце.
+    Возвращает словарь {offer_id: delta}
     """
     excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
     if not excel_files:
@@ -26,15 +25,13 @@ def load_article_info_from_excel(folder='data') -> dict:
     df = pd.read_excel(excel_files[0], skiprows=2)
     df.columns = df.columns.str.strip()
 
-
     article_info = {}
     for _, row in df.iterrows():
         offer_id = str(row.iloc[0]).strip()
         if not offer_id:
             continue
 
-        price = row.iloc[4]
-        new_price = row.iloc[5]
+        new_price = row.iloc[5]  # 6 столбец
 
         if pd.isna(new_price) or new_price == '':
             continue
@@ -49,23 +46,25 @@ def load_article_info_from_excel(folder='data') -> dict:
     return article_info
 
 
-def write_price_to_excel(article_info, folder='data') -> None:
+def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
     """
-    Записывает price из словаря {offer_id: (price, delta)} обратно в Excel.
-    Артикул в 1 столбце, price пишется в 5 столбец, начиная с 4 строки.
+    Записывает текущие цены из current_prices в Excel в 5 столбец.
+    Артикул в 1 столбце, price в 5 столбце, начиная с 4 строки.
     """
+    folder = 'data'
     excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsm файлов.')
         return
 
     wb = openpyxl.load_workbook(excel_files[0])
-    ws = wb.active
+    ws = wb[marketplace]
 
     for row in ws.iter_rows(min_row=4):
         cell_article = row[0].value
-        if cell_article and str(cell_article).strip() in article_info:
-            price_value, _ = article_info[str(cell_article).strip()]
+        if cell_article:
+            offer_id = str(cell_article).strip()
+            price_value = current_prices.get(offer_id)
             if price_value is not None:
                 row[4].value = price_value  # 5 столбец
 
@@ -73,9 +72,7 @@ def write_price_to_excel(article_info, folder='data') -> None:
         os.makedirs('results')
 
     wb.save('results/result_data.xlsx')
-    print('✅ Цены успешно записаны в results/result_data.xlsx')
-
-
+    print('✅ Текущие цены успешно записаны в results/result_data.xlsx')
 
 
 def get_current_prices_ozon() -> dict:
@@ -90,9 +87,7 @@ def get_current_prices_ozon() -> dict:
     while True:
         data = {
             'cursor': cursor,
-            'filter': {
-                'visibility': 'ALL'
-            },
+            'filter': {'visibility': 'ALL'},
             'limit': limit
         }
 
@@ -116,12 +111,12 @@ def get_current_prices_ozon() -> dict:
             break
 
         items = data.get('items', [])
-        
         for item in items:
             offer_id = item.get('offer_id')
             price_info = item.get('price', {})
             price = price_info.get('price', 0)
-            result[offer_id] = float(price)
+            if offer_id:
+                result[offer_id] = float(price)
 
         cursor = data.get('last_id')
         if not cursor:
@@ -164,7 +159,6 @@ def get_current_prices_wb() -> dict:
             break
 
         goods = data.get('data', {}).get('listGoods', [])
-
         if not goods:
             break
 
@@ -173,20 +167,21 @@ def get_current_prices_wb() -> dict:
             sizes = item.get('sizes', [])
             if sizes:
                 price = sizes[0].get('price', 0)
-                result[vendor_code] = float(price)
+                if vendor_code:
+                    result[vendor_code] = float(price)
 
         params['skip'] += 100
 
     return result
 
 
-def update_prices_ozon(article_info: dict) -> None:
+def update_prices_ozon(article_info: dict) -> dict:
     """
-    Обновляет цены на Ozon по API.
+    Обновляет цены на Ozon по API и возвращает текущие цены для записи в Excel.
     """
     if not article_info:
         print('Нет данных для обновления цен на Ozon.')
-        return
+        return {}
 
     current_prices = get_current_prices_ozon()
     prices = {'prices': []}
@@ -225,14 +220,16 @@ def update_prices_ozon(article_info: dict) -> None:
     except Exception as ex:
         print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
 
+    return current_prices
 
-def update_prices_wb(article_info: dict) -> None:
+
+def update_prices_wb(article_info: dict) -> dict:
     """
-    Обновляет цены на Wildberries по API.
+    Обновляет цены на Wildberries по API и возвращает текущие цены для записи в Excel.
     """
     if not article_info:
         print('Нет данных для обновления цен на WB.')
-        return
+        return {}
 
     current_prices = get_current_prices_wb()
     payload = {'data': []}
@@ -260,3 +257,7 @@ def update_prices_wb(article_info: dict) -> None:
         )
     except Exception as ex:
         print(f'❌ Ошибка при обновлении цен WB: {ex}')
+
+    return current_prices
+
+
