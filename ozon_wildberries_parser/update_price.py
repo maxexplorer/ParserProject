@@ -125,20 +125,20 @@ def get_current_prices_ozon() -> dict:
     return result
 
 
-def get_current_prices_wb() -> dict:
-    """
-    Получает текущие цены товаров с WB.
-    :return: Словарь {vendorCode: current_price}
-    """
-    result = {}
-    params = {
-        'order': 'nmId',
-        'direction': 'asc',
-        'limit': 100,
-        'skip': 0
-    }
+def get_current_prices_wb() -> tuple[dict, dict]:
+    vendor_code_to_price = {}
+    vendor_code_to_nmID = {}
+    limit = 1000
+    offset = 0
 
     while True:
+        params = {
+            'order': 'nmId',
+            'direction': 'asc',
+            'limit': limit,
+            'offset': offset
+        }
+
         try:
             time.sleep(1)
             response = requests.get(
@@ -163,17 +163,17 @@ def get_current_prices_wb() -> dict:
             break
 
         for item in goods:
+            nm_id = item.get('nmID')
             vendor_code = item.get('vendorCode')
             sizes = item.get('sizes', [])
-            if sizes:
+            if sizes and vendor_code:
                 price = sizes[0].get('price', 0)
-                if vendor_code:
-                    result[vendor_code] = float(price)
+                vendor_code_to_price[vendor_code] = float(price)
+                vendor_code_to_nmID[vendor_code] = nm_id
 
-        params['skip'] += 100
+        offset += limit
 
-    return result
-
+    return vendor_code_to_price, vendor_code_to_nmID
 
 def update_prices_ozon(article_info: dict) -> dict:
     """
@@ -224,26 +224,28 @@ def update_prices_ozon(article_info: dict) -> dict:
 
 
 def update_prices_wb(article_info: dict) -> dict:
-    """
-    Обновляет цены на Wildberries по API и возвращает текущие цены для записи в Excel.
-    """
     if not article_info:
         print('Нет данных для обновления цен на WB.')
         return {}
 
-    current_prices = get_current_prices_wb()
+    vendor_code_to_price, vendor_code_to_nmID = get_current_prices_wb()
     payload = {'data': []}
 
     for vendor_code, delta in article_info.items():
-        current_price = current_prices.get(vendor_code)
+        current_price = vendor_code_to_price.get(vendor_code)
+        nm_id = vendor_code_to_nmID.get(vendor_code)
+
         if current_price is None:
             print(f'❗ Не найдена текущая цена для WB vendorCode: {vendor_code}')
+            continue
+        if nm_id is None:
+            print(f'❗ Не найден nmID для WB vendorCode: {vendor_code}')
             continue
 
         new_price = current_price + delta
 
         payload['data'].append({
-            'nmID': int(vendor_code),
+            'nmID': int(nm_id),
             'price': int(new_price),
             'discount': 30
         })
@@ -255,9 +257,10 @@ def update_prices_wb(article_info: dict) -> dict:
             json=payload,
             timeout=20
         )
+        response.raise_for_status()
     except Exception as ex:
         print(f'❌ Ошибка при обновлении цен WB: {ex}')
 
-    return current_prices
+    return vendor_code_to_price
 
 
