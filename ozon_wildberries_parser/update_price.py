@@ -10,9 +10,9 @@ from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 
 def load_article_info_from_excel(folder='data'):
     """
-    Загружает артикулы и new_price из Excel, начиная с 4 строки, артикул в 1 столбце, new_price в 5 столбце.
-    :param folder: Папка с Excel
-    :return: Словарь {offer_id: delta_price}
+    Загружает артикулы, price и new_price из Excel, начиная с 4 строки.
+    Артикул в 1 столбце, price в 5, new_price в 6 столбце.
+    Возвращает словарь {offer_id: (price, delta)}
     """
     excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
     if not excel_files:
@@ -28,14 +28,22 @@ def load_article_info_from_excel(folder='data'):
         if not offer_id:
             continue
 
-        new_price = row.iloc[4]
+        price = row.iloc[4]
+        new_price = row.iloc[5]
+
         if pd.isna(new_price) or new_price == '':
             continue
 
-        delta = float(new_price)
-        article_info[offer_id] = delta
+        try:
+            delta = float(new_price)
+            price_value = float(price) if not pd.isna(price) and price != '' else None
+            article_info[offer_id] = (price_value, delta)
+        except Exception as ex:
+            print(f'Ошибка преобразования для {offer_id}: {ex}')
+            continue
 
     return article_info
+
 
 
 def get_current_prices_ozon():
