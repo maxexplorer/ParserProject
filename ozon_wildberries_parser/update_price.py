@@ -80,8 +80,8 @@ def get_current_prices_ozon():
         for item in items:
             offer_id = item.get('offer_id')
             price_info = item.get('price', {})
-            marketing_price = price_info.get('marketing_price', 0)
-            result[offer_id] = float(marketing_price)
+            price = price_info.get('price', 0)
+            result[offer_id] = float(price)
 
         cursor = data.get('last_id')
         if not cursor:
@@ -150,7 +150,7 @@ def update_prices_ozon():
         return
 
     current_prices = get_current_prices_ozon()
-    payload = {'prices': []}
+    prices = {'prices': []}
 
     for offer_id, delta in articles.items():
         current_price = current_prices.get(offer_id)
@@ -160,13 +160,13 @@ def update_prices_ozon():
 
         new_price = current_price + delta
 
-        payload['prices'].append({
+        prices['prices'].append({
             'auto_action_enabled': 'UNKNOWN',
             'auto_add_to_ozon_actions_list_enabled': 'UNKNOWN',
             'currency_code': 'RUB',
             'min_price': str(int(new_price)),
             'min_price_for_auto_actions_enabled': True,
-            'net_price': str(int(new_price)),
+            'net_price': '0',
             'offer_id': offer_id,
             'old_price': '0',
             'price': str(int(new_price)),

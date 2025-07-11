@@ -23,7 +23,7 @@ def main():
             pages = int(input('Введите количество страниц Ozon: \n'))
             driver = init_undetected_chromedriver()
             try:
-                print('Сбор данных Ozon...')
+                print('Сбор данных Ozon')
                 ozon_parser(driver=driver, workbook=workbook, pages=pages)
                 update_prices_ozon()
                 print('Сбор данных Ozon завершен.')
@@ -37,7 +37,7 @@ def main():
         case '2':
             pages = int(input('Введите количество страниц Wildberries: \n'))
             try:
-                print('Сбор данных Wildberries...')
+                print('Сбор данных Wildberries')
                 wildberries_parser(workbook=workbook, pages=pages)
                 update_prices_wb()
                 print('Сбор данных Wildberries завершен.')
