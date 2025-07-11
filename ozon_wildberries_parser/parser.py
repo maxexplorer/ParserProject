@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-workbook = openpyxl.load_workbook('data/data.xlsm')
+workbook = openpyxl.load_workbook('data/data.xlsx')
 
 
 def init_undetected_chromedriver():
@@ -426,7 +426,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 print(
                     f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
 
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    if not os.path.exists('data'):
+        os.makedirs('data')
 
-    workbook.save('results/result_data.xlsx')
+    workbook.save('data/data.xlsx')

@@ -17,10 +17,10 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
     Артикул в 1 столбце, new_price в 6 столбце.
     Возвращает словарь {offer_id: delta}
     """
-    folder='data'
-    excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
+    folder = 'data'
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
-        print('❗ В папке data/ не найдено .xlsm файлов.')
+        print('❗ В папке data/ не найдено .xlsx файлов.')
         return {}
 
     df = pd.read_excel(excel_files[0], sheet_name=sheet_name, skiprows=2)
@@ -49,16 +49,20 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
 
 def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
     """
-    Записывает текущие цены из current_prices в Excel в 5 столбец.
-    Артикул в 1 столбце, price в 5 столбце, начиная с 4 строки.
+    Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
+    сохраняя изменения в data/data.xlsx.
     """
     folder = 'data'
-    excel_files = glob.glob(os.path.join(folder, '*.xlsm'))
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
-        print('❗ В папке data/ не найдено .xlsm файлов.')
+        print('❗ В папке data/ не найдено .xlsx файлов.')
         return
 
     wb = openpyxl.load_workbook(excel_files[0])
+    if marketplace not in wb.sheetnames:
+        print(f'❗ В книге нет листа "{marketplace}"')
+        return
+
     ws = wb[marketplace]
 
     for row in ws.iter_rows(min_row=4):
@@ -67,13 +71,14 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
             offer_id = str(cell_article).strip()
             price_value = current_prices.get(offer_id)
             if price_value is not None:
-                row[4].value = price_value  # 5 столбец
+                row[4].value = price_value  # 5-й столбец
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
-    wb.save('data/data.xlsm')
-    print('✅ Текущие цены успешно записаны в results/result_data.xlsx')
+    output_path = os.path.join(folder, 'data.xlsx')
+    wb.save(output_path)
+    print(f'✅ Текущие цены успешно записаны в {output_path}')
 
 
 def get_current_prices_ozon() -> dict:
@@ -176,6 +181,7 @@ def get_current_prices_wb() -> tuple[dict, dict]:
 
     return vendor_code_to_price, vendor_code_to_nmID
 
+
 def update_prices_ozon(article_info: dict) -> dict:
     """
     Обновляет цены на Ozon по API и возвращает текущие цены для записи в Excel.
@@ -263,5 +269,3 @@ def update_prices_wb(article_info: dict) -> dict:
         print(f'❌ Ошибка при обновлении цен WB: {ex}')
 
     return vendor_code_to_price
-
-
