@@ -107,14 +107,16 @@ def main():
             case _:
                 print('Введено неправильное значение')
 
-        input("Нажмите Enter, чтобы закрыть программу...")
-
     except Exception as ex:
         print(f'main: {ex}')
         input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
+
+    input("Нажмите Enter, чтобы закрыть программу...")
+
+
 
 if __name__ == '__main__':
     main()
