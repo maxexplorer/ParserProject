@@ -109,7 +109,6 @@ def main():
 
     except Exception as ex:
         print(f'main: {ex}')
-        input("Нажмите Enter, чтобы закрыть программу...")
 
     execution_time = datetime.now() - start_time
     print(f'Время работы программы: {execution_time}')
