@@ -186,10 +186,6 @@ def update_prices_ozon(article_info: dict) -> dict:
     """
     Обновляет цены на Ozon по API и возвращает текущие цены для записи в Excel.
     """
-    if not article_info:
-        print('Нет данных для обновления цен на Ozon.')
-        return {}
-
     current_prices = get_current_prices_ozon()
     prices = {'prices': []}
 
@@ -217,24 +213,24 @@ def update_prices_ozon(article_info: dict) -> dict:
             'vat': '0.1'
         })
 
-    try:
-        response = requests.post(
-            API_URLS_OZON['import_price'],
-            headers=OZON_HEADERS,
-            json=prices,
-            timeout=20
-        )
-    except Exception as ex:
-        print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
+    if prices['prices']:
+        try:
+            response = requests.post(
+                API_URLS_OZON['import_price'],
+                headers=OZON_HEADERS,
+                json=prices,
+                timeout=20
+            )
+        except Exception as ex:
+            print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
 
     return current_prices
 
 
 def update_prices_wb(article_info: dict) -> dict:
-    if not article_info:
-        print('Нет данных для обновления цен на WB.')
-        return {}
-
+    """
+    Обновляет цены на Ozon по API и возвращает текущие цены для записи в Excel.
+    """
     vendor_code_to_price, vendor_code_to_nmID = get_current_prices_wb()
     data = {'data': []}
 
@@ -257,15 +253,16 @@ def update_prices_wb(article_info: dict) -> dict:
             'discount': 30
         })
 
-    try:
-        response = requests.post(
-            API_URLS_WB['upload_task'],
-            headers=WB_HEADERS,
-            json=data,
-            timeout=20
-        )
-        response.raise_for_status()
-    except Exception as ex:
-        print(f'❌ Ошибка при обновлении цен WB: {ex}')
+    if data['data']:
+        try:
+            response = requests.post(
+                API_URLS_WB['upload_task'],
+                headers=WB_HEADERS,
+                json=data,
+                timeout=20
+            )
+            response.raise_for_status()
+        except Exception as ex:
+            print(f'❌ Ошибка при обновлении цен WB: {ex}')
 
     return vendor_code_to_price
