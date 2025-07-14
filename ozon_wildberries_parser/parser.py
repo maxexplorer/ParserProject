@@ -331,21 +331,19 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     Основной парсер Wildberries: записывает позиции, цены, количество и склад
     """
     headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'cache-control': 'max-age=0',
-        # 'cookie': '_wbauid=1430232901729079545; wbx-validation-key=042261a8-d7e3-4266-8343-31fb35d5a295',
-        'priority': 'u=0, i',
-        'referer': 'https://www.wildberries.ru/',
-        'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
+        'authorization': 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTI0OTEwNjIsInVzZXIiOiIxODg4NzM1MSIsInNoYXJkX2tleSI6IjE4IiwiY2xpZW50X2lkIjoid2IiLCJzZXNzaW9uX2lkIjoiOGNjZTcxMzI0YjhjNDBjMGFlN2JkMTEwYzVmN2Q0YjkiLCJ2YWxpZGF0aW9uX2tleSI6IjE0YzM2ZmViZTlmOGU4YjVmYzNlMGY1OGIwZTAyY2ZmMDA5M2RjZjM2ODMzMDJkNDQ1NGIwNzRkNDA0OTcxYjEiLCJwaG9uZSI6Im95THlJNTJQNzdXL3FZdnA2T2luQmc9PSIsInVzZXJfcmVnaXN0cmF0aW9uX2R0IjoxNjc0MDUwNDc1LCJ2ZXJzaW9uIjoyfQ.BZaDdpljQE4Npqz_pbhMycN8LLgwUNXbkAqIjYvcQw_pFuNXZHBxuu2yIOocvxO69EDHgNoZiMYgxBXz9B0P8r0HqgGtPdpXs8dX45efbUp4KgnlCwORutD2CXTQd9vMISfUsmwcKrovQiBap9dNI8zc6GKXMiH8xr-Yu7ZLGTfjXLvNW9ll7NPfFoqla-KnA8Y-OI12K-RFgzsowrl1tpTDY1Gh83aqHuM_-uClVC4EHU8Xp1gCS2itk6ww6_I0vqVaryM_ClQYUVhn-UE6R7dhpRtlOTdSDB_CF6GcsqL_jIZL7gHvNeHjaKp_Gumrm3JJjabSea9UvdCF-YZh6A',
+        'origin': 'https://www.wildberries.ru',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wildberries.ru/catalog/265491193/detail.aspx',
+        'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'cross-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
     }
 
     # Выбираем активный лист (или любой другой лист)
@@ -376,14 +374,14 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 params = {
                     'appType': '1',
                     'curr': 'rub',
-                    'dest': '-1257786',
+                    'dest': '123585494',
                     'spp': '30',
                     'nm': {product_id},
                 }
 
                 try:
                     time.sleep(randint(1, 3))
-                    response = requests.get('https://card.wb.ru/cards/v1/detail', params=params, headers=headers)
+                    response = requests.get('https://card.wb.ru/cards/v4/detail', params=params, headers=headers)
                     if response.status_code != 200:
                         print(f'{product_url}: {response.status_code}')
                 except Exception as ex:
