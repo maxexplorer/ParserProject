@@ -242,7 +242,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = '-'
-                    row[cell.column - 4].value = price
+                    row[cell.column - 6].value = price
 
                     try:
                         stor_item = soup.find('span', string=re.compile('Со склада')).text.strip()
@@ -419,7 +419,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                     price = data['products'][0]['sizes'][0]['price']['product'] // 100
                 except Exception:
                     price = '-'
-                row[cell.column - 4].value = price
+                row[cell.column - 6].value = price
 
                 print(
                     f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
