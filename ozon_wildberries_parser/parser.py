@@ -176,7 +176,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
     try:
         for row in ws.iter_rows(min_row=4):
-            text = row[1].value
+            text = row[2].value
 
             if not text:
                 continue
@@ -353,7 +353,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     processed_texts = {}
 
     for row in ws.iter_rows(min_row=4):
-        text = row[1].value
+        text = row[2].value
 
         if not text:
             continue
@@ -380,7 +380,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 }
 
                 try:
-                    time.sleep(1)
+                    time.sleep(randint(1, 3))
                     response = requests.get('https://card.wb.ru/cards/v4/detail', params=params, headers=headers)
                     if response.status_code != 200:
                         print(f'{product_url}: {response.status_code}')
