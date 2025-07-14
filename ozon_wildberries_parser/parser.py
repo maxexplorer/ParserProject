@@ -380,7 +380,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 }
 
                 try:
-                    time.sleep(randint(1, 3))
+                    time.sleep(1)
                     response = requests.get('https://card.wb.ru/cards/v4/detail', params=params, headers=headers)
                     if response.status_code != 200:
                         print(f'{product_url}: {response.status_code}')
@@ -391,7 +391,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 data = response.json()
 
                 try:
-                    quantity = data['data']['products'][0]['sizes'][0]['stocks'][0]['qty']
+                    quantity = data['products'][0]['sizes'][0]['stocks'][0]['qty']
                     row[cell.column - 3].value = quantity
                 except Exception:
                     print(f'{product_url}: Этот товар закончился')
@@ -409,14 +409,14 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 row[cell.column].value = product_position
 
                 try:
-                    storage_id = data['data']['products'][0]['sizes'][0]['stocks'][0]['dtype']
+                    storage_id = data['products'][0]['sizes'][0]['stocks'][0]['dtype']
                     storage = 'FBO' if storage_id == 4 else 'FBS'
                 except Exception:
                     storage = None
                 row[cell.column - 2].value = storage
 
                 try:
-                    price = data['data']['products'][0]['salePriceU'] // 100
+                    price = data['products'][0]['sizes'][0]['price']['product'] // 100
                 except Exception:
                     price = '-'
                 row[cell.column - 4].value = price
