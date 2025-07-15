@@ -93,7 +93,11 @@ def get_current_prices_ozon() -> dict:
     while True:
         data = {
             'cursor': cursor,
-            'filter': {'visibility': 'ALL'},
+            'filter': {
+                'offer_id': [],
+                'product_id': [],
+                'visibility': 'IN_SALE'
+            },
             'limit': limit
         }
 
