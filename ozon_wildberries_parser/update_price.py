@@ -254,7 +254,7 @@ def update_prices_wb(article_info: dict) -> dict:
         data['data'].append({
             'nmID': int(nm_id),
             'price': int(new_price),
-            'discount': 30
+            'discount': 0
         })
 
     if data['data']:
