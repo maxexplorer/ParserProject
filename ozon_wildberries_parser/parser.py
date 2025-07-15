@@ -320,10 +320,10 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     except Exception as ex:
         print(ex)
     finally:
-        if not os.path.exists('results'):
-            os.makedirs('results')
+        if not os.path.exists('data'):
+            os.makedirs('data')
 
-        workbook.save('results/result_data.xlsx')
+        workbook.save('data/data.xlsx')
 
 
 def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
