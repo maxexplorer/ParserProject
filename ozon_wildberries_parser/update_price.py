@@ -28,7 +28,7 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
 
     article_info = {}
     for _, row in df.iterrows():
-        offer_id = str(row.iloc[0]).strip()
+        offer_id = str(row.iloc[1]).strip()
         if not offer_id:
             continue
 
@@ -45,41 +45,6 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
             continue
 
     return article_info
-
-
-def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
-    """
-    Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
-    сохраняя изменения в data/data.xlsx.
-    """
-    folder = 'data'
-    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
-    if not excel_files:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return
-
-    wb = openpyxl.load_workbook(excel_files[0])
-    if marketplace not in wb.sheetnames:
-        print(f'❗ В книге нет листа "{marketplace}"')
-        return
-
-    ws = wb[marketplace]
-
-    for row in ws.iter_rows(min_row=4):
-        cell_article = row[0].value
-        if not cell_article:
-            continue
-        offer_id = str(cell_article).strip()
-        price_value = current_prices.get(offer_id)
-        if price_value is not None:
-            row[4].value = price_value  # 5-й столбец
-
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-    output_path = os.path.join(folder, 'data.xlsx')
-    wb.save(output_path)
-    print(f'✅ Текущие цены успешно записаны в {output_path}')
 
 
 def get_current_prices_ozon() -> dict:
@@ -271,3 +236,38 @@ def update_prices_wb(article_info: dict) -> dict:
             print(f'❌ Ошибка при обновлении цен WB: {ex}')
 
     return vendor_code_to_price
+
+
+def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
+    """
+    Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
+    сохраняя изменения в data/data.xlsx.
+    """
+    folder = 'data'
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
+    if not excel_files:
+        print('❗ В папке data/ не найдено .xlsx файлов.')
+        return
+
+    wb = openpyxl.load_workbook(excel_files[0])
+    if marketplace not in wb.sheetnames:
+        print(f'❗ В книге нет листа "{marketplace}"')
+        return
+
+    ws = wb[marketplace]
+
+    for row in ws.iter_rows(min_row=4):
+        cell_article = row[1].value
+        if not cell_article:
+            continue
+        offer_id = str(cell_article).strip()
+        price_value = current_prices.get(offer_id)
+        if price_value is not None:
+            row[5].value = price_value  # 5-й столбец
+
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    output_path = os.path.join(folder, 'data.xlsx')
+    wb.save(output_path)
+    print(f'✅ Текущие цены успешно записаны в {output_path}')

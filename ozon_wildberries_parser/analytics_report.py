@@ -1,80 +1,80 @@
 # analytics_report.py
 
 import os
-import time
 import glob
 from datetime import datetime, timedelta
 
 import requests
+import pandas as pd
 import openpyxl
 
 from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_ANALYTICS_HEADERS
 
 
-def get_all_products() -> dict:
+def load_sku_article_from_excel(sheet_name: str) -> dict:
     """
-    Получает соответствие {product_id: offer_id} для всех товаров Ozon.
-    Используется для сопоставления id из отчёта аналитики с артикулами.
+    Загружает артикулы и new_price из Excel, начиная с 3 строки (skiprows=2).
+    Артикул в 1 столбце, new_price в 6 столбце.
+    Возвращает словарь {offer_id: delta}
     """
-    all_products = {}
-    last_id = ''
-    limit = 100
 
-    while True:
-        payload = {
-            'filter': {
-                'visibility': 'IN_SALE'
-            },
-            'last_id': last_id,
-            'limit': limit
-        }
+    folder = 'data'
+    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
+    if not excel_files:
+        print('❗ В папке data/ не найдено .xlsx файлов.')
+        return {}
 
-        try:
-            response = requests.post(
-                API_URLS_OZON['product_list'],
-                headers=OZON_HEADERS,
-                json=payload,
-                timeout=20
-            )
-            response.raise_for_status()
-        except Exception as ex:
-            print(f'❌ Ошибка при получении товаров Ozon: {ex}')
-            break
+    df = pd.read_excel(excel_files[0], sheet_name=sheet_name, skiprows=2)
+    df.columns = df.columns.str.strip()
 
-        data = response.json()
-        result = data.get('result', {})
-        items = result.get('items', [])
-        total = result.get('total')
+    article_info = {}
+    for _, row in df.iterrows():
+        offer_id = str(row.iloc[1]).strip()
+        if not offer_id:
+            continue
 
-        print(f'📦 Всего товаров: {total} | Загружено: {len(all_products)}')
+        value = row.iloc[0]
+        if pd.notna(value):
+            if isinstance(value, float) and value.is_integer():
+                sku = str(int(value)).strip()
+            else:
+                sku = str(value).strip()
+        else:
+            sku = ''
 
-        for item in items:
-            product_id = str(item.get('product_id'))
-            offer_id = str(item.get('offer_id'))
-            if product_id and offer_id:
-                all_products[product_id] = offer_id
+        if pd.isna(offer_id) or offer_id == '' or pd.isna(sku) or sku == '':
+            continue
 
-        # Переходим к следующей странице
-        last_id = result.get('last_id', '')
-        if not last_id:
-            break
+        if sku and offer_id:
+            article_info[sku] = offer_id
 
-    print(f'✅ Загружено {len(all_products)} товаров Ozon')
-    return all_products
+    return article_info
 
-
-def get_ozon_orders_report(period: str) -> dict:
+def get_ozon_orders_report(
+    period: str,
+    product_to_offer: dict,
+    custom_date_from: str = None,
+    custom_date_to: str = None
+) -> dict:
     """
-    Получение количества заказов по offer_id за месяц или неделю.
+    Получение количества заказов по offer_id за месяц, неделю или произвольный период.
+    product_to_offer — словарь {product_id: offer_id}.
+    Для period='custom' необходимо передавать custom_date_from и custom_date_to в формате 'YYYY-MM-DD'.
     """
-    now = datetime.now()
+
     if period == 'month':
-        date_from = (now - timedelta(days=30)).strftime('%Y-%m-%d')
+        date_from = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        date_to = datetime.now().strftime('%Y-%m-%d')
     elif period == 'week':
-        date_from = (now - timedelta(days=7)).strftime('%Y-%m-%d')
+        date_from = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        date_to = datetime.now().strftime('%Y-%m-%d')
+    elif period == 'custom':
+        if not custom_date_from or not custom_date_to:
+            raise ValueError('Для period="custom" необходимо передать custom_date_from и custom_date_to.')
+        date_from = custom_date_from
+        date_to = custom_date_to
     else:
-        raise ValueError('period должен быть "month" или "week"')
-    date_to = now.strftime('%Y-%m-%d')
+        raise ValueError('period должен быть "month", "week" или "custom"')
 
     data = {
         'date_from': date_from,
@@ -96,32 +96,48 @@ def get_ozon_orders_report(period: str) -> dict:
                 timeout=20
             )
             response.raise_for_status()
-            data = response.json()
-            for item in data['result']['data']:
-                offer_id = item['dimensions'][0]['id']
+            data_dict = response.json()
+
+            for item in data_dict['result']['data']:
+                product_id = str(item['dimensions'][0]['id'])
                 ordered_units = int(item['metrics'][0])
+
+                offer_id = product_to_offer.get(product_id)
                 orders[offer_id] = orders.get(offer_id, 0) + ordered_units
-            if len(data['result']['data']) < data['limit']:
+
+            if len(data_dict['result']['data']) < data['limit']:
                 break
             data['offset'] += data['limit']
+
         except Exception as ex:
             print(f'❌ Ошибка получения данных OZON: {ex}')
             break
+
     return orders
 
+def get_wb_orders_report(
+    period: str,
+    custom_date_from: str = None,
+    custom_date_to: str = None
+) -> dict:
+    """
+    Получение количества заказов по vendorCode за месяц, неделю или произвольный период.
+    """
 
-def get_wb_orders_report(period: str) -> dict:
-    """
-    Получение количества заказов по vendorCode за месяц или неделю.
-    """
     now = datetime.now()
     if period == 'month':
         date_from = (now - timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+        date_to = now.strftime('%Y-%m-%d %H:%M:%S')
     elif period == 'week':
         date_from = (now - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+        date_to = now.strftime('%Y-%m-%d %H:%M:%S')
+    elif period == 'custom':
+        if not custom_date_from or not custom_date_to:
+            raise ValueError('Для period="custom" необходимо передать custom_date_from и custom_date_to.')
+        date_from = custom_date_from
+        date_to = custom_date_to
     else:
-        raise ValueError('period должен быть "month" или "week"')
-    date_to = now.strftime('%Y-%m-%d %H:%M:%S')
+        raise ValueError('period должен быть "month", "week" или "custom"')
 
     page = 1
     orders = {}
@@ -150,12 +166,12 @@ def get_wb_orders_report(period: str) -> dict:
                 timeout=20
             )
             response.raise_for_status()
-            data = response.json()
-            for card in data['data']['cards']:
+            data_dict = response.json()
+            for card in data_dict['data']['cards']:
                 vendor_code = card['vendorCode']
                 orders_count = card['statistics']['selectedPeriod']['ordersCount']
                 orders[vendor_code] = orders.get(vendor_code, 0) + orders_count
-            if not data['data']['isNextPage']:
+            if not data_dict['data']['isNextPage']:
                 break
             page += 1
         except Exception as ex:
@@ -164,18 +180,20 @@ def get_wb_orders_report(period: str) -> dict:
     return orders
 
 
+
 def write_analytics_to_excel(
         analytics_data: dict,
         marketplace='ОЗОН',
-        column_month=11,
-        column_week=12,
+        column_month=12,
+        column_week=13,
+        column_custom=14,
         period='month'
 ) -> None:
     """
     Записывает данные аналитики (кол-во заказов) в Excel в указанный столбец по period.
 
     analytics_data: {offer_id: orders_count}
-    period: 'month' или 'week' для определения в какую колонку писать
+    period: 'month', 'week' или 'custom' для определения в какую колонку писать
     """
     folder = 'data'
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
@@ -189,10 +207,19 @@ def write_analytics_to_excel(
         return
 
     ws = wb[marketplace]
-    target_column = column_month if period == 'month' else column_week
+
+    if period == 'month':
+        target_column = column_month
+    elif period == 'week':
+        target_column = column_week
+    elif period == 'custom':
+        target_column = column_custom
+    else:
+        print(f'❌ Неверное значение period: {period}. Должно быть "month", "week" или "custom".')
+        return
 
     for row in ws.iter_rows(min_row=4):
-        cell_article = row[0].value
+        cell_article = row[1].value
         if not cell_article:
             continue
         offer_id = str(cell_article).strip()
@@ -206,3 +233,5 @@ def write_analytics_to_excel(
     output_path = os.path.join(folder, 'data.xlsx')
     wb.save(output_path)
     print(f'✅ Данные аналитики успешно записаны в {output_path}')
+
+

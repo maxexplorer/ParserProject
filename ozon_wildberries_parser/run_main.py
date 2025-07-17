@@ -19,7 +19,8 @@ from update_price import (
 from analytics_report import (
     get_ozon_orders_report,
     get_wb_orders_report,
-    write_analytics_to_excel
+    write_analytics_to_excel,
+    load_sku_article_from_excel
 )
 
 def main():
@@ -36,6 +37,8 @@ def main():
             '8 - Получить отчет заказов Ozon за неделю\n'
             '9 - Получить отчет заказов WB за месяц\n'
             '10 - Получить отчет заказов WB за неделю\n'
+            '11 - Получить отчет заказов Ozon за указанный период\n'
+            '12 - Получить отчет заказов WB за указанный период\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -106,13 +109,15 @@ def main():
 
                 case '7':
                     print('Получение отчета Ozon за месяц...')
-                    ozon_orders = get_ozon_orders_report(period='month')
+                    product_to_offer = load_sku_article_from_excel(sheet_name='ОЗОН')
+                    ozon_orders = get_ozon_orders_report(period='month', product_to_offer=product_to_offer)
                     write_analytics_to_excel(analytics_data=ozon_orders, marketplace='ОЗОН', period='month')
                     print('✅ Отчет Ozon за месяц собран и записан.')
 
                 case '8':
                     print('Получение отчета Ozon за неделю...')
-                    ozon_orders = get_ozon_orders_report(period='week')
+                    product_to_offer = load_sku_article_from_excel(sheet_name='ОЗОН')
+                    ozon_orders = get_ozon_orders_report(period='week', product_to_offer=product_to_offer)
                     write_analytics_to_excel(analytics_data=ozon_orders, marketplace='ОЗОН', period='week')
                     print('✅ Отчет Ozon за неделю собран и записан.')
 
@@ -127,6 +132,56 @@ def main():
                     wb_orders = get_wb_orders_report(period='week')
                     write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='week')
                     print('✅ Отчет WB за неделю собран и записан.')
+
+                case '11':
+                    print('Получение отчета Ozon за указанный период...')
+                    date_start = input('Введите дату начала периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
+                    date_end = input('Введите дату окончания периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
+                    try:
+                        date_from = datetime.strptime(date_start, '%d.%m.%Y').strftime('%Y-%m-%d')
+                        date_to = datetime.strptime(date_end, '%d.%m.%Y').strftime('%Y-%m-%d')
+                    except ValueError:
+                        print('❌ Неверный формат даты. Используйте формат DD.MM.YYYY.')
+                        break
+
+                    article_info = load_article_info_from_excel(sheet_name='ОЗОН')
+                    ozon_orders = get_ozon_orders_report(
+                        period='custom',
+                        product_to_offer=article_info,
+                        custom_date_from=date_from,
+                        custom_date_to=date_to
+                    )
+                    write_analytics_to_excel(
+                        analytics_data=ozon_orders,
+                        marketplace='ОЗОН',
+                        column_custom=14,
+                        period='custom'
+                    )
+                    print('✅ Отчет Ozon за указанный период собран и записан.')
+
+                case '12':
+                    print('Получение отчета Wildberries за указанный период...')
+                    date_start = input('Введите дату начала периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
+                    date_end = input('Введите дату окончания периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
+                    try:
+                        date_from = datetime.strptime(date_start, '%d.%m.%Y').strftime('%Y-%m-%d %H:%M:%S')
+                        date_to = datetime.strptime(date_end, '%d.%m.%Y').strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        print('❌ Неверный формат даты. Используйте формат DD.MM.YYYY.')
+                        break
+
+                    wb_orders = get_wb_orders_report(
+                        period='custom',
+                        custom_date_from=date_from,
+                        custom_date_to=date_to
+                    )
+                    write_analytics_to_excel(
+                        analytics_data=wb_orders,
+                        marketplace='ВБ',
+                        column_custom=14,
+                        period='custom'
+                    )
+                    print('✅ Отчет Wildberries за указанный период собран и записан.')
 
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')
