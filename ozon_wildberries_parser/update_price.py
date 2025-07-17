@@ -67,11 +67,12 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
 
     for row in ws.iter_rows(min_row=4):
         cell_article = row[0].value
-        if cell_article:
-            offer_id = str(cell_article).strip()
-            price_value = current_prices.get(offer_id)
-            if price_value is not None:
-                row[4].value = price_value  # 5-й столбец
+        if not cell_article:
+            continue
+        offer_id = str(cell_article).strip()
+        price_value = current_prices.get(offer_id)
+        if price_value is not None:
+            row[4].value = price_value  # 5-й столбец
 
     if not os.path.exists(folder):
         os.makedirs(folder)

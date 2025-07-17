@@ -19,7 +19,7 @@ from update_price import (
 from analytics_report import (
     get_ozon_orders_report,
     get_wb_orders_report,
-    write_orders_to_excel
+    write_analytics_to_excel
 )
 
 def main():
@@ -32,10 +32,10 @@ def main():
             '4 - Обновить цены Ozon\n'
             '5 - Обновить цены Wildberries\n'
             '6 - Обновить цены Ozon и Wildberries\n'
-            '7 - Собрать отчет Ozon за месяц\n'
-            '8 - Собрать отчет Ozon за неделю\n'
-            '9 - Собрать отчет WB за месяц\n'
-            '10 - Собрать отчет WB за неделю\n'
+            '7 - Получить отчет заказов Ozon за месяц\n'
+            '8 - Получить отчет заказов Ozon за неделю\n'
+            '9 - Получить отчет заказов WB за месяц\n'
+            '10 - Получить отчет заказов WB за неделю\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -105,27 +105,27 @@ def main():
                     print('✅ Цены Wildberries обновлены и сохранены.')
 
                 case '7':
-                    print('Сбор отчета Ozon за месяц...')
+                    print('Получение отчета Ozon за месяц...')
                     ozon_orders = get_ozon_orders_report(period='month')
-                    write_orders_to_excel(ozon_orders=ozon_orders, wb_orders={}, period='month')
+                    write_analytics_to_excel(analytics_data=ozon_orders, marketplace='ОЗОН', period='month')
                     print('✅ Отчет Ozon за месяц собран и записан.')
 
                 case '8':
-                    print('Сбор отчета Ozon за неделю...')
+                    print('Получение отчета Ozon за неделю...')
                     ozon_orders = get_ozon_orders_report(period='week')
-                    write_orders_to_excel(ozon_orders=ozon_orders, wb_orders={}, period='week')
+                    write_analytics_to_excel(analytics_data=ozon_orders, marketplace='ОЗОН', period='week')
                     print('✅ Отчет Ozon за неделю собран и записан.')
 
                 case '9':
-                    print('Сбор отчета WB за месяц...')
+                    print('Получение отчета WB за месяц...')
                     wb_orders = get_wb_orders_report(period='month')
-                    write_orders_to_excel(ozon_orders={}, wb_orders=wb_orders, period='month')
+                    write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='month')
                     print('✅ Отчет WB за месяц собран и записан.')
 
                 case '10':
-                    print('Сбор отчета WB за неделю...')
+                    print('Получение отчета WB за неделю...')
                     wb_orders = get_wb_orders_report(period='week')
-                    write_orders_to_excel(ozon_orders={}, wb_orders=wb_orders, period='week')
+                    write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='week')
                     print('✅ Отчет WB за неделю собран и записан.')
 
                 case _:
