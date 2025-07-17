@@ -144,10 +144,10 @@ def main():
                         print('❌ Неверный формат даты. Используйте формат DD.MM.YYYY.')
                         break
 
-                    article_info = load_article_info_from_excel(sheet_name='ОЗОН')
+                    product_to_offer = load_sku_article_from_excel(sheet_name='ОЗОН')
                     ozon_orders = get_ozon_orders_report(
                         period='custom',
-                        product_to_offer=article_info,
+                        product_to_offer=product_to_offer,
                         custom_date_from=date_from,
                         custom_date_to=date_to
                     )
