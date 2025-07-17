@@ -133,6 +133,7 @@ def main():
 
         except Exception as ex:
             print(f'❌ Ошибка: {ex}')
+            input("Нажмите Enter, чтобы закрыть программу...")
 
         execution_time = datetime.now() - start_time
         print(f'⏱️ Время выполнения: {execution_time}')
