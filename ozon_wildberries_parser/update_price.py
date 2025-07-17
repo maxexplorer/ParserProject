@@ -32,7 +32,7 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
         if not offer_id:
             continue
 
-        new_price = row.iloc[5]  # 6 столбец
+        new_price = row.iloc[6]  # 6 столбец
 
         if pd.isna(new_price) or new_price == '':
             continue
