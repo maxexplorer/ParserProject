@@ -176,7 +176,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
     try:
         for row in ws.iter_rows(min_row=4):
-            text = row[2].value
+            text = row[3].value
 
             if not text:
                 continue
@@ -353,7 +353,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     processed_texts = {}
 
     for row in ws.iter_rows(min_row=4):
-        text = row[2].value
+        text = row[3].value
 
         if not text:
             continue

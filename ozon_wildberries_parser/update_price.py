@@ -263,7 +263,7 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
         offer_id = str(cell_article).strip()
         price_value = current_prices.get(offer_id)
         if price_value is not None:
-            row[5].value = price_value  # 5-й столбец
+            row[5].value = price_value
 
     if not os.path.exists(folder):
         os.makedirs(folder)
