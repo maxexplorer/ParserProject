@@ -1,6 +1,6 @@
 import os
-import time
 from datetime import datetime
+
 from requests import Session
 from pandas import DataFrame, ExcelWriter, read_excel
 
