@@ -97,7 +97,7 @@ def get_data(url_list):
                 seller_info_list.append(
                     {
                         'title': title,
-                        'id_seller': seller_id
+                        'seller_id': seller_id
                     }
                 )
             print(f'Processed: {page} page!!!')

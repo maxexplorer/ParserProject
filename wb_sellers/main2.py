@@ -10,14 +10,14 @@ from pandas import read_excel
 start_time = datetime.now()
 
 
-def get_inn(session: Session, headers: dict, id_seller: str) -> str:
+def get_inn(session: Session, headers: dict, seller_id: str) -> str:
     try:
-        response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{id_seller}.json',
+        response = session.get(f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
                                headers=headers)
         json_data = response.json()
 
     except Exception as ex:
-        print(f'{id}: {ex}')
+        print(f'{seller_id}: {ex}')
 
     try:
         inn = json_data.get('inn')
@@ -56,11 +56,11 @@ def get_registration_date() -> None:
     with Session() as session:
         for index, row in df.iterrows():
             url = row.iloc[0]
-            id_seller = row.iloc[0].split('/')[-1]
+            seller_id = row.iloc[0].split('/')[-1]
 
             try:
                 time.sleep(1)
-                response = session.get(f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{id_seller}',
+                response = session.get(f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
                                        headers=headers, timeout=60)
 
                 json_data = response.json()
@@ -83,7 +83,7 @@ def get_registration_date() -> None:
                 if (years_on_wb == 1 and 1000 <= sale_item_quantity <= 4000) or \
                         (years_on_wb == 2 and 4001 <= sale_item_quantity <= 9000) or \
                         (years_on_wb >= 3 and sale_item_quantity >= 9001):
-                    inn = get_inn(session=session, headers=headers, id_seller=id_seller)
+                    inn = get_inn(session=session, headers=headers, seller_id=seller_id)
 
                     result_list.append(
                         {

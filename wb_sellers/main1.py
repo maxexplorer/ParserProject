@@ -22,7 +22,7 @@ def get_data_products_wb() -> None:
     with Session() as session:
         for index, row in df.iterrows():
             url = row.iloc[0]
-            id_seller = row.iloc[0].split('/')[-1]
+            seller_id = row.iloc[0].split('/')[-1]
 
             headers = {
                 'accept': '*/*',
@@ -41,7 +41,7 @@ def get_data_products_wb() -> None:
             }
 
             try:
-                response = session.get(f'https://suppliers-shipment.wildberries.ru/api/v1/suppliers/{id_seller}',
+                response = session.get(f'https://suppliers-shipment.wildberries.ru/api/v1/suppliers/{seller_id}',
                                        headers=headers, timeout=60)
 
                 if response.status_code != 200:
