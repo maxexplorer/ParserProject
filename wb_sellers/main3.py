@@ -28,7 +28,7 @@ def get_inn(session: Session, headers: dict, seller_id: str) -> str:
 
 
 # Функция для получения данных о наличии товаров у продавца
-def get_registration_date(session: Session, url: str, seller_id: str) -> tuple[str, str]:
+def get_registration_date(session: Session, url: str, seller_id: str) -> tuple[str, str] | None:
     headers = {
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',

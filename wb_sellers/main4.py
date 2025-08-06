@@ -28,7 +28,7 @@ def get_inn(session: Session, headers: dict, seller_id: str) -> str | None:
         return None
 
 
-def get_registration_date_and_inn(session: Session, headers: dict, seller_id: str) -> tuple[str, str] | None:
+def get_registration_date_and_inn(session: Session, headers: dict, url: str, seller_id: str) -> tuple[str, str] | None:
     """
     Получает дату регистрации и общее количество продаж продавца.
     Проверяет, является ли продавец активным согласно условиям.
@@ -63,7 +63,7 @@ def get_registration_date_and_inn(session: Session, headers: dict, seller_id: st
             (years_on_wb >= 3 and sale_item_quantity >= 9001)
         ):
             inn = get_inn(session, headers, seller_id)
-            return f'https://www.wildberries.ru/seller/{seller_id}', inn
+            return url, inn
 
     return None
 
@@ -106,7 +106,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                 'dest': '-5551776',
                 'sort': 'popular',
                 'spp': '30',
-                'supplier': str(seller_id),
+                'supplier': seller_id,
             }
 
             try:
@@ -126,7 +126,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                 if not data_products:
                     continue
 
-                url, inn = get_registration_date_and_inn(session, headers, str(seller_id))
+                url, inn = get_registration_date_and_inn(session, headers, url, seller_id)
 
                 result_list.append(
                     {
