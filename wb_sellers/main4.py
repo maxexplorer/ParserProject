@@ -7,7 +7,7 @@ from pandas import DataFrame, ExcelWriter, read_excel
 start_time = datetime.now()
 
 
-def get_inn(session: Session, headers: dict, seller_id: str) -> str | None:
+def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
     """
     Получает ИНН продавца по его ID через статичный JSON-эндпоинт WB.
 
@@ -28,7 +28,7 @@ def get_inn(session: Session, headers: dict, seller_id: str) -> str | None:
         return None
 
 
-def get_registration_date_and_inn(session: Session, headers: dict, url: str, seller_id: str) -> tuple[str, str] | None:
+def get_registration_date_and_inn(session: Session, headers: dict, url: str, seller_id: int) -> tuple[str, str] | None:
     """
     Получает дату регистрации и общее количество продаж продавца.
     Проверяет, является ли продавец активным согласно условиям.
@@ -38,6 +38,7 @@ def get_registration_date_and_inn(session: Session, headers: dict, url: str, sel
     :param seller_id: ID продавца
     :return: Кортеж (ссылка на продавца, ИНН) или None, если продавец неактивен или ошибка
     """
+
     try:
         response = session.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
@@ -58,14 +59,14 @@ def get_registration_date_and_inn(session: Session, headers: dict, url: str, sel
 
         # Проверка условий "активности"
         if (
-            (years_on_wb == 1 and 1000 <= sale_item_quantity <= 4000) or
-            (years_on_wb == 2 and 4001 <= sale_item_quantity <= 9000) or
-            (years_on_wb >= 3 and sale_item_quantity >= 9001)
+                (years_on_wb == 1 and sale_item_quantity >= 1000) or
+                (years_on_wb == 2 and sale_item_quantity >= 4001) or
+                (years_on_wb >= 3 and sale_item_quantity >= 9001)
         ):
             inn = get_inn(session, headers, seller_id)
             return url, inn
 
-    return None
+        return None
 
 
 def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> None:
@@ -77,21 +78,6 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
     :param end_id: Конечный ID (включительно)
     :param batch_size: Размер пакета для записи в Excel
     """
-    headers = {
-        'accept': '*/*',
-        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'origin': 'https://www.wildberries.ru',
-        'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/seller/202',
-        'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'cross-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                      '(KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-    }
 
     result_list = []
     processed_count = 0
@@ -99,6 +85,22 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
             url = f'https://www.wildberries.ru/seller/{seller_id}'
+
+            headers = {
+                'accept': '*/*',
+                'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                'origin': 'https://www.wildberries.ru',
+                'priority': 'u=1, i',
+                'referer': f'https://www.wildberries.ru/seller/{seller_id}',
+                'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-site',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+                'x-client-name': 'site',
+            }
 
             params = {
                 'appType': '1',
@@ -126,14 +128,15 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                 if not data_products:
                     continue
 
-                url, inn = get_registration_date_and_inn(session, headers, url, seller_id)
+                result = get_registration_date_and_inn(session, headers, url, seller_id)
 
-                result_list.append(
-                    {
-                    'Ссылка': url,
-                    'ИНН': inn
-                }
-                )
+                if result:
+                    result_list.append(
+                        {
+                            'Ссылка': result[0],
+                            'ИНН': result[1]
+                        }
+                    )
 
             except Exception as ex:
                 print(f'{url}: {ex}')
@@ -159,8 +162,7 @@ def save_excel(data: list[dict]) -> None:
     directory = 'results'
     file_path = f'{directory}/result_data.xlsx'
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    os.makedirs(directory, exist_ok=True)
 
     if not os.path.exists(file_path):
         # Создаем пустой файл
