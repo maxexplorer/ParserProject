@@ -22,7 +22,8 @@ def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
             headers=headers
         )
         json_data = response.json()
-        return json_data.get('inn')
+        inn = json_data.get('inn')
+        return inn
     except Exception as ex:
         print(f'Ошибка при получении ИНН для {seller_id}: {ex}')
         return None
