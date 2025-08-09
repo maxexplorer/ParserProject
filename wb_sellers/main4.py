@@ -19,7 +19,8 @@ def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
     try:
         response = session.get(
             f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
-            headers=headers
+            headers=headers,
+            timeout=10
         )
         json_data = response.json()
         inn = json_data.get('inn')
@@ -44,7 +45,7 @@ def get_registration_date_and_inn(session: Session, headers: dict, url: str, sel
         response = session.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
             headers=headers,
-            timeout=60
+            timeout=10
         )
         json_data = response.json()
     except Exception as ex:
@@ -117,7 +118,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                     'https://catalog.wb.ru/sellers/v2/catalog',
                     params=params,
                     headers=headers,
-                    timeout=60
+                    timeout=10
                 )
 
                 if response.status_code != 200:
