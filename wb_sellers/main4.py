@@ -133,13 +133,15 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
 
                 result = get_registration_date_and_inn(session, headers, url, seller_id)
 
-                if result:
-                    result_list.append(
-                        {
-                            'Ссылка': result[0],
-                            'ИНН': result[1]
-                        }
-                    )
+                if result is None:
+                    continue
+
+                result_list.append(
+                    {
+                        'Ссылка': result[0],
+                        'ИНН': result[1]
+                    }
+                )
 
             except Exception as ex:
                 print(f'{url}: {ex}')
@@ -188,7 +190,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1_422_974
+    start_id = 1_423_071
     end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
