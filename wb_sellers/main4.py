@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from requests import Session
@@ -112,6 +113,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
             }
 
             try:
+                time.sleep(0.1)
                 response = session.get(
                     'https://catalog.wb.ru/sellers/v2/catalog',
                     params=params,
