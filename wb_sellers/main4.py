@@ -106,8 +106,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
             params = {
                 'appType': '1',
                 'curr': 'rub',
-                'dest': '-5551776',
-                'sort': 'popular',
+                'dest': '123585494',
                 'spp': '30',
                 'supplier': seller_id,
             }
@@ -186,7 +185,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1
+    start_id = 1_422_974
     end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
