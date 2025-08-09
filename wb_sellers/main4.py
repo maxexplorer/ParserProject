@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from requests import Session
@@ -20,7 +21,7 @@ def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
         response = session.get(
             f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
             headers=headers,
-            timeout=10
+            timeout=(3, 5)
         )
         json_data = response.json()
         inn = json_data.get('inn')
@@ -45,7 +46,7 @@ def get_registration_date_and_inn(session: Session, headers: dict, url: str, sel
         response = session.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
             headers=headers,
-            timeout=10
+            timeout=(3, 5)
         )
         json_data = response.json()
     except Exception as ex:
@@ -114,11 +115,12 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
             }
 
             try:
+                time.sleep(0.5)
                 response = session.get(
                     'https://catalog.wb.ru/sellers/v2/catalog',
                     params=params,
                     headers=headers,
-                    timeout=10
+                    timeout=(3, 5)
                 )
 
                 if response.status_code != 200:
@@ -187,7 +189,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1
+    start_id = 1_422_974
     end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
