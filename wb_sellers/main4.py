@@ -1,5 +1,4 @@
 import os
-import time
 from datetime import datetime
 
 from requests import Session
@@ -8,28 +7,19 @@ from pandas import DataFrame, ExcelWriter, read_excel
 start_time = datetime.now()
 
 
-def get_inn(session: Session, seller_id: int) -> str | None:
+def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
     """
     Получает ИНН продавца по его ID через статичный JSON-эндпоинт WB.
 
     :param session: Активная сессия requests
+    :param headers: Заголовки HTTP-запроса
     :param seller_id: ID продавца (строка)
     :return: ИНН как строка или None, если не найден
     """
-    headers = {
-        'sec-ch-ua-platform': '"Windows"',
-        'Referer': f'https://www.wildberries.ru/seller/{seller_id}',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-        'sec-ch-ua-mobile': '?0',
-    }
-
     try:
         response = session.get(
             f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
-
-            headers=headers,
-            timeout=10
+            headers=headers
         )
         json_data = response.json()
         inn = json_data.get('inn')
@@ -39,37 +29,22 @@ def get_inn(session: Session, seller_id: int) -> str | None:
         return None
 
 
-def get_registration_date_and_inn(session: Session, url: str, seller_id: int) -> tuple[str, str] | None:
+def get_registration_date_and_inn(session: Session, headers: dict, url: str, seller_id: int) -> tuple[str, str] | None:
     """
     Получает дату регистрации и общее количество продаж продавца.
     Проверяет, является ли продавец активным согласно условиям.
 
     :param session: Активная HTTP-сессия
+    :param headers: Заголовки запроса
     :param seller_id: ID продавца
     :return: Кортеж (ссылка на продавца, ИНН) или None, если продавец неактивен или ошибка
     """
-
-    headers = {
-        'accept': '*/*',
-        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'origin': 'https://www.wildberries.ru',
-        'priority': 'u=1, i',
-        'referer': f'https://www.wildberries.ru/seller/{seller_id}',
-        'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'x-client-name': 'site',
-    }
 
     try:
         response = session.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
             headers=headers,
-            timeout=10
+            timeout=60
         )
         json_data = response.json()
     except Exception as ex:
@@ -79,7 +54,7 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
     registration_date = json_data.get('registrationDate')
     sale_item_quantity = json_data.get('saleItemQuantity')
 
-    if registration_date and sale_item_quantity:
+    if registration_date and sale_item_quantity is not None:
         reg_date = datetime.strptime(registration_date, '%Y-%m-%dT%H:%M:%SZ')
         years_on_wb = (datetime.now() - reg_date).days // 365
 
@@ -89,7 +64,7 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
                 (years_on_wb == 2 and sale_item_quantity >= 4001) or
                 (years_on_wb >= 3 and sale_item_quantity >= 9001)
         ):
-            inn = get_inn(session, seller_id)
+            inn = get_inn(session, headers, seller_id)
             return url, inn
 
         return None
@@ -115,35 +90,34 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
             headers = {
                 'accept': '*/*',
                 'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                'authorization': 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTQ3MjI2MDUsInVzZXIiOiIxODg4NzM1MSIsInNoYXJkX2tleSI6IjE4IiwiY2xpZW50X2lkIjoid2IiLCJzZXNzaW9uX2lkIjoiOGNjZTcxMzI0YjhjNDBjMGFlN2JkMTEwYzVmN2Q0YjkiLCJ2YWxpZGF0aW9uX2tleSI6IjE0YzM2ZmViZTlmOGU4YjVmYzNlMGY1OGIwZTAyY2ZmMDA5M2RjZjM2ODMzMDJkNDQ1NGIwNzRkNDA0OTcxYjEiLCJwaG9uZSI6Im95THlJNTJQNzdXL3FZdnA2T2luQmc9PSIsInVzZXJfcmVnaXN0cmF0aW9uX2R0IjoxNjc0MDUwNDc1LCJ2ZXJzaW9uIjoyfQ.f5eX4TsfF9DFv_lxswm7wwy1zLS_KgXVouEeLil1wYNq5RVdvJ9mFJpcFbyEOuO80uev1Qa04xM9Tclf-PMSkd8Sore7rZaUOZxVFB8ycD423O1pNRJ1d2LSIlEq_lLSgodRTKGIUeXihne07m_axTpDAn2B0hxKvx4Ul2rnBmLz_7-1yMjLbbO2SruIpeF_Ilnqat3YyZPCywrOzIvmUYNNQFhXMPI_8_N0sbelguOGAEyWGLJMgncjXdq5taMv5EdBzTXWtjEKVZbqV6ZgCaKvazVK-VrK6WMrV8N8fuSGuZSm2GTPHgRC5qkCmMc9G2aGPp4UT5-4k1G6n2zDNA',
                 'origin': 'https://www.wildberries.ru',
                 'priority': 'u=1, i',
                 'referer': f'https://www.wildberries.ru/seller/{seller_id}',
-                'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+                'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"',
                 'sec-fetch-dest': 'empty',
                 'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'cross-site',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-                'x-pow': '',
+                'sec-fetch-site': 'same-site',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+                'x-client-name': 'site',
             }
 
             params = {
                 'appType': '1',
                 'curr': 'rub',
                 'dest': '123585494',
+                'sort': 'popular',
                 'spp': '30',
                 'supplier': seller_id,
             }
 
             try:
-                time.sleep(0.1)
                 response = session.get(
                     'https://catalog.wb.ru/sellers/v2/catalog',
                     params=params,
                     headers=headers,
-                    timeout=10
+                    timeout=60
                 )
 
                 if response.status_code != 200:
@@ -155,7 +129,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                 if not data_products:
                     continue
 
-                result = get_registration_date_and_inn(session, url, seller_id)
+                result = get_registration_date_and_inn(session, headers, url, seller_id)
 
                 if result:
                     result_list.append(
@@ -212,7 +186,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1_422_974
+    start_id = 1
     end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
