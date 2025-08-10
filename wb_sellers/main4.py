@@ -116,7 +116,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
 
             try:
                 response = session.get(
-                    'https://catalog.wb.ru/sellers/v2/catalog',
+                    'https://catalog.wb.ru/sellers/v4/catalog',
                     params=params,
                     headers=headers,
                     timeout=(3, 5)
@@ -190,7 +190,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1_423_071
+    start_id = 1_422_974
     end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
