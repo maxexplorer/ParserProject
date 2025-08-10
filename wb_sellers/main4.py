@@ -31,7 +31,7 @@ def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
         return None
 
 
-def get_registration_date_and_inn(session: Session, headers: dict, url: str, seller_id: int) -> tuple[str, str] | None:
+def get_registration_date_and_inn(session: Session, url: str, seller_id: int) -> tuple[str, str] | None:
     """
     Получает дату регистрации и общее количество продаж продавца.
     Проверяет, является ли продавец активным согласно условиям.
@@ -41,6 +41,22 @@ def get_registration_date_and_inn(session: Session, headers: dict, url: str, sel
     :param seller_id: ID продавца
     :return: Кортеж (ссылка на продавца, ИНН) или None, если продавец неактивен или ошибка
     """
+
+    headers = {
+        'accept': '*/*',
+        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        'origin': 'https://www.wildberries.ru',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wildberries.ru/seller/1422974',
+        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+        'x-client-name': 'site',
+    }
 
     try:
         response = session.get(
@@ -83,7 +99,6 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
     """
 
     result_list = []
-    processed_count = 0
 
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
@@ -127,11 +142,11 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                     continue
 
                 json_data = response.json()
-                data_products = json_data.get('data', {}).get('products', [])
+                data_products = json_data.get('products', [])
                 if not data_products:
                     continue
 
-                result = get_registration_date_and_inn(session, headers, url, seller_id)
+                result = get_registration_date_and_inn(session, url, seller_id)
 
                 if result is None:
                     continue
@@ -147,8 +162,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 100) -> 
                 print(f'{url}: {ex}')
                 continue
 
-            processed_count += 1
-            print(f'Обработано продавцов: {processed_count}')
+            print(f'Обработано продавец: {seller_id}')
 
             if len(result_list) >= batch_size:
                 save_excel(result_list)
