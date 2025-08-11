@@ -137,6 +137,8 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                     timeout=(3, 5)
                 )
 
+                print(f'Обработан продавец: {seller_id}')
+
                 if response.status_code != 200:
                     print(f'Продавец {seller_id}: статус ответа {response.status_code}')
                     continue
@@ -161,8 +163,6 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
             except Exception as ex:
                 print(f'{url}: {ex}')
                 continue
-
-            print(f'Обработан продавец: {seller_id}')
 
             if len(result_list) >= batch_size:
                 save_excel(result_list)
