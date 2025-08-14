@@ -331,19 +331,20 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     Основной парсер Wildberries: записывает позиции, цены, количество и склад
     """
     headers = {
-        'accept': '*/*',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'authorization': 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTI0OTEwNjIsInVzZXIiOiIxODg4NzM1MSIsInNoYXJkX2tleSI6IjE4IiwiY2xpZW50X2lkIjoid2IiLCJzZXNzaW9uX2lkIjoiOGNjZTcxMzI0YjhjNDBjMGFlN2JkMTEwYzVmN2Q0YjkiLCJ2YWxpZGF0aW9uX2tleSI6IjE0YzM2ZmViZTlmOGU4YjVmYzNlMGY1OGIwZTAyY2ZmMDA5M2RjZjM2ODMzMDJkNDQ1NGIwNzRkNDA0OTcxYjEiLCJwaG9uZSI6Im95THlJNTJQNzdXL3FZdnA2T2luQmc9PSIsInVzZXJfcmVnaXN0cmF0aW9uX2R0IjoxNjc0MDUwNDc1LCJ2ZXJzaW9uIjoyfQ.BZaDdpljQE4Npqz_pbhMycN8LLgwUNXbkAqIjYvcQw_pFuNXZHBxuu2yIOocvxO69EDHgNoZiMYgxBXz9B0P8r0HqgGtPdpXs8dX45efbUp4KgnlCwORutD2CXTQd9vMISfUsmwcKrovQiBap9dNI8zc6GKXMiH8xr-Yu7ZLGTfjXLvNW9ll7NPfFoqla-KnA8Y-OI12K-RFgzsowrl1tpTDY1Gh83aqHuM_-uClVC4EHU8Xp1gCS2itk6ww6_I0vqVaryM_ClQYUVhn-UE6R7dhpRtlOTdSDB_CF6GcsqL_jIZL7gHvNeHjaKp_Gumrm3JJjabSea9UvdCF-YZh6A',
-        'origin': 'https://www.wildberries.ru',
-        'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/catalog/265491193/detail.aspx',
-        'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+        'cache-control': 'max-age=0',
+        'priority': 'u=0, i',
+        'referer': 'https://www.wildberries.ru/lk',
+        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'cross-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'same-origin',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
     }
 
     # Выбираем активный лист (или любой другой лист)
