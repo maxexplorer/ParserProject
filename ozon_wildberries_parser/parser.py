@@ -283,7 +283,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                             data_state = div['data-state']
                             data_dict = json.loads(data_state)
                             try:
-                                quantity = data_dict['items'][0]['quantity']['maxQuantity']
+                                quantity = data_dict['cartItems'][0]['controls']['quantity']['maximum']
                                 if quantity:
                                     break
                             except (KeyError, IndexError, TypeError):
