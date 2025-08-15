@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+import json
 
 from requests import Session
 
@@ -28,7 +29,7 @@ def get_html(url: str, headers: dict, session: Session) -> str:
         print(f'get_html: {ex}')
 
 
-def get_products_urls(url: str, headers: dict) ->list[dict]:
+def get_products_urls(url: str, headers: dict) -> list[dict]:
     product_data_list = []
 
     with Session() as session:
@@ -47,7 +48,7 @@ def get_products_urls(url: str, headers: dict) ->list[dict]:
         for item in data:
             product_urls = []
             try:
-                category_name = item.find('a',  itemprop='url').text.strip()
+                category_name = item.find('a', itemprop='url').text.strip()
             except Exception:
                 category_name = None
 
@@ -74,12 +75,20 @@ def get_products_urls(url: str, headers: dict) ->list[dict]:
 
             print(f'Обработана категория: {category_name}')
 
+    directory = 'data'
+    os.makedirs(directory, exist_ok=True)
+
+    with open('data/product_data_list.json', 'a', encoding='utf-8') as file:
+        json.dump(product_data_list, file, indent=4, ensure_ascii=False)
+
     return product_data_list
 
 
-def get_products_data(product_data_list: list) -> list[dict]:
+def get_products_data(file_path: str) -> list[dict]:
+    with open(file_path, 'r', encoding='utf-8') as file:
+        product_data_list = json.load(file)
+
     result_data = []
-    images_urls_list = []
 
     with Session() as session:
         for category_dict in product_data_list:
@@ -103,94 +112,63 @@ def get_products_data(product_data_list: list) -> list[dict]:
                         title = None
 
                     try:
-                        price = int(
-                            ''.join(filter(lambda x: x.isdigit(), soup.find('span', class_='catalogbox__price').text.strip())))
-                    except Exception:
-                        price = None
+                        content_data = soup.find('div', class_='entry-content')
+                    except Exception as ex:
+                        print(f'content_data: {product_url} - {ex}')
+                        continue
 
                     try:
-                        images_items = soup.find('div', class_='catalogbox__galbox js-catalog-detail-fotorama-wrap').find_all(
-                            'a')
+                        description = ''.join(i.text.strip().replace('\xa0', ' ') for i in content_data.find_all('p'))
+                    except Exception:
+                        description = ''
+
+                    try:
+                        characteristic = ''
+                        characteristic_items = content_data.find('table').find_all('tr')
+                        for characteristic_item in characteristic_items:
+                            characteristic += '\n' + ' '.join(
+                                c.text.strip().replace('\xa0', ' ') for c in characteristic_item.find_all('td'))
+                    except Exception:
+                        characteristic = ''
+
+                    description = f'{description}\n{characteristic}'
+
+                    try:
+                        images_urls_list = []
+                        images_items = content_data.find_all('figure', class_='gallery-item')
                         for image_item in images_items:
-                            image_url = f"https://bellodeco.ru/{image_item.get('href')}"
+                            image_url = f"{image_item.find('a').get('href')}"
                             images_urls_list.append(image_url)
-                            product_images_urls_list.append(image_url)
-                        main_image_url = product_images_urls_list[0]
-                        additional_images_urls = '; '.join(product_images_urls_list[1:])
+                        images_urls = ', '.join(images_urls_list)
                     except Exception:
-                        main_image_url = None
-                        additional_images_urls = None
+                        images_urls = None
 
-                    try:
-                        description = soup.find('div', class_='catalogbox__description').text.strip().splitlines()[-1]
-                    except Exception:
-                        description = None
-
-                    try:
-                        models = soup.find('div', class_='b-model-list').find_all('div', class_='model-list__item')
+                    if not images_urls:
                         try:
-                            model_fbx = models[0].find('a').get('href')
+                            images_urls = soup.find('div', class_='single-product-header').find('img').get('src')
                         except Exception:
-                            model_fbx = None
-                        try:
-                            model_obj = models[1].find('a').get('href')
-                        except Exception:
-                            model_obj = None
-                        try:
-                            model_3ds = models[2].find('a').get('href')
-                        except Exception:
-                            model_3ds = None
-                    except Exception:
-                        pass
+                            images_urls = None
 
-                    result_dict = {
-                        'Название товара': title,
-                        'Ссылка': product_url,
-                        'Цена': price,
-                        'Главное изображение': main_image_url,
-                        'Дополнительные изображения': additional_images_urls,
-                        'Описание': description,
-                        'Модель fbs': model_fbx,
-                        'Модель obj': model_obj,
-                        'Модель 3ds': model_3ds,
-                    }
+                    result_data.append(
+                        {
+                            'Название_позиции': title,
+                            'Поисковые_запросы': title,
+                            'Описание': description,
+                            'Тип_товара': 'u',
+                            'Цена': 0,
+                            'Валюта': 'RUB',
+                            'Скидка': 0,
+                            'Единица_измерения': 1,
+                            'Ссылка_изображения': images_urls,
+                            'Наличие': '+',
+                            'Идентификатор_товара': '',
+                            'Идентификатор_группы': '',
+                            'Личные_заметки': '',
+                            'Ссылка_на_товар_на_сайте': product_url,
+                        }
+                    )
 
-                    # Сбор параметров товара
-                    product_parameters = {}
-                    try:
-                        parameters_items = soup.find('div', class_='catalogbox__param__left').find_all('div')
-                        for parameter_item in parameters_items:
-                            attribute_name = parameter_item.text.split(':')[0].strip()
-                            attribute_value = parameter_item.text.split(':')[1].strip()
-                            product_parameters[attribute_name] = attribute_value
-                    except Exception:
-                        pass
-
-                    # Сбор характеристик товара
-                    product_characteristics = {}
-                    try:
-                        characteristics_items = soup.find('div', id='tabs-obj_description').find_all('tr')
-                        for characteristic_item in characteristics_items:
-                            characteristic = characteristic_item.find_all('td')
-                            attribute_name = characteristic[0].text.strip()
-                            attribute_value = characteristic[1].text.strip()
-                            product_characteristics[attribute_name] = attribute_value
-                    except Exception:
-                        pass
-
-                    product_attributes = {**product_parameters, **product_characteristics}
-
-                    result_dict.update(product_attributes)
-
-                    result_data.append(result_dict)
-
-                    print(f'Обработано: {j}/{count_urls}')
-
-        if not os.path.exists('data'):
-            os.mkdir('data')
-
-        with open('data/images_urls_list.txt', 'w', encoding='utf-8') as file:
-            print(*images_urls_list, file=file, sep='\n')
+                    print(f'Обработано: {product_url}')
 
     return result_data
 
@@ -198,24 +176,22 @@ def get_products_data(product_data_list: list) -> list[dict]:
 # Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str) -> None:
     directory = 'results'
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    os.makedirs(directory, exist_ok=True)
 
     file_path = f'{directory}/result_data_{species}.xlsx'
 
     dataframe = DataFrame(data)
 
     with ExcelWriter(file_path, mode='w') as writer:
-        dataframe.to_excel(writer, sheet_name='data', index=False)
+        dataframe.to_excel(writer, sheet_name='Export Products Sheet', index=False)
 
     print(f'Данные сохранены в файл {file_path}')
 
 
 def main():
-    product_data_list = get_products_urls(url="https://neftemash-m.com/catalog/", headers=headers)
-    result_data = get_products_data(product_data_list=product_data_list)
-    # save_excel(data=result_data, species='products')
+    # product_data_list = get_products_urls(url="https://neftemash-m.com/catalog/", headers=headers)
+    result_data = get_products_data(file_path='data/product_data_list.json')
+    save_excel(data=result_data, species='products')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
