@@ -16,7 +16,7 @@ headers = {
 
 
 # Получаем html разметку страницы
-def get_html(url: str, headers: dict, session: Session) -> str:
+def get_html(url: str, headers: dict, session: Session) -> str | None:
     try:
         response = session.get(url=url, headers=headers, timeout=60)
 
