@@ -28,6 +28,17 @@ def get_html(url: str, headers: dict, session: Session) -> str | None:
     except Exception as ex:
         print(f'get_html: {ex}')
 
+def get_unique_urls(file_path: str) -> set:
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
+    with open(file_path, 'r', encoding='utf-8') as file:
+        unique_urls = set(line.strip() for line in file)
+
+    # Сохраняем уникальные URL-адреса обратно в файл
+    with open(file_path, 'w', encoding='utf-8') as file:
+        print(*unique_urls, file=file, sep='\n')
+
+    return unique_urls
+
 
 def get_products_data(headers: dict) -> list[dict]:
     batch_size = 1000
@@ -89,6 +100,7 @@ def get_products_data(headers: dict) -> list[dict]:
                         'Name': product_name,
                         'Price': price,
                         'Old price': old_price,
+                        'URL': product_url
                     }
                 )
 
@@ -100,6 +112,7 @@ def get_products_data(headers: dict) -> list[dict]:
                 print(*products_urls_list, file=file, sep='\n')
 
             print(f'Обработано: {page}')
+
 
             if len(result_data) >= batch_size:
                 save_excel(result_data)
@@ -139,6 +152,7 @@ def save_excel(data: list[dict]) -> None:
 
 
 def main():
+    # get_unique_urls(file_path='data/products_urls_list.txt')
     result_data = get_products_data(headers=headers)
     save_excel(data=result_data)
 
