@@ -4,10 +4,18 @@ from datetime import datetime
 import json
 import re
 
+import requests
 from requests import Session
 
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
+
+import uuid
+from PIL import Image
+from io import BytesIO
+
+
+from configs.config import API_KEY
 
 start_time = datetime.now()
 
@@ -141,26 +149,21 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
 
 def get_products_data(file_path: str) -> None:
     """
-    Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
-    по ссылкам из сохранённого JSON-файла.
-
-    :param file_path: Путь к JSON-файлу с категориями и ссылками на товары
-    :return: Список словарей с данными о каждом товаре
+    Извлекает данные о товарах по ссылкам из JSON,
+    скачивает и обрезает изображения, загружает их в облако и
+    сохраняет новые ссылки в Excel.
     """
     with open(file_path, 'r', encoding='utf-8') as file:
         product_data_list = json.load(file)
 
-
-
-    # Создаем requests.Session для ускорения
     with Session() as session:
         for category_dict in product_data_list:
             for category_name, product_urls in category_dict.items():
                 result_data = []
-                image_url_list = []
+
                 for product_url in product_urls:
                     try:
-                        time.sleep(1)  # пауза между запросами
+                        time.sleep(1)
                         html = get_html(url=product_url, headers=headers, session=session)
                     except Exception as ex:
                         print(f"{product_url} - {ex}")
@@ -177,10 +180,13 @@ def get_products_data(file_path: str) -> None:
                     except Exception:
                         title = ''
 
-                    # Изображения
+                    # Изображение: скачивание + обрезка + облако
                     try:
-                        image_url = soup.find('div', class_='general-img').find('a').get('href')
-                        image_url_list.append(image_url)
+                        orig_image_url = soup.find('div', class_='general-img').find('a').get('href')
+                        if orig_image_url:
+                            image_url = process_and_upload_image(orig_image_url, headers=headers)
+                        else:
+                            image_url = None
                     except Exception:
                         image_url = None
 
@@ -209,64 +215,112 @@ def get_products_data(file_path: str) -> None:
 
                     description = f'{description}\n{characteristic}'
 
-                    # Добавляем словарь с данными товара
-                    result_data.append(
-                        {
-                            'Код_товара': None,
-                            'Название_позиции': title,
-                            'Поисковые_запросы': f'{title}, {category_name}',
-                            'Описание': description,
-                            'Тип_товара': 'u',
-                            'Цена': None,
-                            'Цена от': None,
-                            'Ярлык': None,
-                            'HTML_заголовок': None,
-                            'HTML_описание': None,
-                            'HTML_ключевые_слова': None,
-                            'Валюта': '',
-                            'Скидка': '',
-                            'Cрок действия скидки от': None,
-                            'Cрок действия скидки до': None,
-                            'Единица_измерения': 1,
-                            'Минимальный_объем_заказа': None,
-                            'Оптовая_цена': None,
-                            'Минимальный_заказ_опт': None,
-                            'Ссылка_изображения': image_url,
-                            'Наличие': '+',
-                            'Количество': None,
-                            'Производитель': None,
-                            'Страна_производитель': None,
-                            'Номер_группы': None,
-                            'Адрес_подраздела': None,
-                            'Возможность_поставки': None,
-                            'Срок_поставки': None,
-                            'Способ_упаковки': None,
-                            'Личные_заметки': '',
-                            'Продукт_на_сайте': None,
-                            'Код_маркировки_(GTIN)': None,
-                            'Номер_устройства_(MPN)': None,
-                            'Идентификатор_товара': '',
-                            'Уникальный_идентификатор': None,
-                            'Идентификатор_подраздела': None,
-                            'Идентификатор_группы': '',
-                            'Подарки': None,
-                            'ID_Подарков': None,
-                            'Сопутствующие': None,
-                            'ID_Сопутствующих': None,
-                            'ID_группы_разновидностей': None,
-                            'Название_Характеристики': None,
-                            'Измерение_Характеристики': None,
-                            'Значение_Характеристики': None,
-                            'Ссылка_на_товар_на_сайте': None,
-                        }
-                    )
+                    # Сохраняем данные в словарь
+                    result_data.append({
+                        'Код_товара': None,
+                        'Название_позиции': title,
+                        'Поисковые_запросы': f'{title}, {category_name}',
+                        'Описание': description,
+                        'Тип_товара': 'u',
+                        'Цена': None,
+                        'Цена от': None,
+                        'Ярлык': None,
+                        'HTML_заголовок': None,
+                        'HTML_описание': None,
+                        'HTML_ключевые_слова': None,
+                        'Валюта': '',
+                        'Скидка': '',
+                        'Cрок действия скидки от': None,
+                        'Cрок действия скидки до': None,
+                        'Единица_измерения': 1,
+                        'Минимальный_объем_заказа': None,
+                        'Оптовая_цена': None,
+                        'Минимальный_заказ_опт': None,
+                        'Ссылка_изображения': image_url,
+                        'Наличие': '+',
+                        'Количество': None,
+                        'Производитель': None,
+                        'Страна_производитель': None,
+                        'Номер_группы': None,
+                        'Адрес_подраздела': None,
+                        'Возможность_поставки': None,
+                        'Срок_поставки': None,
+                        'Способ_упаковки': None,
+                        'Личные_заметки': '',
+                        'Продукт_на_сайте': None,
+                        'Код_маркировки_(GTIN)': None,
+                        'Номер_устройства_(MPN)': None,
+                        'Идентификатор_товара': '',
+                        'Уникальный_идентификатор': None,
+                        'Идентификатор_подраздела': None,
+                        'Идентификатор_группы': '',
+                        'Подарки': None,
+                        'ID_Подарков': None,
+                        'Сопутствующие': None,
+                        'ID_Сопутствующих': None,
+                        'ID_группы_разновидностей': None,
+                        'Название_Характеристики': None,
+                        'Измерение_Характеристики': None,
+                        'Значение_Характеристики': None,
+                        'Ссылка_на_товар_на_сайте': None,
+                    })
 
                     print(f'Обработано: {product_url}')
 
                 save_excel(data=result_data, category_name=category_name)
 
-                with open('data/images_urls_list.txt', 'a', encoding='utf-8') as file:
-                    print(*image_url_list, file=file, sep='\n')
+
+def process_and_upload_image(image_url: str, session: requests.Session, headers: dict,
+                             crop_bottom: int = 30) -> str | None:
+    """
+    Скачивает изображение, обрезает снизу и загружает на imgbb.
+    Возвращает ссылку на загруженное изображение.
+
+    :param image_url: Ссылка на исходное изображение
+    :param session: requests.Session для повторного использования соединений
+    :param headers: HTTP-заголовки
+    :param crop_bottom: Пиксели для обрезки снизу
+    :return: Ссылка на изображение в облаке или None
+    """
+    try:
+        # Скачиваем изображение через сессию
+        response = session.get(image_url, headers=headers, timeout=30)
+        if response.status_code != 200:
+            print(f"Ошибка загрузки {image_url} (код {response.status_code})")
+            return None
+
+        # Обрезка изображения
+        img = Image.open(BytesIO(response.content)).convert('RGB')
+        width, height = img.size
+        new_height = max(1, height - crop_bottom)
+        cropped = img.crop((0, 0, width, new_height))
+
+        # Создаём уникальное имя для временного файла
+        os.makedirs('images', exist_ok=True)
+        temp_filename = f'temp_{uuid.uuid4().hex}_{os.path.basename(image_url)}'
+        temp_path = os.path.join('images', temp_filename)
+        cropped.save(temp_path)
+
+        # Загружаем на imgbb
+        with open(temp_path, 'rb') as f:
+            payload = {'key': API_KEY}
+            files = {'image': f}
+            r = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
+
+        # Удаляем временный файл
+        os.remove(temp_path)
+
+        # Обработка ответа
+        result = r.json()
+        if r.status_code == 200 and result.get('success'):
+            return result['data']['url']
+        else:
+            print(f'Ошибка загрузки на imgbb: {result}')
+            return None
+
+    except Exception as ex:
+        print(f'process_and_upload_image: {ex}')
+        return None
 
 
 def save_excel(data: list[dict], category_name: str) -> None:
@@ -296,28 +350,6 @@ def save_excel(data: list[dict], category_name: str) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def download_imgs(file_path: str, headers: dict) -> None:   # Сохраняем список ссылок в JSON
-    directory = 'images'
-    os.makedirs(directory, exist_ok=True)
-
-    with open(file_path, 'r', encoding='utf-8') as file:
-        image_urls_list = [line.strip() for line in file.readlines()]
-
-    count_urls = len(image_urls_list)
-
-    for k, image_url in enumerate(image_urls_list, 1):
-        image_title = image_url.split('/')[-1]
-
-        with Session() as session:
-            time.sleep(1)
-            response = session.get(url=image_url, headers=headers)
-
-        with open(f'{directory}/{image_title}', 'wb') as file:
-            file.write(response.content)
-
-        print(f'Обработано изображений: {k}/{count_urls}')
-
-
 def main():
     """
     Главная функция:
@@ -327,7 +359,6 @@ def main():
     """
     # product_data_list = get_products_urls(category_dict=category_dict, headers=headers)
     get_products_data(file_path='data/product_data_list.json')
-    download_imgs(file_path="data/images_urls_list.txt", headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
