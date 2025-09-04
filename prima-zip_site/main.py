@@ -3,17 +3,15 @@ import time
 from datetime import datetime
 import json
 import re
+from urllib.parse import urlparse
 
-import requests
 from requests import Session
 
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
-import uuid
 from PIL import Image
 from io import BytesIO
-
 
 from configs.config import API_KEY
 
@@ -131,7 +129,7 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
                         product_url = None
                     product_urls.append(product_url)
 
-                print(f'ОБработано страниц: {page}/{pages}')
+                print(f'Обработано страниц: {page}/{pages}')
 
             product_data_list.append({category_name: product_urls})
 
@@ -161,6 +159,10 @@ def get_products_data(file_path: str) -> None:
             for category_name, product_urls in category_dict.items():
                 result_data = []
 
+                # Готовим название категории для разных целей
+                search_category = category_name.replace('/', ', ')
+                excel_category_name = category_name.split('/')[-1] if '/' in category_name else category_name
+
                 for product_url in product_urls:
                     try:
                         time.sleep(1)
@@ -180,11 +182,16 @@ def get_products_data(file_path: str) -> None:
                     except Exception:
                         title = ''
 
+                    try:
+                        price = soup.find('span', itemprop='price').get('content')
+                    except Exception:
+                        price = ''
+
                     # Изображение: скачивание + обрезка + облако
                     try:
                         orig_image_url = soup.find('div', class_='general-img').find('a').get('href')
                         if orig_image_url:
-                            image_url = process_and_upload_image(orig_image_url, headers=headers)
+                            image_url = process_and_upload_image(orig_image_url, session=session, headers=headers)
                         else:
                             image_url = None
                     except Exception:
@@ -199,17 +206,22 @@ def get_products_data(file_path: str) -> None:
 
                     # Текстовое описание
                     try:
-                        description = ' '.join(i.text.strip().replace('\xa0', ' ') for i in content_data.find_all('p'))
+                        description = ' '.join(
+                            i.text.strip().replace('\xa0', ' ')
+                            for i in content_data.find_all('p')
+                        )
                     except Exception:
                         description = ''
 
-                    # Характеристики (таблица)
+                    # Характеристики
                     try:
                         characteristic = ''
                         characteristic_items = content_data.find('table').find_all('tr')
                         for characteristic_item in characteristic_items:
                             characteristic += '\n' + ' '.join(
-                                c.text.strip().replace('\xa0', ' ') for c in characteristic_item.find_all('td'))
+                                c.text.strip().replace('\xa0', ' ')
+                                for c in characteristic_item.find_all('td')
+                            )
                     except Exception:
                         characteristic = ''
 
@@ -219,10 +231,10 @@ def get_products_data(file_path: str) -> None:
                     result_data.append({
                         'Код_товара': None,
                         'Название_позиции': title,
-                        'Поисковые_запросы': f'{title}, {category_name}',
+                        'Поисковые_запросы': f'{title}, {search_category}',
                         'Описание': description,
                         'Тип_товара': 'u',
-                        'Цена': None,
+                        'Цена': price,
                         'Цена от': None,
                         'Ярлык': None,
                         'HTML_заголовок': None,
@@ -267,20 +279,14 @@ def get_products_data(file_path: str) -> None:
 
                     print(f'Обработано: {product_url}')
 
-                save_excel(data=result_data, category_name=category_name)
+                save_excel(data=result_data, category_name=excel_category_name)
 
 
-def process_and_upload_image(image_url: str, session: requests.Session, headers: dict,
+def process_and_upload_image(image_url: str, session: Session, headers: dict,
                              crop_bottom: int = 30) -> str | None:
     """
     Скачивает изображение, обрезает снизу и загружает на imgbb.
     Возвращает ссылку на загруженное изображение.
-
-    :param image_url: Ссылка на исходное изображение
-    :param session: requests.Session для повторного использования соединений
-    :param headers: HTTP-заголовки
-    :param crop_bottom: Пиксели для обрезки снизу
-    :return: Ссылка на изображение в облаке или None
     """
     try:
         # Скачиваем изображение через сессию
@@ -297,7 +303,10 @@ def process_and_upload_image(image_url: str, session: requests.Session, headers:
 
         # Создаём уникальное имя для временного файла
         os.makedirs('images', exist_ok=True)
-        temp_filename = f'temp_{uuid.uuid4().hex}_{os.path.basename(image_url)}'
+        # Берём только путь из URL, чтобы убрать параметры
+        url_path = urlparse(image_url).path
+        filename = os.path.basename(url_path)
+        temp_filename = f'temp_{filename}'
         temp_path = os.path.join('images', temp_filename)
         cropped.save(temp_path)
 
@@ -305,14 +314,14 @@ def process_and_upload_image(image_url: str, session: requests.Session, headers:
         with open(temp_path, 'rb') as f:
             payload = {'key': API_KEY}
             files = {'image': f}
-            r = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
+            response = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
 
         # Удаляем временный файл
         os.remove(temp_path)
 
         # Обработка ответа
-        result = r.json()
-        if r.status_code == 200 and result.get('success'):
+        result = response.json()
+        if response.status_code == 200 and result.get('success'):
             return result['data']['url']
         else:
             print(f'Ошибка загрузки на imgbb: {result}')
@@ -321,6 +330,7 @@ def process_and_upload_image(image_url: str, session: requests.Session, headers:
     except Exception as ex:
         print(f'process_and_upload_image: {ex}')
         return None
+
 
 
 def save_excel(data: list[dict], category_name: str) -> None:
