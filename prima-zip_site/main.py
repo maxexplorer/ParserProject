@@ -2,7 +2,9 @@ import os
 import time
 from datetime import datetime
 import json
+import random
 import re
+
 from urllib.parse import urlparse
 
 from requests import Session
@@ -145,6 +147,100 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
     return product_data_list
 
 
+def extract_mod_id(url: str) -> str:
+    """
+    Извлекает параметр mod_id из URL.
+    Если параметр не найден, генерирует случайный 12-значный идентификатор.
+
+    :param url: Ссылка на товар (строка)
+    :return: mod_id в виде строки
+    """
+    # Ищем модификационный идентификатор в URL
+    match = re.search(r"mod_id=(\d+)", url)
+    if match:
+        return match.group(1)  # Если нашли число, возвращаем его
+    else:
+        # Если mod_id нет — генерируем случайное 12-значное число
+        return str(random.randint(10 ** 11, 10 ** 12 - 1))
+
+
+def process_and_upload_image(image_url: str, session: Session, headers: dict,
+                             crop_bottom: int = 30) -> str | None:
+    """
+    Скачивает изображение, обрезает снизу и загружает на imgbb.
+    Возвращает ссылку на загруженное изображение.
+    """
+    try:
+        # Скачиваем изображение через сессию
+        response = session.get(image_url, headers=headers, timeout=30)
+        if response.status_code != 200:
+            print(f"Ошибка загрузки {image_url} (код {response.status_code})")
+            return None
+
+        # Обрезка изображения
+        img = Image.open(BytesIO(response.content)).convert('RGB')
+        width, height = img.size
+        new_height = max(1, height - crop_bottom)
+        cropped = img.crop((0, 0, width, new_height))
+
+        # Создаём уникальное имя для временного файла
+        os.makedirs('images', exist_ok=True)
+        # Берём только путь из URL, чтобы убрать параметры
+        url_path = urlparse(image_url).path
+        filename = os.path.basename(url_path)
+        temp_filename = f'temp_{filename}'
+        temp_path = os.path.join('images', temp_filename)
+        cropped.save(temp_path)
+
+        # Загружаем на imgbb
+        with open(temp_path, 'rb') as f:
+            payload = {'key': API_KEY}
+            files = {'image': f}
+            response = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
+
+        # Удаляем временный файл
+        os.remove(temp_path)
+
+        # Обработка ответа
+        result = response.json()
+        if response.status_code == 200 and result.get('success'):
+            return result['data']['url']
+        else:
+            print(f'Ошибка загрузки на imgbb: {result}')
+            return None
+
+    except Exception as ex:
+        print(f'process_and_upload_image: {ex}')
+        return None
+
+
+def save_excel(data: list[dict], category_name: str) -> None:
+    """
+    Сохраняет список данных в Excel-файл.
+
+    :param data: Список словарей с данными о продавцах
+    """
+    directory = 'results'
+    file_path = f'{directory}/result_data_{category_name}.xlsx'
+
+    os.makedirs(directory, exist_ok=True)
+
+    if not os.path.exists(file_path):
+        # Создаем пустой файл
+        with ExcelWriter(file_path, mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='Export Products Sheet', index=False)
+
+    df_existing = read_excel(file_path, sheet_name='Export Products Sheet')
+    num_existing_rows = len(df_existing.index)
+
+    new_df = DataFrame(data)
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
+                        sheet_name='Export Products Sheet', index=False)
+
+    print(f'Сохранено {len(data)} записей в {file_path}')
+
+
 def get_products_data(file_path: str) -> None:
     """
     Извлекает данные о товарах по ссылкам из JSON,
@@ -154,11 +250,12 @@ def get_products_data(file_path: str) -> None:
     with open(file_path, 'r', encoding='utf-8') as file:
         product_data_list = json.load(file)
 
+    batch_size = 100
+
     with Session() as session:
         for category_dict in product_data_list:
             for category_name, product_urls in category_dict.items():
                 result_data = []
-
                 # Готовим название категории для разных целей
                 search_category = category_name.replace('/', ', ')
                 excel_category_name = category_name.split('/')[-1] if '/' in category_name else category_name
@@ -279,85 +376,16 @@ def get_products_data(file_path: str) -> None:
 
                     print(f'Обработано: {product_url}')
 
-                save_excel(data=result_data, category_name=excel_category_name)
+                    # Записываем данные в excel каждые batch_size
+                    if len(result_data) >= batch_size:
+                        save_excel(data=result_data, category_name=excel_category_name)
+                        result_data.clear()  # Очищаем список для следующей партии
 
+                    # Записываем оставшиеся данные в Excel
+                if result_data:
+                    save_excel(data=result_data, category_name=excel_category_name)
 
-def process_and_upload_image(image_url: str, session: Session, headers: dict,
-                             crop_bottom: int = 30) -> str | None:
-    """
-    Скачивает изображение, обрезает снизу и загружает на imgbb.
-    Возвращает ссылку на загруженное изображение.
-    """
-    try:
-        # Скачиваем изображение через сессию
-        response = session.get(image_url, headers=headers, timeout=30)
-        if response.status_code != 200:
-            print(f"Ошибка загрузки {image_url} (код {response.status_code})")
-            return None
-
-        # Обрезка изображения
-        img = Image.open(BytesIO(response.content)).convert('RGB')
-        width, height = img.size
-        new_height = max(1, height - crop_bottom)
-        cropped = img.crop((0, 0, width, new_height))
-
-        # Создаём уникальное имя для временного файла
-        os.makedirs('images', exist_ok=True)
-        # Берём только путь из URL, чтобы убрать параметры
-        url_path = urlparse(image_url).path
-        filename = os.path.basename(url_path)
-        temp_filename = f'temp_{filename}'
-        temp_path = os.path.join('images', temp_filename)
-        cropped.save(temp_path)
-
-        # Загружаем на imgbb
-        with open(temp_path, 'rb') as f:
-            payload = {'key': API_KEY}
-            files = {'image': f}
-            response = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
-
-        # Удаляем временный файл
-        os.remove(temp_path)
-
-        # Обработка ответа
-        result = response.json()
-        if response.status_code == 200 and result.get('success'):
-            return result['data']['url']
-        else:
-            print(f'Ошибка загрузки на imgbb: {result}')
-            return None
-
-    except Exception as ex:
-        print(f'process_and_upload_image: {ex}')
-        return None
-
-
-
-def save_excel(data: list[dict], category_name: str) -> None:
-    """
-    Сохраняет список данных в Excel-файл.
-
-    :param data: Список словарей с данными о продавцах
-    """
-    directory = 'results'
-    file_path = f'{directory}/result_data_{category_name}.xlsx'
-
-    os.makedirs(directory, exist_ok=True)
-
-    if not os.path.exists(file_path):
-        # Создаем пустой файл
-        with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Export Products Sheet', index=False)
-
-    df_existing = read_excel(file_path, sheet_name='Export Products Sheet')
-    num_existing_rows = len(df_existing.index)
-
-    new_df = DataFrame(data)
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
-                        sheet_name='Export Products Sheet', index=False)
-
-    print(f'Сохранено {len(data)} записей в {file_path}')
+                # save_excel(data=result_data, category_name=excel_category_name)
 
 
 def main():
