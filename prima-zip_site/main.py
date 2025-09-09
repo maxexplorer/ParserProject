@@ -90,7 +90,7 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
 
     product_data_list = []
 
-    # Создаем requests.Session для ускорения запросов
+    # Создаем Session для ускорения запросов
     with Session() as session:
         for category_name, category_url in category_dict.items():
             product_urls = []
@@ -253,8 +253,9 @@ def get_products_data(file_path: str) -> None:
     batch_size = 100
 
     with Session() as session:
-        for category_dict in product_data_list:
+        for category_dict in product_data_list[1:2]:
             for category_name, product_urls in category_dict.items():
+                print(f'Обрабатывается категория: {category_name}')
                 result_data = []
                 # Готовим название категории для разных целей
                 search_category = category_name.replace('/', ', ')
@@ -262,7 +263,7 @@ def get_products_data(file_path: str) -> None:
 
                 for product_url in product_urls:
                     try:
-                        time.sleep(1)
+                        time.sleep(1.5)
                         html = get_html(url=product_url, headers=headers, session=session)
                     except Exception as ex:
                         print(f"{product_url} - {ex}")
@@ -278,11 +279,6 @@ def get_products_data(file_path: str) -> None:
                         title = soup.find('h1', itemprop='name').text.strip()
                     except Exception:
                         title = ''
-
-                    try:
-                        price = soup.find('span', itemprop='price').get('content')
-                    except Exception:
-                        price = ''
 
                     # Изображение: скачивание + обрезка + облако
                     try:
@@ -331,7 +327,7 @@ def get_products_data(file_path: str) -> None:
                         'Поисковые_запросы': f'{title}, {search_category}',
                         'Описание': description,
                         'Тип_товара': 'u',
-                        'Цена': price,
+                        'Цена': '',
                         'Цена от': None,
                         'Ярлык': None,
                         'HTML_заголовок': None,
@@ -341,7 +337,7 @@ def get_products_data(file_path: str) -> None:
                         'Скидка': '',
                         'Cрок действия скидки от': None,
                         'Cрок действия скидки до': None,
-                        'Единица_измерения': 1,
+                        'Единица_измерения': '',
                         'Минимальный_объем_заказа': None,
                         'Оптовая_цена': None,
                         'Минимальный_заказ_опт': None,
@@ -359,7 +355,7 @@ def get_products_data(file_path: str) -> None:
                         'Продукт_на_сайте': None,
                         'Код_маркировки_(GTIN)': None,
                         'Номер_устройства_(MPN)': None,
-                        'Идентификатор_товара': '',
+                        'Идентификатор_товара': extract_mod_id(product_url),
                         'Уникальный_идентификатор': None,
                         'Идентификатор_подраздела': None,
                         'Идентификатор_группы': '',
