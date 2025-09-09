@@ -381,8 +381,6 @@ def get_products_data(file_path: str) -> None:
                 if result_data:
                     save_excel(data=result_data, category_name=excel_category_name)
 
-                # save_excel(data=result_data, category_name=excel_category_name)
-
 
 def main():
     """
