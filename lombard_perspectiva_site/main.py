@@ -31,54 +31,47 @@ def get_html(url: str, headers: dict, session: Session) -> str | None:
     """
     Загружает HTML-код страницы по переданному URL.
 
-    :param url: Адрес страницы для загрузки.
-    :param headers: HTTP-заголовки запроса.
-    :param session: Сессия requests для повторного использования соединений.
-    :return: HTML-код страницы (str) или None, если произошла ошибка.
+    :param url: адрес страницы для загрузки
+    :param headers: словарь с HTTP-заголовками
+    :param session: объект requests.Session для повторного использования соединений
+    :return: HTML-код страницы (str) или None при ошибке
     """
     try:
         response = session.get(url=url, headers=headers, timeout=60)
-
         if response.status_code != 200:
             print(f'status_code: {response.status_code}')
-
-        html = response.text
-        return html
+        return response.text
     except Exception as ex:
         print(f'get_html: {ex}')
+        return None
 
 
 def get_unique_urls(file_path: str) -> set:
     """
-    Читает файл с URL-адресами, удаляет дубликаты и сохраняет только уникальные.
+    Читает файл с URL-адресами, удаляет дубликаты и сохраняет уникальные ссылки.
 
-    :param file_path: Путь к файлу с URL-адресами.
-    :return: Множество уникальных URL.
+    :param file_path: путь к файлу с URL
+    :return: множество уникальных URL
     """
-    # Читаем все строки файла и убираем дубликаты через set
     with open(file_path, 'r', encoding='utf-8') as file:
         unique_urls = set(line.strip() for line in file)
 
-    # Перезаписываем файл только уникальными ссылками
     with open(file_path, 'w', encoding='utf-8') as file:
         print(*unique_urls, file=file, sep='\n')
 
     return unique_urls
 
 
-def get_product_urls(headers: dict) -> list[dict]:
+def get_product_urls(headers: dict) -> list:
     """
-    Собирает ссылки на товары по категориям.
+    Собирает все URL товаров со страниц каталога.
 
-    :param category_dict: Словарь со ссылками на страницы каталога
-    :param headers: Заголовки запроса
-    :return: Список словарей {имя_категории: [список ссылок на товары]}
+    :param headers: словарь с HTTP-заголовками
+    :return: список URL товаров
     """
-
     product_urls_list = []
     pages = 17
 
-    # Создаем Session для ускорения запросов
     with Session() as session:
         for page in range(1, pages + 1):
             page_url = f"https://lombard-perspectiva.ru/clocks_today/?page={page}"
@@ -95,165 +88,135 @@ def get_product_urls(headers: dict) -> list[dict]:
             soup = BeautifulSoup(html, 'lxml')
 
             try:
-                # Ищем карточки товаров
-                product_items = soup.find('div', class_='elements-container').find_all('a',
-                                                                                       class_='product-list-item catalog-item')
+                product_items = soup.find('div', class_='elements-container') \
+                    .find_all('a', class_='product-list-item catalog-item')
             except Exception as ex:
                 print(f'product_items: {page_url} - {ex}')
                 continue
 
-            # Обрабатываем каждый товар
             for product_item in product_items:
-                try:
-                    product_url = product_item.get('href')
-                except Exception:
-                    product_url = None
-
+                product_url = product_item.get('href')
                 if product_url:
                     product_urls_list.append(product_url)
 
             print(f'Обработано страниц: {page}/{pages}')
 
-    # Сохраняем список ссылок в txt формат
-    directory = 'data'
-    os.makedirs(directory, exist_ok=True)
-
+    os.makedirs('data', exist_ok=True)
     with open('data/product_urls_list.txt', 'w', encoding='utf-8') as file:
         print(*product_urls_list, file=file, sep='\n')
 
     return product_urls_list
 
 
-def get_products_data(file_path: str, headers: dict) -> list[dict]:
+def get_products_data(file_path: str, headers: dict) -> list:
     """
-    Загружает данные о товарах с сайта monetnik.ru и сохраняет в Excel партиями.
+    Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
 
-    :param headers: HTTP-заголовки для запросов.
-    :return: Список словарей с данными о товарах.
+    :param file_path: путь к файлу с URL товаров
+    :param headers: словарь с HTTP-заголовками
+    :return: список словарей с данными о товарах
     """
     with open(file_path, 'r', encoding='utf-8') as file:
         product_urls_list = [line.strip() for line in file.readlines()]
 
     count_urls = len(product_urls_list)
-    batch_size = 100  # сколько строк сохранять за раз
+    batch_size = 100
     result_data = []
 
     with Session() as session:
-        # Перебор страниц каталога
         for i, product_url in enumerate(product_urls_list, 1):
             try:
-                time.sleep(1)  # задержка, чтобы не забанили
+                time.sleep(1)
 
-                response = session.get(
-                    f"https://backend.lombard-perspectiva.ru/api{product_url}",
-                    headers=headers)
+                response = session.get(f"https://backend.lombard-perspectiva.ru/api{product_url}",
+                                       headers=headers)
 
                 if response.status_code != 200:
                     print(f'status_code: {response.status_code}')
 
                 json_data = response.json()
-
             except Exception as ex:
                 print(f"{product_url} - {ex}")
                 continue
 
-            data = json_data['data']
+            data = json_data.get('data', {})
 
             brand = data.get('brandTitle')
-
             collection = data.get('collectionTitle')
-
             reference = data.get('reference')
 
-            product_id = data.get('id')
-
-            prices = data.get('prices')
-
+            prices = data.get('prices', {})
             price_start = prices.get('start', {}).get('value')
             price_rub = prices.get('rub', {}).get('value')
             price_eur = prices.get('eur', {}).get('value')
             price_usd = prices.get('usd', {}).get('value')
 
-            attributes = data.get('dataAttributes')
-
+            material = None
+            attributes = data.get('dataAttributes', [])
             for attribute in attributes:
                 if attribute.get('label') == 'Материал корпуса':
                     material = attribute.get('value')
-                else:
-                    continue
+                    break  # остановка после нахождения нужного атрибута
 
-            # Добавляем данные в результирующий список
-            result_data.append(
-                {
-                    'Бренд': brand,
-                    'Коллекция': collection,
-                    'Название товара': f'{brand} {reference} (id {product_id})',
-                    'Стартовая цена: USD': price_start,
-                    'Цена: RUB': price_rub,
-                    'Цена: EUR': price_eur,
-                    'Цена: USD': price_usd,
-                    'Материал корпуса': material,
-                    'Ссылка':  f"https://lombard-perspectiva.ru{product_url}",
+            result_data.append({
+                'Бренд': brand,
+                'Коллекция': collection,
+                'Название товара': f'Часы {brand} {reference}',
+                'Стартовая цена: USD': price_start,
+                'Цена: RUB': price_rub,
+                'Цена: EUR': price_eur,
+                'Цена: USD': price_usd,
+                'Материал корпуса': material,
+                'Ссылка': f"https://lombard-perspectiva.ru{product_url}",
+            })
 
-                }
-            )
+            print(f'Обработано товаров: {i}/{count_urls}')
 
-        print(f'Обработано товаров: {i}/{count_urls}')
+            if len(result_data) >= batch_size:
+                save_excel(result_data)
+                result_data.clear()
 
-        # Сохраняем партию данных в Excel
-        if len(result_data) >= batch_size:
-            save_excel(result_data)
-            result_data.clear()
-
-    # Сохраняем остаток
     if result_data:
         save_excel(result_data)
 
     return result_data
 
 
-def save_excel(data: list[dict]) -> None:
+def save_excel(data: list) -> None:
     """
-    Сохраняет список данных в Excel-файл (results/result_data.xlsx).
+    Сохраняет список товаров в Excel (results/result_data.xlsx).
 
-    :param data: Список словарей с данными о товарах.
+    :param data: список словарей с данными о товарах
     """
     directory = 'results'
     file_path = f'{directory}/result_data.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
-    # Если файла нет — создаем пустой
     if not os.path.exists(file_path):
         with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='Data', index=False)
 
-    # Читаем существующие данные
     df_existing = read_excel(file_path, sheet_name='Data')
     num_existing_rows = len(df_existing.index)
 
-    # Преобразуем новые данные в DataFrame
     new_df = DataFrame(data)
 
-    # Дописываем новые строки в конец
     with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(
-            writer,
-            startrow=num_existing_rows + 1,
-            header=(num_existing_rows == 0),
-            sheet_name='Data',
-            index=False
-        )
+        new_df.to_excel(writer, startrow=num_existing_rows + 1,
+                        header=(num_existing_rows == 0),
+                        sheet_name='Data', index=False)
 
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
 def main():
     """
-    Основная функция: запускает сбор данных и сохраняет их в Excel.
+    Основная функция программы.
+    Собирает данные о товарах и сохраняет их в Excel.
     """
     # get_product_urls(headers=headers)
-    # get_unique_urls(file_path='data/product_urls_list.txt')  # если нужно почистить от дублей
+    # get_unique_urls(file_path='data/product_urls_list.txt')
     get_products_data(file_path='data/product_urls_list.txt', headers=headers)
 
     execution_time = datetime.now() - start_time
