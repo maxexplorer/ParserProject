@@ -38,6 +38,9 @@ category_dict = {
     'Запорная арматура/Клапаны обратные': 'https://prima-zip.ru/catalog/KLAPANY-OBRATNYe',
 }
 
+# Глобальный список кэша
+uploaded_files: dict[str, str] = {}  # temp_filename -> url
+
 
 def get_html(url: str, headers: dict, session: Session) -> str | None:
     """
@@ -170,7 +173,18 @@ def process_and_upload_image(image_url: str, session: Session, headers: dict,
     Скачивает изображение, обрезает снизу и загружает на imgbb.
     Возвращает ссылку на загруженное изображение.
     """
+
     try:
+        # Создаём уникальное имя для временного файла
+        os.makedirs('images', exist_ok=True)
+        url_path = urlparse(image_url).path
+        filename = os.path.basename(url_path)
+        temp_filename = f'temp_{filename}'
+
+        # Проверяем в кэше (если уже загружали — возвращаем старую ссылку)
+        if temp_filename in uploaded_files:
+            return uploaded_files[temp_filename]
+
         # Скачиваем изображение через сессию
         response = session.get(image_url, headers=headers, timeout=30)
         if response.status_code != 200:
@@ -183,12 +197,6 @@ def process_and_upload_image(image_url: str, session: Session, headers: dict,
         new_height = max(1, height - crop_bottom)
         cropped = img.crop((0, 0, width, new_height))
 
-        # Создаём уникальное имя для временного файла
-        os.makedirs('images', exist_ok=True)
-        # Берём только путь из URL, чтобы убрать параметры
-        url_path = urlparse(image_url).path
-        filename = os.path.basename(url_path)
-        temp_filename = f'temp_{filename}'
         temp_path = os.path.join('images', temp_filename)
         cropped.save(temp_path)
 
@@ -204,7 +212,9 @@ def process_and_upload_image(image_url: str, session: Session, headers: dict,
         # Обработка ответа
         result = response.json()
         if response.status_code == 200 and result.get('success'):
-            return result['data']['url']
+            url = result['data']['url']
+            uploaded_files[temp_filename] = url  # сохраняем в кэше
+            return url
         else:
             print(f'Ошибка загрузки на imgbb: {result}')
             return None
@@ -261,7 +271,7 @@ def get_products_data(file_path: str) -> None:
                 search_category = category_name.replace('/', ', ')
                 excel_category_name = category_name.split('/')[-1] if '/' in category_name else category_name
 
-                for product_url in product_urls:
+                for product_url in product_urls[3101:]:
                     try:
                         time.sleep(1.5)
                         html = get_html(url=product_url, headers=headers, session=session)
@@ -346,7 +356,7 @@ def get_products_data(file_path: str) -> None:
                         'Количество': None,
                         'Производитель': None,
                         'Страна_производитель': None,
-                        'Номер_группы': None,
+                        'Номер_группы': 9470612,
                         'Адрес_подраздела': None,
                         'Возможность_поставки': None,
                         'Срок_поставки': None,
