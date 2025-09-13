@@ -263,7 +263,7 @@ def get_products_data(file_path: str) -> None:
     batch_size = 100
 
     with Session() as session:
-        for category_dict in product_data_list[1:2]:
+        for category_dict in product_data_list:
             for category_name, product_urls in category_dict.items():
                 print(f'Обрабатывается категория: {category_name}')
                 result_data = []
@@ -271,7 +271,7 @@ def get_products_data(file_path: str) -> None:
                 search_category = category_name.replace('/', ', ')
                 excel_category_name = category_name.split('/')[-1] if '/' in category_name else category_name
 
-                for product_url in product_urls[3101:]:
+                for product_url in product_urls:
                     try:
                         time.sleep(1.5)
                         html = get_html(url=product_url, headers=headers, session=session)
