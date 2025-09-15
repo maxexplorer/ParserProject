@@ -56,8 +56,8 @@ def process_data_files(data_folder, avito_dict):
 
                 # Находим индексы колонок с нужными заголовками
                 try:
-                    oem_column_index = headers.index("OEM")  # Ищем столбец "OEM"
-                    price_column_index = headers.index("Price")  # Ищем столбец "Price"
+                    oem_column_index = headers.index('Номер детали OEM')  # Ищем столбец "OEM"
+                    price_column_index = headers.index('Цена')  # Ищем столбец "Price"
                 except Exception as ex:
                     # print(f'{sheet}: {ex}')
                     continue
