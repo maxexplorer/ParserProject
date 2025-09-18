@@ -14,9 +14,15 @@ start_time = datetime.now()
 
 
 def get_basket_number(product_id: int) -> str | None:
+    """
+    Определяет номер корзины для товара по его ID.
+
+    :param product_id: ID товара
+    :return: Номер корзины (строка) или None, если short_id некорректный
+    """
     short_id = product_id // 100000
 
-    # таблица диапазонов: (нижняя_граница, верхняя_граница, basket)
+    # Таблица диапазонов корзин
     ranges = [
         (0, 143, '01'),
         (144, 287, '02'),
@@ -46,8 +52,14 @@ def get_basket_number(product_id: int) -> str | None:
 
 
 def get_card_product(product_id: int, session: Session) -> str | None:
-    short_id = product_id // 100000
+    """
+    Получает значение опции "Объем скороварки" для конкретного товара через API корзины.
 
+    :param product_id: ID товара
+    :param session: Сессия requests.Session для запросов
+    :return: Значение опции или None
+    """
+    short_id = product_id // 100000
     basket = get_basket_number(product_id=product_id)
 
     headers = {
@@ -82,9 +94,16 @@ def get_card_product(product_id: int, session: Session) -> str | None:
 
 
 def aggregate_products(result_list, group_by_product=False):
+    """
+    Агрегирует данные по бренду (и по товару, если указано), рассчитывает min, max, медиану и объединяет дополнительные поля.
+
+    :param result_list: Список словарей с данными товаров
+    :param group_by_product: Если True, группировка будет по бренду и товару; иначе — только по бренду
+    :return: DataFrame с агрегированными данными
+    """
     df = pd.DataFrame(result_list)
 
-    # базовые агрегации
+    # Базовые агрегаты: min/max/median и объединение размеров
     agg_dict = {
         'Min цена': ('Цена', 'min'),
         'Max цена': ('Цена', 'max'),
@@ -92,7 +111,7 @@ def aggregate_products(result_list, group_by_product=False):
         'Размер': ('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
     }
 
-    # дополнительные поля
+    # Дополнительные поля для объединения
     extra_fields = [
         'Модель',
         'Объем накопителя',
@@ -109,14 +128,14 @@ def aggregate_products(result_list, group_by_product=False):
         if col in df.columns:
             agg_dict[col] = (col, lambda x: ', '.join(sorted(set(filter(None, x)))))
 
-    # выбираем колонки для группировки
+    # Колонки для группировки
     group_cols = ['Бренд']
     if group_by_product:
         group_cols.append('Товар')
 
     result = df.groupby(group_cols).agg(**agg_dict).reset_index()
 
-    # желаемый порядок колонок
+    # Порядок колонок для итогового Excel
     desired_order = [
         'Товар', 'Max цена', 'Min цена', 'Медианная цена', 'Бренд', 'Модель',
         'Объем накопителя', 'Тип накопителя', 'Емкость аккумулятора',
@@ -125,7 +144,7 @@ def aggregate_products(result_list, group_by_product=False):
         'Размер', 'Объем скороварки'
     ]
 
-    # добавляем отсутствующие колонки пустыми
+    # Добавляем отсутствующие колонки пустыми
     for col in desired_order:
         if col not in result.columns:
             result[col] = ''
@@ -136,7 +155,14 @@ def aggregate_products(result_list, group_by_product=False):
 
 
 def median_mean(x, lower=0.1, upper=0.1):
-    """Вычисляет среднее после усечения нижних и верхних процентов и округляет результат."""
+    """
+    Вычисляет среднее после усечения нижних и верхних процентов и округляет результат.
+
+    :param x: Series с ценами
+    :param lower: Процент для отсечения снизу
+    :param upper: Процент для отсечения сверху
+    :return: Округленное среднее значение
+    """
     sorted_x = x.sort_values()
     n = len(sorted_x)
     lower_idx = int(n * lower)
@@ -146,12 +172,12 @@ def median_mean(x, lower=0.1, upper=0.1):
     return round(value)
 
 
-
 def save_excel(data: list[dict], category_name: str) -> None:
     """
-    Сохраняет список данных в Excel-файл.
+    Сохраняет список данных в Excel-файл, добавляя новые строки к существующему листу.
 
-    :param data: Список словарей с данными о продавцах
+    :param data: Список словарей с данными о товарах
+    :param category_name: Название категории для формирования имени файла
     """
     directory = 'results'
     file_path = f'{directory}/result_data_{category_name}.xlsx'
@@ -161,27 +187,28 @@ def save_excel(data: list[dict], category_name: str) -> None:
     if not os.path.exists(file_path):
         # Создаем пустой файл
         with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
+            DataFrame().to_excel(writer, sheet_name='Data', index=False)
 
-    df_existing = read_excel(file_path, sheet_name='Sellers')
+    df_existing = read_excel(file_path, sheet_name='Data')
     num_existing_rows = len(df_existing.index)
 
     new_df = DataFrame(data)
     with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
         new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
-                        sheet_name='Sellers', index=False)
+                        sheet_name='Data', index=False)
 
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
 def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
-    """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
+    """
+    Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel.
+
+    :param category_dict: Словарь категорий и их URL
+    :param batch_size: Количество товаров на страницу
+    """
     with Session() as session:
         for category_name, category_url in category_dict.items():
-            # parsed_url = urlparse(category_url)
-            # params_qs = parse_qs(parsed_url.query)
-            # xsubject = params_qs.get("xsubject", [None])[0]
-
             headers = {
                 'accept': '*/*',
                 'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -197,7 +224,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
             }
 
-            # первый запрос для получения total
+            # Параметры запроса для первой страницы
             first_params = {
                 'ab_testid': 'top_gmv',
                 'appType': '1',
@@ -210,7 +237,6 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 'sort': 'popular',
                 'spp': '30',
                 'suppressSpellcheck': 'false',
-                # 'xsubject': xsubject,
             }
 
             try:
@@ -240,7 +266,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
             result_list = []
 
-            # проходим по всем страницам
+            # Проходим по всем страницам
             for page in range(1, pages + 1):
                 params = first_params.copy()
                 params['page'] = page
@@ -267,23 +293,16 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 if not data:
                     continue
 
+                # Обрабатываем товары на странице
                 for item in data:
-                    item: dict
-
                     brand = item.get('brand')
-
                     if brand is None or brand == '':
                         continue
 
                     product_id = item.get('id')
-
                     name = item.get('name')
-
                     size = item.get('sizes', [])[0].get('origName')
-
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
-
-                    # option_value = get_card_product(product_id=product_id, session=session)
 
                     result_list.append(
                         {
@@ -296,8 +315,10 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                 print(f'Обработано страниц: {page}/{pages}')
 
+            # Агрегируем данные
             result = aggregate_products(result_list=result_list)
 
+            # Сохраняем в Excel
             save_excel(result, category_name=category_name)
 
             print(f"{category_name}: данные сохранены, {len(result)} записей")
@@ -305,9 +326,8 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
 def main() -> None:
     """
-    Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
+    Точка входа в программу. Запускает обработку категорий и сбор данных о товарах.
     """
-
     get_products_data(category_dict=category_dict)
 
     execution_time = datetime.now() - start_time
