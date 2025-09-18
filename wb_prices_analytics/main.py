@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
+import math
 
 from requests import Session
 import pandas as pd
@@ -13,15 +14,12 @@ start_time = datetime.now()
 
 
 def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
-    result_list = []
-
+    """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
     with Session() as session:
         for category_name, category_url in category_dict.items():
             parsed_url = urlparse(category_url)
-            params = parse_qs(parsed_url.query)
-            xsubject = params.get("xsubject", [None])[0]
-
-            pages = 1
+            params_qs = parse_qs(parsed_url.query)
+            xsubject = params_qs.get("xsubject", [None])[0]
 
             headers = {
                 'accept': '*/*',
@@ -36,19 +34,16 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
                 'sec-fetch-mode': 'cors',
                 'sec-fetch-site': 'cross-site',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-                'x-pow': '2|site_b19c142c268d48699680efbe9d1e554d|1758179724|8,8,1,28f5c28f5c28f5c,33b9a1e5-9937-4d2e-ab50-3ee3df6f79c1,2df9be27-b150-4999-9532-07863bdc5111,1758179904,1,wl5rj6YOWxUvudkPaMx1Veh+SFaQObu2LHsv/0OSScI=,03999862c2979815cb43b21597488e92b66c525ef513b45a2e15323cbbe9c01a19195f34d7764cef86af8f16ef301777c3f08ffdac8e4e2bf3b401ee21833b0e|104',
-                'x-queryid': 'qid143023290172907954520250918075200',
-                'x-userid': '0',
             }
 
-            for page in range(1, pages + 1):
-                params = {
+            # первый запрос для получения total
+            first_params = {
                     'ab_testid': 'top_gmv',
                     'appType': '1',
                     'curr': 'rub',
                     'dest': '-1257786',
                     'lang': 'ru',
-                    'page': page,
+                    'page': 1,
                     'query': category_name,
                     'resultset': 'catalog',
                     'sort': 'popular',
@@ -57,24 +52,51 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
                     # 'xsubject': xsubject,
                 }
 
+            try:
+                time.sleep(1)
+                response = session.get(
+                    'https://u-search.wb.ru/exactmatch/ru/common/v18/search',
+                    params=first_params,
+                    headers=headers,
+                    timeout=(3, 5)
+                )
+                response.raise_for_status()
+                json_data: dict = response.json()
+                total = json_data.get('total', 0)
+                if total == 0:
+                    print(f"{category_name}: товаров нет")
+                    continue
+
+                pages = math.ceil(total / batch_size)
+                print(f"{category_name}: всего {total} товаров, {pages} страниц")
+
+            except Exception as ex:
+                print(f"{category_name}: ошибка получения total: {ex}")
+                continue
+
+            result_list = []
+
+            # проходим по всем страницам
+            for page in range(1, pages + 1):
+                params = first_params.copy()
+                params['page'] = page
+
                 try:
+                    time.sleep(1)
                     response = session.get(
                         'https://u-search.wb.ru/exactmatch/ru/common/v18/search',
                         params=params,
                         headers=headers,
                         timeout=(3, 5)
                     )
-
-                    if response.status_code != 200:
-                        print(f' category_url: {category_url}: статус ответа {response.status_code}')
-                        continue
-
-                    json_data: dict = response.json()
+                    response.raise_for_status()
+                    json_data = response.json()
                     data: list = json_data.get('products', [])
 
                 except Exception as ex:
-                    print(f'{category_url}: {ex}')
+                    print(f"{category_name} страница {page}: {ex}")
                     continue
+
 
                 if not data:
                     continue
@@ -110,6 +132,8 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
             ).reset_index()
 
             save_excel(result)
+
+            print(f"{category_name}: данные сохранены, {len(result)} записей")
 
 
 def save_excel(data: list[dict]) -> None:
