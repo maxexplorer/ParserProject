@@ -12,13 +12,63 @@ from data.data import category_dict
 
 start_time = datetime.now()
 
+def get_card_product(product_id: int, session: Session) -> str | None:
+    short_id = product_id // 100000
+
+    match short_id:
+        case int(short_id) if 0 <= short_id <= 143: basket = '01'
+        case int(short_id) if 144 <= short_id <= 287: basket = '02'
+        case int(short_id) if 288 <= short_id <= 431: basket = '03'
+        case int(short_id) if 432 <= short_id <= 719: basket = '04'
+        case int(short_id) if 720 <= short_id <= 1007: basket = '05'
+        case int(short_id) if 1008 <= short_id <= 1061: basket = '06'
+        case int(short_id) if 1062 <= short_id <= 1115: basket = '07'
+        case int(short_id) if 1116 <= short_id <= 1169: basket = '08'
+        case int(short_id) if 1170 <= short_id <= 1313: basket = '09'
+        case int(short_id) if 1314 <= short_id <= 1601: basket = '10'
+        case int(short_id) if 1602 <= short_id <= 1655: basket = '11'
+        case int(short_id) if 1656 <= short_id <= 1919: basket = '12'
+        case int(short_id) if 1920 <= short_id <= 2045: basket = '13'
+        case int(short_id) if 2046 <= short_id <= 2189: basket = '14'
+        case int(short_id) if short_id > 2189: basket = '15'
+        case _: return None  # сразу выходим, если не попало в диапазон
+
+    headers = {
+        'sec-ch-ua-platform': '"Windows"',
+        'Referer': f'https://www.wildberries.ru/catalog/{product_id}/detail.aspx',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+        'sec-ch-ua-mobile': '?0',
+    }
+
+    try:
+        response = session.get(
+            f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{product_id // 1000}/{product_id}/info/ru/card.json',
+            headers=headers
+        )
+        if response.status_code != 200:
+            print(f'colors: {product_id} status_code: {response.status_code}')
+            return None
+
+        json_data = response.json()
+        options = json_data.get('options', [])
+
+    except Exception as ex:
+        print(f'{product_id}: {ex}')
+        return None
+
+    value = next(
+        (opt.get("value") for opt in options if opt.get("name") == "Объем чаши"),
+        None
+    )
+    return value
 
 def aggregate_products(result_list):
     # Загружаем в DataFrame
     df = pd.DataFrame(result_list)
 
     # Группируем по бренду и товару, считаем min, max, median, size
-    result = df.groupby(['Бренд', 'Название']).agg(
+    result = df.groupby(['Бренд']).agg(
         Минимальная_цена=('Цена', 'min'),
         Максимальная_цена=('Цена', 'max'),
         Медианная_цена=('Цена', median_mean),
@@ -64,7 +114,7 @@ def save_excel(data: list[dict], category_name: str) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def get_products_data(category_dict: dict) -> None:
+def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
     """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
     with Session() as session:
         for category_name, category_url in category_dict.items():
@@ -95,7 +145,7 @@ def get_products_data(category_dict: dict) -> None:
                     'dest': '-1257786',
                     'lang': 'ru',
                     'page': 1,
-                    'query': category_name,
+                    'query': 'menu_redirect_subject_v2_8703 измельчители и соковыжималки для кухни',
                     'resultset': 'catalog',
                     'sort': 'popular',
                     'spp': '30',
@@ -121,8 +171,7 @@ def get_products_data(category_dict: dict) -> None:
                     print(f"{category_name}: товаров нет")
                     continue
 
-                # pages = math.ceil(total / batch_size)
-                pages = 5
+                pages = math.ceil(total / batch_size)
                 print(f"{category_name}: всего {total} товаров, {pages} страниц")
 
             except Exception as ex:
@@ -166,6 +215,8 @@ def get_products_data(category_dict: dict) -> None:
 
                     if brand is None or brand == '':
                         continue
+
+                    product_id = item.get('id')
 
                     name = item.get('name')
 
