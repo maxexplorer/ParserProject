@@ -60,14 +60,18 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
                     headers=headers,
                     timeout=(3, 5)
                 )
-                response.raise_for_status()
+                if response.status_code != 200:
+                    print(f' category_url: {category_url}: статус ответа {response.status_code}')
+                    continue
+
                 json_data: dict = response.json()
                 total = json_data.get('total', 0)
                 if total == 0:
                     print(f"{category_name}: товаров нет")
                     continue
 
-                pages = math.ceil(total / batch_size)
+                # pages = math.ceil(total / batch_size)
+                pages = 5
                 print(f"{category_name}: всего {total} товаров, {pages} страниц")
 
             except Exception as ex:
@@ -89,8 +93,11 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
                         headers=headers,
                         timeout=(3, 5)
                     )
-                    response.raise_for_status()
-                    json_data = response.json()
+                    if response.status_code != 200:
+                        print(f' category_url: {category_url}: статус ответа {response.status_code}')
+                        continue
+
+                    json_data: dict = response.json()
                     data: list = json_data.get('products', [])
 
                 except Exception as ex:
@@ -110,7 +117,7 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
 
                     size = item.get('sizes', [])[0].get('origName')
 
-                    price = item.get('sizes', [])[0].get('price', {}).get('product')
+                    price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
 
                     result_list.append(
                         {
@@ -121,14 +128,16 @@ def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
                         }
                     )
 
+                print(f'Обработано страниц: {page}/{pages}')
+
             # Загружаем в DataFrame
             df = pd.DataFrame(result_list)
 
             # Группируем по бренду и товару, считаем min, max, median
-            result = df.groupby(["brand", "product"])["price"].agg(
+            result = df.groupby(["Бренд", "Название"])["Цена"].agg(
                 min_price="min",
                 max_price="max",
-                median_price="median"
+                median_price=lambda x: round(x.median(), 1)
             ).reset_index()
 
             save_excel(result)
