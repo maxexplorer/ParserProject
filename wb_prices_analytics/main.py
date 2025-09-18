@@ -13,6 +13,57 @@ from data.data import category_dict
 start_time = datetime.now()
 
 
+def aggregate_products(result_list):
+    # Загружаем в DataFrame
+    df = pd.DataFrame(result_list)
+
+    # Группируем по бренду и товару, считаем min, max, median, size
+    result = df.groupby(['Бренд', 'Название']).agg(
+        Минимальная_цена=('Цена', 'min'),
+        Максимальная_цена=('Цена', 'max'),
+        Медианная_цена=('Цена', median_mean),
+        Размеры=('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
+    ).reset_index()
+
+    return result
+
+
+def median_mean(x, lower=0.1, upper=0.1):
+    """Вычисляет среднее после усечения нижних и верхних процентов."""
+    sorted_x = x.sort_values()
+    n = len(sorted_x)
+    lower_idx = int(n * lower)
+    upper_idx = int(n * (1 - upper))
+    truncated = sorted_x.iloc[lower_idx:upper_idx]
+    return truncated.mean() if len(truncated) > 0 else x.mean()
+
+def save_excel(data: list[dict], category_name: str) -> None:
+    """
+    Сохраняет список данных в Excel-файл.
+
+    :param data: Список словарей с данными о продавцах
+    """
+    directory = 'results'
+    file_path = f'{directory}/result_data_{category_name}.xlsx'
+
+    os.makedirs(directory, exist_ok=True)
+
+    if not os.path.exists(file_path):
+        # Создаем пустой файл
+        with ExcelWriter(file_path, mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
+
+    df_existing = read_excel(file_path, sheet_name='Sellers')
+    num_existing_rows = len(df_existing.index)
+
+    new_df = DataFrame(data)
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
+                        sheet_name='Sellers', index=False)
+
+    print(f'Сохранено {len(data)} записей в {file_path}')
+
+
 def get_products_data(category_dict: dict) -> None:
     """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
     with Session() as session:
@@ -49,7 +100,7 @@ def get_products_data(category_dict: dict) -> None:
                     'sort': 'popular',
                     'spp': '30',
                     'suppressSpellcheck': 'false',
-                    # 'xsubject': xsubject,
+                    'xsubject': xsubject,
                 }
 
             try:
@@ -113,6 +164,9 @@ def get_products_data(category_dict: dict) -> None:
 
                     brand = item.get('brand')
 
+                    if brand is None or brand == '':
+                        continue
+
                     name = item.get('name')
 
                     size = item.get('sizes', [])[0].get('origName')
@@ -130,46 +184,11 @@ def get_products_data(category_dict: dict) -> None:
 
                 print(f'Обработано страниц: {page}/{pages}')
 
-            # Загружаем в DataFrame
-            df = pd.DataFrame(result_list)
+            result = aggregate_products(result_list=result_list)
 
-            # Группируем по бренду и товару, считаем min, max, median
-            result = df.groupby(["Бренд", "Название"])["Цена"].agg(
-                min_price="min",
-                max_price="max",
-                median_price=lambda x: round(x.median(), 1)
-            ).reset_index()
-
-            save_excel(result)
+            save_excel(result, category_name=category_name)
 
             print(f"{category_name}: данные сохранены, {len(result)} записей")
-
-
-def save_excel(data: list[dict]) -> None:
-    """
-    Сохраняет список данных в Excel-файл.
-
-    :param data: Список словарей с данными о продавцах
-    """
-    directory = 'results'
-    file_path = f'{directory}/result_data.xlsx'
-
-    os.makedirs(directory, exist_ok=True)
-
-    if not os.path.exists(file_path):
-        # Создаем пустой файл
-        with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
-
-    df_existing = read_excel(file_path, sheet_name='Sellers')
-    num_existing_rows = len(df_existing.index)
-
-    new_df = DataFrame(data)
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
-                        sheet_name='Sellers', index=False)
-
-    print(f'Сохранено {len(data)} записей в {file_path}')
 
 
 def main() -> None:
