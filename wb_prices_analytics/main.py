@@ -18,20 +18,20 @@ def get_basket_number(product_id: int) -> str | None:
 
     # таблица диапазонов: (нижняя_граница, верхняя_граница, basket)
     ranges = [
-        (0, 143, "01"),
-        (144, 287, "02"),
-        (288, 431, "03"),
-        (432, 719, "04"),
-        (720, 1007, "05"),
-        (1008, 1061, "06"),
-        (1062, 1115, "07"),
-        (1116, 1169, "08"),
-        (1170, 1313, "09"),
-        (1314, 1601, "10"),
-        (1602, 1655, "11"),
-        (1656, 1919, "12"),
-        (1920, 2045, "13"),
-        (2046, 2189, "14"),
+        (0, 143, '01'),
+        (144, 287, '02'),
+        (288, 431, '03'),
+        (432, 719, '04'),
+        (720, 1007, '05'),
+        (1008, 1061, '06'),
+        (1062, 1115, '07'),
+        (1116, 1169, '08'),
+        (1170, 1313, '09'),
+        (1314, 1601, '10'),
+        (1602, 1655, '11'),
+        (1656, 1919, '12'),
+        (1920, 2045, '13'),
+        (2046, 2189, '14'),
     ]
 
     for low, high, basket in ranges:
@@ -39,9 +39,9 @@ def get_basket_number(product_id: int) -> str | None:
             return basket
 
     if short_id > 2189:
-        return "15"
+        return '15'
 
-    print(f"Некорректный short_id: {short_id}")
+    print(f'Некорректный short_id: {short_id}')
     return None
 
 
@@ -75,35 +75,76 @@ def get_card_product(product_id: int, session: Session) -> str | None:
         return None
 
     value = next(
-        (opt.get("value") for opt in options if opt.get("name") == "Объем чаши"),
+        (opt.get('value') for opt in options if opt.get('name') == 'Объем скороварки'),
         None
     )
     return value
 
 
-def aggregate_products(result_list):
-    # Загружаем в DataFrame
+def aggregate_products(result_list, group_by_product=False):
     df = pd.DataFrame(result_list)
 
-    # Группируем по бренду и товару, считаем min, max, median, size
-    result = df.groupby(['Бренд']).agg(
-        Минимальная_цена=('Цена', 'min'),
-        Максимальная_цена=('Цена', 'max'),
-        Медианная_цена=('Цена', median_mean),
-        Размеры=('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
-    ).reset_index()
+    # базовые агрегации
+    agg_dict = {
+        'Min цена': ('Цена', 'min'),
+        'Max цена': ('Цена', 'max'),
+        'Медианная цена': ('Цена', median_mean),
+        'Размер': ('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
+    }
+
+    # дополнительные поля
+    extra_fields = [
+        'Модель',
+        'Объем накопителя',
+        'Тип накопителя',
+        'Емкость аккумулятора',
+        'Мощность устройства',
+        'Модель транспортного средства',
+        'Модель спортивная',
+        'Модель тренажера',
+        'Объем скороварки'
+    ]
+
+    for col in extra_fields:
+        if col in df.columns:
+            agg_dict[col] = (col, lambda x: ', '.join(sorted(set(filter(None, x)))))
+
+    # выбираем колонки для группировки
+    group_cols = ['Бренд']
+    if group_by_product:
+        group_cols.append('Товар')
+
+    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
+
+    # желаемый порядок колонок
+    desired_order = [
+        'Товар', 'Max цена', 'Min цена', 'Медианная цена', 'Бренд', 'Модель',
+        'Объем накопителя', 'Тип накопителя', 'Емкость аккумулятора',
+        'Мощность устройства', 'Модель транспортного средства',
+        'Модель спортивная', 'Модель тренажера',
+        'Размер', 'Объем скороварки'
+    ]
+
+    # добавляем отсутствующие колонки пустыми
+    for col in desired_order:
+        if col not in result.columns:
+            result[col] = ''
+
+    result = result[desired_order]
 
     return result
 
 
 def median_mean(x, lower=0.1, upper=0.1):
-    """Вычисляет среднее после усечения нижних и верхних процентов."""
+    """Вычисляет среднее после усечения нижних и верхних процентов и округляет результат."""
     sorted_x = x.sort_values()
     n = len(sorted_x)
     lower_idx = int(n * lower)
     upper_idx = int(n * (1 - upper))
     truncated = sorted_x.iloc[lower_idx:upper_idx]
-    return truncated.mean() if len(truncated) > 0 else x.mean()
+    value = truncated.mean() if len(truncated) > 0 else x.mean()
+    return round(value)
+
 
 
 def save_excel(data: list[dict], category_name: str) -> None:
@@ -137,9 +178,9 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
     """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
     with Session() as session:
         for category_name, category_url in category_dict.items():
-            parsed_url = urlparse(category_url)
-            params_qs = parse_qs(parsed_url.query)
-            xsubject = params_qs.get("xsubject", [None])[0]
+            # parsed_url = urlparse(category_url)
+            # params_qs = parse_qs(parsed_url.query)
+            # xsubject = params_qs.get("xsubject", [None])[0]
 
             headers = {
                 'accept': '*/*',
@@ -164,12 +205,12 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 'dest': '-1257786',
                 'lang': 'ru',
                 'page': 1,
-                'query': 'menu_redirect_subject_v2_8703 измельчители и соковыжималки для кухни',
+                'query': 'Контейнер для еды с подогревом',
                 'resultset': 'catalog',
                 'sort': 'popular',
                 'spp': '30',
                 'suppressSpellcheck': 'false',
-                'xsubject': xsubject,
+                # 'xsubject': xsubject,
             }
 
             try:
@@ -242,10 +283,12 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
 
+                    # option_value = get_card_product(product_id=product_id, session=session)
+
                     result_list.append(
                         {
+                            'Товар': name,
                             'Бренд': brand,
-                            'Название': name,
                             'Размер': size,
                             'Цена': price,
                         }
