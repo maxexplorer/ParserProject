@@ -13,7 +13,7 @@ from data.data import category_dict
 start_time = datetime.now()
 
 
-def get_products_data(category_dict: dict, batch_size: int = 50) -> None:
+def get_products_data(category_dict: dict) -> None:
     """Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel"""
     with Session() as session:
         for category_name, category_url in category_dict.items():
