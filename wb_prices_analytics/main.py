@@ -12,26 +12,43 @@ from data.data import category_dict
 
 start_time = datetime.now()
 
+
+def get_basket_number(product_id: int) -> str | None:
+    short_id = product_id // 100000
+
+    # таблица диапазонов: (нижняя_граница, верхняя_граница, basket)
+    ranges = [
+        (0, 143, "01"),
+        (144, 287, "02"),
+        (288, 431, "03"),
+        (432, 719, "04"),
+        (720, 1007, "05"),
+        (1008, 1061, "06"),
+        (1062, 1115, "07"),
+        (1116, 1169, "08"),
+        (1170, 1313, "09"),
+        (1314, 1601, "10"),
+        (1602, 1655, "11"),
+        (1656, 1919, "12"),
+        (1920, 2045, "13"),
+        (2046, 2189, "14"),
+    ]
+
+    for low, high, basket in ranges:
+        if low <= short_id <= high:
+            return basket
+
+    if short_id > 2189:
+        return "15"
+
+    print(f"Некорректный short_id: {short_id}")
+    return None
+
+
 def get_card_product(product_id: int, session: Session) -> str | None:
     short_id = product_id // 100000
 
-    match short_id:
-        case int(short_id) if 0 <= short_id <= 143: basket = '01'
-        case int(short_id) if 144 <= short_id <= 287: basket = '02'
-        case int(short_id) if 288 <= short_id <= 431: basket = '03'
-        case int(short_id) if 432 <= short_id <= 719: basket = '04'
-        case int(short_id) if 720 <= short_id <= 1007: basket = '05'
-        case int(short_id) if 1008 <= short_id <= 1061: basket = '06'
-        case int(short_id) if 1062 <= short_id <= 1115: basket = '07'
-        case int(short_id) if 1116 <= short_id <= 1169: basket = '08'
-        case int(short_id) if 1170 <= short_id <= 1313: basket = '09'
-        case int(short_id) if 1314 <= short_id <= 1601: basket = '10'
-        case int(short_id) if 1602 <= short_id <= 1655: basket = '11'
-        case int(short_id) if 1656 <= short_id <= 1919: basket = '12'
-        case int(short_id) if 1920 <= short_id <= 2045: basket = '13'
-        case int(short_id) if 2046 <= short_id <= 2189: basket = '14'
-        case int(short_id) if short_id > 2189: basket = '15'
-        case _: return None  # сразу выходим, если не попало в диапазон
+    basket = get_basket_number(product_id=product_id)
 
     headers = {
         'sec-ch-ua-platform': '"Windows"',
@@ -63,6 +80,7 @@ def get_card_product(product_id: int, session: Session) -> str | None:
     )
     return value
 
+
 def aggregate_products(result_list):
     # Загружаем в DataFrame
     df = pd.DataFrame(result_list)
@@ -86,6 +104,7 @@ def median_mean(x, lower=0.1, upper=0.1):
     upper_idx = int(n * (1 - upper))
     truncated = sorted_x.iloc[lower_idx:upper_idx]
     return truncated.mean() if len(truncated) > 0 else x.mean()
+
 
 def save_excel(data: list[dict], category_name: str) -> None:
     """
@@ -139,19 +158,19 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
             # первый запрос для получения total
             first_params = {
-                    'ab_testid': 'top_gmv',
-                    'appType': '1',
-                    'curr': 'rub',
-                    'dest': '-1257786',
-                    'lang': 'ru',
-                    'page': 1,
-                    'query': 'menu_redirect_subject_v2_8703 измельчители и соковыжималки для кухни',
-                    'resultset': 'catalog',
-                    'sort': 'popular',
-                    'spp': '30',
-                    'suppressSpellcheck': 'false',
-                    'xsubject': xsubject,
-                }
+                'ab_testid': 'top_gmv',
+                'appType': '1',
+                'curr': 'rub',
+                'dest': '-1257786',
+                'lang': 'ru',
+                'page': 1,
+                'query': 'menu_redirect_subject_v2_8703 измельчители и соковыжималки для кухни',
+                'resultset': 'catalog',
+                'sort': 'popular',
+                'spp': '30',
+                'suppressSpellcheck': 'false',
+                'xsubject': xsubject,
+            }
 
             try:
                 time.sleep(1)
@@ -203,7 +222,6 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 except Exception as ex:
                     print(f"{category_name} страница {page}: {ex}")
                     continue
-
 
                 if not data:
                     continue
