@@ -279,6 +279,10 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                     continue
 
                 pages = math.ceil(total / batch_size)
+
+                if pages > 100:
+                    pages = 100
+
                 print(f"{category_name}: всего {total} товаров, {pages} страниц")
 
             except Exception as ex:
@@ -329,9 +333,12 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
 
-                    keys = ['Модель', 'Объем накопителя', 'Тип накопителя']
+                    keys = ['Модель тренажера']
 
                     values = get_card_product(product_id=product_id, session=session, keys=keys)
+
+                    if len(values) == 1 and values[keys[0]] == 'нет данных':
+                        continue
 
                     if values is None or values == {}:
                         continue
@@ -340,7 +347,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                         {
                             'Бренд': brand,
                             'Цена': price,
-                            # 'Размер': size,
+                            'Размер': size,
                             **values
                         }
                     )
