@@ -93,17 +93,14 @@ def get_card_product(product_id: int, session: Session) -> str | None:
     return value
 
 
-def aggregate_products(result_list, group_by_product=False):
+def aggregate_products(result_list, group_by_product=False, category_name=None):
     """
-    Агрегирует данные по бренду (и по товару, если указано), рассчитывает min, max, медиану и объединяет дополнительные поля.
-
-    :param result_list: Список словарей с данными товаров
-    :param group_by_product: Если True, группировка будет по бренду и товару; иначе — только по бренду
-    :return: DataFrame с агрегированными данными
+    Агрегирует данные по бренду (и по модели, если указано),
+    добавляет колонку 'Товар' как категорию (без группировки).
     """
     df = pd.DataFrame(result_list)
 
-    # Базовые агрегаты: min/max/median и объединение размеров
+    # Базовые агрегаты
     agg_dict = {
         'Min цена': ('Цена', 'min'),
         'Max цена': ('Цена', 'max'),
@@ -111,7 +108,7 @@ def aggregate_products(result_list, group_by_product=False):
         'Размер': ('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
     }
 
-    # Дополнительные поля для объединения
+    # Дополнительные поля
     extra_fields = [
         'Модель',
         'Объем накопителя',
@@ -131,11 +128,17 @@ def aggregate_products(result_list, group_by_product=False):
     # Колонки для группировки
     group_cols = ['Бренд']
     if group_by_product:
-        group_cols.append('Товар')
+        group_cols.append('Модель')
 
     result = df.groupby(group_cols).agg(**agg_dict).reset_index()
 
-    # Порядок колонок для итогового Excel
+    # Добавляем колонку "Товар" (одно значение для всех строк категории)
+    if category_name is not None:
+        result['Товар'] = category_name
+    else:
+        result['Товар'] = ''
+
+    # Желаемый порядок колонок
     desired_order = [
         'Товар', 'Max цена', 'Min цена', 'Медианная цена', 'Бренд', 'Модель',
         'Объем накопителя', 'Тип накопителя', 'Емкость аккумулятора',
@@ -144,13 +147,11 @@ def aggregate_products(result_list, group_by_product=False):
         'Размер', 'Объем скороварки'
     ]
 
-    # Добавляем отсутствующие колонки пустыми
     for col in desired_order:
         if col not in result.columns:
             result[col] = ''
 
     result = result[desired_order]
-
     return result
 
 
@@ -232,7 +233,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 'dest': '-1257786',
                 'lang': 'ru',
                 'page': 1,
-                'query': 'Контейнер для еды с подогревом',
+                'query': 'Гитара акустическая',
                 'resultset': 'catalog',
                 'sort': 'popular',
                 'spp': '30',
@@ -306,17 +307,17 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                     result_list.append(
                         {
-                            'Товар': name,
                             'Бренд': brand,
-                            'Размер': size,
                             'Цена': price,
+                            'Размер': size,
+
                         }
                     )
 
                 print(f'Обработано страниц: {page}/{pages}')
 
             # Агрегируем данные
-            result = aggregate_products(result_list=result_list)
+            result = aggregate_products(result_list=result_list, category_name=category_name)
 
             # Сохраняем в Excel
             save_excel(result, category_name=category_name)
