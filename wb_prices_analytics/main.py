@@ -56,7 +56,7 @@ def get_card_product(product_id: int, session: Session) -> str | None:
     Получает значение опции "Объем скороварки" для конкретного товара через API корзины.
 
     :param product_id: ID товара
-    :param session: Сессия requests.Session для запросов
+    :param session: Сессия Session для запросов
     :return: Значение опции или None
     """
     short_id = product_id // 100000
@@ -97,6 +97,7 @@ def aggregate_products(result_list, group_by_product=False, category_name=None):
     """
     Агрегирует данные по бренду (и по модели, если указано),
     добавляет колонку 'Товар' как категорию (без группировки).
+    Дополнительные характеристики просто подтягиваются без агрегации.
     """
     df = pd.DataFrame(result_list)
 
@@ -108,9 +109,19 @@ def aggregate_products(result_list, group_by_product=False, category_name=None):
         'Размер': ('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
     }
 
-    # Дополнительные поля
+    # Колонки для группировки
+    group_cols = ['Бренд']
+    if group_by_product and 'Модель' in df.columns:
+        group_cols.append('Модель')
+
+    # Агрегируем только то, что нужно
+    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
+
+    # Добавляем колонку "Товар" (одно значение для всех строк категории)
+    result['Товар'] = category_name if category_name else ''
+
+    # Остальные дополнительные поля (без агрегации, просто добавляем если они есть)
     extra_fields = [
-        'Модель',
         'Объем накопителя',
         'Тип накопителя',
         'Емкость аккумулятора',
@@ -121,22 +132,12 @@ def aggregate_products(result_list, group_by_product=False, category_name=None):
         'Объем скороварки'
     ]
 
-    for col in extra_fields:
-        if col in df.columns:
-            agg_dict[col] = (col, lambda x: ', '.join(sorted(set(filter(None, x)))))
-
-    # Колонки для группировки
-    group_cols = ['Бренд']
-    if group_by_product:
-        group_cols.append('Модель')
-
-    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
-
-    # Добавляем колонку "Товар" (одно значение для всех строк категории)
-    if category_name is not None:
-        result['Товар'] = category_name
-    else:
-        result['Товар'] = ''
+    # Дополнительные поля добавляем только если есть Модель
+    if 'Модель' in df.columns:
+        for col in extra_fields:
+            if col in df.columns and col != 'Модель':
+                extras = df[['Модель', col]].drop_duplicates(subset=['Модель'])
+                result = result.merge(extras, on='Модель', how='left')
 
     # Желаемый порядок колонок
     desired_order = [
