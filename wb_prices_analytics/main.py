@@ -38,6 +38,24 @@ def get_basket_number(product_id: int) -> str | None:
         (1656, 1919, '12'),
         (1920, 2045, '13'),
         (2046, 2189, '14'),
+        (2190, 2405, '15'),
+        (2406, 2621, '16'),
+        (2622, 2837, '17'),
+        (2838, 3053, '18'),
+        (3054, 3269, '19'),
+        (3270, 3485, '20'),
+        (3486, 3701, '21'),
+        (3702, 3917, '22'),
+        (3918, 4133, '23'),
+        (4134, 4349, '24'),
+        (4350, 4565, '25'),
+        (4566, 4877, '26'),
+        (4878, 5189, '27'),
+        (5190, 5501, '28'),
+        (5502, 5813, '29'),
+        (5814, 6125, '30'),
+        (6126, 6437, '31'),
+        (6438, float('inf'), '32')
     ]
 
     for low, high, basket in ranges:
@@ -51,7 +69,7 @@ def get_basket_number(product_id: int) -> str | None:
     return None
 
 
-def get_card_product(product_id: int, session: Session) -> str | None:
+def get_card_product(product_id: int, session: Session, keys: list) -> dict | None:
     """
     Получает значение опции "Объем скороварки" для конкретного товара через API корзины.
 
@@ -76,7 +94,7 @@ def get_card_product(product_id: int, session: Session) -> str | None:
             headers=headers
         )
         if response.status_code != 200:
-            print(f'colors: {product_id} status_code: {response.status_code}')
+            print(f'get_card_product: {product_id} status_code: {response.status_code}')
             return None
 
         json_data = response.json()
@@ -86,42 +104,34 @@ def get_card_product(product_id: int, session: Session) -> str | None:
         print(f'{product_id}: {ex}')
         return None
 
-    value = next(
-        (opt.get('value') for opt in options if opt.get('name') == 'Объем скороварки'),
-        None
-    )
-    return value
+    values = {
+        key: next((opt.get('value') for opt in options if opt.get('name') == key), 'нет данных')
+        for key in keys
+    }
+
+    return values
 
 
-def aggregate_products(result_list, group_by_product=False, category_name=None):
+def aggregate_products(result_list, group_fields=None, category_name=None):
     """
-    Агрегирует данные по бренду (и по модели, если указано),
-    добавляет колонку 'Товар' как категорию (без группировки).
-    Дополнительные характеристики просто подтягиваются без агрегации.
+    Агрегирует данные по бренду и дополнительным полям (например, Размер, Объем скороварки).
+    Цена агрегируется (min, max, median), остальные поля подтягиваются без агрегации.
     """
     df = pd.DataFrame(result_list)
+    if df.empty:
+        return pd.DataFrame()  # если нет данных
 
-    # Базовые агрегаты
+    # Базовые агрегаты для цен
     agg_dict = {
         'Min цена': ('Цена', 'min'),
         'Max цена': ('Цена', 'max'),
-        'Медианная цена': ('Цена', median_mean),
-        'Размер': ('Размер', lambda x: ', '.join(sorted(set(filter(None, x)))))
+        'Медианная цена': ('Цена', median_mean)
     }
 
-    # Колонки для группировки
-    group_cols = ['Бренд']
-    if group_by_product and 'Модель' in df.columns:
-        group_cols.append('Модель')
-
-    # Агрегируем только то, что нужно
-    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
-
-    # Добавляем колонку "Товар" (одно значение для всех строк категории)
-    result['Товар'] = category_name if category_name else ''
-
-    # Остальные дополнительные поля (без агрегации, просто добавляем если они есть)
-    extra_fields = [
+    # Допустимые поля для группировки
+    allowed_group_fields = [
+        'Модель',
+        'Размер',
         'Объем накопителя',
         'Тип накопителя',
         'Емкость аккумулятора',
@@ -132,12 +142,19 @@ def aggregate_products(result_list, group_by_product=False, category_name=None):
         'Объем скороварки'
     ]
 
-    # Дополнительные поля добавляем только если есть Модель
-    if 'Модель' in df.columns:
-        for col in extra_fields:
-            if col in df.columns and col != 'Модель':
-                extras = df[['Модель', col]].drop_duplicates(subset=['Модель'])
-                result = result.merge(extras, on='Модель', how='left')
+    # Оставляем только реально существующие и разрешённые для группировки поля
+    if group_fields is None:
+        group_fields = []
+    group_fields = [col for col in group_fields if col in df.columns and col in allowed_group_fields]
+
+    # Колонки для группировки
+    group_cols = ['Бренд'] + group_fields
+
+    # Агрегируем по цене
+    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
+
+    # Добавляем колонку "Товар"
+    result['Товар'] = category_name if category_name else ''
 
     # Желаемый порядок колонок
     desired_order = [
@@ -153,6 +170,7 @@ def aggregate_products(result_list, group_by_product=False, category_name=None):
             result[col] = ''
 
     result = result[desired_order]
+
     return result
 
 
@@ -231,10 +249,10 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 'ab_testid': 'top_gmv',
                 'appType': '1',
                 'curr': 'rub',
-                'dest': '-1257786',
+                'dest': '12354108',
                 'lang': 'ru',
                 'page': 1,
-                'query': 'Гитара акустическая',
+                'query': category_name,
                 'resultset': 'catalog',
                 'sort': 'popular',
                 'spp': '30',
@@ -242,13 +260,14 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
             }
 
             try:
-                time.sleep(1)
+                # time.sleep(1)
                 response = session.get(
                     'https://u-search.wb.ru/exactmatch/ru/common/v18/search',
                     params=first_params,
                     headers=headers,
                     timeout=(3, 5)
                 )
+
                 if response.status_code != 200:
                     print(f' category_url: {category_url}: статус ответа {response.status_code}')
                     continue
@@ -274,13 +293,14 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                 params['page'] = page
 
                 try:
-                    time.sleep(1)
+                    # time.sleep(1)
                     response = session.get(
                         'https://u-search.wb.ru/exactmatch/ru/common/v18/search',
                         params=params,
                         headers=headers,
                         timeout=(3, 5)
                     )
+
                     if response.status_code != 200:
                         print(f' category_url: {category_url}: статус ответа {response.status_code}')
                         continue
@@ -293,6 +313,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
                     continue
 
                 if not data:
+                    print(f'not data page: {page}')
                     continue
 
                 # Обрабатываем товары на странице
@@ -303,22 +324,32 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                     product_id = item.get('id')
                     name = item.get('name')
+
                     size = item.get('sizes', [])[0].get('origName')
+
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
+
+                    keys = ['Модель', 'Объем накопителя', 'Тип накопителя']
+
+                    values = get_card_product(product_id=product_id, session=session, keys=keys)
+
+                    if values is None or values == {}:
+                        continue
 
                     result_list.append(
                         {
                             'Бренд': brand,
                             'Цена': price,
-                            'Размер': size,
-
+                            # 'Размер': size,
+                            **values
                         }
                     )
 
                 print(f'Обработано страниц: {page}/{pages}')
 
             # Агрегируем данные
-            result = aggregate_products(result_list=result_list, category_name=category_name)
+            result = aggregate_products(result_list=result_list, group_fields=keys,
+                                        category_name=category_name)
 
             # Сохраняем в Excel
             save_excel(result, category_name=category_name)
