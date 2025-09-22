@@ -11,8 +11,6 @@ from data.data import seller_urls
 
 start_time = datetime.now()
 
-from urllib.parse import urlparse, parse_qs
-
 
 def get_seller_id(url: str) -> str | None:
     """
