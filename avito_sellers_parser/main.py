@@ -14,7 +14,8 @@ from openpyxl import load_workbook
 start_time = datetime.now()
 
 seller_urls = [
-    "https://www.avito.ru/brands/ladyapartsspb/items/all?s=profile_search_show_all&sellerId=40f4b7a6e761189ef00b2774303df3bd",
+    "https://www.avito.ru/brands/gg_auto/all/zapchasti_i_aksessuary?sellerId=de08ae472d1d705873cca3d2970af199",
+    # "https://www.avito.ru/brands/ladyapartsspb/items/all?s=profile_search_show_all&sellerId=40f4b7a6e761189ef00b2774303df3bd",
     # "https://www.avito.ru/brands/i26983653/all/zapchasti_i_aksessuary?gdlkerfdnwq=101&shopId=43050&page_from=from_item_card&iid=7298163664&sellerId=f6971b162668ccde657d1aea1c4f3335"
 ]
 
@@ -139,7 +140,7 @@ def process_data_files(avito_dict: dict, data_folder='data'):
             headers = [cell.value for cell in ws[2]]
 
             # Колонки, которые нужно добавить, если их нет
-            new_cols = ['Бренд', 'Цена', 'Ссылка']
+            new_cols = ['Бренд', 'Цена', 'ссылка']
             col_indices = {}
 
             for col in new_cols:
