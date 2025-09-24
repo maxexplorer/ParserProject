@@ -5,15 +5,18 @@ from urllib.parse import urlparse, parse_qs
 import math
 import json
 import glob
+import re
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter, read_excel
-
-from openpyxl import load_workbook, Workbook
-
-from data.data import seller_urls
+from openpyxl import load_workbook
 
 start_time = datetime.now()
+
+seller_urls = [
+    "https://www.avito.ru/brands/ladyapartsspb/items/all?s=profile_search_show_all&sellerId=40f4b7a6e761189ef00b2774303df3bd",
+    # "https://www.avito.ru/brands/i26983653/all/zapchasti_i_aksessuary?gdlkerfdnwq=101&shopId=43050&page_from=from_item_card&iid=7298163664&sellerId=f6971b162668ccde657d1aea1c4f3335"
+]
 
 
 def get_seller_id(url: str) -> str | None:
@@ -32,140 +35,62 @@ def get_seller_id(url: str) -> str | None:
     return seller_id[0] if seller_id else None
 
 
-def read_avito_data(avito_folder: str = "avito") -> dict:
+def read_avito_data(avito_folder: str = 'avito') -> dict:
     """
     Чтение данных из Excel файла Avito в указанной папке.
     Берёт первый найденный файл *.xlsx.
-
-    Args:
-        avito_folder (str): Папка, где лежит Excel.
-
-    Returns:
-        dict: Словарь {артикул: цена}.
+    Возвращает словарь {артикул: {'Бренд': ..., 'Цена': ..., 'Ссылка': ...}}.
     """
     files = glob.glob(os.path.join(avito_folder, "*.xlsx"))
     if not files:
-        raise FileNotFoundError(f"В папке {avito_folder} не найдено *.xlsx файлов")
+        raise FileNotFoundError(f'В папке {avito_folder} не найдено *.xlsx файлов')
 
     avito_file = files[0]  # берем первый файл
-    print(f"[INFO] Используется файл Avito: {avito_file}")
+    print(f'[INFO] Используется файл Avito: {avito_file}')
 
-    wb_avito = load_workbook(avito_file)
-    ws_avito = wb_avito.active
+    df = read_excel(avito_file, header=1, sheet_name=0)
     avito_dict = {}
 
-    for row in ws_avito.iter_rows(min_row=3, max_col=5):
-        key = row[1].value  # колонка 2 — артикул
-        value = row[3].value  # колонка 4 — цена
-
-        if not key:
-            continue
-
-        try:
-            avito_dict[key.replace('-', '')] = int(value)
-        except Exception as ex:
-            print(f'read_avito_data: {key} error: {ex}')
-            continue
+    # Артикул во 2 колонке, бренд в колонке 'Бренд', цена в колонке 'Цена', ссылка в колонке 'Ссылка'
+    for _, row in df.iterrows():
+        article = str(row[df.columns[1]]).replace('-', '').strip()  # колонка 2
+        brand = row.get('Бренд')
+        price = row.get('Цена')
+        url = row.get('Ссылка')
+        if article:
+            avito_dict[article] = {'Бренд': brand, 'Цена': price, 'Ссылка': url}
 
     return avito_dict
 
-def process_data_files(data_folder, avito_dict):
-    """Обработка файлов из папки data и обновление цен"""
-    # Итерация по файлам в папке data
-    for file_name in os.listdir(data_folder):
-        data_file_path = os.path.join(data_folder, file_name)
 
-        print(f'Обрабатывается файл: {file_name}')
+def get_normalize_article(article: str) -> str | None:
+    if not article:
+        return None
 
-        # Проверяем, что это Excel-файл
-        if file_name.endswith(('.xlsx', '.xlsm')):
-            try:
-                # Загружаем книгу
-                workbook = load_workbook(data_file_path)
-                sheet_names = workbook.sheetnames
-            except Exception as e:
-                raise f'Ошибка чтения файла: {e}'
+    # Если есть символ "•", берем часть после него
+    if '•' in article:
+        article = article.split('•')[-1]
 
-            # Создаем новую книгу для записи результатов конкретного файла
-            new_wb = Workbook()
-            new_ws = new_wb.active
-            new_ws.append(['Артикул', 'Цена', 'Лист'])  # Заголовки
+    # Убираем "-L" в конце, если есть
+    if article.endswith('-L'):
+        article = article[:-2]
 
-            # Проходим по листам, начиная со второго
-            for sheet_name in sheet_names:
-                if sheet_name == 'Инструкция':  # Пропускаем первый лист
-                    continue
+    # Убираем пробелы и дефисы в середине
+    article = re.sub(r'[\s-]', '', article)
 
-                sheet = workbook[sheet_name]
-
-                # Получаем заголовки из первой строки (предположим, заголовки находятся в первой строке)
-                headers = [cell.value for cell in sheet[2]]
-
-                # Находим индексы колонок с нужными заголовками
-                try:
-                    oem_column_index = headers.index('Номер детали OEM')  # Ищем столбец "OEM"
-                    price_column_index = headers.index('Цена')  # Ищем столбец "Price"
-                except Exception as ex:
-                    # print(f'{sheet}: {ex}')
-                    continue
-
-                # Поиск и обновление цены
-                for row in sheet.iter_rows(min_row=5):  # min_row=3 пропускает заголовок
-                    try:
-                        article_cell = row[oem_column_index].value  # Колонка с артикулом
-                        article_cell = article_cell.replace('-', '')
-                    except Exception:
-                        continue
-
-                    try:
-                        price_cell = int(row[price_column_index].value)  # Колонка с ценой
-                    except Exception as ex:
-                        print(f'price_cell: {article_cell} error: {ex}')
-                        continue
-
-                    if article_cell in avito_dict:
-                        # Обновляем цену
-                        new_price = avito_dict[article_cell]
-
-                        if isinstance(price_cell, int) and isinstance(new_price, int):
-                            if price_cell != new_price:
-                                row[price_column_index].value = new_price  # Колонка с ценой
-
-                                # Записываем в новый файл
-                                new_ws.append([article_cell, new_price, sheet_name])
-                        else:
-                            print(
-                                f"Не удалось сравнить значения: {price_cell} ({type(price_cell)}), {new_price} ({type(new_price)})")
-
-            # Сохраняем изменения в исходный файл
-            workbook.save(data_file_path)
-
-            # Сохраняем результаты
-            save_results(new_wb=new_wb, file_name=file_name)
+    return article.strip()
 
 
-def save_results(new_wb, file_name):
-    """Сохранение результатов в файл"""
-    data = 'results'
-
-    if not os.path.exists(data):
-        os.mkdir(data)
-
-    result_file_path = f'results/updated_prices_{file_name}'
-
-    new_wb.save(result_file_path)
-
-
-def save_excel(data: list[dict]) -> None:
+def save_excel(data: list[dict], seller_id: str) -> None:
     """
     Сохраняет список данных в Excel-файл, добавляя новые строки к существующему листу.
 
     :param data: Список словарей с данными о товарах
     :param category_name: Название категории для формирования имени файла
     """
-    directory = 'results'
-    file_path = f'{directory}/result_data.xlsx'
-    sheet_name = 'avito'
+    directory = 'avito'
+    file_path = f'{directory}/result_data_{seller_id}.xlsx'
+    sheet_name = "data"
 
     os.makedirs(directory, exist_ok=True)
 
@@ -185,8 +110,61 @@ def save_excel(data: list[dict]) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def get_product_card(products_data: dict):
-    pass
+def process_data_files(avito_dict: dict, data_folder='data'):
+    """
+    Обработка файлов из папки data и обновление данных по артикулу.
+    Артикул находится во 2 колонке. Если найден в avito_dict, записываем
+    Бренд, Цена и Ссылка в соответствующие колонки.
+    Только недостающие колонки добавляются.
+
+    Заголовки находятся во 2-й строке.
+    """
+    excel_files = glob.glob(os.path.join(data_folder, "*.xls*"))
+
+    for data_file_path in excel_files:
+        file_name = os.path.basename(data_file_path)
+        print(f'[INFO] Обрабатывается файл: {file_name}')
+
+        try:
+            wb = load_workbook(data_file_path)
+            sheet_names = wb.sheetnames
+        except Exception as e:
+            print(f'[ERROR] Ошибка чтения файла {file_name}: {e}')
+            continue
+
+        for sheet_name in sheet_names:
+            ws = wb[sheet_name]
+
+            # Получаем существующие заголовки из 2-й строки
+            headers = [cell.value for cell in ws[2]]
+
+            # Колонки, которые нужно добавить, если их нет
+            new_cols = ['Бренд', 'Цена', 'Ссылка']
+            col_indices = {}
+
+            for col in new_cols:
+                if col not in headers:
+                    # Добавляем колонку в конец текущих заголовков
+                    ws.cell(row=2, column=len(headers) + 1, value=col)  # <-- исправлено row=2
+                    col_indices[col] = len(headers) + 1
+                    headers.append(col)
+                else:
+                    col_indices[col] = headers.index(col) + 1
+
+            # Проходим по всем строкам, начиная с 3-й (данные)
+            for row in ws.iter_rows(min_row=3, max_col=len(headers)):
+                article_cell = row[1].value  # колонка 2
+                if not article_cell:
+                    continue
+                article = str(article_cell).replace('-', '').strip()
+
+                if article in avito_dict:
+                    ws.cell(row=row[0].row, column=col_indices['Бренд'], value=avito_dict[article]['Бренд'])
+                    ws.cell(row=row[0].row, column=col_indices['Цена'], value=avito_dict[article]['Цена'])
+                    ws.cell(row=row[0].row, column=col_indices['Ссылка'], value=avito_dict[article]['Ссылка'])
+
+        wb.save(data_file_path)
+        print(f"[INFO] Файл обновлён: {file_name}")
 
 
 def get_products_data(seller_urls: list, limit: int = 100) -> None:
@@ -253,8 +231,8 @@ def get_products_data(seller_urls: list, limit: int = 100) -> None:
 
                 pages = math.ceil(total / limit)
 
-                if pages > 100:
-                    pages = 100
+                # if pages > 100:
+                #     pages = 100
 
                 print(f"{seller_url}: всего {total} товаров, {pages} страниц")
 
@@ -306,7 +284,9 @@ def get_products_data(seller_urls: list, limit: int = 100) -> None:
                     article_list = item.get('iva', {}).get('SparePartsParamsStep') or []
                     article = article_list[0].get('payload', {}).get('text') if article_list else None
 
-                    if article is None or article == '':
+                    normalize_article = get_normalize_article(article)
+
+                    if normalize_article is None or normalize_article == '':
                         continue
 
                     brand_list = item.get('iva', {}).get('AutoPartsManufacturerStep') or []
@@ -329,7 +309,7 @@ def get_products_data(seller_urls: list, limit: int = 100) -> None:
                     result_list.append(
                         {
                             'Название': title,
-                            'Артикул': article,
+                            'Артикул': normalize_article,
                             'Бренд': brand,
                             'Цена': price,
                             'Ссылка': product_url
@@ -339,7 +319,7 @@ def get_products_data(seller_urls: list, limit: int = 100) -> None:
                 print(f'Обработано страниц: {page}/{pages}')
 
             # Сохраняем в Excel
-            save_excel(data=result_list)
+            save_excel(data=result_list, seller_id=seller_id)
 
             print(f"{seller_url}: данные сохранены, {len(result_list)} записей")
 
@@ -360,7 +340,9 @@ def main() -> None:
     Точка входа в программу. Запускает обработку категорий и сбор данных о товарах.
     """
 
-    get_products_data(seller_urls=seller_urls)
+    # get_products_data(seller_urls=seller_urls)
+    avito_dict = read_avito_data()
+    process_data_files(avito_dict=avito_dict)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
