@@ -68,7 +68,7 @@ def get_basket_number(product_id: int) -> str | None:
     return None
 
 
-def get_card_product(product_id: int, session: Session, keys: list) -> dict | None:
+def get_product_card(product_id: int, session: Session, keys: list) -> dict | None:
     """
     Получает значение опции "Объем скороварки" для конкретного товара через API корзины.
 
@@ -93,7 +93,7 @@ def get_card_product(product_id: int, session: Session, keys: list) -> dict | No
             headers=headers
         )
         if response.status_code != 200:
-            print(f'get_card_product: {product_id} status_code: {response.status_code}')
+            print(f'get_product_card: {product_id} status_code: {response.status_code}')
             return None
 
         json_data = response.json()
@@ -334,7 +334,7 @@ def get_products_data(category_dict: dict, batch_size: int = 100) -> None:
 
                     keys = ['Модель тренажера']
 
-                    values = get_card_product(product_id=product_id, session=session, keys=keys)
+                    values = get_product_card(product_id=product_id, session=session, keys=keys)
 
                     if len(values) == 1 and values[keys[0]] == 'нет данных':
                         continue
