@@ -28,7 +28,7 @@ def get_normalize_article(article: str) -> str | None:
         article = article.split('•')[-1]
     if article.endswith('-L'):
         article = article[:-2]
-    article = re.sub(r'[\s-]', '', article)
+    article = re.sub(r'[\s\-/]', '', article)
     return article.strip()
 
 
@@ -217,7 +217,7 @@ def process_data_files(data_folder='data'):
             ws = wb[sheet_name]
             headers = [cell.value for cell in ws[2]]
 
-            needed_cols = ['Бренд', 'Цена', 'Ссылка', 'Наша цена']
+            needed_cols = ['Бренд', 'Цена', 'Наша цена', 'Ссылка']
             col_indices = {}
             for col in needed_cols:
                 if col not in headers:
@@ -229,7 +229,7 @@ def process_data_files(data_folder='data'):
                 article_cell = row[1].value
                 if not article_cell:
                     continue
-                article = str(article_cell).replace('-', '').strip()
+                article = str(article_cell).replace('-', '').replace('/', '').replace('\\', '').strip()
 
                 own_price = own_dict.get(article)
                 competitor_data = competitor_dict.get(article)
