@@ -21,15 +21,21 @@ def get_seller_id(url: str) -> str | None:
     return seller_id[0] if seller_id else None
 
 
-def get_normalize_article(article: str) -> str | None:
-    if not article:
+def get_normalize_article(article) -> str | None:
+    if article is None:
         return None
+
+    article = str(article)  # всегда строка
+
     if '•' in article:
         article = article.split('•')[-1]
     if article.endswith('-L'):
         article = article[:-2]
+
+    # убираем пробелы, дефисы и слэши
     article = re.sub(r'[\s\-/]', '', article)
-    return article.strip()
+
+    return article.strip() or None
 
 
 def read_excel_data(file_path: str, own: bool = False) -> dict:
@@ -229,7 +235,7 @@ def process_data_files(data_folder='data'):
                 article_cell = row[1].value
                 if not article_cell:
                     continue
-                article = str(article_cell).replace('-', '').replace('/', '').replace('\\', '').strip()
+                article = get_normalize_article(article_cell)
 
                 own_price = own_dict.get(article)
                 competitor_data = competitor_dict.get(article)
@@ -258,7 +264,7 @@ def main():
     # own_url = "https://www.avito.ru/brands/gg_auto/all/zapchasti_i_aksessuary?sellerId=de08ae472d1d705873cca3d2970af199"
     # print("[INFO] Сбор данных своего магазина...")
     # get_products_data(seller_url=own_url, own=True, species='own')
-    #
+
     # competitor_url = input("Введите ссылку на магазин конкурента: \n").strip()
     # print("[INFO] Сбор данных конкурента...")
     # get_products_data(seller_url=competitor_url, own=False, species='competitor')
