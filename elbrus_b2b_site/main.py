@@ -100,6 +100,7 @@ def get_product_data(article: str, headers: dict, session: Session) -> float | N
     except Exception as ex:
         if soup.find('img', class_='captchaImg'):
             print(f'[CAPTCHA] Обнаружена капча на {product_url}')
+            time.sleep(30)
         else:
             print(f'not short_url: {product_url} - {ex}')
         return None
@@ -162,7 +163,7 @@ def process_data_files(data_folder: str = 'data') -> None:
                 print(f'[ERROR] Ошибка чтения файла {file_name}: {e}')
                 continue
 
-            for sheet_name in wb.sheetnames[9:10]:
+            for sheet_name in wb.sheetnames:
                 ws = wb[sheet_name]
                 headers_excel: list[str] = [cell.value for cell in ws[4]]
 
