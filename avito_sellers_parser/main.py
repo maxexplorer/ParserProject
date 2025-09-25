@@ -261,13 +261,13 @@ def process_data_files(data_folder='data'):
 
 
 def main():
-    # own_url = "https://www.avito.ru/brands/gg_auto/all/zapchasti_i_aksessuary?sellerId=de08ae472d1d705873cca3d2970af199"
-    # print("[INFO] Сбор данных своего магазина...")
-    # get_products_data(seller_url=own_url, own=True, species='own')
+    own_url = "https://www.avito.ru/brands/gg_auto/all/zapchasti_i_aksessuary?sellerId=de08ae472d1d705873cca3d2970af199"
+    print("[INFO] Сбор данных своего магазина...")
+    get_products_data(seller_url=own_url, own=True, species='own')
 
-    # competitor_url = input("Введите ссылку на магазин конкурента: \n").strip()
-    # print("[INFO] Сбор данных конкурента...")
-    # get_products_data(seller_url=competitor_url, own=False, species='competitor')
+    competitor_url = input("Введите ссылку на магазин конкурента: \n").strip()
+    print("[INFO] Сбор данных конкурента...")
+    get_products_data(seller_url=competitor_url, own=False, species='competitor')
 
     process_data_files()
 
