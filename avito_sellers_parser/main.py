@@ -11,10 +11,16 @@ from pandas import DataFrame, ExcelWriter, read_excel
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 
-start_time = datetime.now()
+start_time: datetime = datetime.now()
 
 
 def get_seller_id(url: str) -> str | None:
+    """
+    Извлекает sellerId из URL магазина Avito.
+
+    :param url: URL магазина
+    :return: sellerId или None, если не найден
+    """
     parsed_url = urlparse(url)
     query_params = parse_qs(parsed_url.query)
     seller_id = query_params.get("sellerId")
@@ -22,6 +28,15 @@ def get_seller_id(url: str) -> str | None:
 
 
 def get_normalize_article(article) -> str | None:
+    """
+    Нормализует артикул:
+      - приводит к строке
+      - убирает пробелы, дефисы, слеши
+      - убирает символы '•' и '-L'
+
+    :param article: исходный артикул
+    :return: нормализованный артикул или None
+    """
     if article is None:
         return None
 
@@ -32,19 +47,20 @@ def get_normalize_article(article) -> str | None:
     if article.endswith('-L'):
         article = article[:-2]
 
-    # убираем пробелы, дефисы и слэши
     article = re.sub(r'[\s\-/]', '', article)
-
     return article.strip() or None
 
 
 def read_excel_data(file_path: str, own: bool = False) -> dict:
     """
     Чтение данных из Excel файла Avito.
-    own=True → возвращает {артикул: цена}
-    own=False → возвращает {артикул: {'Название', 'Бренд', 'Цена', 'Ссылка'}}
+
+    :param file_path: путь к Excel файлу
+    :param own: True - возвращает {артикул: цена},
+                False - возвращает {артикул: {'Название', 'Бренд', 'Цена', 'Ссылка'}}
+    :return: словарь с данными
     """
-    df = read_excel(file_path, header=0, sheet_name=0)  # считаем заголовки из первой строки
+    df = read_excel(file_path, header=0, sheet_name=0)
     data_dict = {}
 
     if own:
@@ -73,15 +89,18 @@ def read_excel_data(file_path: str, own: bool = False) -> dict:
     return data_dict
 
 
-# Функция для записи данных в формат xlsx
 def save_excel(data: list, species: str) -> None:
-    directory = 'results'
+    """
+    Сохраняет данные в Excel файл.
 
+    :param data: список словарей с данными
+    :param species: название вида ('own' или 'competitor')
+    """
+    directory: str = 'results'
     os.makedirs(directory, exist_ok=True)
 
-    file_path = f'{directory}/result_data_{species}.xlsx'
-
-    dataframe = DataFrame(data)
+    file_path: str = f'{directory}/result_data_{species}.xlsx'
+    dataframe: DataFrame = DataFrame(data)
 
     with ExcelWriter(file_path, mode='w') as writer:
         dataframe.to_excel(writer, sheet_name='data', index=False)
@@ -89,11 +108,14 @@ def save_excel(data: list, species: str) -> None:
     print(f'Данные сохранены в файл {file_path}')
 
 
-def get_products_data(seller_url: str, limit: int = 100, own: bool = False, species: str = None):
+def get_products_data(seller_url: str, limit: int = 100, own: bool = False, species: str = None) -> None:
     """
-    Сбор данных по Avito.
-    Если own=True → сохраняем {артикул: цена} в own_result.xlsx
-    Если own=False → сохраняем {артикул: {...}} в competitor_data.xlsx
+    Собирает данные товаров с Avito.
+
+    :param seller_url: ссылка на магазин
+    :param limit: количество товаров на странице
+    :param own: True - данные своего магазина, False - конкурента
+    :param species: название для сохранения Excel ('own' или 'competitor')
     """
     seller_id = get_seller_id(seller_url)
     if not seller_id:
@@ -113,8 +135,10 @@ def get_products_data(seller_url: str, limit: int = 100, own: bool = False, spec
             'p': 1,
             'sellerId': seller_id,
             'itemsOnPage': limit,
-            'limit': limit}
+            'limit': limit
+        }
 
+        # Получаем первую страницу
         response = session.get('https://www.avito.ru/web/1/profile/items',
                                params=first_params, headers=headers, timeout=(3, 5))
         response.raise_for_status()
@@ -128,7 +152,7 @@ def get_products_data(seller_url: str, limit: int = 100, own: bool = False, spec
         pages = math.ceil(total / limit)
         print(f"{seller_url}: всего {total} товаров, {pages} страниц")
 
-        # цикл по страницам
+        # Цикл по страницам
         for page in range(1, pages + 1):
             params = first_params.copy()
             params['p'] = page
@@ -156,6 +180,7 @@ def get_products_data(seller_url: str, limit: int = 100, own: bool = False, spec
             if not items:
                 continue
 
+            # Обработка товаров на странице
             for item in items:
                 product_url = f"https://www.avito.ru{item.get('urlPath')}"
                 title = item.get('title')
@@ -194,17 +219,25 @@ def get_products_data(seller_url: str, limit: int = 100, own: bool = False, spec
             print(f"Обработано страниц: {page}/{pages}")
 
         print(f"{seller_url}: обработано {len(result_list)} записей")
-
     save_excel(result_list, species)
 
 
-def process_data_files(data_folder='data'):
-    # Загружаем ранее сохранённые Excel
+def process_data_files(data_folder: str = 'data') -> None:
+    """
+    Обновляет Excel файлы с данными о товарах:
+      - добавляет цену своего магазина
+      - добавляет данные конкурента
+      - раскрашивает ячейки по сравнению цен
+
+    :param data_folder: папка с Excel файлами
+    """
+    # Загружаем данные
     own_dict = read_excel_data('results/result_data_own.xlsx', own=True)
     competitor_dict = read_excel_data('results/result_data_competitor.xlsx', own=False)
 
     excel_files = glob.glob(os.path.join(data_folder, "*.xls*"))
 
+    # Цветовые заливки
     green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
     red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
     yellow_fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
@@ -221,8 +254,9 @@ def process_data_files(data_folder='data'):
 
         for sheet_name in wb.sheetnames:
             ws = wb[sheet_name]
-            headers = [cell.value for cell in ws[2]]
+            headers = [cell.value for cell in ws[2]]  # третья строка заголовки
 
+            # Проверяем необходимые колонки
             needed_cols = ['Бренд', 'Цена', 'Наша цена', 'Ссылка']
             col_indices = {}
             for col in needed_cols:
@@ -231,6 +265,7 @@ def process_data_files(data_folder='data'):
                     headers.append(col)
                 col_indices[col] = headers.index(col) + 1
 
+            # Обновляем строки
             for row in ws.iter_rows(min_row=3, max_col=len(headers)):
                 article_cell = row[1].value
                 if not article_cell:
@@ -248,6 +283,7 @@ def process_data_files(data_folder='data'):
                     ws.cell(row=row[0].row, column=col_indices['Цена'], value=competitor_data['Цена'])
                     ws.cell(row=row[0].row, column=col_indices['Ссылка'], value=competitor_data['Ссылка'])
 
+                    # Сравнение цены
                     if own_price and competitor_data['Цена']:
                         if own_price < competitor_data['Цена']:
                             ws.cell(row=row[0].row, column=col_indices['Цена']).fill = green_fill
@@ -260,7 +296,14 @@ def process_data_files(data_folder='data'):
         print(f"[INFO] Файл обновлён: {file_name}")
 
 
-def main():
+def main() -> None:
+    """
+    Основная функция запуска скрипта:
+      1. Сбор данных своего магазина
+      2. Сбор данных конкурента
+      3. Обновление Excel файлов
+      4. Вывод времени выполнения
+    """
     own_url = "https://www.avito.ru/brands/gg_auto/all/zapchasti_i_aksessuary?sellerId=de08ae472d1d705873cca3d2970af199"
     print("[INFO] Сбор данных своего магазина...")
     get_products_data(seller_url=own_url, own=True, species='own')
