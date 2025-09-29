@@ -8,7 +8,7 @@ from requests import Session
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
-from data.data import category_data
+from data.data import category_data_list
 
 # Засекаем время запуска программы
 start_time = datetime.now()
@@ -162,7 +162,7 @@ def save_excel(data: list[dict], category_name: str) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def get_products_data(category_data: list, headers: dict) -> list[dict]:
+def get_products_data(category_data_list: list, headers: dict) -> list[dict]:
     """
     Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
     по ссылкам из сохранённого JSON-файла.
@@ -171,15 +171,17 @@ def get_products_data(category_data: list, headers: dict) -> list[dict]:
     :return: Список словарей с данными о каждом товаре
     """
 
-    result_data = []
+
 
     # Создаем requests.Session для ускорения
     with Session() as session:
         # Итерируемся по группам
-        for category in category_data:
-            category_name: str = category['category_name']
-            group_number: int = category['group_number']
-            category_url: str = category['category_url']
+        for category_data in category_data_list:
+            category_name: str = category_data['category_name']
+            group_number: int = category_data['group_number']
+            category_url: str = category_data['category_url']
+
+            result_data = []
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -227,16 +229,18 @@ def get_products_data(category_data: list, headers: dict) -> list[dict]:
                         sku = name
 
                     try:
-                        characteristics = product_item.find('div', class_='item-product__props props-item-product') \
+                        characteristic_items = product_item.find('div', class_='item-product__props props-item-product') \
                             .find_all('div', class_='props-item-product__item prop-item-product')
 
-                        characteristic_str = ''
-                        for char in characteristics:
-                            prop_name = char.find('span', class_='prop-item-product__name').get_text(strip=True)
-                            prop_value = char.find('span', class_='prop-item-product__value').get_text(strip=True)
-                            characteristic_str += f'{prop_name} {prop_value}; '
+                        characteristics_str = ''
+                        for characteristic_item in characteristic_items:
+                            prop_name = characteristic_item.find('span', class_='prop-item-product__name').get_text(
+                                strip=True)
+                            prop_value = characteristic_item.find('span', class_='prop-item-product__value').get_text(
+                                strip=True)
+                            characteristics_str += f'{prop_name} {prop_value}; '
 
-                        characteristic = characteristic_str.strip('; ')
+                        characteristics = characteristics_str.strip('; ')
 
                     except Exception:
                         characteristic = ''
@@ -244,64 +248,64 @@ def get_products_data(category_data: list, headers: dict) -> list[dict]:
                     # Изображения
                     try:
                         content_url = product_item.find('img', itemprop='contentUrl').get('src')
-                        fixed_path = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
-                        image_url = f"https://shop.uralaz.ru{fixed_path}"
+                        resized_img_url = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
+                        image_url = f"https://shop.uralaz.ru{resized_img_url}"
                     except Exception:
                         image_url = None
 
-
-
-                        # Сохраняем данные в словарь
-                        result_data.append({
-                            'Код_товара': None,
-                            'Название_позиции': name,
-                            'Поисковые_запросы': f'{name}, {category}',
-                            'Описание': description,
-                            'Тип_товара': 'u',
-                            'Цена': '',
-                            'Цена от': None,
-                            'Ярлык': None,
-                            'HTML_заголовок': None,
-                            'HTML_описание': None,
-                            'HTML_ключевые_слова': None,
-                            'Валюта': '',
-                            'Скидка': '',
-                            'Cрок действия скидки от': None,
-                            'Cрок действия скидки до': None,
-                            'Единица_измерения': '',
-                            'Минимальный_объем_заказа': None,
-                            'Оптовая_цена': None,
-                            'Минимальный_заказ_опт': None,
-                            'Ссылка_изображения': image_url,
-                            'Наличие': '+',
-                            'Количество': None,
-                            'Производитель': None,
-                            'Страна_производитель': None,
-                            'Номер_группы': '',
-                            'Адрес_подраздела': None,
-                            'Возможность_поставки': None,
-                            'Срок_поставки': None,
-                            'Способ_упаковки': None,
-                            'Личные_заметки': '',
-                            'Продукт_на_сайте': None,
-                            'Код_маркировки_(GTIN)': None,
-                            'Номер_устройства_(MPN)': None,
-                            'Идентификатор_товара': sku,
-                            'Уникальный_идентификатор': None,
-                            'Идентификатор_подраздела': None,
-                            'Идентификатор_группы': '',
-                            'Подарки': None,
-                            'ID_Подарков': None,
-                            'Сопутствующие': None,
-                            'ID_Сопутствующих': None,
-                            'ID_группы_разновидностей': None,
-                            'Название_Характеристики': None,
-                            'Измерение_Характеристики': None,
-                            'Значение_Характеристики': None,
-                            'Ссылка_на_товар_на_сайте': None,
-                        })
+                    # Сохраняем данные в словарь
+                    result_data.append({
+                        'Код_товара': None,
+                        'Название_позиции': name,
+                        'Поисковые_запросы': f'{name}, {category_name}',
+                        'Описание': characteristics,
+                        'Тип_товара': 'u',
+                        'Цена': '',
+                        'Цена от': None,
+                        'Ярлык': None,
+                        'HTML_заголовок': None,
+                        'HTML_описание': None,
+                        'HTML_ключевые_слова': None,
+                        'Валюта': '',
+                        'Скидка': '',
+                        'Cрок действия скидки от': None,
+                        'Cрок действия скидки до': None,
+                        'Единица_измерения': '',
+                        'Минимальный_объем_заказа': None,
+                        'Оптовая_цена': None,
+                        'Минимальный_заказ_опт': None,
+                        'Ссылка_изображения': image_url,
+                        'Наличие': '+',
+                        'Количество': None,
+                        'Производитель': None,
+                        'Страна_производитель': None,
+                        'Номер_группы': group_number,
+                        'Адрес_подраздела': None,
+                        'Возможность_поставки': None,
+                        'Срок_поставки': None,
+                        'Способ_упаковки': None,
+                        'Личные_заметки': '',
+                        'Продукт_на_сайте': None,
+                        'Код_маркировки_(GTIN)': None,
+                        'Номер_устройства_(MPN)': None,
+                        'Идентификатор_товара': sku,
+                        'Уникальный_идентификатор': None,
+                        'Идентификатор_подраздела': None,
+                        'Идентификатор_группы': '',
+                        'Подарки': None,
+                        'ID_Подарков': None,
+                        'Сопутствующие': None,
+                        'ID_Сопутствующих': None,
+                        'ID_группы_разновидностей': None,
+                        'Название_Характеристики': None,
+                        'Измерение_Характеристики': None,
+                        'Значение_Характеристики': None,
+                        'Ссылка_на_товар_на_сайте': None,
+                    })
 
                 print(f'Обработано страниц: {page}/{pages}')
+
+            save_excel(data=result_data, category_name=category_name)
 
     return result_data
 
