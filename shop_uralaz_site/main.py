@@ -8,7 +8,7 @@ from requests import Session
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
-from data.data import category_dict
+from data.data import category_data
 
 # Засекаем время запуска программы
 start_time = datetime.now()
@@ -17,8 +17,6 @@ start_time = datetime.now()
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
 }
-
-
 
 
 def get_html(url: str, headers: dict, session: Session) -> str | None:
@@ -60,7 +58,7 @@ def get_pages(html: str) -> int:
         return 1
 
 
-def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
+def get_products_urls(category_data: dict, headers: dict) -> list[dict]:
     """
     Собирает ссылки на товары по категориям.
 
@@ -73,7 +71,7 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
 
     # Создаем Session для ускорения запросов
     with Session() as session:
-        for category in category_dict:
+        for category in category_data:
             group_number: int = category['group_number']
             category_url: str = category['category_url']
             product_urls = []
@@ -136,6 +134,7 @@ def get_products_urls(category_dict: dict, headers: dict) -> list[dict]:
 
     return product_data_list
 
+
 def save_excel(data: list[dict], category_name: str) -> None:
     """
     Сохраняет список данных в Excel-файл.
@@ -163,7 +162,7 @@ def save_excel(data: list[dict], category_name: str) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def get_products_data(file_path: str) -> list[dict]:
+def get_products_data(category_data: list, headers: dict) -> list[dict]:
     """
     Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
     по ссылкам из сохранённого JSON-файла.
@@ -171,141 +170,138 @@ def get_products_data(file_path: str) -> list[dict]:
     :param file_path: Путь к JSON-файлу с категориями и ссылками на товары
     :return: Список словарей с данными о каждом товаре
     """
-    # # Читаем product_data_list из JSON
-    # with open('data/product_data_list.json', 'r', encoding='utf-8') as file:
-    #     product_data_list: list = json.load(file)
 
     result_data = []
 
     # Создаем requests.Session для ускорения
     with Session() as session:
         # Итерируемся по группам
-        # for category_data in product_data_list:
-        #     group_number: int = category_data['group_number']
-        #     product_urls: list = category_data['product_urls']
-        # for product_url in product_urls:
-        for product_url in ["https://shop.uralaz.ru/catalog/dvigatel/prokladka-flantsa-4320ya-1015011.html"]:
+        for category in category_data:
+            category_name: str = category['category_name']
+            group_number: int = category['group_number']
+            category_url: str = category['category_url']
+
             try:
-                time.sleep(1)  # пауза между запросами
-                html = get_html(url=product_url, headers=headers, session=session)
+                html = get_html(url=category_url, headers=headers, session=session)
             except Exception as ex:
-                print(f"{product_url} - {ex}")
+                print(f'get_products_data: {category_url} - {ex}')
                 continue
 
-            if not html:
-                continue
+            pages = get_pages(html=html)
 
-            soup = BeautifulSoup(html, 'lxml')
-
-            # Название товара
-            try:
-                name = soup.find('h1', class_='page-content__title').get_text(strip=True)
-            except Exception:
-                name = None
-
-            # Блок с описанием
-            try:
-                content_data = soup.find('div', class_='product__inner')
-            except Exception as ex:
-                print(f'content_data: {product_url} - {ex}')
-                continue
-
-            try:
-                sku = content_data.find('span',  string=re.compile('Обозначение:')
-                                        ).find_next_sibling('span').get_text(strip=True)
-            except Exception:
-                sku = None
-
-            if sku is None:
-                sku = name
-
-            # Текстовое описание
-            try:
-                description = ''.join(i.text.strip().replace('\xa0', ' ') for i in content_data.find_all('p'))
-            except Exception:
-                description = ''
-
-            # Характеристики (таблица)
-            try:
-                characteristic = ''
-                characteristic_items = content_data.find('table').find_all('tr')
-                for characteristic_item in characteristic_items:
-                    characteristic += '\n' + ' '.join(
-                        c.text.strip().replace('\xa0', ' ') for c in characteristic_item.find_all('td'))
-            except Exception:
-                characteristic = ''
-
-            description = f'{description}\n{characteristic}'
-
-            # Изображения
-            try:
-                images_urls_list = []
-                images_items = content_data.find_all('figure', class_='gallery-item')
-                for image_item in images_items:
-                    image_url = f"{image_item.find('a').get('href')}"
-                    images_urls_list.append(image_url)
-                images_urls = ', '.join(images_urls_list)
-            except Exception:
-                images_urls = None
-
-            # Если не нашли в галерее — берём главное фото
-            if not images_urls:
+            for page in range(1, pages + 1):
+                page_url = f"{category_url}?PAGEN_1={page}"
                 try:
-                    images_urls = soup.find('div', class_='single-product-header').find('img').get('src')
-                except Exception:
-                    images_urls = None
+                    time.sleep(1)
+                    html = get_html(url=page_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{page_url} - {ex}")
+                    continue
 
-                    # Сохраняем данные в словарь
-                    result_data.append({
-                        'Код_товара': None,
-                        'Название_позиции': name,
-                        'Поисковые_запросы': f'{name}, {category}',
-                        'Описание': description,
-                        'Тип_товара': 'u',
-                        'Цена': '',
-                        'Цена от': None,
-                        'Ярлык': None,
-                        'HTML_заголовок': None,
-                        'HTML_описание': None,
-                        'HTML_ключевые_слова': None,
-                        'Валюта': '',
-                        'Скидка': '',
-                        'Cрок действия скидки от': None,
-                        'Cрок действия скидки до': None,
-                        'Единица_измерения': '',
-                        'Минимальный_объем_заказа': None,
-                        'Оптовая_цена': None,
-                        'Минимальный_заказ_опт': None,
-                        'Ссылка_изображения': image_url,
-                        'Наличие': '+',
-                        'Количество': None,
-                        'Производитель': None,
-                        'Страна_производитель': None,
-                        'Номер_группы': '',
-                        'Адрес_подраздела': None,
-                        'Возможность_поставки': None,
-                        'Срок_поставки': None,
-                        'Способ_упаковки': None,
-                        'Личные_заметки': '',
-                        'Продукт_на_сайте': None,
-                        'Код_маркировки_(GTIN)': None,
-                        'Номер_устройства_(MPN)': None,
-                        'Идентификатор_товара': sku,
-                        'Уникальный_идентификатор': None,
-                        'Идентификатор_подраздела': None,
-                        'Идентификатор_группы': '',
-                        'Подарки': None,
-                        'ID_Подарков': None,
-                        'Сопутствующие': None,
-                        'ID_Сопутствующих': None,
-                        'ID_группы_разновидностей': None,
-                        'Название_Характеристики': None,
-                        'Измерение_Характеристики': None,
-                        'Значение_Характеристики': None,
-                        'Ссылка_на_товар_на_сайте': None,
-                    })
+                if not html:
+                    continue
 
-            print(f'Обработано: {product_url}')
+                soup = BeautifulSoup(html, 'lxml')
+
+                # Получаем список товаров на странице
+                try:
+                    product_items = soup.find_all('div', class_='product-list__item item-product')
+                except Exception as ex:
+                    print(f'data: {ex}')
+                    product_items = []
+
+                # Перебираем товары
+                for product_item in product_items:
+                    # Название товара
+                    try:
+                        name = product_item.find('a', class_='item-product__name').get_text(strip=True)
+                    except Exception:
+                        name = None
+
+                    try:
+                        sku = product_item.find('div', class_='item-product__designation').get_text(strip=True)
+                    except Exception:
+                        sku = None
+
+                    if sku is None:
+                        sku = name
+
+                    try:
+                        characteristics = product_item.find('div', class_='item-product__props props-item-product') \
+                            .find_all('div', class_='props-item-product__item prop-item-product')
+
+                        characteristic_str = ''
+                        for char in characteristics:
+                            prop_name = char.find('span', class_='prop-item-product__name').get_text(strip=True)
+                            prop_value = char.find('span', class_='prop-item-product__value').get_text(strip=True)
+                            characteristic_str += f'{prop_name} {prop_value}; '
+
+                        characteristic = characteristic_str.strip('; ')
+
+                    except Exception:
+                        characteristic = ''
+
+                    # Изображения
+                    try:
+                        content_url = product_item.find('img', itemprop='contentUrl').get('src')
+                        fixed_path = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
+                        image_url = f"https://shop.uralaz.ru{fixed_path}"
+                    except Exception:
+                        image_url = None
+
+
+
+                        # Сохраняем данные в словарь
+                        result_data.append({
+                            'Код_товара': None,
+                            'Название_позиции': name,
+                            'Поисковые_запросы': f'{name}, {category}',
+                            'Описание': description,
+                            'Тип_товара': 'u',
+                            'Цена': '',
+                            'Цена от': None,
+                            'Ярлык': None,
+                            'HTML_заголовок': None,
+                            'HTML_описание': None,
+                            'HTML_ключевые_слова': None,
+                            'Валюта': '',
+                            'Скидка': '',
+                            'Cрок действия скидки от': None,
+                            'Cрок действия скидки до': None,
+                            'Единица_измерения': '',
+                            'Минимальный_объем_заказа': None,
+                            'Оптовая_цена': None,
+                            'Минимальный_заказ_опт': None,
+                            'Ссылка_изображения': image_url,
+                            'Наличие': '+',
+                            'Количество': None,
+                            'Производитель': None,
+                            'Страна_производитель': None,
+                            'Номер_группы': '',
+                            'Адрес_подраздела': None,
+                            'Возможность_поставки': None,
+                            'Срок_поставки': None,
+                            'Способ_упаковки': None,
+                            'Личные_заметки': '',
+                            'Продукт_на_сайте': None,
+                            'Код_маркировки_(GTIN)': None,
+                            'Номер_устройства_(MPN)': None,
+                            'Идентификатор_товара': sku,
+                            'Уникальный_идентификатор': None,
+                            'Идентификатор_подраздела': None,
+                            'Идентификатор_группы': '',
+                            'Подарки': None,
+                            'ID_Подарков': None,
+                            'Сопутствующие': None,
+                            'ID_Сопутствующих': None,
+                            'ID_группы_разновидностей': None,
+                            'Название_Характеристики': None,
+                            'Измерение_Характеристики': None,
+                            'Значение_Характеристики': None,
+                            'Ссылка_на_товар_на_сайте': None,
+                        })
+
+                print(f'Обработано страниц: {page}/{pages}')
 
     return result_data
 
@@ -317,8 +313,9 @@ def main():
     2. Собирает данные по каждому товару
     3. Сохраняет результат в Excel
     """
-    # product_data_list = get_products_urls(category_dict=category_dict, headers=headers)
-    result_data = get_products_data(file_path='data/product_data_list.json')
+
+    # product_data_list = get_products_urls(category_data=category_data, headers=headers)
+    result_data = get_products_data(category_data=category_data, headers=headers)
     # save_excel(data=result_data, species='products')
 
     execution_time = datetime.now() - start_time
