@@ -204,7 +204,7 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
 
                 # Получаем список товаров на странице
                 try:
-                    product_items = soup.find_all('div', class_='product-list__item item-product')
+                    product_items = soup.find_all('div', class_='product-list__item')
                 except Exception as ex:
                     print(f'data: {ex}')
                     product_items = []
@@ -249,8 +249,8 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
                     # Изображения
                     try:
                         content_url: str = product_item.find('img', itemprop='contentUrl').get('src')
-                        resized_img_url: str = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
-                        image_url: str = f"https://shop.uralaz.ru{resized_img_url}"
+                        # resized_img_url: str = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
+                        image_url: str = f"https://shop.uralaz.ru{content_url}"
                     except Exception:
                         image_url = ''
 
@@ -258,7 +258,7 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
                     result_data.append({
                         'Код_товара': None,
                         'Название_позиции': name,
-                        'Поисковые_запросы': f'{name}, {category_name}',
+                        'Поисковые_запросы': f'Запчасти Урал, Запчасти Урал 4320, {name}',
                         'Описание': characteristics,
                         'Тип_товара': 'u',
                         'Цена': '',
