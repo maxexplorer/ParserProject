@@ -58,6 +58,34 @@ def get_pages(html: str) -> int:
         return 1
 
 
+def save_excel(data: list[dict], category_name: str) -> None:
+    """
+    Сохраняет список данных в Excel-файл.
+
+    :param data: Список словарей с данными о товарах
+    :param category_name: Имя категории для имени файла
+    """
+    directory: str = 'results'
+    file_path: str = f'{directory}/result_data_{category_name}.xlsx'
+
+    os.makedirs(directory, exist_ok=True)
+
+    if not os.path.exists(file_path):
+        # Создаем пустой файл
+        with ExcelWriter(file_path, mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='Export Products Sheet', index=False)
+
+    df_existing: DataFrame = read_excel(file_path, sheet_name='Export Products Sheet')
+    num_existing_rows: int = len(df_existing.index)
+
+    new_df: DataFrame = DataFrame(data)
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
+                        sheet_name='Export Products Sheet', index=False)
+
+    print(f'Сохранено {len(data)} записей в {file_path}')
+
+
 def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -> list[dict]:
     """
     Собирает ссылки на товары по категориям.
@@ -71,6 +99,7 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
     # Создаем Session для ускорения запросов
     with Session() as session:
         for category_data in category_data_list:
+            category_name: str = category_data['category_name']
             group_number: int = category_data['group_number']
             category_url: str = category_data['category_url']
             product_urls: list[str] = []
@@ -118,8 +147,9 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
 
             # Добавляем словарь в итоговый список
             product_data_list.append({
-                "group_number": group_number,
-                "product_urls": product_urls
+                'category_name': category_name,
+                'group_number': group_number,
+                'product_urls': product_urls
             })
 
             print(f'Обработана категория: {category_url}')
@@ -134,32 +164,149 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
     return product_data_list
 
 
-def save_excel(data: list[dict], category_name: str) -> None:
+def get_product_cards(headers: dict[str, str]) -> None:
     """
-    Сохраняет список данных в Excel-файл.
+    Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
+    и сохраняет их в Excel-файлы по категориям.
 
-    :param data: Список словарей с данными о товарах
-    :param category_name: Имя категории для имени файла
+    :param category_data_list: Список словарей с данными категорий
+    :param headers: Заголовки запроса
     """
-    directory: str = 'results'
-    file_path: str = f'{directory}/result_data_{category_name}.xlsx'
 
-    os.makedirs(directory, exist_ok=True)
+    # Читаем product_data_list из JSON
+    with open('data/product_data_list.json', 'r', encoding='utf-8') as file:
+        product_data_list: list = json.load(file)
 
-    if not os.path.exists(file_path):
-        # Создаем пустой файл
-        with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Export Products Sheet', index=False)
+    # Создаем requests.Session для ускорения
+    with Session() as session:
+        # Итерируемся по категориям
+        for product_data in product_data_list:
+            category_name: str = product_data['category_name']
+            group_number: int = product_data['group_number']
+            product_urls: str = product_data['product_urls']
 
-    df_existing: DataFrame = read_excel(file_path, sheet_name='Export Products Sheet')
-    num_existing_rows: int = len(df_existing.index)
+            print(f'Обрабатывается категория: {category_name}')
 
-    new_df: DataFrame = DataFrame(data)
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
-                        sheet_name='Export Products Sheet', index=False)
+            result_data: list[dict] = []
 
-    print(f'Сохранено {len(data)} записей в {file_path}')
+            for i, product_url in enumerate(product_urls, 1):
+                count_urls = len(product_urls)
+
+                try:
+                    time.sleep(1)
+                    html = get_html(url=product_url, headers=headers, session=session)
+                except Exception as ex:
+                    print(f"{product_url} - {ex}")
+                    continue
+
+                if not html:
+                    continue
+
+                soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
+
+                # Получаем список товаров на странице
+                try:
+                    product_item = soup.find('div', class_='container__inner')
+                except Exception as ex:
+                    print(f'data: {ex}')
+                    product_item = []
+
+                try:
+                    name: str = product_item.find('h1', class_='page-content__title').get_text(strip=True)
+                except Exception:
+                    name = ''
+
+                try:
+                    sku: str = product_item.find('span', string=re.compile('Обозначение:')).find_next().get_text(strip=True)
+                except Exception:
+                    sku = ''
+
+                if sku is None:
+                    sku = name
+
+                # Характеристики товара
+                try:
+                    characteristic_items = product_item.find('div', class_='info-product__params params-product') \
+                        .find_all('div', class_='params-product__item item-param')
+
+                    characteristics_str: str = ''
+                    for characteristic_item in characteristic_items:
+                        param_name: str = characteristic_item.find('span',
+                                                                  class_='item-param__name').get_text(
+                            strip=True)
+                        param_value: str = characteristic_item.find('span',
+                                                                   class_='item-param__value').get_text(
+                            strip=True)
+
+                        # Добавляем только если значение не пустое и не равно '0'
+                        if param_value and param_value != '0':
+                            characteristics_str += f'{param_name} {param_value}; '
+
+                    characteristics: str = characteristics_str.strip('; ')
+
+                except Exception:
+                    characteristics = ''
+
+                # Изображения
+                try:
+                    content_url: str = product_item.find('img', {'itemprop': 'contentUrl', 'class': 'main_photo'}).get('src')
+                    image_url: str = f"https://shop.uralaz.ru{content_url}"
+                except Exception:
+                    image_url = ''
+
+                # Сохраняем данные в словарь
+                result_data.append({
+                    'Код_товара': None,
+                    'Название_позиции': name,
+                    'Поисковые_запросы': f'Запчасти Урал, Запчасти Урал 4320, {name}',
+                    'Описание': characteristics,
+                    'Тип_товара': 'u',
+                    'Цена': '',
+                    'Цена от': None,
+                    'Ярлык': None,
+                    'HTML_заголовок': None,
+                    'HTML_описание': None,
+                    'HTML_ключевые_слова': None,
+                    'Валюта': '',
+                    'Скидка': '',
+                    'Cрок действия скидки от': None,
+                    'Cрок действия скидки до': None,
+                    'Единица_измерения': '',
+                    'Минимальный_объем_заказа': None,
+                    'Оптовая_цена': None,
+                    'Минимальный_заказ_опт': None,
+                    'Ссылка_изображения': image_url,
+                    'Наличие': '+',
+                    'Количество': None,
+                    'Производитель': None,
+                    'Страна_производитель': None,
+                    'Номер_группы': group_number,
+                    'Адрес_подраздела': None,
+                    'Возможность_поставки': None,
+                    'Срок_поставки': None,
+                    'Способ_упаковки': None,
+                    'Личные_заметки': '',
+                    'Продукт_на_сайте': None,
+                    'Код_маркировки_(GTIN)': None,
+                    'Номер_устройства_(MPN)': None,
+                    'Идентификатор_товара': sku,
+                    'Уникальный_идентификатор': None,
+                    'Идентификатор_подраздела': None,
+                    'Идентификатор_группы': '',
+                    'Подарки': None,
+                    'ID_Подарков': None,
+                    'Сопутствующие': None,
+                    'ID_Сопутствующих': None,
+                    'ID_группы_разновидностей': None,
+                    'Название_Характеристики': None,
+                    'Измерение_Характеристики': None,
+                    'Значение_Характеристики': None,
+                    'Ссылка_на_товар_на_сайте': None,
+                })
+
+                print(f'Обработано ссылок: {i}/{count_urls}')
+
+            save_excel(data=result_data, category_name=category_name)
 
 
 def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -> None:
@@ -232,9 +379,11 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
 
                         characteristics_str: str = ''
                         for characteristic_item in characteristic_items:
-                            prop_name: str = characteristic_item.find('span', class_='prop-item-product__name').get_text(
+                            prop_name: str = characteristic_item.find('span',
+                                                                      class_='prop-item-product__name').get_text(
                                 strip=True)
-                            prop_value: str = characteristic_item.find('span', class_='prop-item-product__value').get_text(
+                            prop_value: str = characteristic_item.find('span',
+                                                                       class_='prop-item-product__value').get_text(
                                 strip=True)
 
                             # Добавляем только если значение не пустое и не равно '0'
@@ -316,8 +465,11 @@ def main() -> None:
     2. Собирает данные по каждому товару
     3. Сохраняет результат в Excel
     """
+
     # Сбор данных по товарам
-    get_products_data(category_data_list=category_data_list, headers=headers)
+    # get_products_urls(category_data_list=category_data_list, headers=headers)
+    get_product_cards(headers=headers)
+    # get_products_data(category_data_list=category_data_list, headers=headers)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
