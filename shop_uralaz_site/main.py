@@ -23,10 +23,13 @@ def get_html(url: str, headers: dict[str, str], session: Session) -> str | None:
     """
     Выполняет GET-запрос по указанному URL и возвращает HTML-код страницы.
 
-    :param url: Ссылка на страницу
-    :param headers: Заголовки запроса (user-agent и др.)
-    :param session: Сессия requests для повторного использования соединений
-    :return: HTML содержимое страницы или None в случае ошибки
+    Аргументы:
+        url: URL страницы, с которой нужно получить HTML.
+        headers: Заголовки HTTP-запроса (например, user-agent).
+        session: Объект requests.Session для повторного использования соединения.
+
+    Возвращает:
+        Строку с HTML-кодом страницы или None, если произошла ошибка запроса.
     """
     try:
         response = session.get(url=url, headers=headers, timeout=60)
@@ -43,41 +46,53 @@ def get_html(url: str, headers: dict[str, str], session: Session) -> str | None:
 
 def get_pages(html: str) -> int:
     """
-    Определяет количество страниц пагинации на основе HTML.
+    Определяет количество страниц пагинации на основе HTML-кода.
 
-    :param html: HTML код страницы
-    :return: Количество страниц (если не найдено — возвращает 1 по умолчанию)
+    Аргументы:
+        html: HTML-код страницы категории.
+
+    Возвращает:
+        Целое число — количество страниц пагинации.
+        Если пагинация не найдена, возвращает 1.
     """
     soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
 
     try:
-        # Ищем последнюю страницу пагинации
+        # Ищем последнюю страницу в блоке пагинации
         page: int = int(soup.find('div', class_='pagination-block').find_all('a')[-2].get_text(strip=True))
         return page
     except Exception:
+        # Если пагинации нет — возвращаем 1
         return 1
 
 
 def save_excel(data: list[dict], category_name: str) -> None:
     """
-    Сохраняет список данных в Excel-файл.
+    Сохраняет список словарей с данными о товарах в Excel-файл.
 
-    :param data: Список словарей с данными о товарах
-    :param category_name: Имя категории для имени файла
+    Если файла нет — создает его.
+    Если файл существует — дописывает новые данные в конец.
+
+    Аргументы:
+        data: Список словарей с данными товаров.
+        category_name: Название категории для формирования имени файла.
     """
     directory: str = 'results'
     file_path: str = f'{directory}/result_data_{category_name}.xlsx'
 
+    # Создаем директорию для результатов, если её нет
     os.makedirs(directory, exist_ok=True)
 
+    # Если файла еще нет — создаем пустой Excel
     if not os.path.exists(file_path):
-        # Создаем пустой файл
         with ExcelWriter(file_path, mode='w') as writer:
             DataFrame().to_excel(writer, sheet_name='Export Products Sheet', index=False)
 
+    # Читаем существующие данные
     df_existing: DataFrame = read_excel(file_path, sheet_name='Export Products Sheet')
     num_existing_rows: int = len(df_existing.index)
 
+    # Добавляем новые данные
     new_df: DataFrame = DataFrame(data)
     with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
         new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
@@ -88,15 +103,18 @@ def save_excel(data: list[dict], category_name: str) -> None:
 
 def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -> list[dict]:
     """
-    Собирает ссылки на товары по категориям.
+    Собирает ссылки на все товары из категорий и сохраняет их в JSON.
 
-    :param category_data_list: Список словарей с данными категорий (group_number и category_url)
-    :param headers: Заголовки запроса
-    :return: Список словарей с номерами группы и списком ссылок на товары
+    Аргументы:
+        category_data_list: Список категорий со ссылками и номерами групп.
+        headers: Заголовки HTTP-запросов.
+
+    Возвращает:
+        Список словарей, содержащих имя категории, номер группы и список ссылок на товары.
     """
     product_data_list: list[dict] = []
 
-    # Создаем Session для ускорения запросов
+    # Открываем HTTP-сессию
     with Session() as session:
         for category_data in category_data_list:
             category_name: str = category_data['category_name']
@@ -110,12 +128,14 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
                 print(f'get_products_urls: {category_url} - {ex}')
                 continue
 
+            # Определяем количество страниц
             pages: int = get_pages(html=html)
 
+            # Обходим все страницы пагинации
             for page in range(1, pages + 1):
                 page_url: str = f"{category_url}?PAGEN_1={page}"
                 try:
-                    time.sleep(1)
+                    time.sleep(1)  # Задержка, чтобы не перегружать сайт
                     html = get_html(url=page_url, headers=headers, session=session)
                 except Exception as ex:
                     print(f"{page_url} - {ex}")
@@ -126,14 +146,13 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
 
                 soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
 
-                # Получаем список товаров на странице
+                # Извлекаем ссылки на товары
                 try:
                     product_items = soup.find_all('div', class_='item-product__info')
                 except Exception as ex:
                     print(f'data: {ex}')
                     product_items = []
 
-                # Перебираем товары
                 for product_item in product_items:
                     try:
                         product_url: str = f"https://shop.uralaz.ru{product_item.find('a').get('href')}"
@@ -145,7 +164,7 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
 
                 print(f'Обработано страниц: {page}/{pages}')
 
-            # Добавляем словарь в итоговый список
+            # Добавляем результат по категории
             product_data_list.append({
                 'category_name': category_name,
                 'group_number': group_number,
@@ -154,7 +173,7 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
 
             print(f'Обработана категория: {category_url}')
 
-    # Сохраняем список словарей в JSON
+    # Сохраняем в JSON
     directory: str = 'data'
     os.makedirs(directory, exist_ok=True)
 
@@ -166,29 +185,27 @@ def get_products_urls(category_data_list: list[dict], headers: dict[str, str]) -
 
 def get_product_cards(headers: dict[str, str]) -> None:
     """
-    Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
-    и сохраняет их в Excel-файлы по категориям.
+    Извлекает карточки товаров по ссылкам из файла product_data_list.json
+    и сохраняет их данные в Excel по категориям.
 
-    :param category_data_list: Список словарей с данными категорий
-    :param headers: Заголовки запроса
+    Аргументы:
+        headers: Заголовки HTTP-запросов.
     """
-
     # Читаем product_data_list из JSON
     with open('data/product_data_list.json', 'r', encoding='utf-8') as file:
         product_data_list: list = json.load(file)
 
-    # Создаем requests.Session для ускорения
     with Session() as session:
-        # Итерируемся по категориям
         for product_data in product_data_list:
             category_name: str = product_data['category_name']
             group_number: int = product_data['group_number']
-            product_urls: str = product_data['product_urls']
+            product_urls: list[str] = product_data['product_urls']
 
             print(f'Обрабатывается категория: {category_name}')
 
             result_data: list[dict] = []
 
+            # Проходим по всем ссылкам на товары
             for i, product_url in enumerate(product_urls, 1):
                 count_urls = len(product_urls)
 
@@ -204,18 +221,20 @@ def get_product_cards(headers: dict[str, str]) -> None:
 
                 soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
 
-                # Получаем список товаров на странице
+                # Получаем блок с данными товара
                 try:
                     product_item = soup.find('div', class_='container__inner')
                 except Exception as ex:
                     print(f'data: {ex}')
                     product_item = []
 
+                # Название товара
                 try:
                     name: str = product_item.find('h1', class_='page-content__title').get_text(strip=True)
                 except Exception:
                     name = ''
 
+                # SKU
                 try:
                     sku: str = product_item.find('span', string=re.compile('Обозначение:')).find_next().get_text(strip=True)
                 except Exception:
@@ -231,19 +250,13 @@ def get_product_cards(headers: dict[str, str]) -> None:
 
                     characteristics_str: str = ''
                     for characteristic_item in characteristic_items:
-                        param_name: str = characteristic_item.find('span',
-                                                                  class_='item-param__name').get_text(
-                            strip=True)
-                        param_value: str = characteristic_item.find('span',
-                                                                   class_='item-param__value').get_text(
-                            strip=True)
+                        param_name: str = characteristic_item.find('span', class_='item-param__name').get_text(strip=True)
+                        param_value: str = characteristic_item.find('span', class_='item-param__value').get_text(strip=True)
 
-                        # Добавляем только если значение не пустое и не равно '0'
                         if param_value and param_value != '0':
                             characteristics_str += f'{param_name} {param_value}; '
 
                     characteristics: str = characteristics_str.strip('; ')
-
                 except Exception:
                     characteristics = ''
 
@@ -306,20 +319,20 @@ def get_product_cards(headers: dict[str, str]) -> None:
 
                 print(f'Обработано ссылок: {i}/{count_urls}')
 
+            # Сохраняем данные категории в Excel
             save_excel(data=result_data, category_name=category_name)
 
 
 def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -> None:
     """
-    Извлекает данные о товарах (название, описание, характеристики, фото и т.д.)
-    и сохраняет их в Excel-файлы по категориям.
+    Извлекает данные о товарах напрямую со страниц категорий (без перехода на карточку товара)
+    и сохраняет результат в Excel.
 
-    :param category_data_list: Список словарей с данными категорий
-    :param headers: Заголовки запроса
+    Аргументы:
+        category_data_list: Список категорий с URL и номерами групп.
+        headers: Заголовки HTTP-запросов.
     """
-    # Создаем requests.Session для ускорения
     with Session() as session:
-        # Итерируемся по категориям
         for category_data in category_data_list:
             category_name: str = category_data['category_name']
             group_number: int = category_data['group_number']
@@ -349,16 +362,13 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
 
                 soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
 
-                # Получаем список товаров на странице
                 try:
                     product_items = soup.find_all('div', class_='product-list__item')
                 except Exception as ex:
                     print(f'data: {ex}')
                     product_items = []
 
-                # Перебираем товары
                 for product_item in product_items:
-                    # Название товара
                     try:
                         name: str = product_item.find('a', class_='item-product__name').get_text(strip=True)
                     except Exception:
@@ -372,38 +382,28 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
                     if sku is None:
                         sku = name
 
-                    # Характеристики товара
                     try:
                         characteristic_items = product_item.find('div', class_='item-product__props props-item-product') \
                             .find_all('div', class_='props-item-product__item prop-item-product')
 
                         characteristics_str: str = ''
                         for characteristic_item in characteristic_items:
-                            prop_name: str = characteristic_item.find('span',
-                                                                      class_='prop-item-product__name').get_text(
-                                strip=True)
-                            prop_value: str = characteristic_item.find('span',
-                                                                       class_='prop-item-product__value').get_text(
-                                strip=True)
+                            prop_name: str = characteristic_item.find('span', class_='prop-item-product__name').get_text(strip=True)
+                            prop_value: str = characteristic_item.find('span', class_='prop-item-product__value').get_text(strip=True)
 
-                            # Добавляем только если значение не пустое и не равно '0'
                             if prop_value and prop_value != '0':
                                 characteristics_str += f'{prop_name} {prop_value}; '
 
                         characteristics: str = characteristics_str.strip('; ')
-
                     except Exception:
                         characteristics = ''
 
-                    # Изображения
                     try:
                         content_url: str = product_item.find('img', itemprop='contentUrl').get('src')
-                        # resized_img_url: str = re.sub(r"/\d+_\d+_\d+/", "/480_480_0/", content_url)
                         image_url: str = f"https://shop.uralaz.ru{content_url}"
                     except Exception:
                         image_url = ''
 
-                    # Сохраняем данные в словарь
                     result_data.append({
                         'Код_товара': None,
                         'Название_позиции': name,
@@ -460,12 +460,13 @@ def get_products_data(category_data_list: list[dict], headers: dict[str, str]) -
 
 def main() -> None:
     """
-    Главная функция:
-    1. Загружает список категорий
-    2. Собирает данные по каждому товару
-    3. Сохраняет результат в Excel
-    """
+    Главная функция программы:
 
+    1. Загружает список категорий.
+    2. Извлекает данные по товарам (по ссылкам или со страниц категорий).
+    3. Сохраняет результаты в Excel-файлы по категориям.
+    4. Выводит общее время выполнения.
+    """
     # Сбор данных по товарам
     # get_products_urls(category_data_list=category_data_list, headers=headers)
     get_product_cards(headers=headers)
