@@ -1,3 +1,6 @@
+# ===============================
+# 📄 Импорты
+# ===============================
 import os
 import glob
 import time
@@ -15,39 +18,67 @@ from pandas import DataFrame, ExcelWriter
 from openpyxl import load_workbook
 
 
+# ===============================
+# 🧭 Инициализация браузера
+# ===============================
 def init_undetected_chromedriver(headless_mode: bool = False):
+    """
+    Инициализирует браузер Chrome с использованием undetected_chromedriver.
+
+    :param headless_mode: если True — браузер запустится без интерфейса.
+    :return: объект WebDriver.
+    """
     options = ChromeOptions()
     if headless_mode:
         options.add_argument('--headless')
+
     driver = uc.Chrome(options=options)
     driver.implicitly_wait(3)
     driver.maximize_window()
     return driver
 
 
+# ===============================
+# 📂 Работа с файлами XML
+# ===============================
 def get_xml_files(folder: str) -> list[str]:
+    """
+    Возвращает список всех XML-файлов в указанной папке.
+    """
     return glob.glob(os.path.join(folder, '*.xml*'))
 
 
 def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
-    records = []
+    """
+    Извлекает данные о земельных участках из XML-дерева.
+    """
+    records: list[dict[str, str]] = []
+
     for land_record in root.findall('.//land_record'):
         obj = land_record.find('./object')
         if obj is None:
             continue
+
+        # Проверяем, что объект — земельный участок
         type_el = obj.find('./common_data/type/value')
         if type_el is None or type_el.text != 'Земельный участок':
             continue
 
+        # Извлекаем необходимые поля
         cad_number = (obj.findtext('./common_data/cad_number') or '').strip() or None
         address = (land_record.findtext('./address_location/address/readable_address') or '').strip() or None
         area_val = land_record.findtext('./params/area/value')
         area_unit = land_record.findtext('./params/area/unit')
+
+        # Если основной площади нет — пробуем получить из другого блока
         if not area_val:
             area_val = land_record.findtext('../../area_quarter/area')
             area_unit = land_record.findtext('../../area_quarter/unit')
+
         area = f"{area_val.strip()} {area_unit.strip()}" if area_val and area_unit else (
-            area_val.strip() if area_val else None)
+            area_val.strip() if area_val else None
+        )
+
         category = (land_record.findtext('./params/category/type/value') or '').strip() or None
         permitted_use = (land_record.findtext(
             './params/permitted_use/permitted_use_established/by_document') or '').strip() or None
@@ -67,8 +98,12 @@ def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
 
 
 def parse_xml_file(folder: str) -> list[dict[str, str]]:
-    xml_files = get_xml_files(folder)
-    all_records = []
+    """
+    Обрабатывает все XML-файлы в указанной папке.
+    """
+    xml_files: list[str] = get_xml_files(folder)
+    all_records: list[dict[str, str]] = []
+
     for file_path in xml_files:
         try:
             tree = ET.parse(file_path)
@@ -77,56 +112,80 @@ def parse_xml_file(folder: str) -> list[dict[str, str]]:
             all_records.extend(records)
         except ET.ParseError as e:
             print(f'❌ Ошибка парсинга файла {file_path}: {e}')
+
     return all_records
 
 
+# ===============================
+# 📊 Сохранение в Excel
+# ===============================
 def save_excel(data: list[dict[str, str]], species: str) -> str:
+    """
+    Сохраняет данные в Excel-файл в папке 'results'.
+    """
     directory = 'results'
     os.makedirs(directory, exist_ok=True)
-    file_path = os.path.join(directory, f'result_data_{species}.xlsx')
+    file_path: str = os.path.join(directory, f'result_data_{species}.xlsx')
+
     df = DataFrame(data)
     with ExcelWriter(file_path, mode='w') as writer:
         df.to_excel(writer, sheet_name='Лист1', index=False)
+
     print(f'✅ Данные сохранены в файл: {file_path}')
     return file_path
 
 
-def update_ownership_excel(driver, excel_path, url, sheet='Лист2', batch_size=10):
+# ===============================
+# 🏢 Обновление столбца "Форма собственности"
+# ===============================
+def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Лист2', batch_size: int = 10) -> None:
+    """
+    Обновляет данные в Excel: проверяет форму собственности по кадастровому номеру
+    через сайт и удаляет строки с частной формой собственности или при отсутствии данных.
+    """
     wb = load_workbook(excel_path)
     ws = wb[sheet]
 
-    headers = [cell.value for cell in ws[1]]
-    cad_col = headers.index('Кадастровый номер') + 1
-    ownership_col = headers.index('Форма собственности') + 1
+    headers: list[str] = [cell.value for cell in ws[1]]
+    cad_col: int = headers.index('Кадастровый номер') + 1
+    ownership_col: int = headers.index('Форма собственности') + 1
 
-    cad_rows = [row for row in range(2, ws.max_row + 1) if ws.cell(row=row, column=cad_col).value]
-    total = len(cad_rows)
-    i = 0
+    cad_rows: list[int] = [row for row in range(2, ws.max_row + 1) if ws.cell(row=row, column=cad_col).value]
+    total: int = len(cad_rows)
+    i: int = 0
 
-    for row in reversed(cad_rows):  # снизу вверх для безопасного удаления
+    # Обходим строки снизу вверх, чтобы безопасно удалять
+    for row in reversed(cad_rows):
         i += 1
-        cad_number = ws.cell(row=row, column=cad_col).value
+        cad_number: str = str(ws.cell(row=row, column=cad_col).value)
+
         try:
             driver.get(url)
+
+            # Ожидаем поле ввода
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "input.input_search"))
             )
+
+            # Вводим кадастровый номер
             input_box = driver.find_element(By.CSS_SELECTOR, 'input.input_search')
             input_box.clear()
-            input_box.send_keys(str(cad_number))
+            input_box.send_keys(cad_number)
             input_box.send_keys(Keys.ENTER)
 
-            # Проверяем, есть ли элемент "Форма собственности"
+            # Проверяем наличие блока с формой собственности
             ownership_divs = driver.find_elements(By.XPATH, "//div[contains(text(),'Форма собственности')]")
             if ownership_divs:
                 ownership_div = ownership_divs[0]
-                ownership = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
+                ownership: str = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
+
+                # Удаляем строку, если собственность частная
                 if ownership.lower() == 'частная':
                     ws.delete_rows(row)
                 else:
                     ws.cell(row=row, column=ownership_col, value=ownership)
             else:
-                # ⚠️ Если элемента нет — тоже удаляем строку
+                # Если блока нет — тоже удаляем строку
                 ws.delete_rows(row)
 
             print(f'Обработано номеров: {i}/{total} ({cad_number})')
@@ -134,34 +193,48 @@ def update_ownership_excel(driver, excel_path, url, sheet='Лист2', batch_siz
         except Exception as ex:
             print(f'Ошибка обработки {cad_number}: {ex}')
 
+        # Промежуточное сохранение каждые batch_size записей
         if i % batch_size == 0:
             wb.save(excel_path)
             print(f'💾 Промежуточное сохранение: обработано {i}/{total}')
 
+    # Финальное сохранение
     wb.save(excel_path)
     print(f'✅ Excel обновлён: {excel_path}')
 
 
+# ===============================
+# 🚀 Точка входа
+# ===============================
+def main() -> None:
+    """
+    Основная точка входа в программу:
+    - загружает XML-данные (если нужно),
+    - открывает браузер,
+    - авторизуется на сайте,
+    - обновляет Excel-файл по форме собственности.
+    """
+    data_folder: str = 'data'
+    url: str = 'https://kadbase.ru/'
 
-def main():
-    data_folder = 'data'
-    url = 'https://kadbase.ru/'
-
+    # Если нужно — распарсить XML и создать Excel
     # all_records = parse_xml_file(data_folder)
     # excel_path = save_excel(all_records, species='land_plots')
 
-    excel_path = 'results/result_data_land_plots.xlsx'
+    excel_path: str = 'results/result_data_land_plots.xlsx'
 
     driver = init_undetected_chromedriver(headless_mode=False)
     try:
+        # Авторизация вручную
         driver.get("https://kadbase.ru/lk/")
         time.sleep(60)
         print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
-        update_ownership_excel(driver, excel_path, url)
 
+        update_ownership_excel(driver, excel_path, url)
     finally:
         driver.close()
         driver.quit()
+
 
 if __name__ == '__main__':
     main()
