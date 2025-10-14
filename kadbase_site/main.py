@@ -20,7 +20,7 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     if headless_mode:
         options.add_argument('--headless')
     driver = uc.Chrome(options=options)
-    driver.implicitly_wait(15)
+    driver.implicitly_wait(3)
     driver.maximize_window()
     return driver
 
@@ -91,15 +91,14 @@ def save_excel(data: list[dict[str, str]], species: str) -> str:
     return file_path
 
 
-def update_ownership_excel(driver, excel_path, url):
+def update_ownership_excel(driver, excel_path, url, sheet='Лист2', batch_size=10):
     wb = load_workbook(excel_path)
-    ws = wb.active
+    ws = wb[sheet]
 
     headers = [cell.value for cell in ws[1]]
     cad_col = headers.index('Кадастровый номер') + 1
     ownership_col = headers.index('Форма собственности') + 1
 
-    # Считаем количество строк с кадастровыми номерами
     cad_rows = [row for row in range(2, ws.max_row + 1) if ws.cell(row=row, column=cad_col).value]
     total = len(cad_rows)
     i = 0
@@ -117,23 +116,31 @@ def update_ownership_excel(driver, excel_path, url):
             input_box.send_keys(str(cad_number))
             input_box.send_keys(Keys.ENTER)
 
-            ownership_div = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[contains(text(),'Форма собственности')]"))
-            )
-            ownership = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
-
-            if ownership.lower() == 'частная':
-                ws.delete_rows(row)
+            # Проверяем, есть ли элемент "Форма собственности"
+            ownership_divs = driver.find_elements(By.XPATH, "//div[contains(text(),'Форма собственности')]")
+            if ownership_divs:
+                ownership_div = ownership_divs[0]
+                ownership = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
+                if ownership.lower() == 'частная':
+                    ws.delete_rows(row)
+                else:
+                    ws.cell(row=row, column=ownership_col, value=ownership)
             else:
-                ws.cell(row=row, column=ownership_col, value=ownership)
+                # ⚠️ Если элемента нет — тоже удаляем строку
+                ws.delete_rows(row)
 
             print(f'Обработано номеров: {i}/{total} ({cad_number})')
 
         except Exception as ex:
             print(f'Ошибка обработки {cad_number}: {ex}')
 
+        if i % batch_size == 0:
+            wb.save(excel_path)
+            print(f'💾 Промежуточное сохранение: обработано {i}/{total}')
+
     wb.save(excel_path)
     print(f'✅ Excel обновлён: {excel_path}')
+
 
 
 def main():
@@ -147,11 +154,14 @@ def main():
 
     driver = init_undetected_chromedriver(headless_mode=False)
     try:
+        driver.get("https://kadbase.ru/lk/")
+        time.sleep(60)
+        print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
         update_ownership_excel(driver, excel_path, url)
+
     finally:
         driver.close()
         driver.quit()
-
 
 if __name__ == '__main__':
     main()
