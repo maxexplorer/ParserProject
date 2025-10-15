@@ -4,7 +4,7 @@
 import os
 import glob
 import time
-import re
+from datetime import datetime
 import xml.etree.ElementTree as ET
 
 import undetected_chromedriver as uc
@@ -119,26 +119,25 @@ def parse_xml_file(folder: str) -> list[dict[str, str]]:
 # ===============================
 # 📊 Сохранение в Excel
 # ===============================
-def save_excel(data: list[dict[str, str]], species: str) -> str:
+def save_excel(data: list[dict[str, str]], cur_date: str) -> None:
     """
     Сохраняет данные в Excel-файл в папке 'results'.
     """
     directory = 'results'
     os.makedirs(directory, exist_ok=True)
-    file_path: str = os.path.join(directory, f'result_data_{species}.xlsx')
+    file_path: str = os.path.join(directory, f'result_data_{cur_date}.xlsx')
 
     df = DataFrame(data)
     with ExcelWriter(file_path, mode='w') as writer:
         df.to_excel(writer, sheet_name='Лист1', index=False)
 
     print(f'✅ Данные сохранены в файл: {file_path}')
-    return file_path
 
 
 # ===============================
 # 🏢 Обновление столбца "Форма собственности"
 # ===============================
-def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Лист2', batch_size: int = 10) -> None:
+def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Лист2', batch_size: int = 100) -> None:
     """
     Обновляет данные в Excel: проверяет форму собственности по кадастровому номеру
     через сайт и удаляет строки с частной формой собственности или при отсутствии данных.
@@ -209,31 +208,43 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
 def main() -> None:
     """
     Основная точка входа в программу:
-    - загружает XML-данные (если нужно),
-    - открывает браузер,
-    - авторизуется на сайте,
-    - обновляет Excel-файл по форме собственности.
+
+    - Формирует текущую дату `cur_date` для имени выходного Excel-файла.
+    - Загружает XML-данные из папки `data`.
+    - Сохраняет данные в Excel с именем, включающим `cur_date`.
+    - Инициализирует браузер Chrome через undetected_chromedriver.
+    - Переходит на сайт и предоставляет пользователю 60 секунд на авторизацию.
+    - Обновляет Excel-файл: проверяет форму собственности по кадастровым номерам
+      и удаляет строки с частной формой собственности или при отсутствии данных.
+    - В конце выводит общее время выполнения программы.
     """
+    start_time = datetime.now()
+
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
     data_folder: str = 'data'
     url: str = 'https://kadbase.ru/'
 
     # Если нужно — распарсить XML и создать Excel
-    # all_records = parse_xml_file(data_folder)
-    # excel_path = save_excel(all_records, species='land_plots')
+    all_records = parse_xml_file(data_folder)
+    save_excel(all_records, cur_date=cur_date)
+    excel_path: str = f'results/result_data_{cur_date}.xlsx'
 
-    excel_path: str = 'results/result_data_land_plots.xlsx'
+    # driver = init_undetected_chromedriver(headless_mode=False)
+    # try:
+    #     # Авторизация вручную
+    #     driver.get("https://kadbase.ru/lk/")
+    #     time.sleep(60)
+    #     print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
+    #
+    #     update_ownership_excel(driver, excel_path, url)
+    # finally:
+    #     driver.close()
+    #     driver.quit()
 
-    driver = init_undetected_chromedriver(headless_mode=False)
-    try:
-        # Авторизация вручную
-        driver.get("https://kadbase.ru/lk/")
-        time.sleep(60)
-        print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
-
-        update_ownership_excel(driver, excel_path, url)
-    finally:
-        driver.close()
-        driver.quit()
+    execution_time = datetime.now() - start_time
+    print('Сбор данных завершен!')
+    print(f'Время работы программы: {execution_time}')
 
 
 if __name__ == '__main__':
