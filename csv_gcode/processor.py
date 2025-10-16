@@ -5,6 +5,8 @@ import csv
 import glob
 
 from macros import MACROS
+from constants import GCODE_HEADER
+
 
 def read_csv_files(folder: str):
     """Возвращает список всех путей к CSV файлам в папке."""
@@ -17,6 +19,9 @@ def process_csv_file(file_path: str, output_folder: str):
     output_path = os.path.join(output_folder, f'{file_name}.txt')
 
     print(f'\n[START] Обработка файла: {file_name}.csv')
+
+    # 📌 Добавляем G-коды инициализации в начало
+    output_lines.extend(GCODE_HEADER)
 
     with open(file_path, 'r', encoding='utf-8') as f:
         reader = csv.reader(f, delimiter=',')
