@@ -3,6 +3,7 @@
 import os
 import csv
 import glob
+
 from macros import MACROS
 
 def read_csv_files(folder: str):
