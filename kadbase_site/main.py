@@ -113,6 +113,8 @@ def parse_xml_file(folder: str) -> list[dict[str, str]]:
         except ET.ParseError as e:
             print(f'❌ Ошибка парсинга файла {file_path}: {e}')
 
+        print(f'Обработан файл: {file_path} ')
+
     return all_records
 
 
@@ -226,21 +228,21 @@ def main() -> None:
     url: str = 'https://kadbase.ru/'
 
     # Если нужно — распарсить XML и создать Excel
-    all_records = parse_xml_file(data_folder)
-    save_excel(all_records, cur_date=cur_date)
+    # all_records = parse_xml_file(data_folder)
+    # save_excel(all_records, cur_date=cur_date)
     excel_path: str = f'results/result_data_{cur_date}.xlsx'
 
-    # driver = init_undetected_chromedriver(headless_mode=False)
-    # try:
-    #     # Авторизация вручную
-    #     driver.get("https://kadbase.ru/lk/")
-    #     time.sleep(60)
-    #     print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
-    #
-    #     update_ownership_excel(driver, excel_path, url)
-    # finally:
-    #     driver.close()
-    #     driver.quit()
+    driver = init_undetected_chromedriver(headless_mode=False)
+    try:
+        # Авторизация вручную
+        driver.get("https://kadbase.ru/lk/")
+        time.sleep(60)
+        print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
+
+        update_ownership_excel(driver, excel_path, url)
+    finally:
+        driver.close()
+        driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
