@@ -13,6 +13,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 from pandas import DataFrame, ExcelWriter
 from openpyxl import load_workbook
@@ -141,67 +142,93 @@ def save_excel(data: list[dict[str, str]], cur_date: str) -> None:
 # ===============================
 def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Лист2', batch_size: int = 100) -> None:
     """
-    Обновляет данные в Excel: проверяет форму собственности по кадастровому номеру
-    через сайт и удаляет строки с частной формой собственности или при отсутствии данных.
+    Обновляет Excel-файл с кадастровыми номерами:
+    1. Заходит на сайт и ищет форму собственности по каждому номеру.
+    2. Если форма собственности частная или не найдена — строка удаляется.
+    3. Иначе — значение записывается в столбец.
+    4. Промежуточное сохранение каждые batch_size записей.
+
+    :param driver: активный Selenium WebDriver
+    :param excel_path: путь к Excel-файлу
+    :param url: целевой URL для парсинга
+    :param sheet: имя листа с данными
+    :param batch_size: количество строк между автосохранениями
     """
     wb = load_workbook(excel_path)
     ws = wb[sheet]
 
+    # Находим индексы нужных колонок по заголовкам
     headers: list[str] = [cell.value for cell in ws[1]]
     cad_col: int = headers.index('Кадастровый номер') + 1
     ownership_col: int = headers.index('Форма собственности') + 1
 
-    cad_rows: list[int] = [row for row in range(2, ws.max_row + 1) if ws.cell(row=row, column=cad_col).value]
+    # Список строк, где заполнен кадастровый номер
+    cad_rows: list[int] = [
+        row for row in range(2, ws.max_row + 1)
+        if ws.cell(row=row, column=cad_col).value
+    ]
     total: int = len(cad_rows)
-    i: int = 0
+    processed: int = 0
 
-    # Обходим строки снизу вверх, чтобы безопасно удалять
+    # Обходим строки снизу вверх — чтобы удаление не сбивало индексы
     for row in reversed(cad_rows):
-        i += 1
+        processed += 1
         cad_number: str = str(ws.cell(row=row, column=cad_col).value)
 
         try:
+            # Переход на страницу поиска
             driver.get(url)
 
-            # Ожидаем поле ввода
+            # Явное ожидание поля ввода
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "input.input_search"))
             )
 
-            # Вводим кадастровый номер
+            # Ввод кадастрового номера и отправка
             input_box = driver.find_element(By.CSS_SELECTOR, 'input.input_search')
             input_box.clear()
             input_box.send_keys(cad_number)
             input_box.send_keys(Keys.ENTER)
 
-            # Проверяем наличие блока с формой собственности
-            ownership_divs = driver.find_elements(By.XPATH, "//div[contains(text(),'Форма собственности')]")
+            # Явное ожидание блока с формой собственности
+            try:
+                ownership_divs = WebDriverWait(driver, 3).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, "//div[contains(text(),'Форма собственности')]")
+                    )
+                )
+            except TimeoutException:
+                # Если блок не найден — удаляем строку
+                ws.delete_rows(row)
+                continue
+
+            # Обработка найденного значения
             if ownership_divs:
                 ownership_div = ownership_divs[0]
-                ownership: str = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
+                ownership: str = ownership_div.find_element(
+                    By.XPATH, "following-sibling::div"
+                ).text.strip()
 
-                # Удаляем строку, если собственность частная
                 if ownership.lower() == 'частная':
                     ws.delete_rows(row)
                 else:
                     ws.cell(row=row, column=ownership_col, value=ownership)
             else:
-                # Если блока нет — тоже удаляем строку
                 ws.delete_rows(row)
 
-            print(f'Обработано номеров: {i}/{total} ({cad_number})')
+            print(f'Обработано номеров: {processed}/{total} ({cad_number})')
 
         except Exception as ex:
-            print(f'Ошибка обработки {cad_number}: {ex}')
+            print(f'⚠️ Ошибка обработки {cad_number}: {ex}')
 
-        # Промежуточное сохранение каждые batch_size записей
-        if i % batch_size == 0:
+        # Промежуточное сохранение каждые batch_size строк
+        if processed % batch_size == 0:
             wb.save(excel_path)
-            print(f'💾 Промежуточное сохранение: обработано {i}/{total}')
+            print(f'💾 Промежуточное сохранение: {processed}/{total}')
 
     # Финальное сохранение
     wb.save(excel_path)
-    print(f'✅ Excel обновлён: {excel_path}')
+    print(f'🏁 Обработка завершена. Всего обработано: {processed}/{total}')
 
 
 # ===============================
