@@ -8,6 +8,19 @@ from macros import MACROS
 from constants import GCODE_HEADER
 
 
+def process_all_csv(folder: str, output_folder: str):
+    """Обрабатывает все CSV в папке."""
+    files = read_csv_files(folder)
+    if not files:
+        print('[INFO] Нет CSV файлов для обработки')
+        return
+
+    os.makedirs(output_folder, exist_ok=True)
+
+    for file_path in files:
+        process_csv_file(file_path, output_folder)
+
+
 def read_csv_files(folder: str):
     """Возвращает список всех путей к CSV файлам в папке."""
     return glob.glob(os.path.join(folder, "*.csv*"))
@@ -68,14 +81,3 @@ def process_csv_file(file_path: str, output_folder: str):
     print(f'Всего строк: {row_num}, блоков добавлено: {len(output_lines)}')
 
 
-def process_all_csv(folder: str, output_folder: str):
-    """Обрабатывает все CSV в папке."""
-    files = read_csv_files(folder)
-    if not files:
-        print('[INFO] Нет CSV файлов для обработки')
-        return
-
-    os.makedirs(output_folder, exist_ok=True)
-
-    for file_path in files:
-        process_csv_file(file_path, output_folder)
