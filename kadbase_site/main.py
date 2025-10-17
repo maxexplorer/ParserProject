@@ -13,6 +13,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 from pandas import DataFrame, ExcelWriter
 from openpyxl import load_workbook
@@ -160,6 +161,8 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
         i += 1
         cad_number: str = str(ws.cell(row=row, column=cad_col).value)
 
+        print(f'Обрабатывается: {i}/{total} ({cad_number})')
+
         try:
             driver.get(url)
 
@@ -175,21 +178,27 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
             input_box.send_keys(Keys.ENTER)
 
             # Проверяем наличие блока с формой собственности
-            ownership_divs = driver.find_elements(By.XPATH, "//div[contains(text(),'Форма собственности')]")
-            if ownership_divs:
-                ownership_div = ownership_divs[0]
-                ownership: str = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
-
-                # Удаляем строку, если собственность частная
-                if ownership.lower() == 'частная':
+            try:
+                ownership_div = WebDriverWait(driver, 3).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, "//div[contains(text(),'Форма собственности')]")
+                    )
+                )
+                try:
+                    ownership = ownership_div.find_element(By.XPATH, "following-sibling::div").text.strip()
+                except Exception:
                     ws.delete_rows(row)
-                else:
-                    ws.cell(row=row, column=ownership_col, value=ownership)
-            else:
-                # Если блока нет — тоже удаляем строку
+                    continue
+            except TimeoutException:
                 ws.delete_rows(row)
+                continue
 
-            print(f'Обработано номеров: {i}/{total} ({cad_number})')
+            # Удаляем строку, если собственность частная
+            ownership = ownership.strip().lower()
+            if ownership == 'частная':
+                ws.delete_rows(row)
+            else:
+                ws.cell(row=row, column=ownership_col, value=ownership)
 
         except Exception as ex:
             print(f'Ошибка обработки {cad_number}: {ex}')
