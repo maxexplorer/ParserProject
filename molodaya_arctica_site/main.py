@@ -170,7 +170,9 @@ def process_vacancy_ids(driver, file_path: str) -> None:
 
             # Проверяем, скрыта ли вакансия
             try:
-                title_el = driver.find_element(By.XPATH, "//h1[@class='content__title']")
+                title_el = WebDriverWait(driver, 1).until(
+                    EC.presence_of_element_located((By.XPATH, "//h1[@class='content__title']"))
+                )
                 if "Вакансия была скрыта или удалена работодателем" in title_el.text:
                     hidden_count += 1
                     with open(result_file, 'a', encoding='utf-8') as f:
@@ -215,7 +217,7 @@ def main() -> None:
     # Получение вакансий (можно раскомментировать)
     # get_product_ids(file_path=file_path)
 
-    driver = init_undetected_chromedriver(headless_mode=False)
+    driver = init_undetected_chromedriver(headless_mode=True)
     try:
         process_vacancy_ids(driver=driver, file_path=file_path)
     finally:
