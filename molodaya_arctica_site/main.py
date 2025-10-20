@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
+# Начало отсчёта времени выполнения
 start_time: datetime = datetime.now()
 
 
@@ -18,23 +19,29 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     """
     Инициализирует браузер Chrome с использованием undetected_chromedriver.
 
-    :param headless_mode: если True — браузер запустится без интерфейса.
-    :return: объект WebDriver.
+    :param headless_mode: Если True — браузер запускается без интерфейса.
+    :return: объект WebDriver для управления браузером.
     """
     options = ChromeOptions()
     if headless_mode:
         options.add_argument('--headless')
 
     driver = uc.Chrome(options=options)
-    driver.implicitly_wait(1)
-    driver.maximize_window()
+    driver.implicitly_wait(1)  # неявное ожидание для всех элементов
+    driver.maximize_window()  # максимальный размер окна для корректной работы элементов
     return driver
 
 
 def get_product_ids(file_path: str) -> None:
+    """
+    Получает все ID вакансий через API и сохраняет их в текстовый файл.
+
+    :param file_path: Путь к файлу для сохранения ID вакансий.
+    """
     with Session() as session:
         vacancy_ids = []
 
+        # Заголовки запроса
         headers = {
             'Accept': '*/*',
             'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -52,9 +59,9 @@ def get_product_ids(file_path: str) -> None:
 
         first_params = {
             'page': 1,
-
         }
 
+        # Получаем первую страницу, чтобы узнать общее количество
         response = session.get(
             'https://molodaya-arctica.ru/api/vacancies',
             headers=headers,
@@ -66,7 +73,6 @@ def get_product_ids(file_path: str) -> None:
         json_data = response.json()
 
         total = json_data.get('total', 0)
-
         pages = json_data.get('last_page', 1)
 
         print(f"Всего {total} вакансий, {pages} страниц")
@@ -77,7 +83,7 @@ def get_product_ids(file_path: str) -> None:
             params['pages'] = page
 
             try:
-                time.sleep(1)
+                time.sleep(1)  # пауза между запросами
                 response = session.get(
                     'https://molodaya-arctica.ru/api/vacancies',
                     headers=headers,
@@ -99,27 +105,31 @@ def get_product_ids(file_path: str) -> None:
             if not items:
                 continue
 
-            # Обработка товаров на странице
+            # Сохраняем ID вакансий
             for item in items:
                 vacancy_id = item.get('id')
-
                 vacancy_ids.append(vacancy_id)
 
             print(f"Обработано страниц: {page}/{pages}")
 
+    # Сохраняем все ID в файл
     with open(file_path, 'w', encoding='utf-8') as file:
         print(*vacancy_ids, file=file, sep='\n')
 
 
 def process_vacancy_ids(driver, file_path: str) -> None:
     """
-    Обрабатывает список вакансий:
-    - Нажимает "Откликнуться"
-    - Переключается на новую вкладку
-    - Проверяет скрытые вакансии
-    - Сохраняет результаты в файл
-    """
+    Обрабатывает вакансии:
+    1. Открывает страницу вакансии
+    2. Кликает кнопку "Откликнуться"
+    3. Переключается на новую вкладку
+    4. Проверяет, скрыта ли вакансия
+    5. Сохраняет ID скрытых вакансий в result_data.txt
+    6. Выводит прогресс i/total и статистику по скрытым вакансиям
 
+    :param driver: объект WebDriver
+    :param file_path: путь к файлу с ID вакансий
+    """
     directory: str = 'results'
     os.makedirs(directory, exist_ok=True)
     result_file = os.path.join(directory, 'result_data.txt')
@@ -127,7 +137,7 @@ def process_vacancy_ids(driver, file_path: str) -> None:
     total_processed = 0
     hidden_count = 0
 
-    # Загружаем данные
+    # Загружаем список вакансий
     with open(file_path, 'r', encoding='utf-8') as file:
         vacancy_ids = [line.strip() for line in file.readlines()]
 
@@ -138,32 +148,27 @@ def process_vacancy_ids(driver, file_path: str) -> None:
         print(f"🔄 Обработка {i}/{total_count}: Вакансия {vacancy_id}")
 
         try:
-            # Открываем вакансию
+            # Открываем страницу вакансии
             driver.get(url=f"https://molodaya-arctica.ru/jobs/{vacancy_id}")
 
-            html = driver.page_source
-
-            # Кликаем по кнопке "Откликнуться"
-            # Ждём, пока ссылка с текстом "Откликнуться" станет кликабельной
+            # Ждём кнопку "Откликнуться" и кликаем по ней
             button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable(
                     (By.XPATH, "/html/body/div[1]/div/div/main/div/div[2]/div/div/div/a/span")
                 )
             )
-
-            # Кликаем через JavaScript, чтобы обойти overlay или hidden state
             button.click()
 
-            # Ждём открытия новой вкладки
+            # Ждём открытия новой вкладки и переключаемся
             WebDriverWait(driver, 5).until(lambda d: len(d.window_handles) > 1)
             driver.switch_to.window(driver.window_handles[-1])
 
-            # Ждём полной загрузки страницы
+            # Ждём полной загрузки новой страницы
             WebDriverWait(driver, 5).until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
 
-            # Проверяем заголовок
+            # Проверяем, скрыта ли вакансия
             try:
                 title_el = driver.find_element(By.XPATH, "//h1[@class='content__title']")
                 if "Вакансия была скрыта или удалена работодателем" in title_el.text:
@@ -174,11 +179,12 @@ def process_vacancy_ids(driver, file_path: str) -> None:
             except NoSuchElementException:
                 pass
 
-        except Exception as ex:
+        except Exception:
+            # Игнорируем ошибки, чтобы не прерывать цикл
             continue
 
         finally:
-            # Закрываем новую вкладку (если она есть) и возвращаемся
+            # Закрываем вкладку с формой и возвращаемся на основную
             if len(driver.window_handles) > 1:
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
@@ -192,16 +198,24 @@ def process_vacancy_ids(driver, file_path: str) -> None:
 
 
 def main() -> None:
+    """
+    Основная функция:
+    1. Создаёт папку data
+    2. Получает список вакансий (закомментировано для теста)
+    3. Запускает Chrome через undetected_chromedriver
+    4. Запускает обработку вакансий
+    5. Закрывает браузер и выводит время выполнения
+    """
     directory: str = 'data'
     os.makedirs(directory, exist_ok=True)
 
     file_name = 'vacancy_ids.txt'
-
     file_path = os.path.join(directory, file_name)
 
+    # Получение вакансий (можно раскомментировать)
     # get_product_ids(file_path=file_path)
 
-    driver = init_undetected_chromedriver(headless_mode=True)
+    driver = init_undetected_chromedriver(headless_mode=False)
     try:
         process_vacancy_ids(driver=driver, file_path=file_path)
     finally:
