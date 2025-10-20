@@ -130,6 +130,9 @@ def process_vacancy_ids(driver, file_path: str) -> None:
     :param driver: объект WebDriver
     :param file_path: путь к файлу с ID вакансий
     """
+
+    exceptions_list = []
+
     directory: str = 'results'
     os.makedirs(directory, exist_ok=True)
     result_file = os.path.join(directory, 'result_data.txt')
@@ -154,7 +157,7 @@ def process_vacancy_ids(driver, file_path: str) -> None:
             # Ждём кнопку "Откликнуться" и кликаем по ней
             button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div[1]/div/div/main/div/div[2]/div/div/div/a/span")
+                    (By.XPATH, '/html/body/div[1]/div/div/main/div/div[2]/div/div/div/a/span')
                 )
             )
             button.click()
@@ -165,7 +168,7 @@ def process_vacancy_ids(driver, file_path: str) -> None:
 
             # Ждём полной загрузки новой страницы
             WebDriverWait(driver, 5).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
+                lambda d: d.execute_script('return document.readyState') == 'complete'
             )
 
             # Проверяем, скрыта ли вакансия
@@ -173,16 +176,17 @@ def process_vacancy_ids(driver, file_path: str) -> None:
                 title_el = WebDriverWait(driver, 1).until(
                     EC.presence_of_element_located((By.XPATH, "//h1[@class='content__title']"))
                 )
-                if "Вакансия была скрыта или удалена работодателем" in title_el.text:
+                if 'Вакансия была скрыта или удалена работодателем' in title_el.text:
                     hidden_count += 1
                     with open(result_file, 'a', encoding='utf-8') as f:
                         f.write(f"{vacancy_id}\n")
-                    print(f"✅ Вакансия {vacancy_id} скрыта — ID сохранён.")
+                    print(f'✅ Вакансия {vacancy_id} скрыта — ID сохранён.')
             except NoSuchElementException:
                 pass
 
         except Exception:
             # Игнорируем ошибки, чтобы не прерывать цикл
+            exceptions_list.append(vacancy_id)
             continue
 
         finally:
@@ -193,8 +197,11 @@ def process_vacancy_ids(driver, file_path: str) -> None:
 
     # В конце добавляем статистику
     with open(result_file, 'a', encoding='utf-8') as f:
-        f.write(f"\nВсего обработано: {total_processed}\n")
-        f.write(f"Скрытых вакансий: {hidden_count}\n")
+        f.write(f'\nВсего обработано: {total_processed}\n')
+        f.write(f'Скрытых вакансий: {hidden_count}\n')
+
+    with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
+        print(*exceptions_list, file=file, sep='\n')
 
     print(f"📊 Обработка завершена: всего {total_processed}, скрытых {hidden_count}")
 
@@ -215,7 +222,7 @@ def main() -> None:
     file_path = os.path.join(directory, file_name)
 
     # Получение вакансий (можно раскомментировать)
-    # get_product_ids(file_path=file_path)
+    get_product_ids(file_path=file_path)
 
     driver = init_undetected_chromedriver(headless_mode=True)
     try:
