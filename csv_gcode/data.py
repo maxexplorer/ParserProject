@@ -1,5 +1,5 @@
-# constants.py
-GCODE_HEADER = [
+# data.py
+gcode_header = [
     'G21 ; Метрические единицы',
     'G90 ; Абсолютное позиционирование',
     'G28 X Y Z ; Домашняя позиция по всем осям',
@@ -7,3 +7,10 @@ GCODE_HEADER = [
     'M3 S100 ; Включение лазера',
     ''
 ]
+
+cut_commands = {
+    'DIMPLE',
+    'LIP_NOTCH',
+    'WEB_NOTCH',
+    'SERVICE'
+}
