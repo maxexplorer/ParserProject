@@ -1,5 +1,5 @@
 def dimple(y: float) -> str:
-    return f"""DIMPLE G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -23,7 +23,7 @@ M30
 
 
 def end_truss_start(y: float) -> str:
-    return f"""END_TRUSS START G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -70,7 +70,7 @@ M30
 
 
 def end_truss_finish(y: float) -> str:
-    return f"""END_TRUSS FINISH G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -117,7 +117,7 @@ M30
 
 
 def lip_notch(y: float) -> str:
-    return f"""LIP_NOTCH G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -164,7 +164,7 @@ M30
 
 
 def web_notch(y: float) -> str:
-    return f"""WEB_NOTCH G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -211,7 +211,7 @@ M30
 
 
 def service(y: float) -> str:
-    return f"""SERVICE G0 Y{y}
+    return f"""G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -229,8 +229,7 @@ M30
 
 
 def cut() -> str:
-    return f"""CUT
-%
+    return f"""%
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
 G94 G90 G17 G21 F450
@@ -246,7 +245,7 @@ M30
 
 
 def cut_length(length: float) -> str:
-    return f"""CUT LENGTH G0 Y{length + 21}
+    return f"""G0 Y{length + 21}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
