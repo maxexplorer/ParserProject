@@ -273,8 +273,6 @@ macros = {
     'CUT_LENGTH': cut_length,
 }
 
-
-
 command_map = {
     'DIMPLE': 'DIMPLE',
     'END_TRUSS': ('END_TRUSS_START', 'END_TRUSS_FINISH'),
@@ -282,5 +280,3 @@ command_map = {
     'WEB_NOTCH': 'WEB_NOTCH',
     'SERVICE': 'SERVICE',
 }
-
-
