@@ -8,9 +8,4 @@ gcode_header = [
     ''
 ]
 
-cut_commands = {
-    'DIMPLE',
-    'LIP_NOTCH',
-    'WEB_NOTCH',
-    'SERVICE'
-}
+

@@ -1,6 +1,5 @@
 def dimple(y: float) -> str:
-    return f"""
-G0 Y{y}
+    return f"""DIMPLE G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -23,57 +22,102 @@ M30
 """
 
 
-def end_truss(y: float) -> str:
-    return f"""
-G0 Y{y}
+def end_truss_start(y: float) -> str:
+    return f"""END_TRUSS START G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
 G94 G90 G17 G21 F450
 (Contour 0)
-G00 X-153.694 Y4.185
+G00 X-153.694 Y-18.089
 M3
 G01 X-49.694
 M5
 (Contour 1)
-G00 X-13.353 Y4.184
+G00 X-13.353 Y-18.09
 M3
-G03 X-49.767 Y4.166 I-18.207 J-0.118
+G03 X-49.767 Y-18.108 I-18.207 J-0.118
 M5
 (Contour 2)
-G00 X-13.347 Y4.183
+G00 X-13.347 Y-18.091
 M3
 G01 X-11.347
 M5
 (Contour 3)
-G00 X0. Y0.05
+G00 X0. Y-22.224
 M3
-G01 X-11.276 Y4.154
+G01 X-11.276 Y-18.12
 M5
 (Contour 4)
-G00 X-153.788 Y4.148
+G00 X-153.788 Y-18.126
 M3
-G03 X-190.202 Y4.13 I-18.207 J-0.118
+G03 X-190.202 Y-18.144 I-18.207 J-0.118
 M5
 (Contour 5)
-G00 X-190.266 Y4.144
+G00 X-190.266 Y-18.13
 M3
 G01 X-192.266
 M5
 (Contour 6)
-G00 X-192.323 Y4.104
+G00 X-192.323 Y-18.17
 M3
-G01 X-203.6 Y0.
+G01 X-203.6 Y-22.274
 M5
-G00 X0.
+G00 X0. Y0.
+M30
+%
+"""
+
+
+def end_truss_finish(y: float) -> str:
+    return f"""END_TRUSS FINISH G0 Y{y}
+%
+(Layout "Model")
+(ABViewer 15 trial version - www.cadsofttools.com )
+G94 G90 G17 G21 F450
+(Contour 0)
+G00 X-192.387 Y18.168
+M3
+G01 X-203.601 Y22.321
+M5
+(Contour 5)
+G00 X-190.315 Y18.111
+M3
+G03 X-153.901 Y18.093 I18.207 J0.1
+M5
+(Contour 4)
+G00 X-153.903 Y18.26
+M3
+G01 X-49.804 Y18.248
+M5
+(Contour 6)
+G00 X-49.879 Y18.107
+M3
+G03 X-13.465 Y18.09 I18.207 J0.1
+M5
+(Contour 3)
+G00 X-13.409 Y18.088
+M3
+G01 X-11.418 Y18.201
+M5
+(Contour 2)
+G00 X0. Y22.768
+M3
+G01 X-11.386 Y18.217
+M5
+(Contour 1)
+G00 X-190.324 Y18.06
+M3
+G01 X-192.345 Y18.101
+M5
+G00 X0. Y0.
 M30
 %
 """
 
 
 def lip_notch(y: float) -> str:
-    return f"""
-G0 Y{y}
+    return f"""LIP_NOTCH G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -120,8 +164,7 @@ M30
 
 
 def web_notch(y: float) -> str:
-    return f"""
-G0 Y{y}
+    return f"""WEB_NOTCH G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -168,8 +211,7 @@ M30
 
 
 def service(y: float) -> str:
-    return f"""
-G0 Y{y}
+    return f"""SERVICE G0 Y{y}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -186,9 +228,25 @@ M30
 """
 
 
-def cut(y: float) -> str:
-    return f"""
-G0 Y{y}
+def cut() -> str:
+    return f"""CUT
+%
+(Layout "Model")
+(ABViewer 15 trial version - www.cadsofttools.com )
+G94 G90 G17 G21 F450
+(Contour 0)
+G00 X-102. Y-0.034
+M3
+G01 X102.
+M5
+G00 X0. Y0.
+M30
+%
+"""
+
+
+def cut_length(length: float) -> str:
+    return f"""CUT LENGTH G0 Y{length + 21}
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -206,11 +264,23 @@ M30
 
 macros = {
     'DIMPLE': dimple,
-    'END_TRUSS': end_truss,
+    'END_TRUSS_START': end_truss_start,
+    'END_TRUSS_FINISH': end_truss_finish,
     'LIP_NOTCH': lip_notch,
     'WEB_NOTCH': web_notch,
     'SERVICE': service,
     'CUT': cut,
+    'CUT_LENGTH': cut_length,
+}
+
+
+
+command_map = {
+    'DIMPLE': 'DIMPLE',
+    'END_TRUSS': ('END_TRUSS_START', 'END_TRUSS_FINISH'),
+    'LIP_NOTCH': 'LIP_NOTCH',
+    'WEB_NOTCH': 'WEB_NOTCH',
+    'SERVICE': 'SERVICE',
 }
 
 
