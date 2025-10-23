@@ -80,14 +80,14 @@ def get_product_ids(file_path: str) -> None:
         # Цикл по страницам
         for page in range(1, pages + 1):
             params = first_params.copy()
-            params['pages'] = page
+            params['page'] = page
 
             try:
                 time.sleep(1)  # пауза между запросами
                 response = session.get(
                     'https://molodaya-arctica.ru/api/vacancies',
                     headers=headers,
-                    params=first_params,
+                    params=params,
                     timeout=(3, 5)
                 )
 
@@ -224,12 +224,12 @@ def main() -> None:
     # Получение вакансий (можно раскомментировать)
     get_product_ids(file_path=file_path)
 
-    driver = init_undetected_chromedriver(headless_mode=True)
-    try:
-        process_vacancy_ids(driver=driver, file_path=file_path)
-    finally:
-        driver.close()
-        driver.quit()
+    # driver = init_undetected_chromedriver(headless_mode=True)
+    # try:
+    #     process_vacancy_ids(driver=driver, file_path=file_path)
+    # finally:
+    #     driver.close()
+    #     driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
