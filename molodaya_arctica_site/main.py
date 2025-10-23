@@ -224,12 +224,12 @@ def main() -> None:
     # Получение вакансий (можно раскомментировать)
     get_product_ids(file_path=file_path)
 
-    # driver = init_undetected_chromedriver(headless_mode=True)
-    # try:
-    #     process_vacancy_ids(driver=driver, file_path=file_path)
-    # finally:
-    #     driver.close()
-    #     driver.quit()
+    driver = init_undetected_chromedriver(headless_mode=True)
+    try:
+        process_vacancy_ids(driver=driver, file_path=file_path)
+    finally:
+        driver.close()
+        driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
