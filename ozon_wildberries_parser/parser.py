@@ -336,7 +336,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'cache-control': 'max-age=0',
         'priority': 'u=0, i',
         'referer': 'https://www.wildberries.ru/lk',
-        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+        'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'document',
@@ -344,7 +344,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-site': 'same-origin',
         'sec-fetch-user': '?1',
         'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
     }
 
     # Выбираем активный лист (или любой другой лист)
