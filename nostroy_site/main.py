@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 import json
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 headers = {
     'authority': 'api-open-nostroy.anonamis.ru',

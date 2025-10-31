@@ -1,9 +1,8 @@
 import requests
 import os
 from datetime import datetime
-import json
+
 from pandas import DataFrame, ExcelWriter
-import openpyxl
 
 start_time = datetime.now()
 
