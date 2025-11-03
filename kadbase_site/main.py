@@ -199,7 +199,7 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
                 continue
 
             # Удаляем строку, если собственность частная
-            ownership = ownership.lower()
+            ownership = ownership.strip().lower()
             if ownership == 'частная':
                 ws.delete_rows(row)
             else:
