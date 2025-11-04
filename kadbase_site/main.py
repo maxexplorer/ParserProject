@@ -162,7 +162,6 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
 
     # Обходим строки снизу вверх (чтобы безопасно удалять)
     for row in reversed(cad_rows):
-        processed_count += 1
         cad_number: str = str(ws.cell(row=row, column=cad_col).value)
         print(f'➡️  Обработка {processed_count}/{total} — {cad_number}')
 
@@ -203,16 +202,16 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
             if ownership == 'частная':
                 ws.delete_rows(row)
             else:
+                processed_count += 1
                 ws.cell(row=row, column=ownership_col, value=ownership)
 
         except Exception as ex:
             print(f'❌ Ошибка при обработке {cad_number}: {ex}')
 
-        finally:
-            # Промежуточное сохранение каждые batch_size строк
-            if processed_count % batch_size == 0:
-                wb.save(excel_path)
-                print(f'💾 Промежуточное сохранение: обработано {processed_count}/{total}')
+        # Промежуточное сохранение каждые batch_size строк
+        if processed_count % batch_size == 0:
+            wb.save(excel_path)
+            print(f'💾 Промежуточное сохранение: обработано {processed_count}/{total}')
 
     # Финальное сохранение
     wb.save(excel_path)
