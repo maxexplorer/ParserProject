@@ -2,24 +2,24 @@ def dimple(y: float) -> str:
     return f"""G90
 G0 Y{y} 
 G00 X0 Y{y}
+G91
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
-G94 G90 G17 G21 F450
 (Contour 0)
-G00 X0. Y2.5
+G00 X-26.5 Y2.5
 M3
-G03 X-5. I-2.5 J0.
-X0. I2.5 J0.
+G03 X-5.0 I-2.5 J0.
+X5.0 I2.5 J0.
 M5
 (Contour 1)
-G00 X-143.978 Y2.572
+G00 X-143.978 Y0.07200000000000006
 M3
-G03 X-148.978 I-2.5 J0.
-X-143.978 I2.5 J0.
+G03 X-5.0 I-2.5 J0.
+X5.0 I2.5 J0.
 M5
-G00 X0. Y0.
-M30
+G00 X143.978 Y-2.572
+M02
 %
 """
 
@@ -256,7 +256,10 @@ M02
 
 
 def cut_length(length: float) -> str:
-    return f"""G0 Y{length + 21}
+    return f"""G90
+G0 Y{length + 21}
+G00 X0 Y{length + 21}
+G91
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
