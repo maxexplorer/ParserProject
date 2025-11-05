@@ -109,4 +109,3 @@ def process_csv_file(file_path: str, output_folder: str):
 
     print(f'[DONE] Файл {file_name}.csv → {file_name}.txt')
     print(f'Всего строк: {row_num}, блоков добавлено: {len(output_lines)}')
-
