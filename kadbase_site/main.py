@@ -218,6 +218,78 @@ def update_ownership_excel(driver, excel_path: str, url: str, sheet: str = 'Ли
     print(f'✅ Excel обновлён: {excel_path}')
 
 
+def update_restrictions_excel(driver, excel_path: str, url: str, sheet: str = 'Лист1', batch_size: int = 10) -> None:
+    """
+    Обновляет Excel, оставляя только строки, где на сайте по кадастровому номеру
+    найден текст:
+    "Зарегистрированные ограничения - не обнаружены (на момент последней проверки)"
+
+    Все остальные строки удаляются.
+    """
+
+    wb = load_workbook(excel_path)
+    ws = wb[sheet]
+
+    headers: list[str] = [cell.value for cell in ws[1]]
+    cad_col: int = headers.index('Кадастровый номер') + 1
+
+    cad_rows: list[int] = [row for row in range(2, ws.max_row + 1) if ws.cell(row=row, column=cad_col).value]
+    total: int = len(cad_rows)
+    processed_count: int = 0
+
+    print(f"🔍 Всего строк для проверки: {total}")
+
+    for row in reversed(cad_rows):
+        cad_number: str = str(ws.cell(row=row, column=cad_col).value)
+        print(f'➡️  Обработка {processed_count}/{total} — {cad_number}')
+
+        try:
+            driver.get(url)
+
+            # Ожидаем появления поля ввода
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "input.input_search"))
+            )
+
+            # Вводим кадастровый номер
+            input_box = driver.find_element(By.CSS_SELECTOR, 'input.input_search')
+            input_box.clear()
+            input_box.send_keys(cad_number)
+            input_box.send_keys(Keys.ENTER)
+
+            # Проверяем наличие нужного блока
+            try:
+                restriction_div = WebDriverWait(driver, 3).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH,
+                         "//div[contains(@class, 'left_sser') and contains(text(), 'Зарегистрированные ограничения - не обнаружены')]"
+                         )
+                    )
+                )
+                restriction_text = restriction_div.text.strip()
+            except TimeoutException:
+                ws.delete_rows(row)
+                continue
+
+            # Проверяем, совпадает ли текст
+            if "Зарегистрированные ограничения - не обнаружены" in restriction_text:
+                processed_count += 1
+            else:
+                ws.delete_rows(row)
+
+        except Exception as ex:
+            print(f'❌ Ошибка при обработке {cad_number}: {ex}')
+            ws.delete_rows(row)
+
+        # Промежуточное сохранение каждые batch_size строк
+        if processed_count % batch_size == 0:
+            wb.save(excel_path)
+            print(f'💾 Промежуточное сохранение: обработано {processed_count}/{total}')
+
+    wb.save(excel_path)
+    print(f'✅ Excel обновлён: {excel_path}')
+
+
 # ===============================
 # 🚀 Точка входа
 # ===============================
@@ -253,7 +325,8 @@ def main() -> None:
         time.sleep(60)
         print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
 
-        update_ownership_excel(driver, excel_path, url)
+        # update_ownership_excel(driver, excel_path, url)
+        update_restrictions_excel(driver, excel_path, url)
     finally:
         driver.close()
         driver.quit()
