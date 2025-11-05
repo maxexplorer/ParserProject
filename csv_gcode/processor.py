@@ -49,8 +49,18 @@ def process_csv_file(file_path: str, output_folder: str):
                 print(f'[WARN] {file_name} — строка {row_num}: некорректные 6 или 7 столбцы')
                 continue
 
-            blocks = ['0']  # начало блока
+            name_idx = 1
             col_idx = 12  # 13-й столбец — первая команда
+
+            # Получаем имя (например, из второго столбца)
+            try:
+                name = row[name_idx].strip()
+            except IndexError:
+                name = "unknown"
+
+            # 📌 Создаём блок уже с именем
+            blocks = [f'(name="{name}")', '0']
+
             commands_in_row = []
 
             # Считываем все команды в строке
@@ -65,13 +75,10 @@ def process_csv_file(file_path: str, output_folder: str):
                 if csv_command in command_map:
                     macro_key = command_map[csv_command]
 
-                    # Если macro_key — кортеж (END_TRUSS)
                     if isinstance(macro_key, tuple):
                         start_macro, finish_macro = macro_key
-                        # Первая команда в строке — END_TRUSS_START
                         if col_idx == 12:
                             blocks.extend(macros[start_macro](y_value).splitlines())
-                        # Для остальных END_TRUSS вызываем просто как обычная команда
                     else:
                         blocks.extend(macros[macro_key](y_value).splitlines())
 
