@@ -13,12 +13,12 @@ G03 X-5.0 I-2.5 J0.
 X5.0 I2.5 J0.
 M5
 (Contour 1)
-G00 X-143.978 Y0.07200000000000006
+G00 X-140.978 Y0.07200000000000006
 M3
 G03 X-5.0 I-2.5 J0.
 X5.0 I2.5 J0.
 M5
-G00 X143.978 Y-2.572
+G00 X140.978 Y-2.572
 M02
 %
 """
@@ -257,8 +257,8 @@ M02
 
 def cut_length(length: float) -> str:
     return f"""G90
-G0 Y{length + 21}
-G00 X0 Y{length + 21}
+G0 Y{length + 4}
+G00 X0 Y{length + 4}
 G91
 %
 (Layout "Model")
