@@ -240,8 +240,11 @@ M02
 """
 
 
-def cut() -> str:
-    return f"""G91
+def cut(length) -> str:
+    return f"""G90
+G0 Y{length}
+G00 X0 Y{length}
+G91
 %
 (Layout "Model")
 (ABViewer 15 trial version - www.cadsofttools.com )
@@ -277,8 +280,8 @@ macros = {
     'DIMPLE': dimple,
     'END_TRUSS_START': end_truss_start,
     'END_TRUSS_FINISH': end_truss_finish,
-    'LIP_NOTCH': lip_notch,
-    'WEB_NOTCH': web_notch,
+    'LIP NOTCH': lip_notch,
+    'WEB NOTCH': web_notch,
     'SERVICE': service,
     'CUT': cut,
     'CUT_LENGTH': cut_length,
@@ -287,7 +290,7 @@ macros = {
 command_map = {
     'DIMPLE': 'DIMPLE',
     'END_TRUSS': ('END_TRUSS_START', 'END_TRUSS_FINISH'),
-    'LIP_NOTCH': 'LIP_NOTCH',
-    'WEB_NOTCH': 'WEB_NOTCH',
+    'LIP NOTCH': 'LIP NOTCH',
+    'WEB NOTCH': 'WEB NOTCH',
     'SERVICE': 'SERVICE',
 }

@@ -93,7 +93,7 @@ def process_csv_file(file_path: str, output_folder: str):
                 blocks.extend(macros[finish_macro](length).splitlines())
                 blocks.extend(macros['CUT_LENGTH'](length).splitlines())
             else:
-                blocks.extend(macros['CUT']().splitlines())
+                blocks.extend(macros['CUT'](length).splitlines())
 
             # Добавляем длину и пустую строку
             blocks.append(str(length))
