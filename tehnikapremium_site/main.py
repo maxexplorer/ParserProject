@@ -128,7 +128,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with Session() as session:
-        for category_dict in category_data[24:]:
+        for category_dict in category_data:
             category_name, category_url = next(iter(category_dict.items()))
 
             print(f'Обработка категории: {category_name}')
