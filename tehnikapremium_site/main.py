@@ -173,8 +173,9 @@ def get_products_data(file_path: str, headers: dict) -> list:
                         model = ''
 
                     brands_with_two_words = ['De Dietrich', 'Jet Air']
+                    model_lower = model.lower()
 
-                    if any(b in model for b in brands_with_two_words):
+                    if any(b.lower() in model_lower for b in brands_with_two_words):
                         brand = " ".join(model.split()[:2])
                     else:
                         brand = model.split()[0]
