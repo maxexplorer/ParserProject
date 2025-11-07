@@ -128,7 +128,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with Session() as session:
-        for category_dict in category_data[:1]:
+        for category_dict in category_data:
             category_name, category_url = next(iter(category_dict.items()))
 
             print(f'Обработка категории: {category_name}')
@@ -172,10 +172,15 @@ def get_products_data(file_path: str, headers: dict) -> list:
                     except Exception:
                         model = ''
 
-                    try:
+                    brands_with_two_words = ['De Dietrich', 'Jet Air']
+
+                    if any(b in model for b in brands_with_two_words):
+                        brand = " ".join(model.split()[:2])
+                    else:
                         brand = model.split()[0]
-                    except Exception:
-                        brand = ''
+
+                    # Удаляем бренд из строки model
+                    model_clean = model.replace(brand, '').strip()
 
                     try:
                         price = product_item.find('span', class_='price_value').get_text(strip=True)
@@ -185,7 +190,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
                     result_data.append({
                         'Товар': category_name,
                         'Бренд': brand,
-                        'Модель': model,
+                        'Модель': model_clean,
                         'Цена': price,
 
                     })
