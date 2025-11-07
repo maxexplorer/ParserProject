@@ -124,11 +124,11 @@ def get_products_data(file_path: str, headers: dict) -> list:
     with open(file_path, 'r', encoding='utf-8') as file:
         category_data: list = json.load(file)
 
-    batch_size = 100
+    batch_size = 1000
     result_data = []
 
     with Session() as session:
-        for category_dict in category_data:
+        for category_dict in category_data[24:]:
             category_name, category_url = next(iter(category_dict.items()))
 
             print(f'Обработка категории: {category_name}')
@@ -168,6 +168,11 @@ def get_products_data(file_path: str, headers: dict) -> list:
 
                 for product_item in product_items:
                     try:
+                        product_name = product_item.find('div', class_='item-title').find('span').get_text(strip=True)
+                    except Exception:
+                        product_name = ''
+
+                    try:
                         model = product_item.find('img', class_='img-responsive').get('title')
                     except Exception:
                         model = ''
@@ -176,12 +181,18 @@ def get_products_data(file_path: str, headers: dict) -> list:
                     model_lower = model.lower()
 
                     if any(b.lower() in model_lower for b in brands_with_two_words):
-                        brand = " ".join(model.split()[:2])
+                        brand = ' '.join(model.split()[:2])
                     else:
                         brand = model.split()[0]
 
                     # Удаляем бренд из строки model
                     model_clean = model.replace(brand, '').strip()
+
+                    # Удаляем model из строки product_name
+                    product_name_clean = product_name.replace(model, '').strip()
+
+                    if len(product_name_clean) == 0:
+                        product_name_clean = category_name
 
                     try:
                         price = product_item.find('span', class_='price_value').get_text(strip=True)
@@ -189,7 +200,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
                         price = ''
 
                     result_data.append({
-                        'Товар': category_name,
+                        'Товар': product_name_clean,
                         'Бренд': brand,
                         'Модель': model_clean,
                         'Цена': price,
