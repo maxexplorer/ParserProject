@@ -63,7 +63,8 @@ def get_pages(html: str) -> int:
 
     try:
         # Ищем последнюю страницу в блоке пагинации
-        pages: int = int(soup.find('div', class_='paging b30').find('td', {'align':'right'}).find_all('a')[-2].get_text(strip=True))
+        pages: int = int(
+            soup.find('div', class_='paging b30').find('td', {'align': 'right'}).find_all('a')[-2].get_text(strip=True))
         return pages
     except Exception:
         # Если пагинации нет — возвращаем 1
@@ -83,7 +84,6 @@ def get_category_urls(url: str, headers: dict) -> None:
         soup = BeautifulSoup(html, 'lxml')
 
         category_urls = []
-
 
         product_items = soup.find('div', class_='catalog catalog_active').find_all('span')
 
@@ -108,7 +108,6 @@ def get_category_urls(url: str, headers: dict) -> None:
         print(*category_urls, file=file, sep='\n')
 
 
-
 def get_products_data(file_path: str, headers: dict) -> list:
     """
     Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
@@ -125,8 +124,9 @@ def get_products_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with Session() as session:
-        for category_url in category_urls:
-            print(f'Обработка категории: {category_url}')
+        for i, category_url in enumerate(category_urls[:3], 1):
+            count_urls = len(category_urls)
+            print(f'Обработка категории: {i}/{count_urls}')
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -140,7 +140,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
             pages: int = get_pages(html=html)
 
             for page in range(1, pages + 1):
-                page_url: str = f"{category_url}?PAGEN_2={page}"
+                page_url: str = f"{category_url}&pg={page}"
 
                 try:
                     time.sleep(1)  # Задержка, чтобы не перегружать сайт
@@ -155,49 +155,59 @@ def get_products_data(file_path: str, headers: dict) -> list:
                 soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
 
                 try:
-                    product_items = soup.find_all('div',
-                                                  class_='item_block col-4 col-md-3 col-sm-6 col-xs-6 js-notice-block')
+                    product_items = soup.find_all('div', class_='object ga')
                 except Exception as ex:
                     print(f'product_items: {ex}')
                     continue
 
                 for product_item in product_items:
                     try:
-                        product_name = product_item.find('div', class_='item-title').find('span').get_text(strip=True)
+                        title = product_item.find('a', class_='title').find('span').find('font')
                     except Exception:
-                        product_name = ''
+                        title = ''
 
                     try:
-                        model = product_item.find('img', class_='img-responsive').get('title')
+                        name = title.get_text(strip=True)
+                    except Exception:
+                        name = ''
+
+                    try:
+                        model = title.next_sibling.strip()
                     except Exception:
                         model = ''
 
-                    brands_with_two_words = ['De Dietrich', 'Jet Air']
-                    model_lower = model.lower()
-
-                    if any(b.lower() in model_lower for b in brands_with_two_words):
-                        brand = ' '.join(model.split()[:2])
-                    else:
-                        brand = model.split()[0]
-
-                    # Удаляем бренд из строки model
-                    model_clean = model.replace(brand, '').strip()
-
-                    # Удаляем model из строки product_name
-                    product_name_clean = product_name.replace(model, '').strip()
-
-
+                    try:
+                        brand = product_item.find('span', class_='brand').find('span', class_='blue').get_text(strip=True)
+                    except Exception:
+                        brand = ''
 
                     try:
-                        price = product_item.find('span', class_='price_value').get_text(strip=True)
+                        price = int(''.join(filter(lambda x: x.isdigit(), product_item.find(
+                            'span', class_='price').find('span', class_='value').get_text(strip=True))))
                     except Exception:
                         price = ''
 
+                    discount_spans = product_item.find_all('span', class_='discount')
+                    discount_price = ''
+                    discountsale_price = ''
+
+                    for span in discount_spans:
+                        value_tag = span.find('span', class_='value')
+                        if value_tag:
+                            value = int(''.join(filter(str.isdigit, value_tag.get_text(strip=True))))
+                            # В зависимости от класса span определяем, что это:
+                            if 'discountsale' in span.get('class', []):
+                                discountsale_price = value
+                            else:
+                                discount_price = value
+
                     result_data.append({
-                        'Товар': product_name_clean,
+                        'Товар': name,
                         'Бренд': brand,
-                        'Модель': model_clean,
+                        'Модель': model,
                         'Цена': price,
+                        'Цена по дисконтной карте': discount_price,
+                        'Цена со скидкой': discountsale_price
 
                     })
 
