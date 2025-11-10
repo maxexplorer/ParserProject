@@ -124,7 +124,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
     result_data = []
 
     with Session() as session:
-        for i, category_url in enumerate(category_urls[:3], 1):
+        for i, category_url in enumerate(category_urls, 1):
             count_urls = len(category_urls)
             print(f'Обработка категории: {i}/{count_urls}')
 
