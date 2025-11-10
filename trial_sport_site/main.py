@@ -63,7 +63,7 @@ def get_pages(html: str) -> int:
 
     try:
         # Ищем последнюю страницу в блоке пагинации
-        pages: int = int(soup.find('div', class_='module-pagination').find_all('a')[-2].get_text(strip=True))
+        pages: int = int(soup.find('div', class_='paging b30').find('td', {'align':'right'}).find_all('a')[-2].get_text(strip=True))
         return pages
     except Exception:
         # Если пагинации нет — возвращаем 1
@@ -82,7 +82,7 @@ def get_category_urls(url: str, headers: dict) -> None:
 
         soup = BeautifulSoup(html, 'lxml')
 
-        category_data = []
+        category_urls = []
 
 
         product_items = soup.find('div', class_='catalog catalog_active').find_all('span')
@@ -96,16 +96,16 @@ def get_category_urls(url: str, headers: dict) -> None:
                 product_url = f"https://trial-sport.ru{product_item.find('a').get('href')}"
             except Exception:
                 product_url = None
-            category_data.append(
-                (product_name, product_url)
+            category_urls.append(
+                product_url
             )
 
     # Сохраняем список ссылок в JSON
     directory = 'data'
     os.makedirs(directory, exist_ok=True)
 
-    with open('data/category_data.txt', 'w', encoding='utf-8') as file:
-        print(*category_data, file=file, sep='\n')
+    with open(f'{directory}/category_urls.txt', 'w', encoding='utf-8') as file:
+        print(*category_urls, file=file, sep='\n')
 
 
 
@@ -117,18 +117,16 @@ def get_products_data(file_path: str, headers: dict) -> list:
     :param headers: словарь с HTTP-заголовками
     :return: список словарей с данными о товарах
     """
-    # Читаем product_data_list из JSON
+    # Читаем все URL-адреса из файла и сразу создаем множество для удаления дубликатов
     with open(file_path, 'r', encoding='utf-8') as file:
-        category_data: list = json.load(file)
+        category_urls = [line.strip() for line in file]
 
     batch_size = 1000
     result_data = []
 
     with Session() as session:
-        for category_dict in category_data:
-            category_name, category_url = next(iter(category_dict.items()))
-
-            print(f'Обработка категории: {category_name}')
+        for category_url in category_urls:
+            print(f'Обработка категории: {category_url}')
 
             try:
                 html = get_html(url=category_url, headers=headers, session=session)
@@ -188,8 +186,7 @@ def get_products_data(file_path: str, headers: dict) -> list:
                     # Удаляем model из строки product_name
                     product_name_clean = product_name.replace(model, '').strip()
 
-                    if len(product_name_clean) == 0:
-                        product_name_clean = category_name
+
 
                     try:
                         price = product_item.find('span', class_='price_value').get_text(strip=True)
@@ -250,8 +247,8 @@ def main():
     Собирает данные о товарах и сохраняет их в Excel.
     """
 
-    get_category_urls(url="https://trial-sport.ru/catalog.html", headers=headers)
-    # get_products_data(file_path='data/category_data.json', headers=headers)
+    # get_category_urls(url="https://trial-sport.ru/catalog.html", headers=headers)
+    get_products_data(file_path='data/category_urls.txt', headers=headers)
 
     execution_time = datetime.now() - start_time
     print('✅ Сбор данных завершен!')
