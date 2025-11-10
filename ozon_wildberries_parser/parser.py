@@ -120,11 +120,11 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
     with Session() as session:
         for page in range(1, pages + 1):
             params = {
-                'ab_testing': 'false',
                 'appType': '1',
                 'curr': 'rub',
-                'dest': '-5856841',
-                'hide_dtype': '10',
+                'dest': '1259570222',
+                'hide_dtype': '11',
+                'inheritFilters': 'false',
                 'lang': 'ru',
                 'page': page,
                 'query': text,
@@ -134,12 +134,24 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'suppressSpellcheck': 'false',
             }
 
+            cookies = {
+                'wbx-validation-key': '042261a8-d7e3-4266-8343-31fb35d5a295',
+                '_wbauid': '7163656111752145777',
+                'external-locale': 'ru',
+                '_ga': 'GA1.1.1098996660.1758261326',
+                '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
+                '_cp': '1',
+                'routeb': '1762510688.185.75.806138|d28264025fa6002a5af5e6c1f365b179',
+                'x_wbaas_token': '1.1000.f0b9b163c0994120b08431d0a6b243ee.MHwxMDkuMTEwLjg4LjU0fE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDIuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzYzNzIwMjg3fHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2MzExNTQ4Nw==.MEUCIHSCtv2MQQwMinlhAMtqp7WXrzwcOuk4aKYBfouUrWYzAiEA8JAsIEJwpcN/dZ8YQTd1w3Gz9H4t8hregpgWW2jQwn4=',
+            }
+
             try:
                 time.sleep(1)
                 response = session.get(
-                    f'https://search.wb.ru/exactmatch/ru/common/v9/search',
+                    'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                     params=params,
                     headers=headers,
+                    cookies=cookies,
                     timeout=60
                 )
 
@@ -153,7 +165,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
             data = response.json()
 
             try:
-                for item in data['data']['products']:
+                for item in data['products']:
                     product_id = item.get('id')
                     products_ids_list.append(str(product_id))
             except Exception as ex:
@@ -331,20 +343,23 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
     Основной парсер Wildberries: записывает позиции, цены, количество и склад
     """
     headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'cache-control': 'max-age=0',
-        'priority': 'u=0, i',
-        'referer': 'https://www.wildberries.ru/lk',
-        'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'deviceid': 'site_b19c142c268d48699680efbe9d1e554d',
+        'priority': 'u=1, i',
+        'referer': 'https://www.wildberries.ru/',
+        'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+        'x-pow': '2|site_b19c142c268d48699680efbe9d1e554d|1762706312|6,8,1,570960000000000,24dead5f-c14b-4cbf-a1a1-3601d862af06,dffb77a9-1584-4a87-8ec4-e74cd76223d6,1762706364,1,RK60aNJO7ndxB1zixRRiCOroSh6o8w8Ag5UVw//cci0=,f31a04b5238275522fc23aa5ab7b41ca01a40ce223c68bf431b0f1a6e6a498df3593e4bb9234120dee21e084188940d8688cb0c7586650e781ffb119aa15c4bf|96',
+        'x-queryid': 'qid716365611175214577720251109163213',
+        'x-requested-with': 'XMLHttpRequest',
+        'x-spa-version': '13.12.0',
+        'x-userid': '0',
     }
 
     # Выбираем активный лист (или любой другой лист)
