@@ -9,7 +9,6 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
-
 # Отметка начала выполнения
 start_time: datetime = datetime.now()
 
@@ -90,6 +89,9 @@ def process_participants_ids(driver) -> None:
     result_data: list[dict] = []
 
     for participant_id in range(1, 3265):
+
+        print(f"📊 Обработка: {participant_id}/3264")
+
         try:
             time.sleep(1)
             driver.get(f"https://connect.mysportel.com/details/participant/{participant_id}")
@@ -150,8 +152,6 @@ def process_participants_ids(driver) -> None:
             save_excel(result_data, sheet_name='Participants')
             result_data.clear()
 
-        print(f"📊 Обработано: {participant_id}/3264")
-
     # Сохранение последних данных
     if result_data:
         save_excel(result_data, sheet_name='Participants')
@@ -176,6 +176,9 @@ def process_companies_ids(driver) -> None:
     result_data: list[dict] = []
 
     for company_id in range(1, 2073):
+
+        print(f"📊 Обработка: {company_id}/3264")
+
         try:
             time.sleep(1)
             driver.get(f"https://connect.mysportel.com/details/company/{company_id}")
@@ -210,6 +213,8 @@ def process_companies_ids(driver) -> None:
         except Exception:
             participants = ''
 
+        if not participants:
+            continue
 
         result_data.append({
             'company': company,
@@ -221,8 +226,6 @@ def process_companies_ids(driver) -> None:
         if len(result_data) >= batch_size:
             save_excel(result_data, sheet_name='Companies')
             result_data.clear()
-
-        print(f"📊 Обработано: {company_id}/3264")
 
     # Сохранение последних данных
     if result_data:
