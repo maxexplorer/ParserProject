@@ -34,7 +34,7 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     return driver
 
 
-def save_excel(data: list[dict]) -> None:
+def save_excel(data: list[dict], sheet_name: str) -> None:
     """
     Сохраняет данные в Excel-файл. Если файла нет — создаёт.
     Если есть — дописывает новые строки в конец.
@@ -51,10 +51,10 @@ def save_excel(data: list[dict]) -> None:
     # Создать пустой Excel-файл, если он отсутствует
     if not os.path.exists(file_path):
         with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Лист1', index=False)
+            DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
 
     # Загружаем существующие данные
-    df_existing = read_excel(file_path, sheet_name='Лист1')
+    df_existing = read_excel(file_path, sheet_name=sheet_name)
     num_existing_rows = len(df_existing.index)
 
     # Добавляем новые строки
@@ -64,7 +64,7 @@ def save_excel(data: list[dict]) -> None:
             writer,
             startrow=num_existing_rows + 1,
             header=(num_existing_rows == 0),
-            sheet_name='Лист1',
+            sheet_name=sheet_name,
             index=False
         )
 
@@ -147,14 +147,86 @@ def process_participants_ids(driver) -> None:
 
         # Сохраняем пакетами по 100
         if len(result_data) >= batch_size:
-            save_excel(result_data)
+            save_excel(result_data, sheet_name='Participants')
             result_data.clear()
 
         print(f"📊 Обработано: {participant_id}/3264")
 
     # Сохранение последних данных
     if result_data:
-        save_excel(result_data)
+        save_excel(result_data, sheet_name='Participants')
+
+
+def process_companies_ids(driver) -> None:
+    """
+    Обрабатывает участников по ID, собирает с каждой страницы:
+    - имя
+    - должность
+    - компанию
+    - профиль
+    - email
+    - телефон
+
+    Работает пакетами по 100 записей для уменьшения нагрузки.
+
+    Args:
+        driver (WebDriver): Активный экземпляр браузера.
+    """
+    batch_size = 100
+    result_data: list[dict] = []
+
+    for company_id in range(1, 2073):
+        try:
+            time.sleep(1)
+            driver.get(f"https://connect.mysportel.com/details/company/{company_id}")
+        except Exception:
+            continue
+
+        html = driver.page_source
+        if not html:
+            continue
+
+        soup = BeautifulSoup(html, 'lxml')
+
+        # Имя
+        try:
+            company = soup.find('span', class_='d-block g-font-size-18 g-color-gray-dark-v1').get_text(strip=True)
+        except Exception:
+            company = ''
+
+        if not company:
+            continue
+
+        try:
+            country = soup.find('b', string=re.compile('Country:')).next_sibling.strip()
+        except Exception:
+            country = ''
+
+        try:
+            participants = ', '.join(
+                a.get_text(strip=True)
+                for a in soup.select('tbody.text-center td.js-details-show a')
+            )
+        except Exception:
+            participants = ''
+
+
+        result_data.append({
+            'company': company,
+            'country': country,
+            'participants': participants,
+        })
+
+        # Сохраняем пакетами по 100
+        if len(result_data) >= batch_size:
+            save_excel(result_data, sheet_name='Companies')
+            result_data.clear()
+
+        print(f"📊 Обработано: {company_id}/3264")
+
+    # Сохранение последних данных
+    if result_data:
+        save_excel(result_data, sheet_name='Companies')
 
 
 def main() -> None:
@@ -173,7 +245,8 @@ def main() -> None:
         print("⏳ У вас есть 30 секунд, чтобы авторизоваться вручную...")
         time.sleep(30)
 
-        process_participants_ids(driver)
+        # process_participants_ids(driver=driver)
+        process_companies_ids(driver=driver)
     finally:
         driver.close()
         driver.quit()
