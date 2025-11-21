@@ -3,6 +3,8 @@ import time
 from datetime import datetime
 import re
 
+from requests import Session
+
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
@@ -11,6 +13,15 @@ from pandas import DataFrame, ExcelWriter, read_excel
 
 # Отметка начала выполнения
 start_time: datetime = datetime.now()
+
+headers = {
+    'Referer': 'https://connect.mysportel.com/',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+    'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+}
 
 
 def init_undetected_chromedriver(headless_mode: bool = False):
@@ -232,6 +243,73 @@ def process_companies_ids(driver) -> None:
         save_excel(result_data, sheet_name='Companies')
 
 
+def download_imgs(session: Session, image_url: str, name: str) -> None:
+    directory = 'images'
+
+    # Создаём директорию при необходимости
+    os.makedirs(directory, exist_ok=True)
+
+    response = session.get(url=image_url, headers=headers)
+
+    with open(f"images/{name}.jpg", "wb") as file:
+        file.write(response.content)
+
+    print(f'Обработано фото: {name}')
+
+
+def process_participants_photo(driver) -> None:
+    """
+    Обрабатывает участников по ID, собирает с каждой страницы:
+    - имя
+    - должность
+    - компанию
+    - профиль
+    - email
+    - телефон
+
+    Работает пакетами по 100 записей для уменьшения нагрузки.
+
+    Args:
+        driver (WebDriver): Активный экземпляр браузера.
+    """
+
+    with Session() as session:
+        for participant_id in range(1, 3265):
+
+            print(f"📊 Обработка: {participant_id}/3264")
+
+            try:
+                time.sleep(1)
+                driver.get(f"https://connect.mysportel.com/details/participant/{participant_id}")
+            except Exception:
+                continue
+
+            html = driver.page_source
+            if not html:
+                continue
+
+            soup = BeautifulSoup(html, 'lxml')
+
+            # Имя
+            try:
+                name = soup.find('h2', class_='g-font-weight-300 g-mr-10').get_text(strip=True)
+            except Exception:
+                name = ''
+
+            if not name:
+                continue
+
+            try:
+                image_url = f"https://connect.mysportel.com{soup.find('div', class_='g-mb-20').find('img').get('src')}"
+            except Exception:
+                image_url = ''
+
+            if 'anonymous' in image_url:
+                continue
+
+            download_imgs(session, image_url, name)
+
+
 def main() -> None:
     """
     Основная функция:
@@ -249,7 +327,8 @@ def main() -> None:
         time.sleep(30)
 
         # process_participants_ids(driver=driver)
-        process_companies_ids(driver=driver)
+        # process_companies_ids(driver=driver)
+        process_participants_photo(driver)
     finally:
         driver.close()
         driver.quit()
