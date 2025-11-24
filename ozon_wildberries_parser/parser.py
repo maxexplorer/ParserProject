@@ -141,8 +141,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
-                'routeb': '1762510688.185.75.806138|d28264025fa6002a5af5e6c1f365b179',
-                'x_wbaas_token': '1.1000.f0b9b163c0994120b08431d0a6b243ee.MHwxMDkuMTEwLjg4LjU0fE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDIuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzYzNzIwMjg3fHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2MzExNTQ4Nw==.MEUCIHSCtv2MQQwMinlhAMtqp7WXrzwcOuk4aKYBfouUrWYzAiEA8JAsIEJwpcN/dZ8YQTd1w3Gz9H4t8hregpgWW2jQwn4=',
+                'routeb': '1763537196.705.1970.897937|fc3b37d75a18d923fd0e9c7589719997',
+                'x_wbaas_token': '1.1000.64d45847a9704b3e916ad474ed8277c8.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NjUxOTA4NTB8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY0NTg2MDUwfDE=.MEUCIQC6EqLqMK9Y0h9NAzkGdDPcxajciovAffWmjpN5H4X9PQIgXarzU2jU7dk4GJKdQg+60AosfUal1YzE1y4h+8JwvmA=',
             }
 
             try:
@@ -355,10 +355,9 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-        'x-pow': '2|site_b19c142c268d48699680efbe9d1e554d|1762706312|6,8,1,570960000000000,24dead5f-c14b-4cbf-a1a1-3601d862af06,dffb77a9-1584-4a87-8ec4-e74cd76223d6,1762706364,1,RK60aNJO7ndxB1zixRRiCOroSh6o8w8Ag5UVw//cci0=,f31a04b5238275522fc23aa5ab7b41ca01a40ce223c68bf431b0f1a6e6a498df3593e4bb9234120dee21e084188940d8688cb0c7586650e781ffb119aa15c4bf|96',
-        'x-queryid': 'qid716365611175214577720251109163213',
+        'x-queryid': 'qid716365611175214577720251124105138',
         'x-requested-with': 'XMLHttpRequest',
-        'x-spa-version': '13.12.0',
+        'x-spa-version': '13.14.1',
         'x-userid': '0',
     }
 
