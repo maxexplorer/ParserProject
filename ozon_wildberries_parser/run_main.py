@@ -10,18 +10,26 @@ from parser import (
 )
 
 from update_price import (
+    load_article_info_from_excel,
     update_prices_ozon,
     update_prices_wb,
     write_price_to_excel,
-    load_article_info_from_excel
+
+)
+
+from update_volume import (
+    load_offer_id_from_excel,
+    get_volume_ozon,
+    write_volume_to_excel
 )
 
 from analytics_report import (
+    load_sku_article_from_excel,
     get_ozon_orders_report,
     get_wb_orders_report,
     write_analytics_to_excel,
-    load_sku_article_from_excel
 )
+
 
 def main():
     while True:
@@ -39,6 +47,7 @@ def main():
             '10 - Получить отчет заказов WB за неделю\n'
             '11 - Получить отчет заказов Ozon за указанный период\n'
             '12 - Получить отчет заказов WB за указанный период\n'
+            '13 - Обновить объемы товаров Ozon\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -182,6 +191,15 @@ def main():
                         period='custom'
                     )
                     print('✅ Отчет Wildberries за указанный период собран и записан.')
+
+                case '13':
+                    print("Обновление объемов товаров Ozon...")
+                    offer_ids = load_offer_id_from_excel(sheet_name='ОЗОН')
+
+                    volume_data = get_volume_ozon(offer_ids)
+                    write_volume_to_excel(volume_data, marketplace='ОЗОН')
+
+                    print("✅ Объемы обновлены и записаны в Excel.")
 
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')
