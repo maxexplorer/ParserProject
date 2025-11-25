@@ -202,6 +202,7 @@ def get_data(driver: uc.Chrome, html: str, session: requests.Session) -> None:
                 project_name: str = c.find('a').get_text(strip=True)
             except Exception:
                 project_name = ''
+
             if not project_name:
                 continue
 
@@ -302,10 +303,12 @@ def get_data(driver: uc.Chrome, html: str, session: requests.Session) -> None:
                     type_apartment: str = item.find('div', class_='first').get_text(strip=True)
                 except Exception:
                     type_apartment = ''
+
                 try:
                     size_apartment: str = item.find('div', class_='second').find_all('p')[1].get_text(strip=True)
                 except Exception:
                     size_apartment = ''
+
                 try:
                     price_apartment: str = item.find('div', class_='third').find_all('p')[1].get_text(strip=True)
                 except Exception:
