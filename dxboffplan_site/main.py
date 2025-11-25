@@ -13,8 +13,7 @@ exceptions_list = []
 def get_html(url, session):
     headers = {
         'Accept': '*/*',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10_5_8; ja-jp) AppleWebKit/533.16 (KHTML, like Gecko)'
-                      ' Version/5.0 Safari/533.16'
+        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
     }
 
     try:
@@ -30,50 +29,54 @@ def get_data(html, session):
     price_range_list = []
 
     soup = BeautifulSoup(html, 'lxml')
-    developer_items = soup.find('tbody').find_all('tr')
+    developer_items = soup.find('div', class_='developments-table').find_all('div', class_='item')
     for i in developer_items:
         try:
-            developer_data = i.find_all('td')
+            developer_data = i.find_all('span')
         except Exception as ex:
             print(f'developer_data - {ex}')
             continue
         try:
-            developer_name = developer_data[0].find_next().text.strip()
+            developer_name = i.find('a').get_text(strip=True)
         except Exception:
             developer_name = None
+        if not developer_name:
+            continue
         try:
-            projects_count = developer_data[1].text.strip()
+            projects_count = developer_data[0].get_text(strip=True)
             if projects_count == '0':
                 continue
         except Exception:
             projects_count = None
         try:
-            min_price = developer_data[2].text.strip()
+            min_price = developer_data[1].get_text(strip=True)
         except Exception:
             min_price = None
         try:
-            max_price = developer_data[3].text.strip()
+            max_price = developer_data[2].get_text(strip=True)
         except Exception:
             max_price = None
         try:
-            avg_price = developer_data[4].text.strip()
+            avg_price = developer_data[3].get_text(strip=True)
         except Exception:
             avg_price = None
         try:
             developer_url = i.find('a').get('href')
             html = get_html(url=developer_url, session=session)
             soup = BeautifulSoup(html, 'lxml')
-            project_urls = soup.find('tbody').find_all('tr')
+            project_items = soup.find('section', class_='developments-table single-developer-table').find_all('div', class_='item')
         except Exception as ex:
             print(f'url_developer - {ex}')
             continue
-        for c in project_urls:
+        for c in project_items:
             try:
-                project_name = c.find('a').text.strip()
+                project_name = c.find('a').get_text(strip=True)
             except Exception:
                 project_name = None
+            if not project_name:
+                continue
             try:
-                property_type = c.find_all('td')[2].text.strip()
+                property_type = c.find('span', class_='text-capitalize').get_text(strip=True)
             except Exception:
                 property_type = None
             try:
@@ -84,40 +87,41 @@ def get_data(html, session):
                 print(f'url_project - {ex}')
                 continue
             try:
-                starting_price = soup.find('th', string=re.compile('Starting Price')).find_next().text.strip()
+                starting_price = soup.find('div', string=re.compile('Start price from')).find_next().get_text(strip=True)
             except Exception as ex:
                 starting_price = None
                 exceptions_list.append(
                     (developer_url, project_url, ex)
                 )
             try:
-                price_per_sqft_from = soup.find('th', string=re.compile('Price Per Sqft from')).find_next().text.strip()
+                price_per_sqft_from = soup.find('div', string=re.compile('Price Per Sqft from')).find_next().get_text(strip=True)
             except Exception:
                 price_per_sqft_from = None
             try:
-                area_from = soup.find('th', string=re.compile('Area from')).find_next().text.strip()
+                area_from = soup.find('div', string=re.compile('Area from')).find_next().get_text(strip=True)
             except Exception:
                 area_from = None
             try:
-                type = soup.find('th', string=re.compile('Type')).find_next().text.strip()
+                type = soup.find('div', string=re.compile('Type')).find_next().get_text(strip=True)
             except Exception:
                 type = None
             try:
-                bedrooms = soup.find('th', string=re.compile('Bedrooms')).find_next().text.strip()
+                bedrooms = soup.find('div', string=re.compile('Bedrooms')).find_next().get_text(strip=True)
             except Exception:
                 bedrooms = None
             try:
-                location = soup.find('th', string=re.compile('Location')).find_next().text.strip()
+                location = soup.find('div', string=re.compile('Location')).find_next().get_text(strip=True)
             except Exception:
                 location = None
             try:
-                completion = soup.find('th', string=re.compile('Est. Completion')).find_next().text.strip()
+                completion = soup.find('div', string=re.compile('Est. Completion')).find_next().get_text(strip=True)
             except Exception:
                 completion = None
             try:
-                images = tuple(img.get('src') for img in soup.select('img[decoding=async]'))
+                images_items = soup.find('div', class_='gallery-grid').find_all('div', class_='thickbox setThumbMe')
+                images_urls = [image_item.find('img').get('data-lazy-src') for image_item in images_items]
             except Exception:
-                images = None
+                images_urls = None
 
             result_list.append(
                 (
@@ -137,12 +141,12 @@ def get_data(html, session):
                     completion,
                     developer_url,
                     project_url,
-                    images
+                    images_urls
                 )
             )
 
             try:
-                price_range_items = soup.find('div', class_='project-price-range my-3').find_all('ul')
+                price_range_items = soup.find('div', class_='prices-items').find_all('div', class_='prices-items')
             except Exception:
                 continue
             for item in price_range_items:
@@ -241,7 +245,7 @@ def save_csv_price(price):
 def main():
     with requests.Session() as session:
         html = get_html(url="https://dxboffplan.com/list-of-property-developers-in-uae/", session=session)
-        data, price = get_data(html=html, session=session)
+        data = get_data(html=html, session=session)
         save_csv_data(data)
         # save_csv_price(price)
     if len(exceptions_list) > 0:
