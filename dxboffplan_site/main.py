@@ -13,29 +13,36 @@ import requests
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
-start_time = datetime.now()
+start_time: datetime = datetime.now()
 
-exceptions_data = []
+exceptions_data: list[dict] = []
 
 
-def init_undetected_chromedriver(headless_mode: bool = False):
+def init_undetected_chromedriver(headless_mode: bool = False) -> uc.Chrome:
     """
     Инициализирует браузер Chrome с использованием undetected_chromedriver.
 
     :param headless_mode: если True — браузер запустится без интерфейса.
-    :return: объект WebDriver.
+    :return: объект WebDriver Chrome.
     """
-    options = ChromeOptions()
+    options: ChromeOptions = ChromeOptions()
     if headless_mode:
         options.add_argument('--headless')
 
-    driver = uc.Chrome(options=options)
+    driver: uc.Chrome = uc.Chrome(options=options)
     driver.implicitly_wait(3)
     driver.maximize_window()
     return driver
 
 
-def scroll_and_get_html(driver, url):
+def scroll_and_get_html(driver: uc.Chrome, url: str) -> str:
+    """
+    Скроллит страницу с кнопкой 'Load More' до конца и возвращает HTML-код.
+
+    :param driver: WebDriver Chrome.
+    :param url: URL страницы для скролла.
+    :return: HTML-код страницы.
+    """
     driver.get(url)
     wait = WebDriverWait(driver, 10)
 
@@ -43,52 +50,63 @@ def scroll_and_get_html(driver, url):
 
     while True:
         try:
+            # Сколько элементов сейчас на странице
             items = driver.find_elements(By.CSS_SELECTOR, ".developments-table .item")
-            cur = len(items)
+            cur_count = len(items)
 
-            if cur == prev_count and cur > 0:
+            # Если количество не изменилось — конец списка
+            if cur_count == prev_count and cur_count > 0:
                 break
 
-            prev_count = cur
+            prev_count = cur_count
 
+            # Находим кнопку загрузки
             loadmore_btn = wait.until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, "button.btn-loadmore")
-                )
+                EC.presence_of_element_located((By.CSS_SELECTOR, "button.btn-loadmore"))
             )
 
+            # Листаем к кнопке
             driver.execute_script("arguments[0].scrollIntoView(true);", loadmore_btn)
             driver.execute_script("arguments[0].click();", loadmore_btn)
-            time.sleep(1.5)
 
-        except:
+            time.sleep(2)
+
+        except Exception:
             break
 
     return driver.page_source
 
 
-def get_html(url, session):
-    headers = {
+def get_html(url: str, session: requests.Session) -> str:
+    """
+    Получает HTML-страницу через requests с заголовками.
+
+    :param url: URL страницы.
+    :param session: объект requests.Session.
+    :return: HTML-код страницы.
+    """
+    headers: dict[str, str] = {
         'Accept': '*/*',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
     }
 
     try:
-        response = session.get(url=url, headers=headers)
-        html = response.text
-        return html
+        response: requests.Response = session.get(url=url, headers=headers)
+        return response.text
     except Exception as ex:
         print(ex)
+        return ""
 
 
-def save_excel(data: list[dict]) -> None:
+def save_excel(data: list[dict], file_name: str) -> None:
     """
-    Сохраняет список данных в Excel-файл (results/result_data.xlsx).
+    Сохраняет список данных в Excel-файл с указанным именем.
 
-    :param data: Список словарей с данными о товарах.
+    :param data: Список словарей с данными.
+    :param file_name: Название файла Excel (без пути).
     """
-    directory = 'results'
-    file_path = f'{directory}/result_data.xlsx'
+    directory: str = 'results'
+    file_path: str = f'{directory}/{file_name}'
 
     os.makedirs(directory, exist_ok=True)
 
@@ -98,11 +116,11 @@ def save_excel(data: list[dict]) -> None:
             DataFrame().to_excel(writer, sheet_name='Data', index=False)
 
     # Читаем существующие данные
-    df_existing = read_excel(file_path, sheet_name='Data')
-    num_existing_rows = len(df_existing.index)
+    df_existing: DataFrame = read_excel(file_path, sheet_name='Data')
+    num_existing_rows: int = len(df_existing.index)
 
     # Преобразуем новые данные в DataFrame
-    new_df = DataFrame(data)
+    new_df: DataFrame = DataFrame(data)
 
     # Дописываем новые строки в конец
     with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
@@ -117,108 +135,135 @@ def save_excel(data: list[dict]) -> None:
     print(f'Сохранено {len(data)} записей в {file_path}')
 
 
-def get_data(driver, html, session):
-    batch_size = 100
-    result_data = []
-    prices_data = []
+def get_data(driver: uc.Chrome, html: str, session: requests.Session) -> None:
+    """
+    Основная функция сбора данных с сайта: разработчики, проекты, цены.
+
+    :param driver: WebDriver Chrome.
+    :param html: HTML главной страницы с разработчиками.
+    :param session: объект requests.Session.
+    """
+    batch_size: int = 100
+    result_data: list[dict] = []
+    prices_data: list[dict] = []
 
     soup = BeautifulSoup(html, 'lxml')
     developer_items = soup.find('div', class_='developments-table').find_all('div', class_='item')
-    for i in developer_items:
+
+    count_developers = len(developer_items)
+
+    for i, developer_item  in enumerate(developer_items, 1):
         try:
-            developer_data = i.find_all('span')
+            developer_data = developer_item.find_all('span')
         except Exception as ex:
             print(f'developer_data - {ex}')
             continue
+
         try:
-            developer_name = i.find('a').get_text(strip=True)
+            developer_name: str = developer_item.find('a').get_text(strip=True)
         except Exception:
-            developer_name = None
+            developer_name = ''
         if not developer_name:
             continue
+
         try:
-            projects_count = developer_data[0].get_text(strip=True)
+            projects_count: str = developer_data[0].get_text(strip=True)
             if projects_count == '0':
                 continue
         except Exception:
-            projects_count = None
+            projects_count = ''
+
         try:
-            min_price = developer_data[1].get_text(strip=True)
+            min_price: str = developer_data[1].get_text(strip=True)
         except Exception:
-            min_price = None
+            min_price = ''
+
         try:
-            max_price = developer_data[2].get_text(strip=True)
+            max_price: str = developer_data[2].get_text(strip=True)
         except Exception:
-            max_price = None
+            max_price = ''
+
         try:
-            avg_price = developer_data[3].get_text(strip=True)
+            avg_price: str = developer_data[3].get_text(strip=True)
         except Exception:
-            avg_price = None
+            avg_price = ''
+
         try:
-            developer_url = i.find('a').get('href')
-            html = get_html(url=developer_url, session=session)
+            developer_url: str = developer_item.find('a').get('href')
+            html = scroll_and_get_html(driver, developer_url)
             soup = BeautifulSoup(html, 'lxml')
-            project_items = soup.find('section', class_='developments-table single-developer-table').find_all('div',
-                                                                                                              class_='item')
+            project_items = soup.find('section', class_='developments-table single-developer-table').find_all('div', class_='item')
         except Exception as ex:
             print(f'url_developer - {ex}')
             continue
+
         for c in project_items:
             try:
-                project_name = c.find('a').get_text(strip=True)
+                project_name: str = c.find('a').get_text(strip=True)
             except Exception:
-                project_name = None
+                project_name = ''
             if not project_name:
                 continue
+
             try:
-                property_type = c.find('span', class_='text-capitalize').get_text(strip=True)
+                property_type: str = c.find('span', class_='text-capitalize').get_text(strip=True)
             except Exception:
-                property_type = None
+                property_type = ''
+
             try:
-                project_url = c.find('a').get('href')
-                html = scroll_and_get_html(driver, project_url)
+                project_url: str = c.find('a').get('href')
+                html = get_html(project_url, session)
                 soup = BeautifulSoup(html, 'lxml')
             except Exception as ex:
                 print(f'url_project - {ex}')
                 continue
+
+            # Сбор данных по проекту
             try:
-                starting_price = soup.find('div', string=re.compile('Start price from')).find_next().get_text(
-                    strip=True)
+                starting_price: str = soup.find('div', string=re.compile('Start price from')).find_next().get_text(strip=True)
             except Exception as ex:
-                starting_price = None
-                exceptions_data.append(
-                    (developer_url, project_url, ex)
-                )
+                starting_price = ''
+                exceptions_data.append({
+                    'Developer URL': developer_url,
+                    'Project URL': project_url,
+                    'Error': str(ex)
+                })
+
             try:
-                price_per_sqft_from = soup.find('div', string=re.compile('Price Per Sqft from')).find_next().get_text(
-                    strip=True)
+                price_per_sqft_from: str = soup.find('div', string=re.compile('Price Per Sqft from')).find_next().get_text(strip=True)
             except Exception:
-                price_per_sqft_from = None
+                price_per_sqft_from = ''
+
             try:
-                area_from = soup.find('div', string=re.compile('Area from')).find_next().get_text(strip=True)
+                area_from: str = soup.find('div', string=re.compile('Area from')).find_next().get_text(strip=True)
             except Exception:
-                area_from = None
+                area_from = ''
+
             try:
-                type = soup.find('div', string=re.compile('Type')).find_next().get_text(strip=True)
+                type_: str = soup.find('div', string=re.compile('Type')).find_next().get_text(strip=True)
             except Exception:
-                type = None
+                type_ = ''
+
             try:
-                bedrooms = soup.find('div', string=re.compile('Bedrooms')).find_next().get_text(strip=True)
+                bedrooms: str = soup.find('div', string=re.compile('Bedrooms')).find_next().get_text(strip=True)
             except Exception:
-                bedrooms = None
+                bedrooms = ''
+
             try:
-                location = soup.find('div', string=re.compile('Location')).find_next().get_text(strip=True)
+                location: str = soup.find('div', string=re.compile('Location')).find_next().get_text(strip=True)
             except Exception:
-                location = None
+                location = ''
+
             try:
-                completion = soup.find('div', string=re.compile('Est. Completion')).find_next().get_text(strip=True)
+                completion: str = soup.find('div', string=re.compile('Est. Completion')).find_next().get_text(strip=True)
             except Exception:
-                completion = None
+                completion = ''
+
             try:
                 images_items = soup.find('div', class_='gallery-grid').find_all('div', class_='thickbox setThumbMe')
-                images_urls = [image_item.find('img').get('data-lazy-src') for image_item in images_items]
+                images_urls: str = ', '.join(image_item.find('img').get('data-lazy-src') for image_item in images_items)
             except Exception:
-                images_urls = None
+                images_urls = ''
 
             result_data.append(
                 {
@@ -232,7 +277,7 @@ def get_data(driver, html, session):
                     'Starting price': starting_price,
                     'Price per sqft from': price_per_sqft_from,
                     'Area from': area_from,
-                    'Type': type,
+                    'Type': type_,
                     'Bedrooms': bedrooms,
                     'Location': location,
                     'Completion': completion,
@@ -242,28 +287,29 @@ def get_data(driver, html, session):
                 }
             )
 
-            # Сохраняем партию данных в Excel
+            # Сохраняем партию данных result_data
             if len(result_data) >= batch_size:
-                save_excel(result_data)
+                save_excel(result_data, 'result_data.xlsx')
                 result_data.clear()
 
             try:
                 price_range_items = soup.find('div', class_='prices-items').find_all('div', class_='item')
             except Exception:
                 continue
+
             for item in price_range_items:
                 try:
-                    type_apartment = item.find('div', class_='first').get_text(strip=True)
+                    type_apartment: str = item.find('div', class_='first').get_text(strip=True)
                 except Exception:
-                    type_apartment = None
+                    type_apartment = ''
                 try:
-                    size_apartment = item.find('div', class_='second').find_all('p')[1].get_text(strip=True)
+                    size_apartment: str = item.find('div', class_='second').find_all('p')[1].get_text(strip=True)
                 except Exception:
-                    size_apartment = None
+                    size_apartment = ''
                 try:
-                    price_apartment = item.find('div', class_='third').find_all('p')[1].get_text(strip=True)
+                    price_apartment: str = item.find('div', class_='third').find_all('p')[1].get_text(strip=True)
                 except Exception:
-                    price_apartment = None
+                    price_apartment = ''
 
                 prices_data.append(
                     {
@@ -274,35 +320,39 @@ def get_data(driver, html, session):
                     }
                 )
 
-                # Сохраняем партию данных в Excel
+                # Сохраняем партию данных prices_data
                 if len(prices_data) >= batch_size:
-                    save_excel(result_data)
-                    result_data.clear()
+                    save_excel(prices_data, 'prices_data.xlsx')
+                    prices_data.clear()
 
             print(f'Developer: {developer_name}, Project: {project_name}')
 
+        print(f'Обработано застройщиков: {i}/{count_developers}')
+
     # Сохраняем остатки
     if result_data:
-        save_excel(result_data)
-    # Сохраняем остаток
-    if result_data:
-        save_excel(result_data)
+        save_excel(result_data, 'result_data.xlsx')
+    if prices_data:
+        save_excel(prices_data, 'prices_data.xlsx')
 
 
-def main():
+def main() -> None:
+    """
+    Точка входа программы.
+    """
     driver = init_undetected_chromedriver(headless_mode=False)
 
     try:
-        html = scroll_and_get_html(driver, url="https://dxboffplan.com/list-of-property-developers-in-uae/")
-
+        html: str = scroll_and_get_html(driver, url="https://dxboffplan.com/list-of-property-developers-in-uae/")
         with requests.Session() as session:
             get_data(driver, html, session)
-
     finally:
         driver.close()
         driver.quit()
-    if len(exceptions_data) > 0:
-        save_excel(data=exceptions_data)
+
+    # Сохраняем исключения
+    if exceptions_data:
+        save_excel(exceptions_data, 'exception_list.xlsx')
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
