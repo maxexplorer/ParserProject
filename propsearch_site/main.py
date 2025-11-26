@@ -112,14 +112,14 @@ def get_data(html, session):
 
             # Собираем данные по зданию
             try:
-                building_name = soup.find('h1', class_='ps-h1').text.strip()
+                building_name = soup.find('h1', class_='ps-h1').get_text(strip=True)
             except Exception as ex:
                 exceptions_data.append({'URL': url, 'Error': str(ex)})
                 continue
 
             try:
                 building_overview = ' '.join(
-                    soup.find('div', class_='lg:text-xl mx-auto max-w-160').text.strip().split())
+                    soup.find('div', class_='lg:text-xl mx-auto max-w-160').get_text(strip=True).split())
             except Exception:
                 building_overview = None
 
@@ -140,12 +140,12 @@ def get_data(html, session):
                 status = None
 
             try:
-                floors = soup.find('div', string=re.compile('Floors')).find_next().text.strip()
+                floors = soup.find('div', string=re.compile('Floors')).find_next().get_text(strip=True)
             except Exception:
                 floors = None
 
             try:
-                area = soup.find('div', string=re.compile('Area')).find_next().text.strip()
+                area = soup.find('div', text='Area').find_next().get_text(strip=True)
             except Exception:
                 area = None
 
@@ -155,47 +155,47 @@ def get_data(html, session):
                 sub_buildings = None
 
             try:
-                developer = soup.find('div', string=re.compile('The developer')).find_next().text.strip()
+                developer = soup.find('div', string=re.compile('The developer')).find_next().get_text(strip=True)
             except Exception:
                 developer = None
 
             try:
-                timeline = soup.find('div', string=re.compile('Timeline')).find_next().text.strip()
+                timeline = soup.find('div', string=re.compile('Timeline')).find_next().get_text(strip=True)
             except Exception:
                 timeline = None
 
             try:
-                plot = soup.find('div', string=re.compile('Plot')).find_next().text.strip()
+                plot = soup.find('div', string=re.compile('Plot')).find_next().get_text(strip=True)
             except Exception:
                 plot = None
 
             try:
-                units = soup.find('div', string=re.compile('Units')).find_next().text.strip()
+                units = soup.find('div', string=re.compile('Units')).find_next().get_text(strip=True)
             except Exception:
                 units = None
 
             try:
-                unit_layouts = soup.find('div', string=re.compile('Unit layouts')).find_next().text.strip()
+                unit_layouts = soup.find('div', string=re.compile('Unit layouts')).find_next().get_text(strip=True)
             except Exception:
                 unit_layouts = None
 
             try:
-                architect = soup.find('div', string=re.compile('The architect')).find_next().text.strip()
+                architect = soup.find('div', string=re.compile('The architect')).find_next().get_text(strip=True)
             except Exception:
                 architect = None
 
             try:
-                contractor = soup.find('div', string=re.compile('The contractor')).find_next().text.strip()
+                contractor = soup.find('div', string=re.compile('The contractor')).find_next().get_text(strip=True)
             except Exception:
                 contractor = None
 
             try:
-                structure = soup.find('div', string=re.compile('Structure')).find_next().text.strip()
+                structure = soup.find('div', string=re.compile('Structure')).find_next().get_text(strip=True)
             except Exception:
                 structure = None
 
             try:
-                amenities = soup.find('div', string=re.compile('Amenities')).find_next().text.strip()
+                amenities = soup.find('div', string=re.compile('Amenities')).find_next().get_text(strip=True)
             except Exception:
                 amenities = None
 
@@ -207,12 +207,12 @@ def get_data(html, session):
 
             try:
                 commute_times_by_car = soup.find('div',
-                                                 string=re.compile('Commute times by car')).find_next().text.strip()
+                                                 string=re.compile('Commute times by car')).find_next().get_text(strip=True)
             except Exception:
                 commute_times_by_car = None
 
             try:
-                airport_proximity = soup.find('div', string=re.compile('Airport proximity')).find_next().text.strip()
+                airport_proximity = soup.find('div', string=re.compile('Airport proximity')).find_next().get_text(strip=True)
             except Exception:
                 airport_proximity = None
 
@@ -276,7 +276,7 @@ def get_data(html, session):
 
             try:
                 supermarkets_and_mini_marts = ''
-                for i in [item.text.strip().split() for item in
+                for i in [item.get_text(strip=True).split() for item in
                           soup.find('span', string=re.compile('Supermarkets & Mini Marts')).find_next()]:
                     supermarkets_and_mini_marts += ' '.join(i)
             except Exception:
@@ -284,7 +284,7 @@ def get_data(html, session):
 
             try:
                 restaurants_and_bars = ''
-                for i in [item.text.strip().split() for item in
+                for i in [item.get_text(strip=True).split() for item in
                           soup.find('span', string=re.compile('Restaurants & Bars')).find_next()]:
                     restaurants_and_bars += ' '.join(i)
             except Exception:
@@ -292,7 +292,7 @@ def get_data(html, session):
 
             try:
                 clinics_and_pharmacies = ''
-                for i in [item.text.strip().split() for item in
+                for i in [item.get_text(strip=True).split() for item in
                           soup.find('span', string=re.compile('Clinics & Pharmacies')).find_next()]:
                     clinics_and_pharmacies += ' '.join(i)
             except Exception:
@@ -300,7 +300,7 @@ def get_data(html, session):
 
             try:
                 salons_and_spas = ''
-                for i in [item.text.strip().split() for item in
+                for i in [item.get_text(strip=True).split() for item in
                           soup.find('span', string=re.compile('Salons & Spas')).find_next()]:
                     salons_and_spas += ' '.join(i)
             except Exception:
