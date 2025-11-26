@@ -145,7 +145,7 @@ def get_data(html, session):
                 floors = None
 
             try:
-                area = soup.find('div', text='Area').find_next().get_text(strip=True)
+                area = soup.find('div', string='Area').find_next().get_text(strip=True)
             except Exception:
                 area = None
 
