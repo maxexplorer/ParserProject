@@ -1,40 +1,87 @@
-import requests
-from fake_useragent import UserAgent
-from bs4 import BeautifulSoup
 import csv
 import os
 from datetime import datetime
 import re
 
+import requests
+from bs4 import BeautifulSoup
+
+from pandas import DataFrame, ExcelWriter, read_excel
+
 start_time = datetime.now()
 
-useragent = UserAgent()
+exceptions_data = []
 
 
-def get_html(url, session):
-    headers = {
-        'accept': '*/*',
-        'user-agent': useragent.random
+def get_html(url: str, session: requests.Session) -> str:
+    """
+    Получает HTML-страницу через requests с заголовками.
+
+    :param url: URL страницы.
+    :param session: объект requests.Session.
+    :return: HTML-код страницы.
+    """
+    headers: dict[str, str] = {
+        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36'
     }
+
     try:
-        response = session.get(url=url, headers=headers)
-        html = response.text
-        return html
+        response: requests.Response = session.get(url=url, headers=headers)
+        return response.text
     except Exception as ex:
         print(ex)
+        return ""
 
 
-exceptions_list = []
+def save_excel(data: list[dict], file_name: str) -> None:
+    """
+    Сохраняет список данных в Excel-файл с указанным именем.
+
+    :param data: Список словарей с данными.
+    :param file_name: Название файла Excel (без пути).
+    """
+    directory: str = 'results'
+    file_path = f'{directory}/{file_name}'
+
+    os.makedirs(directory, exist_ok=True)
+
+    # Если файла нет — создаем пустой
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='Data', index=False)
+
+    # Читаем существующие данные
+    df_existing: DataFrame = read_excel(file_path, sheet_name='Data')
+    num_existing_rows: int = len(df_existing.index)
+
+    # Преобразуем новые данные в DataFrame
+    new_df: DataFrame = DataFrame(data)
+
+    # Дописываем новые строки в конец
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        new_df.to_excel(
+            writer,
+            startrow=num_existing_rows + 1,
+            header=(num_existing_rows == 0),
+            sheet_name='Data',
+            index=False
+        )
+
+    print(f'Сохранено {len(data)} записей в {file_path}')
 
 
 def get_data(html, session):
-    result_list = []
+    batch_size: int = 100
+    result_data: list[dict] = []
 
     soup = BeautifulSoup(html, 'lxml')
-    district_items = soup.find('div', class_='ps-items-index-container').find_all('a')
-    for i in district_items:
+    district_items = soup.find('div', class_='grid md:grid-cols-2 gap-x-6 gap-y-8').find_all('a')
+
+    count_districts = len(district_items)
+    for i, district_item  in enumerate(district_items, 1):
         try:
-            url = i.get('href')
+            url = district_item.get('href')
             html = get_html(url=url, session=session)
             soup = BeautifulSoup(html, 'lxml')
             building_items = set(soup.find_all(class_='lg:px-2 py-1 h-full'))
@@ -52,8 +99,10 @@ def get_data(html, session):
             try:
                 building_name = soup.find('h1', class_='ps-h1').text.strip()
             except Exception as ex:
-                exceptions_list.append(
-                    (url, ex)
+                exceptions_data.append(
+                    {'URL':url,
+                    'Error': str(ex)
+                     }
                 )
                 continue
             try:
@@ -229,112 +278,64 @@ def get_data(html, session):
             except Exception:
                 nearby_neighbourhoods = None
 
-            result_list.append(
-                (
-                    area,
-                    building_name,
-                    building_overview,
-                    building_type,
-                    status,
-                    floors,
-                    sub_buildings,
-                    developer,
-                    timeline,
-                    plot,
-                    units,
-                    unit_layouts,
-                    architect,
-                    contractor,
-                    structure,
-                    amenities,
-                    additional_information,
-                    commute_times_by_car,
-                    airport_proximity,
-                    map_coordinates,
-                    attractions,
-                    parks_and_beaches,
-                    golf_and_clubs,
-                    cinemas,
-                    shops_and_outlets,
-                    supermarkets_and_mini_marts,
-                    restaurants_and_bars,
-                    clinics_and_pharmacies,
-                    salons_and_spas,
-                    local_schools,
-                    nearby_neighbourhoods,
-                    url,
-                    img_link
-
-                )
+            result_data.append(
+                {
+                    'area': area,
+                    'building_name': building_name,
+                    'building_overview': building_overview,
+                    'building_type': building_type,
+                    'status': status,
+                    'floors': floors,
+                    'sub_buildings': sub_buildings,
+                    'developer': developer,
+                    'timeline': timeline,
+                    'plot': plot,
+                    'units': units,
+                    'unit_layouts': unit_layouts,
+                    'architect': architect,
+                    'contractor': contractor,
+                    'structure': structure,
+                    'amenities': amenities,
+                    'additional_information': additional_information,
+                    'commute_times_by_car': commute_times_by_car,
+                    'airport_proximity': airport_proximity,
+                    'map_coordinates': map_coordinates,
+                    'attractions': attractions,
+                    'parks_and_beaches': parks_and_beaches,
+                    'golf_and_clubs': golf_and_clubs,
+                    'cinemas': cinemas,
+                    'shops_and_outlets': shops_and_outlets,
+                    'supermarkets_and_mini_marts': supermarkets_and_mini_marts,
+                    'restaurants_and_bars': restaurants_and_bars,
+                    'clinics_and_pharmacies': clinics_and_pharmacies,
+                    'salons_and_spas': salons_and_spas,
+                    'local_schools': local_schools,
+                    'nearby_neighbourhoods': nearby_neighbourhoods,
+                    'url': url,
+                    'img_link': img_link
+                }
             )
+
+            if len(result_data) >= batch_size:
+                save_excel(result_data, 'result_data.xlsx')
+                result_data.clear()
 
             print(f'District: {area}, Building: {building_name}')
 
-    return result_list
+        print(f'Обработано районов: {i}/{count_districts}')
 
-
-def save_csv(data):
-    if not os.path.exists('data'):
-        os.mkdir('data')
-
-    with open(f'data/data_new.csv', 'w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(
-            (
-                'Area',
-                'Building name',
-                'Building overview',
-                'Building type',
-                'Status',
-                'Floors',
-                'Sub buildings',
-                'Developer',
-                'Timeline',
-                'Plot',
-                'Units',
-                'Unit layouts',
-                'Architect',
-                'Contractor',
-                'Structure',
-                'Amenities',
-                'Additional information',
-                'Commute times by car',
-                'Airport proximity',
-                'Map coordinates',
-                'Attractions',
-                'Parks & beaches',
-                'Golf & clubs',
-                'Cinemas',
-                'Shops_and_outlets',
-                'Supermarkets & mini_marts',
-                'Restaurants & bars',
-                'Clinics & pharmacies',
-                'Salons & spas',
-                'Local schools',
-                'Nearby neighbourhoods',
-                'Link',
-                'Img_link'
-
-            )
-        )
-
-    with open('data/data_new.csv', 'a', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(
-            data
-        )
-    print('Данные сохранены в файл "data.csv"')
+    if result_data:
+        save_excel(result_data, 'result_data.xlsx')
 
 
 def main():
     with requests.Session() as session:
         html = get_html(url="https://propsearch.ae/dubai/buildings", session=session)
-        data = get_data(html=html, session=session)
-        save_csv(data)
-    if len(exceptions_list) > 0:
-        with open(f'data/exceptions_list.csv', 'w', encoding='utf-8', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(exceptions_list)
+        get_data(html=html, session=session)
+
+        # Сохраняем исключения
+    if exceptions_data:
+        save_excel(exceptions_data, 'exception_list.xlsx')
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
     print(f'Время работы программы: {execution_time}')
