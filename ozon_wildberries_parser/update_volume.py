@@ -2,13 +2,12 @@
 
 import os
 import glob
-import time
 
 import pandas as pd
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
+from configs.config import API_URLS_OZON, OZON_HEADERS, WB_HEADERS
 
 
 def load_offer_id_from_excel(sheet_name: str) -> list[str]:
@@ -45,17 +44,17 @@ def get_volume_ozon(offer_ids: list[str]) -> dict:
     result = {}
 
     data = {
-        "filter": {
-            "offer_id": offer_ids,
-            "visibility": "ALL"
+        'filter': {
+            'offer_id': offer_ids,
+            'visibility': 'ALL'
         },
-        "limit": len(offer_ids),
-        "sort_dir": "ASC"
+        'limit': len(offer_ids),
+        'sort_dir': 'ASC'
     }
 
     try:
         response = requests.post(
-            API_URLS_OZON["product_info_attributes"],
+            API_URLS_OZON['product_info_attributes'],
             headers=OZON_HEADERS,
             json=data,
             timeout=20
@@ -66,16 +65,16 @@ def get_volume_ozon(offer_ids: list[str]) -> dict:
         return result
 
     resp = response.json()
-    items = resp.get("result", [])
+    items = resp.get('result', [])
 
     for item in items:
-        offer_id = item.get("offer_id")
+        offer_id = item.get('offer_id')
         if not offer_id:
             continue
 
-        height = item.get("height", 0)
-        depth = item.get("depth", 0)
-        width = item.get("width", 0)
+        height = item.get('height', 0)
+        depth = item.get('depth', 0)
+        width = item.get('width', 0)
 
         try:
             volume = (height * depth * width) / 1_000_000  # м³
