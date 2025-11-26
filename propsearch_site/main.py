@@ -90,7 +90,7 @@ def get_data(html, session):
     district_items = soup.find('div', class_='grid md:grid-cols-2 gap-x-6 gap-y-8').find_all('a')
     count_districts = len(district_items)
 
-    for i, district_item in enumerate(district_items, 1):
+    for index, district_item in enumerate(district_items, 1):
         try:
             url = district_item.get('href')
             html = get_html(url=url, session=session)
@@ -368,7 +368,7 @@ def get_data(html, session):
 
             print(f'District: {area}, Building: {building_name}')
 
-        print(f'Обработано районов: {i}/{count_districts}')
+        print(f'Обработано районов: {index}/{count_districts}')
 
     # Сохраняем оставшиеся данные
     if result_data:
