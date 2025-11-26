@@ -87,15 +87,15 @@ def get_data(html, session):
 
     # Получаем список районов
     soup = BeautifulSoup(html, 'lxml')
-    district_items = soup.find('div', class_='grid md:grid-cols-2 gap-x-6 gap-y-8').find_all('a')
+    district_items = soup.find('div', class_='grid md:grid-cols-2 gap-x-6 gap-y-8').find_all('div', class_='p-2 flex-grow')
     count_districts = len(district_items)
 
     for index, district_item in enumerate(district_items, 1):
         try:
-            url = district_item.get('href')
+            url = district_item.find('a').get('href')
             html = get_html(url=url, session=session)
             soup = BeautifulSoup(html, 'lxml')
-            building_items = set(soup.find_all(class_='lg:px-2 py-1 h-full'))
+            building_items = soup.find_all(class_='lg:px-2 py-1 h-full')
         except Exception as ex:
             print(ex)
             continue
