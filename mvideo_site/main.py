@@ -14,7 +14,7 @@ from data.data import category_data
 start_time = datetime.now()
 
 
-def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list:
+def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> None:
     """
     Собирает все product IDs для каждой категории с учётом пагинации.
 
@@ -23,7 +23,6 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list
     :param cookies: cookies
     :return: список всех product_ids
     """
-    result_data = []
 
     with Session() as session:
         for category_data in categories_data:
@@ -33,6 +32,7 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list
             offset = 0
             limit = 72
             total = None
+            processed_count = 0
 
             while True:
                 params = {
@@ -57,68 +57,73 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list
                     print(f'get_product_ids: {ex}')
 
                 product_ids = json_data.get('body', {}).get('products')
-                get_product_data(product_ids=product_ids, session=session, headers=headers, cookies=cookies,
-                                 main_category_name=main_category_name, category_name=category_name)
 
                 # Инициализируем total при первом запросе
                 if total is None:
                     total = json_data['body'].get('total', 0)
 
+                get_product_data(product_ids=product_ids, session=session, headers=headers, cookies=cookies,
+                                 main_category_name=main_category_name, category_name=category_name)
+
+                # Обновляем прогресс
+                processed_count += len(product_ids)
+                print(f"Прогресс категории '{category_name}': {processed_count}/{total}", end='\r')
+
                 offset += limit
                 if offset >= total:
+                    print(f'Обработана категория: {category_name}')
                     break
 
-    return result_data
 
-
-def get_product_prices(product_ids: list[str], session: Session, headers: dict, cookies: dict):
+def get_product_prices(product_ids: list[str], session: Session, headers: dict, cookies: dict) -> dict:
     """
-    Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
+    Загружает цены для списка product_ids и возвращает словарь:
+    {productId: {'Цена': base_price, 'Цена со скидкой': sale_price}}
 
-    :param file_path: путь к файлу с URL товаров
-    :param headers: словарь с HTTP-заголовками
-    :return: список словарей с данными о товарах
+    :param product_ids: список ID товаров
+    :param session: requests.Session
+    :param headers: словарь HTTP-заголовков
+    :param cookies: cookies
+    :return: словарь с ценами
     """
+    price_data = {}
 
-    price_data = []
+    # Передаём product_ids как строку через запятую
+    product_ids_str = ','.join(product_ids)
 
     params = {
-        'productIds': product_ids,
+        'productIds': product_ids_str,
         'addBonusRubles': 'true',
         'isPromoApplied': 'true',
     }
 
     try:
-        response = session.post('https://www.mvideo.ru/bff/products/prices',
-                                headers=headers,
-                                cookies=cookies,
-                                params=params,
-                                )
-
+        response = session.get(
+            'https://www.mvideo.ru/bff/products/prices',
+            headers=headers,
+            cookies=cookies,
+            params=params,
+        )
         response.raise_for_status()
         json_data = response.json()
     except Exception as ex:
         print(f'get_product_prices: {ex}')
+        return price_data  # возвращаем пустой словарь при ошибке
 
     price_items = json_data.get('body', {}).get('materialPrices', [])
 
     if not price_items:
-        print('not product_items')
+        print('No price items found')
 
     for price_item in price_items:
         product_id = price_item.get('productId')
+        base_price = price_item.get('price', {}).get('basePrice')
+        sale_price = price_item.get('price', {}).get('salePrice')
 
-        base_price = price_item.get('basePrice')
-
-        sale_price = price_item.get('salePrice')
-
-        price_data.append(
-            {
-                'productId': product_id,
-                'Цена': base_price,
-                'Цена со скидкой': sale_price,
-            }
-        )
+        price_data[product_id] = {
+            'Цена': base_price,
+            'Цена со скидкой': sale_price
+        }
 
     return price_data
 
@@ -128,54 +133,55 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
     """
     Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
 
-    :param file_path: путь к файлу с URL товаров
-    :param headers: словарь с HTTP-заголовками
-    :return: список словарей с данными о товарах
+    :param product_ids: список ID товаров
+    :param session: requests.Session
+    :param headers: словарь HTTP-заголовков
+    :param cookies: cookies
+    :param main_category_name: основная категория
+    :param category_name: подкатегория
+    :return: None
     """
-
     result_data = []
 
+    # Запрос данных о товарах
     json_data = {
         'productIds': product_ids,
-        'mediaTypes': [
-            'images',
-        ],
+        'mediaTypes': ['images'],
         'category': True,
         'status': True,
         'brand': True,
-        'propertyTypes': [
-            'KEY',
-        ],
-        'propertiesConfig': {
-            'propertiesPortionSize': 5,
-        },
+        'propertyTypes': ['KEY'],
+        'propertiesConfig': {'propertiesPortionSize': 5},
     }
 
     try:
-        response = session.post('https://www.mvideo.ru/bff/product-details/list',
-                                headers=headers,
-                                cookies=cookies,
-                                json=json_data,
-                                )
-
+        response = session.post(
+            'https://www.mvideo.ru/bff/product-details/list',
+            headers=headers,
+            cookies=cookies,
+            json=json_data,
+        )
         response.raise_for_status()
-        json_data = response.json()
+        product_items = response.json().get('body', {}).get('products', [])
     except Exception as ex:
         print(f'get_product_data: {ex}')
-
-    product_items = json_data.get('body', {}).get('products', [])
+        return
 
     if not product_items:
-        print('not product_items')
+        print('No product items')
+        return
+
+    # Получаем цены **одним запросом для всех product_ids**
+    price_data = get_product_prices(product_ids=product_ids, session=session, headers=headers, cookies=cookies)
 
     for product_item in product_items:
 
+        product_id = product_item.get('productId')
         brand = product_item.get('brandName')
-
         model = product_item.get('modelName')
+        product_name = product_item.get('name', '').replace(model, '')
 
-        product_name = product_item.get('name').replace(model, '')
-
+        # Атрибуты товара
         product_attributes = {
             'Основная категория': main_category_name,
             'Kатегория': category_name,
@@ -184,27 +190,22 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
             'Модель': model
         }
 
-        # Сбор параметров товара
+        # Добавляем цены из price_map
+        price_info = price_data.get(product_id, {})
+
+        # Объединяем все данные
+        result_dict = {**product_attributes, **price_info}
+
+        # Параметры товара
         product_parameters = {}
-        properties_items = product_item.get('propertiesPortion', [])
+        for prop_item in product_item.get('propertiesPortion', []):
+            product_parameters[prop_item.get('name')] = prop_item.get('value')
 
-        for prop_item in properties_items:
-            prop_name = prop_item.get('name')
-            prop_value = prop_item.get('value')
-            product_parameters[prop_name] = prop_value
-
-        result_dict = {**product_attributes, **product_parameters}
-
-        price_data = get_product_prices(product_ids=product_ids, session=session, headers=headers, cookies=cookies)
-
-        # как-то надо соединить данные price_data и result_dict
-
-        result_dict.update(price_data) #???
+        result_dict.update(product_parameters)
 
         result_data.append(result_dict)
 
-        # print(f'Обработано товаров: {}/{}')
-
+    # Сохраняем в Excel
     save_excel(result_data)
 
 
@@ -243,7 +244,6 @@ def main():
     """
 
     get_product_ids(categories_data=category_data, headers=headers, cookies=cookies)
-    # get_products_data(file_path='data/category_data.json', headers=headers)
 
     execution_time = datetime.now() - start_time
     print('✅ Сбор данных завершен!')
