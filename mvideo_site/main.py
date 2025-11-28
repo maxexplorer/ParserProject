@@ -55,7 +55,6 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list
                     json_data = response.json()
                 except Exception as ex:
                     print(f'get_product_ids: {ex}')
-                    break
 
                 product_ids = json_data.get('body', {}).get('products')
                 get_product_data(product_ids=product_ids, session=session, headers=headers, cookies=cookies,
@@ -72,8 +71,7 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list
     return result_data
 
 
-def get_product_prices(product_ids: list[str], session: Session, headers: dict, cookies: dict,
-                       main_category_name: str, category_name: str):
+def get_product_prices(product_ids: list[str], session: Session, headers: dict, cookies: dict):
     """
     Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
 
@@ -102,7 +100,7 @@ def get_product_prices(product_ids: list[str], session: Session, headers: dict, 
     except Exception as ex:
         print(f'get_product_prices: {ex}')
 
-    price_items = json_data.get('body', {}).get('materialPrices')
+    price_items = json_data.get('body', {}).get('materialPrices', [])
 
     if not price_items:
         print('not product_items')
@@ -165,7 +163,7 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
     except Exception as ex:
         print(f'get_product_data: {ex}')
 
-    product_items = json_data.get('body', {}).get('products')
+    product_items = json_data.get('body', {}).get('products', [])
 
     if not product_items:
         print('not product_items')
@@ -178,7 +176,7 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
 
         product_name = product_item.get('name').replace(model, '')
 
-        result_dict = {
+        product_attributes = {
             'Основная категория': main_category_name,
             'Kатегория': category_name,
             'Товар': product_name,
@@ -195,13 +193,17 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
             prop_value = prop_item.get('value')
             product_parameters[prop_name] = prop_value
 
-        get_product_prices()
+        result_dict = {**product_attributes, **product_parameters}
 
-        result_dict.update(product_parameters)
+        price_data = get_product_prices(product_ids=product_ids, session=session, headers=headers, cookies=cookies)
+
+        # как-то надо соединить данные price_data и result_dict
+
+        result_dict.update(price_data) #???
 
         result_data.append(result_dict)
 
-        print(f'Обработано товаров: {}/{}')
+        # print(f'Обработано товаров: {}/{}')
 
     save_excel(result_data)
 
