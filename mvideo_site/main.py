@@ -8,89 +8,72 @@ from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
 from configs.config import headers, cookies
+from data.data import category_data
 
 # Засекаем время работы программы
 start_time = datetime.now()
 
 
-def get_html(url: str, headers: dict, session: Session) -> str | None:
+def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> list:
     """
-    Загружает HTML-код страницы по переданному URL.
+    Собирает все product IDs для каждой категории с учётом пагинации.
 
-    :param url: адрес страницы для загрузки
-    :param headers: словарь с HTTP-заголовками
-    :param session: объект requests.Session для повторного использования соединений
-    :return: HTML-код страницы (str) или None при ошибке
+    :param categories_data: список кортежей (main_category_name, category_name, category_id)
+    :param headers: HTTP заголовки
+    :param cookies: cookies
+    :return: список всех product_ids
     """
-    try:
-        response = session.get(url=url, headers=headers, timeout=60)
-        if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
-        return response.text
-    except Exception as ex:
-        print(f'get_html: {ex}')
-        return None
-
-
-def get_pages(html: str) -> int:
-    """
-    Определяет количество страниц пагинации на основе HTML-кода.
-
-    Аргументы:
-        html: HTML-код страницы категории.
-
-    Возвращает:
-        Целое число — количество страниц пагинации.
-        Если пагинация не найдена, возвращает 1.
-    """
-    soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
-
-    try:
-        # Ищем последнюю страницу в блоке пагинации
-        pages: int = int(soup.find('div', class_='module-pagination').find_all('a')[-2].get_text(strip=True))
-        return pages
-    except Exception:
-        # Если пагинации нет — возвращаем 1
-        return 1
-
-
-def get_categories_data(headers: dict, cookies: dict) -> None:
-    categories_data = []
+    result_data = []
 
     with Session() as session:
-        try:
-            response = session.get('https://www.mvideo.ru/bff/settings/v2/catalog', cookies=cookies, headers=headers)
+        for category_data in categories_data:
+            main_category_name, category_name, category_id = category_data
+            print(f'Обработка категории: {category_name}')
 
-            json_data = response.json()
-        except Exception as ex:
-            print(f'get_categories_data: {ex}')
+            offset = 0
+            limit = 72
+            total = None
 
-        try:
-            main_category_items = json_data['body']['categories']
-        except Exception:
-            main_category_items = []
+            while True:
+                params = {
+                    'categoryIds': category_id,
+                    'offset': str(offset),
+                    'filterParams': 'WyJ0b2xrby12LW5hbGljaGlpIiwiLTEyIiwiZGEiXQ==',
+                    'limit': str(limit),
+                    'doTranslit': 'true',
+                    'context': 'v2dzaG9wX2lkZFMwMDJsY2F0ZWdvcnlfaWRzn2M0MDD/ZmNhdF9JZGM0MDD/',
+                }
 
-        for main_category_item in main_category_items:
-            main_category_name = main_category_item.get('name')
-            category_items = main_category_item.get('categories', [])
-            for category_item in category_items:
-                category_name = category_item.get('name')
-                subcategory_items = category_item.get('categories', [])
-                for subcategory_item in subcategory_items:
-                    subcategory_name = subcategory_item.get('categories')
+                try:
+                    response = session.get(
+                        'https://www.mvideo.ru/bff/products/v2/search',
+                        headers=headers,
+                        cookies=cookies,
+                        params=params,
+                    )
+                    response.raise_for_status()
+                    json_data = response.json()
+                except Exception as ex:
+                    print(f'get_product_ids: {ex}')
+                    break
 
-        if not json_data:
-            raise 'not json_data'
+                product_ids = json_data.get('body', {}).get('products')
+                get_product_data(product_ids=product_ids, session=session, headers=headers, cookies=cookies,
+                                 main_category_name=main_category_name, category_name=category_name)
 
-    # Сохраняем список ссылок в JSON
-    directory = 'data'
-    os.makedirs(directory, exist_ok=True)
+                # Инициализируем total при первом запросе
+                if total is None:
+                    total = json_data['body'].get('total', 0)
 
-    with open('data/category_data.json', 'w', encoding='utf-8') as file:
-        json.dump(categories_data, file, indent=4, ensure_ascii=False)
+                offset += limit
+                if offset >= total:
+                    break
+
+    return result_data
 
 
-def get_products_data(file_path: str, headers: dict) -> list:
+def get_product_prices(product_ids: list[str], session: Session, headers: dict, cookies: dict,
+                       main_category_name: str, category_name: str):
     """
     Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
 
@@ -98,103 +81,129 @@ def get_products_data(file_path: str, headers: dict) -> list:
     :param headers: словарь с HTTP-заголовками
     :return: список словарей с данными о товарах
     """
-    # Читаем product_data_list из JSON
-    with open(file_path, 'r', encoding='utf-8') as file:
-        category_data: list = json.load(file)
 
-    batch_size = 1000
+    price_data = []
+
+    params = {
+        'productIds': product_ids,
+        'addBonusRubles': 'true',
+        'isPromoApplied': 'true',
+    }
+
+    try:
+        response = session.post('https://www.mvideo.ru/bff/products/prices',
+                                headers=headers,
+                                cookies=cookies,
+                                params=params,
+                                )
+
+        response.raise_for_status()
+        json_data = response.json()
+    except Exception as ex:
+        print(f'get_product_prices: {ex}')
+
+    price_items = json_data.get('body', {}).get('materialPrices')
+
+    if not price_items:
+        print('not product_items')
+
+    for price_item in price_items:
+        product_id = price_item.get('productId')
+
+        base_price = price_item.get('basePrice')
+
+        sale_price = price_item.get('salePrice')
+
+        price_data.append(
+            {
+                'productId': product_id,
+                'Цена': base_price,
+                'Цена со скидкой': sale_price,
+            }
+        )
+
+    return price_data
+
+
+def get_product_data(product_ids: list[str], session: Session, headers: dict, cookies: dict,
+                     main_category_name: str, category_name: str):
+    """
+    Загружает данные о товарах с API сайта и сохраняет их партиями в Excel.
+
+    :param file_path: путь к файлу с URL товаров
+    :param headers: словарь с HTTP-заголовками
+    :return: список словарей с данными о товарах
+    """
+
     result_data = []
 
-    with Session() as session:
-        for category_dict in category_data:
-            category_name, category_url = next(iter(category_dict.items()))
+    json_data = {
+        'productIds': product_ids,
+        'mediaTypes': [
+            'images',
+        ],
+        'category': True,
+        'status': True,
+        'brand': True,
+        'propertyTypes': [
+            'KEY',
+        ],
+        'propertiesConfig': {
+            'propertiesPortionSize': 5,
+        },
+    }
 
-            print(f'Обработка категории: {category_name}')
+    try:
+        response = session.post('https://www.mvideo.ru/bff/product-details/list',
+                                headers=headers,
+                                cookies=cookies,
+                                json=json_data,
+                                )
 
-            try:
-                html = get_html(url=category_url, headers=headers, session=session)
-            except Exception as ex:
-                print(f'get_products_data: {ex}')
+        response.raise_for_status()
+        json_data = response.json()
+    except Exception as ex:
+        print(f'get_product_data: {ex}')
 
-            if not html:
-                continue
+    product_items = json_data.get('body', {}).get('products')
 
-            # Определяем количество страниц
-            pages: int = get_pages(html=html)
+    if not product_items:
+        print('not product_items')
 
-            for page in range(1, pages + 1):
-                page_url: str = f"{category_url}?PAGEN_2={page}"
+    for product_item in product_items:
 
-                try:
-                    time.sleep(1)  # Задержка, чтобы не перегружать сайт
-                    html = get_html(url=page_url, headers=headers, session=session)
-                except Exception as ex:
-                    print(f"{page_url} - {ex}")
-                    continue
+        brand = product_item.get('brandName')
 
-                if not html:
-                    continue
+        model = product_item.get('modelName')
 
-                soup: BeautifulSoup = BeautifulSoup(html, 'lxml')
+        product_name = product_item.get('name').replace(model, '')
 
-                try:
-                    product_items = soup.find_all('div',
-                                                  class_='item_block col-4 col-md-3 col-sm-6 col-xs-6 js-notice-block')
-                except Exception as ex:
-                    print(f'product_items: {ex}')
-                    continue
+        result_dict = {
+            'Основная категория': main_category_name,
+            'Kатегория': category_name,
+            'Товар': product_name,
+            'Бренд': brand,
+            'Модель': model
+        }
 
-                for product_item in product_items:
-                    try:
-                        product_name = product_item.find('div', class_='item-title').find('span').get_text(strip=True)
-                    except Exception:
-                        product_name = ''
+        # Сбор параметров товара
+        product_parameters = {}
+        properties_items = product_item.get('propertiesPortion', [])
 
-                    try:
-                        model = product_item.find('img', class_='img-responsive').get('title')
-                    except Exception:
-                        model = ''
+        for prop_item in properties_items:
+            prop_name = prop_item.get('name')
+            prop_value = prop_item.get('value')
+            product_parameters[prop_name] = prop_value
 
-                    brands_with_two_words = ['De Dietrich', 'Jet Air']
-                    model_lower = model.lower()
+        get_product_prices()
 
-                    if any(b.lower() in model_lower for b in brands_with_two_words):
-                        brand = ' '.join(model.split()[:2])
-                    else:
-                        brand = model.split()[0]
+        result_dict.update(product_parameters)
 
-                    # Удаляем бренд из строки model
-                    model_clean = model.replace(brand, '').strip()
+        result_data.append(result_dict)
 
-                    # Удаляем model из строки product_name
-                    product_name_clean = product_name.replace(model, '').strip()
+        print(f'Обработано товаров: {}/{}')
 
-                    if len(product_name_clean) == 0:
-                        product_name_clean = category_name
-
-                    try:
-                        price = product_item.find('span', class_='price_value').get_text(strip=True)
-                    except Exception:
-                        price = ''
-
-                    result_data.append({
-                        'Товар': product_name_clean,
-                        'Бренд': brand,
-                        'Модель': model_clean,
-                        'Цена': price,
-
-                    })
-
-                    if len(result_data) >= batch_size:
-                        save_excel(result_data)
-                        result_data.clear()
-
-                print(f'Обработано страниц: {page}/{pages}')
-
-    if result_data:
-        save_excel(result_data)
-
-    return result_data
+    save_excel(result_data)
 
 
 def save_excel(data: list) -> None:
@@ -231,7 +240,7 @@ def main():
     Собирает данные о товарах и сохраняет их в Excel.
     """
 
-    get_categories_data(headers=headers, cookies=cookies)
+    get_product_ids(categories_data=category_data, headers=headers, cookies=cookies)
     # get_products_data(file_path='data/category_data.json', headers=headers)
 
     execution_time = datetime.now() - start_time
