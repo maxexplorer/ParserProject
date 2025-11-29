@@ -54,7 +54,8 @@ def get_product_ids(categories_data: list, headers: dict, cookies: dict) -> None
                     response.raise_for_status()
                     json_data = response.json()
                 except Exception as ex:
-                    print(f'get_product_ids: {ex}')
+                    print(f'get_product_ids: {category_id} - {ex}')
+                    continue
 
                 product_ids = json_data.get('body', {}).get('products')
 
