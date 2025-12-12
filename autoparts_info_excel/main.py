@@ -14,9 +14,9 @@ def process_excel_file(path: str) -> list:
     """
     df: pd.DataFrame = pd.read_excel(path, header=None, skiprows=4)
 
-    results_dict: dict = {}
-    current_price: float = None
-    current_name: str = None
+    results_dict = {}
+    current_price = None
+    current_name = None
 
     for i in range(len(df)):
         row = df.iloc[i]
@@ -49,7 +49,7 @@ def process_excel_file(path: str) -> list:
 
             results_dict[article]['Количество'] += 1
 
-    results: list = []
+    results = []
     for k, v in results_dict.items():
         results.append({
             'Наименование': v['Наименование'],
@@ -70,8 +70,8 @@ def save_result(results: list, source_file: str) -> None:
     """
     os.makedirs('results', exist_ok=True)
 
-    base_name: str = os.path.basename(source_file).rsplit('.', 1)[0]
-    out_path: str = f'results/{base_name}_result_data.xlsx'
+    base_name = os.path.basename(source_file).rsplit('.', 1)[0]
+    out_path = f'results/{base_name}_result_data.xlsx'
 
     df: pd.DataFrame = pd.DataFrame(results)
     df.to_excel(out_path, index=False)
@@ -85,8 +85,7 @@ def main(folder: str = 'data') -> None:
 
     :param folder: папка, в которой искать Excel-файлы
     """
-    files: list = glob.glob(os.path.join(folder, '*.xls')) + \
-                  glob.glob(os.path.join(folder, '*.xlsx'))
+    files = glob.glob(os.path.join(folder, '*.xls')) + glob.glob(os.path.join(folder, '*.xlsx'))
 
     if not files:
         print('❗ В папке data/ нет Excel-файлов (.xls или .xlsx)')
