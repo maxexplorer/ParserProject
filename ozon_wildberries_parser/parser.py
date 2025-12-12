@@ -142,7 +142,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
                 'routeb': '1763537196.705.1970.897937|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.64d45847a9704b3e916ad474ed8277c8.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NjUxOTA4NTB8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY0NTg2MDUwfDE=.MEUCIQC6EqLqMK9Y0h9NAzkGdDPcxajciovAffWmjpN5H4X9PQIgXarzU2jU7dk4GJKdQg+60AosfUal1YzE1y4h+8JwvmA=',
+                'x_wbaas_token': '1.1000.68008f236da840108f7a3eb65d45c7b3.MHwxMDkuMTEwLjg4LjU0fE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDMuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzY2NDcxMTQ5fHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2NTg2NjM0OXwx.MEYCIQC9S2Wq8ZSNK8nRd+WGWEj9yGnB1U4Pp1lGNm21SSwc/wIhAOZjDKm8dtqGaPljnzkv9SQjf/d61RXOeI3cQDlcaIeB',
             }
 
             try:
@@ -348,17 +348,15 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'deviceid': 'site_b19c142c268d48699680efbe9d1e554d',
         'priority': 'u=1, i',
         'referer': 'https://www.wildberries.ru/',
-        'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+        'sec-ch-ua': '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-        'x-queryid': 'qid716365611175214577720251124105138',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
-        'x-spa-version': '13.14.1',
-        'x-userid': '0',
+        'x-spa-version': '13.16.3',
     }
 
     # Выбираем активный лист (или любой другой лист)
