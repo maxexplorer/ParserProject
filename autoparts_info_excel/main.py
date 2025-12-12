@@ -2,7 +2,7 @@ import os
 import glob
 import pandas as pd
 
-def process_excel_file(path):
+def process_excel_file(path: str) -> list:
     """
     Обрабатывает один Excel-файл и извлекает наименование, артикулы, количество и цену.
 
@@ -12,12 +12,11 @@ def process_excel_file(path):
     :param path: путь к Excel-файлу
     :return: список словарей с ключами 'Наименование', 'Артикул', 'Количество', 'Цена'
     """
-    # Читаем Excel без заголовка, пропускаем первые 4 строки
-    df = pd.read_excel(path, header=None, skiprows=4)
+    df: pd.DataFrame = pd.read_excel(path, header=None, skiprows=4)
 
-    results_dict = {}
-    current_price = None
-    current_name = None
+    results_dict: dict = {}
+    current_price: float = None
+    current_name: str = None
 
     for i in range(len(df)):
         row = df.iloc[i]
@@ -31,16 +30,15 @@ def process_excel_file(path):
             except Exception:
                 current_price = None
 
-            # Берем наименование из второго столбца строки группы
             if pd.notna(row[1]):
                 current_name = str(row[1]).strip()
-            continue  # пропускаем строку группы
+            continue
 
         # ------------------------------
         # 2) Строка с артикулом
         # ------------------------------
         if isinstance(row[2], str) and row[2].startswith('BNN'):
-            article = row[2]
+            article: str = row[2]
 
             if article not in results_dict:
                 results_dict[article] = {
@@ -49,11 +47,9 @@ def process_excel_file(path):
                     'Цена': current_price
                 }
 
-            # Считаем количество по числу строк с этим артикулом
             results_dict[article]['Количество'] += 1
 
-    # Преобразуем словарь в список для сохранения в Excel
-    results = []
+    results: list = []
     for k, v in results_dict.items():
         results.append({
             'Наименование': v['Наименование'],
@@ -65,7 +61,7 @@ def process_excel_file(path):
     return results
 
 
-def save_result(results, source_file):
+def save_result(results: list, source_file: str) -> None:
     """
     Сохраняет обработанные данные в новый Excel-файл.
 
@@ -74,23 +70,23 @@ def save_result(results, source_file):
     """
     os.makedirs('results', exist_ok=True)
 
-    base_name = os.path.basename(source_file).rsplit('.', 1)[0]
-    out_path = f'results/{base_name}_result_data.xlsx'
+    base_name: str = os.path.basename(source_file).rsplit('.', 1)[0]
+    out_path: str = f'results/{base_name}_result_data.xlsx'
 
-    df = pd.DataFrame(results)
+    df: pd.DataFrame = pd.DataFrame(results)
     df.to_excel(out_path, index=False)
 
     print(f'✅ Результат сохранён: {out_path}')
 
 
-def main(folder='data'):
+def main(folder: str = 'data') -> None:
     """
     Основная функция, обрабатывает все Excel-файлы в указанной папке.
 
     :param folder: папка, в которой искать Excel-файлы
     """
-    files = glob.glob(os.path.join(folder, '*.xls')) + \
-            glob.glob(os.path.join(folder, '*.xlsx'))
+    files: list = glob.glob(os.path.join(folder, '*.xls')) + \
+                  glob.glob(os.path.join(folder, '*.xlsx'))
 
     if not files:
         print('❗ В папке data/ нет Excel-файлов (.xls или .xlsx)')
@@ -98,7 +94,7 @@ def main(folder='data'):
 
     for file in files:
         print(f'📄 Обрабатываю: {file}')
-        results = process_excel_file(file)
+        results: list = process_excel_file(file)
         save_result(results, file)
 
 
