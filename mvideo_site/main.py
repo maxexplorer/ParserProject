@@ -1,10 +1,7 @@
 import os
-import time
 from datetime import datetime
-import json
 
 from requests import Session
-from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter, read_excel
 
 from configs.config import headers, cookies
@@ -235,7 +232,7 @@ def save_excel(data: list) -> None:
                         header=(num_existing_rows == 0),
                         sheet_name='Data', index=False)
 
-    print(f'Сохранено {len(data)} записей в {file_path}')
+    print(f'Сохранено {num_existing_rows} записей в {file_path}')
 
 
 def main():
