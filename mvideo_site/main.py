@@ -180,7 +180,7 @@ def get_product_data(product_ids: list[str], session: Session, headers: dict, co
         product_id = product_item.get('productId')
         brand = product_item.get('brandName')
         model = product_item.get('modelName')
-        product_name = product_item.get('name', '').replace(model, '')
+        product_name = product_item.get('name', '').replace(brand, '').replace(model, '')
 
         # Атрибуты товара
         product_attributes = {
