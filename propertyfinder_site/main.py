@@ -187,7 +187,7 @@ def get_data(headers: dict) -> list[dict[str, str | int | None]]:
                 property_url: str | None = properties.get('share_url')
 
                 # Изображения
-                images: str = ', '.join(
+                image_urls: str = ', '.join(
                     image.get('medium')
                     for image in properties.get('images', [])
                     if image.get('medium')
@@ -222,7 +222,7 @@ def get_data(headers: dict) -> list[dict[str, str | int | None]]:
                         'description': description,
                         'amenities': amenities,
                         'property_url': property_url,
-                        'images': images,
+                        'image_urls': image_urls,
                         'broker_name': broker_name,
                         'broker_address': broker_address,
                         'broker_email': broker_email,
