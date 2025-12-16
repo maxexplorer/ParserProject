@@ -1,13 +1,20 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, date
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter
 
-start_time = datetime.now()
 
-headers = {
+# =============================================================================
+# Глобальные настройки
+# =============================================================================
+
+# Время старта программы (используется для подсчёта времени выполнения)
+start_time: datetime = datetime.now()
+
+# HTTP-заголовки для имитации запроса от браузера
+headers: dict = {
     'accept': '*/*',
     'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     'priority': 'u=1, i',
@@ -18,30 +25,43 @@ headers = {
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+    'user-agent': (
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        'AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Chrome/143.0.0.0 Safari/537.36'
+    ),
     'x-nextjs-data': '1',
 }
 
 
+# =============================================================================
+# Работа с API PropertyFinder
+# =============================================================================
+
 def get_json(headers: dict, session: Session, page: int) -> dict | None:
     """
-    Получить JSON с новостями с указанной страницы.
+    Загружает JSON-данные выдачи PropertyFinder для указанной страницы.
 
-    :param headers: Заголовки HTTP запроса
-    :param session: Объект requests.Session для повторного использования соединения
-    :param page: Номер страницы для запроса
-    :return: JSON-ответ в виде словаря или None в случае ошибки
+    Используется Next.js endpoint, который возвращает
+    структурированные данные по объявлениям.
+
+    :param headers: HTTP-заголовки запроса
+    :param session: Активная requests.Session
+    :param page: Номер страницы выдачи
+    :return: JSON-ответ в виде dict или None при ошибке
     """
-    params = {
+    params: dict = {
         'page': page,
         'categorySlug': 'buy',
         'propertyTypeSlug': 'properties',
         'saleType': 'for-sale',
         'pattern': '/categorySlug/propertyTypeSlug-saleType.html',
     }
+
     try:
         response = session.get(
-            'https://www.propertyfinder.ae/search/_next/data/2uummsZcqGe1HZV7ZIrBW/en/buy/properties-for-sale.html.json',
+            'https://www.propertyfinder.ae/search/_next/data/'
+            '2uummsZcqGe1HZV7ZIrBW/en/buy/properties-for-sale.html.json',
             params=params,
             headers=headers,
             timeout=30
@@ -52,149 +72,224 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
             return None
 
         return response.json()
+
     except Exception as ex:
         print(f'get_json: {ex}')
         return None
 
 
+# =============================================================================
+# Сбор и обработка данных
+# =============================================================================
+
 def get_data(headers: dict) -> list[dict[str, str | int | None]]:
     """
-    Собирает данные статей с сайта, фильтруя по ключевому слову 'ТиНАО'.
+    Собирает объявления о продаже недвижимости с сайта PropertyFinder.
 
-    :param headers: Заголовки HTTP запроса
-    :return: Список словарей с информацией по статьям
+    В итоговую выборку попадают только объявления,
+    опубликованные **сегодня (по UTC)**.
+
+    :param headers: HTTP-заголовки запроса
+    :return: Список словарей с данными объявлений
     """
-    result_data = []
+    result_data: list[dict[str, str | int | None]] = []
 
+    # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
 
-        pages = 3
+        pages: int = 3  # Количество страниц для обработки
 
         for page in range(1, pages + 1):
             try:
-                time.sleep(1)  # Пауза между запросами, чтобы избежать блокировки
-                # Получаем JSON данные для каждой страницы
-                json_data = get_json(headers=headers, session=session, page=page)
+                # Пауза между запросами для снижения риска блокировки
+                time.sleep(1)
+
+                json_data: dict | None = get_json(
+                    headers=headers,
+                    session=session,
+                    page=page
+                )
+
             except Exception as ex:
-                print(f"page: {page} - {ex}")
+                print(f'page {page}: {ex}')
                 continue
 
             if not json_data:
                 print('not json_data')
                 continue
 
-            data = json_data.get('pageProps', {}).get('searchResult', {}).get('listings')
+            # Извлечение списка объявлений
+            listings: list | None = (
+                json_data
+                .get('pageProps', {})
+                .get('searchResult', {})
+                .get('listings')
+            )
 
-            if not data:
+            if not listings:
                 print('not data')
                 continue
 
-            for item in data:
-                properties = item.get('property')
+            for item in listings:
+                properties: dict | None = item.get('property')
 
-                if properties is None:
+                if not properties:
                     continue
 
-                listed_date = properties.get('listed_date')
-                date = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
+                # -----------------------------------------------------------------
+                # Дата публикации объявления (UTC)
+                # -----------------------------------------------------------------
+                listed_date: str | None = properties.get('listed_date')
+                if not listed_date:
+                    continue
 
-                property_id = properties.get('id')
+                date_obj: datetime = datetime.strptime(
+                    listed_date, '%Y-%m-%dT%H:%M:%SZ'
+                )
 
-                property_type = properties.get('property_type')
+                # Фильтрация: только объявления за сегодняшний день
+                if date_obj.date() != date.today():
+                    continue
 
-                title = properties.get('title')
+                # -----------------------------------------------------------------
+                # Основные данные объекта
+                # -----------------------------------------------------------------
+                property_id: int | None = properties.get('id')
+                property_type: str | None = properties.get('property_type')
+                title: str | None = properties.get('title')
 
-                price = properties.get('price', {}).get('value')
+                # Локация
+                location: dict = properties.get('location', {})
+                full_name: str | None = location.get('full_name')
+                building_type: str | None = location.get('type')
+                building_name: str | None = location.get('name')
 
-                currency = properties.get('price', {}).get('currency')
+                # Цена
+                price_info: dict = properties.get('price', {})
+                price: int | None = price_info.get('value')
+                currency: str | None = price_info.get('currency')
 
-                location = properties.get('location', {}).get('full_name')
+                # Комнаты
+                bedrooms: int | None = properties.get('bedrooms')
+                bathrooms: int | None = properties.get('bathrooms')
 
-                building_type = properties.get('location', {}).get('type')
+                # Площадь
+                size_info: dict = properties.get('size', {})
+                size: int | None = size_info.get('value')
+                unit: str | None = size_info.get('unit')
 
-                images = ', '.join(i.get('medium') for i in properties.get('images', []))
+                # Дополнительная информация
+                completion_status: str | None = properties.get('completion_status')
+                description: str | None = properties.get('description')
+                amenities: str = ', '.join(
+                    properties.get('amenity_names', [])
+                )
+                property_url: str | None = properties.get('share_url')
 
-                broker_items = properties.get('broker')
-                broker_name = broker_items.get('name')
-                broker_address = broker_items.get('address')
-                broker_email = broker_items.get('email')
-                broker_phone = broker_items.get('phone')
+                # Изображения
+                images: str = ', '.join(
+                    image.get('medium')
+                    for image in properties.get('images', [])
+                    if image.get('medium')
+                )
 
-                size = properties.get('size', {}).get('value')
-                unit = properties.get('size', {}).get('unit')
+                # Брокер
+                broker: dict = properties.get('broker') or {}
+                broker_name: str | None = broker.get('name')
+                broker_address: str | None = broker.get('address')
+                broker_email: str | None = broker.get('email')
+                broker_phone: str | None = broker.get('phone')
 
-                property_url = properties.get('share_url')
-
-                completion_status = properties.get('completion_status')
-
-                description = properties.get('description')
-
-                amenities = ', '.join(c for c in properties.get('amenity_names', []))
-
+                # -----------------------------------------------------------------
+                # Добавление результата
+                # -----------------------------------------------------------------
                 result_data.append(
                     {
-                        'listed_date': date,
+                        'listed_date': date_obj,
                         'property_id': property_id,
                         'property_type': property_type,
                         'title': title,
+                        'full_name': full_name,
+                        'building_type': building_type,
+                        'building_name': building_name,
                         'price': price,
                         'currency': currency,
-                        'location': location,
-                        'building_type': building_type,
+                        'bedrooms': bedrooms,
+                        'bathrooms': bathrooms,
+                        'size': size,
+                        'size_unit': unit,
+                        'completion_status': completion_status,
+                        'description': description,
+                        'amenities': amenities,
+                        'property_url': property_url,
                         'images': images,
                         'broker_name': broker_name,
                         'broker_address': broker_address,
                         'broker_email': broker_email,
                         'broker_phone': broker_phone,
-                        'size': size,
-                        'size_unit': unit,
-                        'property_url': property_url,
-                        'completion_status': completion_status,
-                        'description': description,
-                        'amenities': amenities,
                     }
                 )
 
-            print(f'Обработано: {page}/{pages}')
+            print(f'Обработано страниц: {page}/{pages}')
 
     return result_data
 
 
-# Функция для записи данных в формат xlsx
-def save_excel(data: list) -> None:
-    cur_date = datetime.now().strftime('%d-%m-%Y')
+# =============================================================================
+# Сохранение данных
+# =============================================================================
 
-    directory = 'results'
+def save_excel(data: list) -> None:
+    """
+    Сохраняет собранные данные в Excel-файл (.xlsx).
+
+    Файл сохраняется в директорию `results`
+    с текущей датой в названии.
+
+    :param data: Список словарей с объявлениями
+    """
+    cur_date: str = datetime.now().strftime('%d-%m-%Y')
+    directory: str = 'results'
 
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    file_path = f'{directory}/result_data_{cur_date}.xlsx'
+    file_path: str = f'{directory}/result_data_{cur_date}.xlsx'
 
-    dataframe = DataFrame(data)
+    dataframe: DataFrame = DataFrame(data)
 
     with ExcelWriter(file_path, mode='w') as writer:
-        dataframe.to_excel(writer, sheet_name='data', index=False)
+        dataframe.to_excel(
+            writer,
+            sheet_name='data',
+            index=False
+        )
 
     print(f'Данные сохранены в файл {file_path}')
 
 
+# =============================================================================
+# Точка входа
+# =============================================================================
+
 def main() -> None:
     """
-    Основная функция запуска скрипта.
-    Собирает данные и сохраняет их в Excel.
+    Точка входа в программу.
+
+    Запускает сбор данных,
+    сохраняет результат в Excel
+    и выводит общее время выполнения.
     """
     try:
-        result_data = get_data(headers=headers)
-
+        result_data: list = get_data(headers=headers)
         save_excel(data=result_data)
 
     except Exception as ex:
         print(f'main: {ex}')
-        input("Нажмите Enter, чтобы закрыть программу...")
+        input('Нажмите Enter, чтобы закрыть программу...')
 
     execution_time = datetime.now() - start_time
-    print('Сбор данных завершен!')
+    print('Сбор данных завершён!')
     print(f'Время работы программы: {execution_time}')
 
 
