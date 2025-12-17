@@ -2,18 +2,15 @@ import os
 import glob
 import pandas as pd
 
-def process_excel_file(path: str) -> list:
+def process_excel_file(path: str) -> dict:
     """
-    Обрабатывает один Excel-файл и извлекает наименование, артикулы, количество и цену.
-
-    Артикулы суммируются по количеству, а цена и наименование берутся из строки группы
-    (столбец 6 = количество, столбец 7 = цена, столбец 2 = наименование). Пропускаются первые 4 строки.
-
-    :param path: путь к Excel-файлу
-    :return: список словарей с ключами 'Наименование', 'Артикул', 'Количество', 'Цена'
+    Обрабатывает Excel-файл и возвращает два блока:
+    1) summary: суммарные данные по артикулу (количество, цена, наименование)
+    2) serials: отдельные строки с Артикул + Серия
     """
     df: pd.DataFrame = pd.read_excel(path, header=None, skiprows=4)
 
+    # ----------- Суммарные данные -----------
     results_dict = {}
     current_price = None
     current_name = None
@@ -21,9 +18,7 @@ def process_excel_file(path: str) -> list:
     for i in range(len(df)):
         row = df.iloc[i]
 
-        # ------------------------------
-        # 1) Строка группы: есть количество и цена
-        # ------------------------------
+        # Строка группы
         if pd.notna(row[5]) and pd.notna(row[6]):
             try:
                 current_price = float(str(row[6]).replace(' ', '').replace(',', '.'))
@@ -34,56 +29,89 @@ def process_excel_file(path: str) -> list:
                 current_name = str(row[1]).strip()
             continue
 
-        # ------------------------------
-        # 2) Строка с артикулом
-        # ------------------------------
+        # Строка с артикулом
         if isinstance(row[2], str) and row[2].startswith('BNN'):
-            article: str = row[2]
-
+            article = row[2]
             if article not in results_dict:
                 results_dict[article] = {
                     'Наименование': current_name,
                     'Количество': 0,
                     'Цена': current_price
                 }
-
             results_dict[article]['Количество'] += 1
 
-    results = []
+    summary = []
     for k, v in results_dict.items():
-        results.append({
+        summary.append({
             'Наименование': v['Наименование'],
             'Артикул': k,
             'Количество': v['Количество'],
             'Цена': v['Цена']
         })
 
-    return results
+    # ----------- Артикул + серия -----------
+    serial_rows = []
+    current_name = None
+    for i in range(len(df)):
+        row = df.iloc[i]
+
+        # Строка группы
+        if pd.notna(row[5]) and pd.notna(row[6]):
+            if pd.notna(row[1]):
+                current_name = str(row[1]).strip()
+            continue
+
+        # Строка с артикулом
+        if isinstance(row[2], str) and row[2].startswith('BNN'):
+            article = row[2]
+            series = str(row[7]).strip() if pd.notna(row[7]) else None
+            serial_rows.append({
+                'Артикул': article,
+                'Серия': series
+            })
+
+    return {'summary': summary, 'serials': serial_rows}
 
 
-def save_result(results: list, source_file: str) -> None:
+def save_result(processed: dict, source_file: str) -> None:
     """
-    Сохраняет обработанные данные в новый Excel-файл.
-
-    :param results: список словарей с данными
-    :param source_file: исходный файл Excel (для формирования имени результата)
+    Записывает данные в ОДИН лист:
+    - summary: колонки A-D
+    - serials: колонки G-H (7 и 8 столбцы)
     """
     os.makedirs('results', exist_ok=True)
-
     base_name = os.path.basename(source_file).rsplit('.', 1)[0]
     out_path = f'results/{base_name}_result_data.xlsx'
 
-    df: pd.DataFrame = pd.DataFrame(results)
-    df.to_excel(out_path, index=False)
+    df_summary = pd.DataFrame(processed['summary'])
+    df_serials = pd.DataFrame(processed['serials'])
+
+    with pd.ExcelWriter(out_path) as writer:
+        # Старая реализация (A-D)
+        df_summary.to_excel(
+            writer,
+            index=False,
+            sheet_name='Лист1',
+            startrow=0,
+            startcol=0
+        )
+
+        # Новая реализация (G-H → 7 и 8 столбцы)
+        df_serials.to_excel(
+            writer,
+            index=False,
+            sheet_name='Лист1',
+            startrow=0,
+            startcol=6
+        )
 
     print(f'✅ Результат сохранён: {out_path}')
 
 
+
 def main(folder: str = 'data') -> None:
     """
-    Основная функция, обрабатывает все Excel-файлы в указанной папке.
-
-    :param folder: папка, в которой искать Excel-файлы
+    Основная функция: обрабатывает все Excel-файлы в папке.
     """
     files = glob.glob(os.path.join(folder, '*.xls')) + glob.glob(os.path.join(folder, '*.xlsx'))
 
@@ -93,8 +121,8 @@ def main(folder: str = 'data') -> None:
 
     for file in files:
         print(f'📄 Обрабатываю: {file}')
-        results: list = process_excel_file(file)
-        save_result(results, file)
+        processed = process_excel_file(file)
+        save_result(processed, file)
 
 
 if __name__ == '__main__':
