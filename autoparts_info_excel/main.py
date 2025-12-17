@@ -2,6 +2,7 @@ import os
 import glob
 import pandas as pd
 
+
 def process_excel_file(path: str) -> dict:
     """
     Обрабатывает Excel-файл и возвращает два блока:
@@ -106,7 +107,6 @@ def save_result(processed: dict, source_file: str) -> None:
         )
 
     print(f'✅ Результат сохранён: {out_path}')
-
 
 
 def main(folder: str = 'data') -> None:
