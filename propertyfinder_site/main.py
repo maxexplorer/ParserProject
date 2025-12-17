@@ -119,18 +119,18 @@ def get_data(headers: dict) -> list[dict[str, str | int | None]]:
                 continue
 
             # Извлечение списка объявлений
-            listings: list | None = (
+            items: list | None = (
                 json_data
                 .get('pageProps', {})
                 .get('searchResult', {})
                 .get('listings')
             )
 
-            if not listings:
-                print('not data')
+            if not items:
+                print('not items')
                 continue
 
-            for item in listings:
+            for item in items:
                 properties: dict | None = item.get('property')
 
                 if not properties:
