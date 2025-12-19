@@ -7,17 +7,23 @@ from pandas import DataFrame, read_excel
 
 from autotrade import get_prices_and_stocks
 
-from config import login_autotrade, password_autotrade
+from config import login_autotrade, password_autotrade, login_abcp, password_abcp
 
 salt = "1>6)/MI~{J"
 
 url_autotrade = "https://api2.autotrade.su/?json"
+url_adcp = "https://id34451.public.api.abcp.ru"
 
 # -------------------
 # Формируем auth_key для autotrade
 # -------------------
 password_md5_autotrade = hashlib.md5(password_autotrade.encode("utf-8")).hexdigest()
 auth_key_autotrade = hashlib.md5((login_autotrade + password_md5_autotrade + salt).encode("utf-8")).hexdigest()
+
+# -------------------
+# Формируем auth_key для autotrade
+# -------------------
+password_md5_adcp = hashlib.md5(password_abcp.encode("utf-8")).hexdigest()
 
 # -------------------
 # Заголовки
