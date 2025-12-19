@@ -52,17 +52,14 @@ def process_excel_file(path: str) -> dict:
 
     # ----------- Артикул + серия -----------
     serial_rows = []
-    current_name = None
+
     for i in range(len(df)):
         row = df.iloc[i]
 
         # Строка группы
         if pd.notna(row[5]) and pd.notna(row[6]):
-            if pd.notna(row[1]):
-                current_name = str(row[1]).strip()
             continue
 
-        # Строка с артикулом
         if isinstance(row[2], str) and row[2].startswith('BNN'):
             article = row[2]
             series = str(row[7]).strip() if pd.notna(row[7]) else None
