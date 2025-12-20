@@ -1,13 +1,11 @@
-import os
-import glob
+# main.py
 
 import hashlib
-
-from pandas import DataFrame, read_excel
 
 from autotrade import get_prices_and_stocks
 
 from config import login_autotrade, password_autotrade, login_abcp, password_abcp
+from utils import load_article_info_from_excel, save_excel
 
 salt = "1>6)/MI~{J"
 
@@ -21,7 +19,7 @@ password_md5_autotrade = hashlib.md5(password_autotrade.encode("utf-8")).hexdige
 auth_key_autotrade = hashlib.md5((login_autotrade + password_md5_autotrade + salt).encode("utf-8")).hexdigest()
 
 # -------------------
-# Формируем auth_key для autotrade
+# Формируем auth_key для adcp
 # -------------------
 password_md5_adcp = hashlib.md5(password_abcp.encode("utf-8")).hexdigest()
 
@@ -32,37 +30,21 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
 }
 
-def load_article_info_from_excel(df: DataFrame):
-    """
-    Загружает артикулы, названия и цены из Excel-файла.
-
-    :param folder: Папка с Excel-файлом
-    :return: Словарь вида {offer_id: (название, цена)}
-    """
-
-    df.columns = df.columns.str.strip()
-    df = df.dropna(subset=['Артикул', df.columns[1], df.columns[2]])
-
-    article_info = []
-    for _, row in df.iterrows():
-        article = str(row['Артикул']).strip()
-        name = str(row.iloc[2]).strip()
-        price = row.iloc[3]
-        article_info.append(article)
-
-
-    return article_info
 
 def main():
-    autotrade_df = read_excel('data/SAT autotrade.xlsx', header=0, sheet_name=0)
-    abcp_df = read_excel('data/ОЕМ abcp.xlsx', header=0, sheet_name=0)
+    autotrade_file_path = 'data/SAT autotrade.xlsx'
+    abcp_file_path = 'data/ОЕМ abcp.xlsx'
 
-    autotrade_article = load_article_info_from_excel(df=autotrade_df)
-    abcp_df = load_article_info_from_excel(df=abcp_df)
+    autotrade_articles = load_article_info_from_excel(autotrade_file_path)
 
-    get_prices_and_stocks(url_autotrade, headers, auth_key_autotrade, autotrade_article)
+    autotrade_data = get_prices_and_stocks(
+        url_autotrade,
+        headers,
+        auth_key_autotrade,
+        autotrade_articles
+    )
 
-
+    save_excel(autotrade_data)
 
 
 if __name__ == '__main__':
