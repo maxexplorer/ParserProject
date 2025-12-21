@@ -1,4 +1,5 @@
 # autotrade.py
+
 import time
 import json
 
@@ -6,9 +7,13 @@ import requests
 
 from utils import chunked
 
-def get_prices_and_stocks(url, headers, auth_key, articles: list[tuple[str, str]]):
-    print(f'Обрабатывается: Autotrade')
 
+def get_prices_autotrade(
+        url: str,
+        headers: dict,
+        auth_key: str,
+        articles: list
+):
     results = []
 
     total_batches = (len(articles) + 59) // 60  # количество батчей
@@ -16,7 +21,7 @@ def get_prices_and_stocks(url, headers, auth_key, articles: list[tuple[str, str]
 
     for batch in chunked(articles, 60):
         batch_num += 1
-        print(f'Обрабатывается батч {batch_num}/{total_batches} ({len(batch)} артикулов)...')
+        print(f'📦 Autotrade батч {batch_num}/{total_batches} ({len(batch)} артикулов)...')
 
         items_payload = {}
 
@@ -38,17 +43,35 @@ def get_prices_and_stocks(url, headers, auth_key, articles: list[tuple[str, str]
             }
         }
 
-        time.sleep(1)
+        try:
+            time.sleep(1)
 
-        response = requests.post(
-            url,
-            data="data=" + json.dumps(payload),
-            headers=headers
-        )
-        response.raise_for_status()
+            response = requests.post(
+                url=url,
+                headers=headers,
+                data="data=" + json.dumps(payload),
+            )
+            response.raise_for_status()
+        except Exception as ex:
+            print(
+                f"❌ Autotrade батч {batch_num}/{total_batches} "
+                f"ошибка запроса: {ex}"
+            )
+            continue
 
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError:
+            print(
+                f"❌ Autotrade батч {batch_num}/{total_batches} "
+                f"ошибка JSON"
+            )
+            continue
+
         items = data.get("items", {})
+
+        if not items:
+            continue
 
         for _, item in items.items():
             article = item.get('article')
@@ -58,9 +81,9 @@ def get_prices_and_stocks(url, headers, auth_key, articles: list[tuple[str, str]
 
             results.append(
                 {
-                'Артикул': article,
-                'Цена': price,
-            }
+                    'Артикул': article,
+                    'Цена': price,
+                }
             )
 
     return results
