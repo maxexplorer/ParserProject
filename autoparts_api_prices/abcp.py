@@ -68,7 +68,7 @@ def get_prices_abcp(
                 f'❌ ABCP батч {batch_num}/{total_batches} '
                 f'ошибка запроса: {ex}'
             )
-            continue
+            return results
 
         try:
             data: list = response.json()
