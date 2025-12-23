@@ -18,7 +18,6 @@ from abcp import get_prices_abcp
 from config import login_autotrade, password_autotrade, login_abcp, password_abcp
 from utils import load_article_info_from_excel, save_excel
 
-
 # Фиксируем время начала выполнения
 start_time: datetime = datetime.now()
 
@@ -28,7 +27,6 @@ salt: str = '1>6)/MI~{J'
 # URL API
 url_autotrade: str = "https://api2.autotrade.su/?json"
 url_abcp: str = "https://id34451.public.api.abcp.ru/"
-
 
 # -------------------
 # Формируем auth_key для autotrade
@@ -68,37 +66,46 @@ def main() -> None:
     - Сохраняет результат в Excel
     """
 
-    # ---------- Autotrade ----------
-    autotrade_file_path: str = "data/SAT autotrade.xlsx"
-    autotrade_articles: list = load_article_info_from_excel(autotrade_file_path)
+    try:
 
-    autotrade_data: list = get_prices_autotrade(
-        url=url_autotrade,
-        headers=headers,
-        auth_key=auth_key_autotrade,
-        articles=autotrade_articles
-    )
+        # ---------- Autotrade ----------
+        autotrade_file_path: str = "data/SAT autotrade.xlsx"
+        autotrade_articles: list = load_article_info_from_excel(autotrade_file_path)
 
-    save_excel(data=autotrade_data)
+        autotrade_data: list = get_prices_autotrade(
+            url=url_autotrade,
+            headers=headers,
+            auth_key=auth_key_autotrade,
+            articles=autotrade_articles
+        )
 
-    # ---------- ABCP ----------
-    abcp_file_path: str = "data/ОЕМ abcp.xlsx"
-    abcp_articles: list = load_article_info_from_excel(abcp_file_path)
+        save_excel(data=autotrade_data)
 
-    abcp_data: list = get_prices_abcp(
-        url=url_abcp,
-        headers=headers,
-        userlogin=login_abcp,
-        userpsw=password_md5_abcp,
-        articles=abcp_articles
-    )
+        # ---------- ABCP ----------
+        abcp_file_path: str = "data/ОЕМ abcp.xlsx"
+        abcp_articles: list = load_article_info_from_excel(abcp_file_path)
 
-    save_excel(data=abcp_data)
+        abcp_data: list = get_prices_abcp(
+            url=url_abcp,
+            headers=headers,
+            userlogin=login_abcp,
+            userpsw=password_md5_abcp,
+            articles=abcp_articles
+        )
 
-    # ---------- Завершение ----------
+        save_excel(data=abcp_data)
+
+    except Exception as ex:
+        print(f'main: {ex}')
+        input("Нажмите Enter, чтобы закрыть программу...")
+        return
+
+        # ---------- Завершение ----------
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
     print(f'Время выполнения: {execution_time}')
+
+    input("Нажмите Enter, чтобы закрыть программу...")
 
 
 if __name__ == '__main__':
