@@ -1,5 +1,11 @@
 # abcp.py
 
+"""
+Модуль работы с ABCP API.
+
+Поиск товаров через операцию search/batch.
+"""
+
 import time
 import requests
 
@@ -12,27 +18,36 @@ def get_prices_abcp(
         userlogin: str,
         userpsw: str,
         articles: list
-):
+) -> list:
     """
-    Поиск цен в ABCP через search/batch
+    Поиск цен товаров в ABCP через search/batch.
+
+    :param url: Базовый URL ABCP
+    :param headers: HTTP-заголовки
+    :param userlogin: Логин пользователя
+    :param userpsw: MD5-хэш пароля
+    :param articles: Список (article, brand)
+    :return: Список словарей с результатами
     """
 
-    url = f'{url}search/batch'
+    # Полный URL операции
+    url = f"{url}search/batch"
 
-    results = []
+    results: list = []
 
-    total_batches = (len(articles) + 99) // 100  # максимум 100 в batch
-    batch_num = 0
+    # ABCP принимает до 100 позиций за запрос
+    total_batches: int = (len(articles) + 99) // 100
+    batch_num: int = 0
 
     for batch in chunked(articles, 100):
         batch_num += 1
 
-        payload = {
+        payload: dict = {
             "userlogin": userlogin,
             "userpsw": userpsw,
         }
 
-        # формируем search[i][number], search[i][brand]
+        # Формируем параметры search[i][number] и search[i][brand]
         for i, (article, brand) in enumerate(batch):
             payload[f"search[{i}][number]"] = article
             payload[f"search[{i}][brand]"] = brand
@@ -56,7 +71,7 @@ def get_prices_abcp(
             continue
 
         try:
-            data = response.json()
+            data: list = response.json()
         except ValueError:
             print(
                 f'❌ ABCP батч {batch_num}/{total_batches} '
@@ -68,10 +83,10 @@ def get_prices_abcp(
             continue
 
         for item in data:
-            article = item.get('number')
-            brand = item.get('brand')
-            price = item.get('price')
-            description = item.get('description')
+            article: str = item.get('number')
+            brand: str = item.get('brand')
+            price: float = item.get('price')
+            description: str = item.get('description')
 
             results.append(
                 {
@@ -80,6 +95,9 @@ def get_prices_abcp(
                 }
             )
 
-        print(f'📦 ABCP батч {batch_num}/{total_batches} ({len(data)} артикулов)...')
+        print(
+            f'📦 ABCP батч {batch_num}/{total_batches} '
+            f'({len(data)} артикулов)...'
+        )
 
     return results

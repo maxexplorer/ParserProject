@@ -1,8 +1,14 @@
 # autotrade.py
 
+"""
+Модуль работы с Autotrade API.
+
+Получение цен и остатков товаров
+через метод getStocksAndPrices.
+"""
+
 import time
 import json
-
 import requests
 
 from utils import chunked
@@ -13,21 +19,33 @@ def get_prices_autotrade(
         headers: dict,
         auth_key: str,
         articles: list
-):
-    results = []
+) -> list:
+    """
+    Получает цены товаров из Autotrade.
 
-    total_batches = (len(articles) + 59) // 60  # количество батчей
-    batch_num = 0
+    :param url: URL API Autotrade
+    :param headers: HTTP-заголовки
+    :param auth_key: Ключ авторизации
+    :param articles: Список (article, brand)
+    :return: Список словарей с результатами
+    """
+
+    results: list = []
+
+    # Autotrade принимает до 60 позиций за запрос
+    total_batches: int = (len(articles) + 59) // 60
+    batch_num: int = 0
 
     for batch in chunked(articles, 60):
         batch_num += 1
 
-        items_payload = {}
+        items_payload: dict = {}
 
+        # Формируем payload items
         for article, brand in batch:
             items_payload[article] = {brand: 1}
 
-        payload = {
+        payload: dict = {
             "auth_key": auth_key,
             "method": "getStocksAndPrices",
             "params": {
@@ -51,32 +69,33 @@ def get_prices_autotrade(
                 data="data=" + json.dumps(payload),
             )
             response.raise_for_status()
+
         except Exception as ex:
             print(
-                f"❌ Autotrade батч {batch_num}/{total_batches} "
-                f"ошибка запроса: {ex}"
+                f'❌ Autotrade батч {batch_num}/{total_batches} '
+                f'ошибка запроса: {ex}'
             )
             continue
 
         try:
-            data = response.json()
+            data: dict = response.json()
         except ValueError:
             print(
-                f"❌ Autotrade батч {batch_num}/{total_batches} "
-                f"ошибка JSON"
+                f'❌ Autotrade батч {batch_num}/{total_batches} '
+                f'ошибка JSON'
             )
             continue
 
-        items = data.get('items', {})
+        items: dict = data.get('items', {})
 
         if not items:
             continue
 
         for _, item in items.items():
-            article = item.get('article')
-            brand = item.get('brand')
-            name = item.get('name')
-            price = item.get('price')
+            article: str = item.get('article')
+            brand: str = item.get('brand')
+            name: str = item.get('name')
+            price: float = item.get('price')
 
             results.append(
                 {
@@ -85,6 +104,9 @@ def get_prices_autotrade(
                 }
             )
 
-        print(f'📦 Autotrade батч {batch_num}/{total_batches} ({len(items)} артикулов)...')
+        print(
+            f'📦 Autotrade батч {batch_num}/{total_batches} '
+            f'({len(items)} артикулов)...'
+        )
 
     return results
