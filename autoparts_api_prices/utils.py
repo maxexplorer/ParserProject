@@ -1,6 +1,7 @@
 # utils.py
 
 import os
+from datetime import datetime
 
 from pandas import DataFrame, ExcelWriter, read_excel
 
@@ -36,8 +37,11 @@ def save_excel(data: list[dict], sheet_name: str = 'Лист1') -> None:
         data: Список словарей с данными товаров.
         category_name: Название категории для формирования имени файла.
     """
+
+    cur_date = datetime.now().strftime('%d-%m-%Y')
+
     directory: str = 'results'
-    file_path: str = f'{directory}/result_data.xlsx'
+    file_path: str = f'{directory}/result_data_{cur_date}.xlsx'
 
     # Создаем директорию для результатов, если её нет
     os.makedirs(directory, exist_ok=True)

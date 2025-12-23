@@ -17,6 +17,8 @@ def get_prices_abcp(
     Поиск цен в ABCP через search/batch
     """
 
+    url = f'{url}search/batch'
+
     results = []
 
     total_batches = (len(articles) + 99) // 100  # максимум 100 в batch
@@ -24,10 +26,6 @@ def get_prices_abcp(
 
     for batch in chunked(articles, 100):
         batch_num += 1
-        print(
-            f'📦 ABCP батч {batch_num}/{total_batches} '
-            f'({len(batch)} артикулов)...'
-        )
 
         payload = {
             "userlogin": userlogin,
@@ -72,8 +70,8 @@ def get_prices_abcp(
         for item in data:
             article = item.get('number')
             brand = item.get('brand')
-            name = item.get('name')
             price = item.get('price')
+            description = item.get('description')
 
             results.append(
                 {
@@ -81,5 +79,7 @@ def get_prices_abcp(
                     'Цена': price,
                 }
             )
+
+        print(f'📦 ABCP батч {batch_num}/{total_batches} ({len(data)} артикулов)...')
 
     return results

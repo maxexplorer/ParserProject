@@ -9,10 +9,13 @@ from abcp import get_prices_abcp
 from config import login_autotrade, password_autotrade, login_abcp, password_abcp
 from utils import load_article_info_from_excel, save_excel
 
+
+start_time = datetime.now()
+
 salt = "1>6)/MI~{J"
 
 url_autotrade = "https://api2.autotrade.su/?json"
-url_abcp = "https://id34451.public.api.abcp.ru/search/batch"
+url_abcp = "https://id34451.public.api.abcp.ru/"
 
 
 # -------------------
@@ -34,20 +37,21 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
 }
 
-start_time = datetime.now()
+
+
 
 def main():
     autotrade_file_path = 'data/SAT autotrade.xlsx'
     autotrade_articles = load_article_info_from_excel(autotrade_file_path)
 
-    # autotrade_data = get_prices_autotrade(
-    #     url=url_autotrade,
-    #     headers=headers,
-    #     auth_key=auth_key_autotrade,
-    #     articles=autotrade_articles
-    # )
-    #
-    # save_excel(autotrade_data)
+    autotrade_data = get_prices_autotrade(
+        url=url_autotrade,
+        headers=headers,
+        auth_key=auth_key_autotrade,
+        articles=autotrade_articles
+    )
+
+    save_excel(data=autotrade_data)
 
     abcp_file_path = 'data/ОЕМ abcp.xlsx'
     abcp_articles = load_article_info_from_excel(abcp_file_path)
@@ -60,7 +64,7 @@ def main():
         articles=abcp_articles
     )
 
-    save_excel(abcp_data)
+    save_excel(data=abcp_data)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')

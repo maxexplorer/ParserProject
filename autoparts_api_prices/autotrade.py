@@ -21,7 +21,6 @@ def get_prices_autotrade(
 
     for batch in chunked(articles, 60):
         batch_num += 1
-        print(f'📦 Autotrade батч {batch_num}/{total_batches} ({len(batch)} артикулов)...')
 
         items_payload = {}
 
@@ -68,7 +67,7 @@ def get_prices_autotrade(
             )
             continue
 
-        items = data.get("items", {})
+        items = data.get('items', {})
 
         if not items:
             continue
@@ -85,5 +84,7 @@ def get_prices_autotrade(
                     'Цена': price,
                 }
             )
+
+        print(f'📦 Autotrade батч {batch_num}/{total_batches} ({len(items)} артикулов)...')
 
     return results
