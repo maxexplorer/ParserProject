@@ -142,7 +142,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
                 'routeb': '1763537196.705.1970.897937|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.68008f236da840108f7a3eb65d45c7b3.MHwxMDkuMTEwLjg4LjU0fE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDMuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzY2NDcxMTQ5fHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2NTg2NjM0OXwx.MEYCIQC9S2Wq8ZSNK8nRd+WGWEj9yGnB1U4Pp1lGNm21SSwc/wIhAOZjDKm8dtqGaPljnzkv9SQjf/d61RXOeI3cQDlcaIeB',
+                'x_wbaas_token': '1.1000.a4da2a9bbaf84e9aa323e0fbeb83c677.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0My4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Njc2ODU4ODF8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY3MDgxMDgxfDE=.MEYCIQCcOG7XYO0iZ4HJq1uLoB14KJ4ZtgtW1tEYv+NWH/YaMwIhAOY5eFn3vYLAbhW2X6z+reBlIGUNs3jcqTMMAqN+TGxB',
             }
 
             try:
