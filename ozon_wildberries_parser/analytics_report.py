@@ -50,11 +50,12 @@ def load_sku_article_from_excel(sheet_name: str) -> dict:
 
     return article_info
 
+
 def get_ozon_orders_report(
-    period: str,
-    product_to_offer: dict,
-    custom_date_from: str = None,
-    custom_date_to: str = None
+        period: str,
+        product_to_offer: dict,
+        custom_date_from: str = None,
+        custom_date_to: str = None
 ) -> dict:
     """
     Получение количества заказов по offer_id за месяц, неделю или произвольный период.
@@ -115,22 +116,30 @@ def get_ozon_orders_report(
 
     return orders
 
-def get_wb_orders_report(
-    period: str,
-    custom_date_from: str = None,
-    custom_date_to: str = None
-) -> dict:
+
+# analytics_report.py (часть для WB)
+
+import requests
+from datetime import datetime, timedelta
+from configs.config import API_URLS_WB, WB_ANALYTICS_HEADERS
+
+
+def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_to: str = None) -> dict:
     """
     Получение количества заказов по vendorCode за месяц, неделю или произвольный период.
+    Использует новый API WB: /analytics/v3/sales-funnel/products
+    Возвращает словарь {vendorCode: orderCount}.
     """
 
     now = datetime.now()
+
+    # Определяем даты
     if period == 'month':
-        date_from = (now - timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
-        date_to = now.strftime('%Y-%m-%d %H:%M:%S')
+        date_from = (now - timedelta(days=30)).strftime('%Y-%m-%d')
+        date_to = now.strftime('%Y-%m-%d')
     elif period == 'week':
-        date_from = (now - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
-        date_to = now.strftime('%Y-%m-%d %H:%M:%S')
+        date_from = (now - timedelta(days=7)).strftime('%Y-%m-%d')
+        date_to = now.strftime('%Y-%m-%d')
     elif period == 'custom':
         if not custom_date_from or not custom_date_to:
             raise ValueError('Для period="custom" необходимо передать custom_date_from и custom_date_to.')
@@ -140,43 +149,53 @@ def get_wb_orders_report(
         raise ValueError('period должен быть "month", "week" или "custom"')
 
     page = 1
-    orders = {}
+    limit = 100
+    orders: dict[str, int] = {}
+
     while True:
-        data = {
-            "brandNames": [],
-            "objectIDs": [],
-            "tagIDs": [],
-            "nmIDs": [],
-            "timezone": "Europe/Moscow",
-            "period": {
-                "begin": date_from,
+        payload = {
+            "selectedPeriod": {
+                "start": date_from,
                 "end": date_to
             },
-            "orderBy": {
-                "field": "ordersSumRub",
-                "mode": "asc"
-            },
-            "page": page
+            "nmIds": [],  # можно оставить пустым для всех товаров
+            "skipDeletedNm": True,
+            "limit": limit,
+            "offset": (page - 1) * limit
         }
+
         try:
             response = requests.post(
-                API_URLS_WB['report_detail'],
+                API_URLS_WB['products'],
                 headers=WB_ANALYTICS_HEADERS,
-                json=data,
+                json=payload,
                 timeout=20
             )
             response.raise_for_status()
-            data_dict = response.json()
-            for card in data_dict['data']['cards']:
-                vendor_code = card['vendorCode']
-                orders_count = card['statistics']['selectedPeriod']['ordersCount']
-                orders[vendor_code] = orders.get(vendor_code, 0) + orders_count
-            if not data_dict['data']['isNextPage']:
-                break
-            page += 1
+            data = response.json()
         except Exception as ex:
             print(f'❌ Ошибка получения данных WB: {ex}')
             break
+
+        products = data.get('data', {}).get('products', [])
+        if not products:
+            break
+
+        for product_entry in products:
+            product = product_entry.get('product', {})
+            statistic = product_entry.get('statistic', {})
+            selected = statistic.get('selected', {})
+            order_count = selected.get('orderCount', 0)
+
+            vendor_code = product.get('vendorCode')
+            if vendor_code:
+                orders[vendor_code] = orders.get(vendor_code, 0) + order_count
+
+        # Проверяем, если меньше limit, значит последняя страница
+        if len(products) < limit:
+            break
+        page += 1
+
     return orders
 
 
@@ -232,5 +251,3 @@ def write_analytics_to_excel(
     output_path = os.path.join(folder, 'data.xlsx')
     wb.save(output_path)
     print(f'✅ Данные аналитики успешно записаны в {output_path}')
-
-
