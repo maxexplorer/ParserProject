@@ -103,7 +103,7 @@ def get_current_prices_ozon() -> dict:
 
 def get_current_prices_wb() -> tuple[dict, dict]:
     vendor_code_to_price = {}
-    vendor_code_to_nmID = {}
+    vendor_code_to_nm_id = {}
     limit = 1000
     offset = 0
 
@@ -145,11 +145,11 @@ def get_current_prices_wb() -> tuple[dict, dict]:
             if sizes and vendor_code:
                 price = sizes[0].get('price', 0)
                 vendor_code_to_price[vendor_code] = float(price)
-                vendor_code_to_nmID[vendor_code] = nm_id
+                vendor_code_to_nm_id[vendor_code] = nm_id
 
         offset += limit
 
-    return vendor_code_to_price, vendor_code_to_nmID
+    return vendor_code_to_price, vendor_code_to_nm_id
 
 
 def update_prices_ozon(article_info: dict) -> dict:
