@@ -50,7 +50,7 @@ def chunked(iterable, size=60):
         yield iterable[i:i + size]
 
 
-def save_excel(data: list[dict], sheet_name: str = 'Лист1') -> None:
+def save_excel(data: list[dict], brand: str, sheet_name: str = 'Лист1') -> None:
     """
     Сохраняет данные в Excel-файл.
 
@@ -64,7 +64,7 @@ def save_excel(data: list[dict], sheet_name: str = 'Лист1') -> None:
     cur_date: str = datetime.now().strftime('%d-%m-%Y')
 
     directory: str = 'results'
-    file_path: str = f'{directory}/result_data_{cur_date}.xlsx'
+    file_path: str = f'{directory}/result_data_{brand}_{cur_date}.xlsx'
 
     # Создаем директорию для результатов
     os.makedirs(directory, exist_ok=True)
