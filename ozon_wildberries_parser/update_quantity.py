@@ -8,6 +8,7 @@ import requests
 import openpyxl
 
 from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS, WB_MARKETPLACE_HEADERS
+from utils import chunk_list
 
 
 def get_fbs_quantity_ozon(offer_ids: list[str]) -> dict:
@@ -158,9 +159,6 @@ def get_size_ids() -> dict[str, list[int]]:
         offset += limit
 
     return vendor_code_to_size_ids
-
-
-from utils import chunk_list
 
 
 def get_fbs_quantity_wb(offer_ids: list[str]) -> dict[str, int]:
