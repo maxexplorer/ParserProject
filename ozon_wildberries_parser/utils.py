@@ -23,6 +23,7 @@ WB_PING_URLS = {
     "user_management": "https://user-management-api.wildberries.ru/ping",
 }
 
+
 def check_wb_api_connection(service: str = "common", headers: dict = None, timeout: int = 5) -> bool:
     """
     Проверяет подключение к Wildberries API и валидность токена.
@@ -55,9 +56,23 @@ def check_wb_api_connection(service: str = "common", headers: dict = None, timeo
         return False
 
 
+def make_wb_headers(token: str, use_bearer: bool = False) -> dict:
+    """
+    Возвращает словарь заголовков для Wildberries API.
+    :param token: токен WB
+    :param use_bearer: добавлять ли префикс 'Bearer' (для аналитики)
+    """
+    auth_value = f'Bearer {token}' if use_bearer else token
+    return {
+        'Authorization': auth_value,
+        'Content-Type': 'application/json'
+    }
+
+
 if __name__ == "__main__":
     # Проверка токенов для разных сервисов
     services = {
+        "marketplace": {"headers": {"Authorization": WB_API_TOKEN}},
         "analytics": {"headers": {"Authorization": WB_ANALYTICS_TOKEN}},
         "prices": {"headers": {"Authorization": WB_API_TOKEN}},
     }
