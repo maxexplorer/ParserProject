@@ -180,7 +180,6 @@ def get_wb_orders_report(
     return orders
 
 
-
 def write_analytics_to_excel(
         analytics_data: dict,
         marketplace='ОЗОН',
