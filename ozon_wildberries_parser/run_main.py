@@ -32,6 +32,7 @@ from update_volume import (
 
 from update_quantity import (
     get_fbs_quantity_ozon,
+    get_fbs_quantity_wb,
     write_fbs_quantity_to_excel
 )
 
@@ -54,6 +55,7 @@ def main():
             '12 - Получить отчет заказов WB за указанный период\n'
             '13 - Обновить объемы товаров Ozon\n'
             '14 - Обновить остатки FBS Ozon\n'
+            '15 - Обновить остатки FBS WB\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -210,6 +212,13 @@ def main():
                     offer_ids = load_offer_id_from_excel(sheet_name='ОЗОН')
                     fbs_data = get_fbs_quantity_ozon(offer_ids)
                     write_fbs_quantity_to_excel(fbs_data, marketplace='ОЗОН')
+                    print('✅ Остатки FBS обновлены и записаны.')
+
+                case '15':
+                    print('Обновление остатков FBS WB...')
+                    offer_ids = load_offer_id_from_excel(sheet_name='ВБ')
+                    fbs_data = get_fbs_quantity_wb(offer_ids)
+                    write_fbs_quantity_to_excel(fbs_data, marketplace='ВБ')
                     print('✅ Остатки FBS обновлены и записаны.')
 
                 case _:
