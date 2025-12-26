@@ -181,8 +181,8 @@ def main():
                     date_start = input('Введите дату начала периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
                     date_end = input('Введите дату окончания периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
                     try:
-                        date_from = datetime.strptime(date_start, '%d.%m.%Y').strftime('%Y-%m-%d %H:%M:%S')
-                        date_to = datetime.strptime(date_end, '%d.%m.%Y').strftime('%Y-%m-%d %H:%M:%S')
+                        date_from = datetime.strptime(date_start, '%d.%m.%Y').strftime('%Y-%m-%d')
+                        date_to = datetime.strptime(date_end, '%d.%m.%Y').strftime('%Y-%m-%d')
                     except ValueError:
                         print('❌ Неверный формат даты. Используйте формат DD.MM.YYYY.')
                         break
