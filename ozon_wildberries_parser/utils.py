@@ -56,6 +56,17 @@ def check_wb_api_connection(service: str = "common", headers: dict = None, timeo
         return False
 
 
+def chunk_list(data: list, chunk_size: int):
+    """
+    Разбивает список на чанки фиксированного размера.
+    """
+    if chunk_size <= 0:
+        raise ValueError('chunk_size должен быть больше 0')
+
+    for i in range(0, len(data), chunk_size):
+        yield data[i:i + chunk_size]
+
+
 def make_wb_headers(token: str, use_bearer: bool = False) -> dict:
     """
     Возвращает словарь заголовков для Wildberries API.
