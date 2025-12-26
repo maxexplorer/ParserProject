@@ -79,7 +79,7 @@ def main() -> None:
             articles=autotrade_articles
         )
 
-        save_excel(data=autotrade_data)
+        save_excel(data=autotrade_data, brand='sat')
 
         # ---------- ABCP ----------
         abcp_file_path: str = "data/ОЕМ abcp.xlsx"
@@ -93,7 +93,7 @@ def main() -> None:
             articles=abcp_articles
         )
 
-        save_excel(data=abcp_data)
+        save_excel(data=abcp_data, brand='oem')
 
     except Exception as ex:
         print(f'main: {ex}')
