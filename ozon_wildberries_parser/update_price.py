@@ -34,7 +34,7 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
 
         new_price = row.iloc[6]  # 6 столбец
 
-        if pd.isna(new_price) or new_price == '':
+        if pd.isna(new_price) or new_price == '' or new_price == ' ':
             continue
 
         try:
@@ -180,7 +180,7 @@ def update_prices_ozon(article_info: dict) -> dict:
             'price_strategy_enabled': 'UNKNOWN',
             'product_id': 0,
             'quant_size': 1,
-            'vat': '0.1'
+            'vat': '0.05'
         })
 
     if prices['prices']:
