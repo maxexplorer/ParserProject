@@ -118,7 +118,6 @@ def process_data_files(data_folder, articles_dict):
                     except Exception:
                         continue
 
-
                     if article_cell in articles_dict:
                         # Обновляем цену
                         new_article = articles_dict[article_cell]
@@ -157,9 +156,6 @@ def main():
         new_articles_dict = read_new_articles_data(new_articles_file_path)
 
         process_data_files(data_folder='data2', articles_dict=new_articles_dict)
-
-
-
 
     except Exception as ex:
         print(f'main: {ex}')
