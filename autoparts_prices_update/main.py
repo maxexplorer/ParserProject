@@ -151,8 +151,8 @@ def main():
         old_articles_file_path = 'data1/старые артикулы.xlsx'
         new_articles_file_path = 'data1/новые артикулы.xlsx'
 
-        # articles_dict = read_old_articles_data(old_articles_file_path)
-        # update_new_articles_file(new_articles_file_path, articles_dict)
+        articles_dict = read_old_articles_data(old_articles_file_path)
+        update_new_articles_file(new_articles_file_path, articles_dict)
 
         new_articles_dict = read_new_articles_data(new_articles_file_path)
 
