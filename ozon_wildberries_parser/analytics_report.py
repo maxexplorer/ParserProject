@@ -117,13 +117,6 @@ def get_ozon_orders_report(
     return orders
 
 
-# analytics_report.py (часть для WB)
-
-import requests
-from datetime import datetime, timedelta
-from configs.config import API_URLS_WB, WB_ANALYTICS_HEADERS
-
-
 def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_to: str = None) -> dict:
     """
     Получение количества заказов по vendorCode за месяц, неделю или произвольный период.
