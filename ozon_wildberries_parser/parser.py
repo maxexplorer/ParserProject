@@ -141,8 +141,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
-                'routeb': '1763537196.705.1970.897937|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.a4da2a9bbaf84e9aa323e0fbeb83c677.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0My4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Njc2ODU4ODF8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY3MDgxMDgxfDE=.MEYCIQCcOG7XYO0iZ4HJq1uLoB14KJ4ZtgtW1tEYv+NWH/YaMwIhAOY5eFn3vYLAbhW2X6z+reBlIGUNs3jcqTMMAqN+TGxB',
+                'x_wbaas_token': '1.1000.9f90b3c27c4a47af87cf696da7b46cea.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0My4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Njg5MjgzOTR8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY4MzIzNTk0fDE=.MEQCIBUBqTgB+cWm+sPHsdtR3EMzzyf34zRFGdTu5tHzFqTQAiB7j5lSCKs7bSAEaNx7aMtDy8dWVAHRdbsIPeL1slARLg==',
+                'routeb': '1767718799.345.1976.525261|fc3b37d75a18d923fd0e9c7589719997',
             }
 
             try:
