@@ -4,7 +4,6 @@ import os
 from random import randint
 import csv
 import re
-import json
 
 from undetected_chromedriver import Chrome as undetectedChrome
 from undetected_chromedriver import ChromeOptions
@@ -195,7 +194,7 @@ def get_products_data(driver: undetectedChrome, products_urls_list: list, brand:
 
 # Функция для записи данных в формат csv
 def save_csv(data: list, brand: str, seller: str) -> None:
-    directory = 'data/results'
+    directory = 'results'
 
     # Создаем директорию, если она не существует
     if not os.path.exists(directory):
