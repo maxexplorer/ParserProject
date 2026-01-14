@@ -3,19 +3,20 @@ from datetime import datetime
 import os
 from random import randint
 import re
+
 from requests import Session
 from pandas import DataFrame, ExcelWriter, read_excel
 
 from new_undetected_chromedriver import Chrome as undetectedChrome
 from undetected_chromedriver import ChromeOptions
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 from bs4 import BeautifulSoup
-from config import API_KEY  # твой ключ imgbb
 
 start_time = datetime.now()
-session = Session()
-
-# Кэш загруженных файлов
-uploaded_files = {}
 
 
 # Функция инициализации объекта chromedriver
@@ -77,47 +78,22 @@ def get_products_urls(driver: undetectedChrome):
             print(*products_urls, file=file, sep='\n')
 
 
-def upload_image_to_imgbb(image_url: str, session: Session) -> str | None:
-    """Загружает изображение на imgbb и возвращает ссылку."""
-    try:
-        filename = os.path.basename(image_url.split("?")[0])
-        if filename in uploaded_files:
-            return uploaded_files[filename]
-
-        response = session.get(image_url, timeout=30)
-        if response.status_code != 200:
-            print(f"Ошибка загрузки {image_url} (код {response.status_code})")
-            return None
-
-        files = {"image": response.content}
-        payload = {"key": API_KEY}
-        r = session.post("https://api.imgbb.com/1/upload", data=payload, files=files, timeout=60)
-        result = r.json()
-
-        if r.status_code == 200 and result.get("success"):
-            url = result["data"]["url"]
-            uploaded_files[filename] = url
-            return url
-        else:
-            print(f"Ошибка загрузки на imgbb: {result}")
-            return None
-    except Exception as ex:
-        print(f"upload_image_to_imgbb: {ex}")
-        return None
-
-
 # Функция получения данных товаров
 def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: str) -> None:
     result_list = []
     image_urls_list = []
-    batch_size = 50
+    batch_size = 10
 
     for product_url in product_urls_list:
         try:
             driver.get(url=product_url)
-            time.sleep(randint(2, 3))
-            driver.execute_script("window.scrollTo(0, 4000);")
-            time.sleep(randint(2, 3))
+
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, 'div[data-widget="webProductHeading"]')
+                )
+            )
+            scroll_and_wait(driver)
             html = driver.page_source
         except Exception as ex:
             print(f"{product_url} - {ex}")
@@ -161,10 +137,6 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         except Exception:
             article = None
 
-        if not article:
-            print(f'{product_url}: артикул не найден — пропуск')
-            continue
-
         try:
             price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
                 'без Ozon Карты')).find_parent().find_parent().find('span').text))
@@ -186,31 +158,31 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
             for image_item in images_items:
                 image_url = image_item.find('img').get('src')
                 image_url = re.sub(r'wc\d+', 'wc1000', image_url)
-
-                # Загружаем на imgbb вместо Яндекс.Диска
-                imgbb_url = upload_image_to_imgbb(image_url, session)
-
-                if imgbb_url:
-                    image_urls_list.append(imgbb_url)
-                    product_image_urls_list.append(imgbb_url)
-
-                time.sleep(0.4)  # обязательно, чтобы не спамить сервер
-
-            images_urls = '; '.join(product_image_urls_list)
+                image_urls_list.append(image_url)
+                product_image_urls_list.append(image_url)
+            images_urls = ' | '.join(product_image_urls_list)
         except Exception:
             images_urls = None
 
         try:
-            description = soup.find('div', id='section-description').find('div', class_='RA-a1').text.strip()
+            description = ''
+            description_items = soup.find_all('div', id='section-description')
+            for description_item in description_items:
+                try:
+                    text = description_item.find('div', class_='RA-a1').text.strip()
+                except Exception:
+                    continue
+                description += text
         except Exception:
             description = None
 
         try:
             characteristics = ''
-            for item in soup.find('div', id='section-characteristics').find_all('dl'):
-                dt = item.find('dt').text.strip()
-                dl = item.find('dd').text.strip()
-                characteristics += f'{dt}: {dl}; '
+            characteristic_items = soup.find('div', id='section-characteristics').find_all('dl')
+            for characteristic_item in characteristic_items:
+                dt = characteristic_item.find('dt').text.strip()
+                dd = characteristic_item.find('dd').text.strip()
+                characteristics += f'{dt}: {dd}; '
         except Exception:
             characteristics = None
 
@@ -241,6 +213,20 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     # Записываем оставшиеся данные в Excel
     if result_list:
         save_excel(data=result_list, brand=brand)
+
+
+def scroll_and_wait(driver, pause=0.5, max_tries=10):
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
+    for _ in range(max_tries):
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(pause)
+
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            return  # дальше не грузится
+
+        last_height = new_height
 
 
 def save_excel(data: list[dict], brand: str, sheet_name: str = 'Лист1') -> None:
@@ -313,6 +299,7 @@ def main():
     except Exception as ex:
         print(f'main: {ex}')
     finally:
+        driver.close()
         driver.quit()
 
     execution_time = datetime.now() - start_time
