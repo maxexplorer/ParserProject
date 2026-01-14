@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_PRICES_AND_DISCOUNTS_TOKEN
+from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_PRICES_AND_DISCOUNTS_HEADERS
 
 
 def load_article_info_from_excel(sheet_name: str) -> dict:
@@ -119,7 +119,7 @@ def get_current_prices_wb() -> tuple[dict, dict]:
             time.sleep(1)
             response = requests.get(
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_PRICES_AND_DISCOUNTS_TOKEN,
+                headers=WB_PRICES_AND_DISCOUNTS_HEADERS,
                 params=params,
                 timeout=15
             )
@@ -227,7 +227,7 @@ def update_prices_wb(article_info: dict) -> dict:
         try:
             response = requests.post(
                 API_URLS_WB['upload_task'],
-                headers=WB_PRICES_AND_DISCOUNTS_TOKEN,
+                headers=WB_PRICES_AND_DISCOUNTS_HEADERS,
                 json=data,
                 timeout=20
             )
