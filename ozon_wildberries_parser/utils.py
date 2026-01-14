@@ -2,8 +2,7 @@
 
 import requests
 
-# Пример: WB_HEADERS может быть словарём с токеном Authorization
-from configs.config import WB_ANALYTICS_TOKEN, WB_API_TOKEN
+from configs.config import WB_ANALYTICS_TOKEN, WB_MARKETPLACE_TOKEN, WB_PRICES_AND_DISCOUNTS_TOKEN
 
 # Словарь сервисов WB и их ping URL
 WB_PING_URLS = {
@@ -83,9 +82,9 @@ def make_wb_headers(token: str, use_bearer: bool = False) -> dict:
 if __name__ == "__main__":
     # Проверка токенов для разных сервисов
     services = {
-        "marketplace": {"headers": {"Authorization": WB_API_TOKEN}},
+        "marketplace": {"headers": {"Authorization": WB_MARKETPLACE_TOKEN}},
         "analytics": {"headers": {"Authorization": WB_ANALYTICS_TOKEN}},
-        "prices": {"headers": {"Authorization": WB_API_TOKEN}},
+        "prices": {"headers": {"Authorization": WB_PRICES_AND_DISCOUNTS_TOKEN}},
     }
 
     for service_name, params in services.items():

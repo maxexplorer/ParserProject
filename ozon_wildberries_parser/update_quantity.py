@@ -7,7 +7,7 @@ import time
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS, WB_MARKETPLACE_HEADERS
+from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_PRICES_AND_DISCOUNTS_TOKEN, WB_MARKETPLACE_HEADERS
 from utils import chunk_list
 
 
@@ -130,7 +130,7 @@ def get_size_ids() -> dict[str, list[int]]:
             time.sleep(1)
             response = requests.get(
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
+                headers=WB_PRICES_AND_DISCOUNTS_TOKEN,
                 params=params,
                 timeout=15
             )

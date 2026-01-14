@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, WB_HEADERS
+from configs.config import API_URLS_OZON, OZON_HEADERS
 
 
 def load_offer_id_from_excel(sheet_name: str) -> list[str]:
