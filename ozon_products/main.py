@@ -36,9 +36,10 @@ def init_undetected_chromedriver(headless_mode=False):
 # Функция получения ссылок товаров
 def get_products_urls(driver: undetectedChrome):
     pages = 100
-    products_urls = []
 
     for page in range(1, pages + 1):
+        products_urls = []
+
         page_url = f"https://www.ozon.ru/brand/teyes-87208738/?currency_price=15000.000%3B196086.000&text=cc3&page={page}"
         try:
             driver.get(url=page_url)
@@ -55,7 +56,7 @@ def get_products_urls(driver: undetectedChrome):
 
         try:
             data_items = soup.find('div', {'data-widget': 'tileGridDesktop'}).find_all('div',
-                                                                                       class_='tile-root u4i_25 kj4_25 kj5_25')
+                                                                                       class_='tile-root i5u_25 jk5_25 jk6_25')
         except Exception as ex:
             print(f'data_items: {page_url} - {ex}')
             continue
@@ -70,12 +71,12 @@ def get_products_urls(driver: undetectedChrome):
 
         print(f'Обработано: {page}/{pages} страниц')
 
-    directory = 'data'
+        directory = 'data'
 
-    os.makedirs(directory, exist_ok=True)
+        os.makedirs(directory, exist_ok=True)
 
-    with open(f'{directory}/product_urls_list.txt', 'a', encoding='utf-8') as file:
-        print(*products_urls, file=file, sep='\n')
+        with open(f'{directory}/product_urls_list.txt', 'a', encoding='utf-8') as file:
+            print(*products_urls, file=file, sep='\n')
 
 
 # Функция получения данных товаров
