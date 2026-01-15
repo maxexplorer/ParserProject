@@ -35,11 +35,11 @@ def init_undetected_chromedriver(headless_mode=False):
 
 # Функция получения ссылок товаров
 def get_products_urls(driver: undetectedChrome):
-    pages = 1
+    pages = 100
 
     for page in range(1, pages + 1):
         products_urls = []
-        page_url = f"https://www.ozon.ru/brand/teyes-87208738/?currency_price=15000.000%3B85893.000&text=c33&page={page}"
+        page_url = f"https://www.ozon.ru/brand/teyes-87208738/?currency_price=15000.000%3B196086.000&text=cc3&page={page}"
         try:
             driver.get(url=page_url)
             time.sleep(3)
@@ -81,7 +81,6 @@ def get_products_urls(driver: undetectedChrome):
 # Функция получения данных товаров
 def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: str) -> None:
     result_list = []
-    image_urls_list = []
     batch_size = 10
 
     for product_url in product_urls_list:
@@ -153,14 +152,13 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
             continue
 
         try:
-            product_image_urls_list = []
-            images_items = soup.find('div', {'data-widget': 'webGallery'}).find_all('div', class_='pdp_e1a')
+            image_urls_list = []
+            images_items = soup.find('div', class_='pdp_as7').find_all('div', class_='pdp_e1a')
             for image_item in images_items:
                 image_url = image_item.find('img').get('src')
                 image_url = re.sub(r'wc\d+', 'wc1000', image_url)
                 image_urls_list.append(image_url)
-                product_image_urls_list.append(image_url)
-            images_urls = ' | '.join(product_image_urls_list)
+            images_urls = ' | '.join(image_urls_list)
         except Exception:
             images_urls = None
 
@@ -206,9 +204,6 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         if len(result_list) >= batch_size:
             save_excel(data=result_list, brand=brand)
             result_list.clear()  # Очищаем список для следующей партии
-
-    with open('data/image_urls_list.txt', 'w', encoding='utf-8') as file:
-        print(*image_urls_list, file=file, sep='\n')
 
     # Записываем оставшиеся данные в Excel
     if result_list:
@@ -284,15 +279,10 @@ def get_unique_urls(file_path: str) -> None:
 def main():
     brand = 'Teyes'
 
-    file_path_urls = 'data/product_urls_list.txt'
-    file_path_images = 'data/image_urls_list.txt'
-
-    # get_unique_urls(file_path_urls)
-
     driver = init_undetected_chromedriver(headless_mode=False)
 
     try:
-        # get_products_urls(driver=driver)
+        get_products_urls(driver=driver)
         with open('data/product_urls_list.txt', 'r', encoding='utf-8') as file:
             product_urls_list = [line.strip() for line in file]
         get_products_data(driver=driver, product_urls_list=product_urls_list, brand=brand)
