@@ -36,9 +36,9 @@ def init_undetected_chromedriver(headless_mode=False):
 # Функция получения ссылок товаров
 def get_products_urls(driver: undetectedChrome):
     pages = 100
+    products_urls = []
 
     for page in range(1, pages + 1):
-        products_urls = []
         page_url = f"https://www.ozon.ru/brand/teyes-87208738/?currency_price=15000.000%3B196086.000&text=cc3&page={page}"
         try:
             driver.get(url=page_url)
@@ -70,12 +70,12 @@ def get_products_urls(driver: undetectedChrome):
 
         print(f'Обработано: {page}/{pages} страниц')
 
-        directory = 'data'
+    directory = 'data'
 
-        os.makedirs(directory, exist_ok=True)
+    os.makedirs(directory, exist_ok=True)
 
-        with open(f'{directory}/product_urls_list.txt', 'a', encoding='utf-8') as file:
-            print(*products_urls, file=file, sep='\n')
+    with open(f'{directory}/product_urls_list.txt', 'a', encoding='utf-8') as file:
+        print(*products_urls, file=file, sep='\n')
 
 
 # Функция получения данных товаров
@@ -83,7 +83,9 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     result_list = []
     batch_size = 10
 
-    for product_url in product_urls_list:
+    count_products = len(product_urls_list)
+
+    for i, product_url in enumerate(product_urls_list, 1):
         try:
             driver.get(url=product_url)
 
@@ -199,6 +201,8 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                 }
             )
         )
+
+        print(f'ОБработано: {i}/{count_products}')
 
         # Записываем данные в CSV каждые batch_size
         if len(result_list) >= batch_size:
