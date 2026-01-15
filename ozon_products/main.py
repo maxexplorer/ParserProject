@@ -282,12 +282,16 @@ def get_unique_urls(file_path: str) -> None:
 
 def main():
     brand = 'Teyes'
+    file_path = 'data/product_urls_list.txt'
 
     driver = init_undetected_chromedriver(headless_mode=False)
 
     try:
         get_products_urls(driver=driver)
-        with open('data/product_urls_list.txt', 'r', encoding='utf-8') as file:
+
+        get_unique_urls(file_path=file_path)
+
+        with open(file_path, 'r', encoding='utf-8') as file:
             product_urls_list = [line.strip() for line in file]
         get_products_data(driver=driver, product_urls_list=product_urls_list, brand=brand)
     except Exception as ex:
