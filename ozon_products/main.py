@@ -81,7 +81,7 @@ def get_products_urls(driver: undetectedChrome):
 # Функция получения данных товаров
 def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: str) -> None:
     result_list = []
-    batch_size = 10
+    batch_size = 100
 
     count_products = len(product_urls_list)
 
