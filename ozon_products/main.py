@@ -95,7 +95,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                     (By.CSS_SELECTOR, 'div[data-widget="webProductHeading"]')
                 )
             )
-            scroll_and_wait(driver)
+            scroll_and_wait_description(driver)
             html = driver.page_source
         except Exception as ex:
             print(f"{product_url} - {ex}")
@@ -215,18 +215,18 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         save_excel(data=result_list, brand=brand)
 
 
-def scroll_and_wait(driver, pause=0.5, max_tries=10):
-    last_height = driver.execute_script("return document.body.scrollHeight")
+def scroll_and_wait_description(driver):
+    # скроллим вниз
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-    for _ in range(max_tries):
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(pause)
-
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            return  # дальше не грузится
-
-        last_height = new_height
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, '#section-description')
+            )
+        )
+    except:
+        pass  # не у всех товаров есть описание
 
 
 def save_excel(data: list[dict], brand: str, sheet_name: str = 'Лист1') -> None:
