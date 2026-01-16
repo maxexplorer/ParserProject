@@ -25,14 +25,14 @@ def load_image_tasks_from_excel() -> list:
     Возвращает:
         tasks (list of dict): список задач для обработки
     """
-    folder = 'data'
+    folder = 'figma_data'
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ Нет Excel файлов')
         return []
 
     # Берем второй файл в папке, если их несколько
-    df = pd.read_excel(excel_files[1])
+    df = pd.read_excel(excel_files[0])
     df.columns = df.columns.str.strip()  # убираем пробелы в названиях колонок
 
     tasks = []
