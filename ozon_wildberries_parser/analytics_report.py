@@ -29,8 +29,8 @@ def load_sku_article_from_excel(sheet_name: str) -> dict:
 
     article_info = {}
     for _, row in df.iterrows():
-        offer_id = str(row.iloc[1]).strip()
-        if not offer_id:
+        article = str(row.iloc[1]).strip()
+        if not article:
             continue
 
         value = row.iloc[0]
@@ -42,11 +42,11 @@ def load_sku_article_from_excel(sheet_name: str) -> dict:
         else:
             sku = ''
 
-        if pd.isna(offer_id) or offer_id == '' or pd.isna(sku) or sku == '':
+        if pd.isna(article) or article == '' or pd.isna(sku) or sku == '':
             continue
 
-        if sku and offer_id:
-            article_info[sku] = offer_id
+        if sku and article:
+            article_info[sku] = article
 
     return article_info
 

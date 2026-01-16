@@ -28,8 +28,8 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
 
     article_info = {}
     for _, row in df.iterrows():
-        offer_id = str(row.iloc[1]).strip()
-        if not offer_id:
+        article = str(row.iloc[1]).strip()
+        if not article:
             continue
 
         new_price = row.iloc[6]  # 6 столбец
@@ -39,9 +39,9 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
 
         try:
             delta = float(new_price)
-            article_info[offer_id] = delta
+            article_info[article] = delta
         except Exception as ex:
-            print(f'Ошибка преобразования для {offer_id}: {ex}')
+            print(f'Ошибка преобразования для {article}: {ex}')
             continue
 
     return article_info
