@@ -36,6 +36,8 @@ from update_quantity import (
     write_fbs_quantity_to_excel
 )
 
+from upload_images import process_image_uploads
+
 
 def main():
     while True:
@@ -56,6 +58,7 @@ def main():
             '13 - Обновить объемы товаров Ozon\n'
             '14 - Обновить остатки FBS Ozon\n'
             '15 - Обновить остатки FBS WB\n'
+            '16 - Загрузить изображения OZON и WB\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -220,6 +223,11 @@ def main():
                     fbs_data = get_fbs_quantity_wb(offer_ids)
                     write_fbs_quantity_to_excel(fbs_data, marketplace='ВБ')
                     print('✅ Остатки FBS обновлены и записаны.')
+
+                case '16':
+                    print('Загрузка изображений...')
+                    process_image_uploads()
+                    print('✅ Загрузка изображений завершена.')
 
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')
