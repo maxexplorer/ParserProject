@@ -93,7 +93,7 @@ def get_figma_image_urls(figma_key: str, node_ids: list) -> list:
     time.sleep(3)
 
     response = requests.get(url, headers=FIGMA_HEADERS, params=params)
-    # response.raise_for_status()  # Можно раскомментировать для дебага
+    response.raise_for_status()  # Можно раскомментировать для дебага
 
     data = response.json()
     images = data.get('images', {})
@@ -102,58 +102,42 @@ def get_figma_image_urls(figma_key: str, node_ids: list) -> list:
     return [img_url for img_url in images.values() if img_url]
 
 
-def upload_images_ozon(product_id: int, image_urls: list) -> dict:
-    """
-    Загружает изображения на OZON для конкретного продукта.
-
-    Параметры:
-        product_id (int): ID продукта на OZON
-        image_urls (list of str): список URL изображений (с Figma или других источников)
-
-    Возвращает:
-        dict: JSON ответ OZON API
-    """
-    payload = {
-        'product_id': product_id,
-        'images': image_urls,
-    }
-
-    response = requests.post(
-        API_URLS_OZON['product_pictures_import'],
-        headers=OZON_HEADERS,
-        json=payload,
-        timeout=15
-    )
-
-    response.raise_for_status()
-    return response.json()
+def upload_images_ozon(product_id: int, image_urls: list) -> dict | None:
+    try:
+        payload = {
+            'product_id': product_id,
+            'images': image_urls,
+        }
+        response = requests.post(
+            API_URLS_OZON['product_pictures_import'],
+            headers=OZON_HEADERS,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"❌ Ошибка загрузки на OZON для product_id={product_id}: {e}")
+        return None
 
 
-def upload_images_wb(nm_id: int, image_urls: list) -> dict:
-    """
-    Загружает изображения на Wildberries для конкретного товара.
-
-    Параметры:
-        nm_id (int): nmId товара WB
-        image_urls (list of str): список URL изображений (с Figma или других источников)
-
-    Возвращает:
-        dict: JSON ответ WB API
-    """
-    payload = {
-        'nmId': nm_id,
-        'data': image_urls
-    }
-
-    response = requests.post(
-        API_URLS_WB['content_media'],
-        headers=WB_CONTENT_HEADERS,
-        json=payload,
-        timeout=15
-    )
-
-    response.raise_for_status()
-    return response.json()
+def upload_images_wb(nm_id: int, image_urls: list) -> dict | None:
+    try:
+        payload = {
+            'nmId': nm_id,
+            'data': image_urls
+        }
+        response = requests.post(
+            API_URLS_WB['content_media'],
+            headers=WB_CONTENT_HEADERS,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"❌ Ошибка загрузки на WB для nmId={nm_id}: {e}")
+        return None
 
 
 def process_image_uploads():
@@ -175,10 +159,14 @@ def process_image_uploads():
         )
 
         if task['ozon'] and task['product_id_ozon']:
-            upload_images_ozon(task['product_id_ozon'], image_urls)
-            print('✅ OZON обновлён')
+            result = upload_images_ozon(task['product_id_ozon'], image_urls)
+            if result is not None:
+                print(f'✅ OZON обновлён для product_id={task["product_id_ozon"]}')
 
         if task['wb'] and task['nm_id_wb']:
-            upload_images_wb(task['nm_id_wb'], image_urls)
-            print('✅ WB обновлён')
+            result = upload_images_wb(task['nm_id_wb'], image_urls)
+            if result is not None:
+                print(f'✅ WB обновлён для nmId={task["nm_id_wb"]}')
+
+
 
