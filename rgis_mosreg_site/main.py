@@ -120,7 +120,7 @@ def get_data(file_path: str, headers: dict) -> None:
     }
 
     with Session() as session:
-        for i, object_id in enumerate(object_ids[3100:], 3100):
+        for i, object_id in enumerate(object_ids, 1):
             params = {'id': object_id}
 
             try:
