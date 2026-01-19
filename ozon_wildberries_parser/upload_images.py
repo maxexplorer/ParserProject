@@ -50,8 +50,6 @@ def load_image_tasks_from_excel() -> list:
 
         # Считываем node_id для изображений из колонок G → P (6 → 15 индекс)
         node_ids = []
-        print("Columns count:", len(row))
-        print(row.index.tolist())
 
         for val in row.iloc[6:]:
             if pd.notna(val):
