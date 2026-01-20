@@ -5,7 +5,6 @@ from datetime import datetime, date
 from requests import Session
 from pandas import DataFrame, ExcelWriter
 
-
 # =============================================================================
 # Глобальные настройки
 # =============================================================================
@@ -18,18 +17,14 @@ headers: dict = {
     'accept': '*/*',
     'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     'priority': 'u=1, i',
-    'referer': 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html?page=1',
-    'sec-ch-ua': '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
+    'referer': 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html',
+    'sec-ch-ua': '"Not(A:Brand";v="8", "Chromium";v="144", "Google Chrome";v="144"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
-    'user-agent': (
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/143.0.0.0 Safari/537.36'
-    ),
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
     'x-nextjs-data': '1',
 }
 
@@ -60,8 +55,7 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
 
     try:
         response = session.get(
-            'https://www.propertyfinder.ae/search/_next/data/'
-            '2uummsZcqGe1HZV7ZIrBW/en/buy/properties-for-sale.html.json',
+            'https://www.propertyfinder.ae/search/_next/data/j-QQFuo_Ac5zdYbWJhTfR/en/buy/properties-for-sale.html.json',
             params=params,
             headers=headers,
             timeout=30
