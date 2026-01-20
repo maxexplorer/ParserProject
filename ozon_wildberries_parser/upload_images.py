@@ -57,7 +57,7 @@ def load_image_tasks_from_excel() -> list:
         layer_names = []
         for val in row.iloc[7:]:
             if pd.notna(val):
-                name = str(val).strip()
+                name = ''.join(str(val).split())
                 if name:  # только непустые строки
                     layer_names.append(name)
 

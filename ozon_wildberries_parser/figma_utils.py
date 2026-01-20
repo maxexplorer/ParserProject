@@ -12,7 +12,9 @@ def extract_node_ids(node: dict, result: dict | None = None) -> dict:
         result = {}
 
     if 'id' in node and 'name' in node:
-        result[node['name'].strip()] = node['id']
+        # Убираем все пробелы
+        key = ''.join(node['name'].split())
+        result[key] = node['id']
 
     for child in node.get('children', []):
         extract_node_ids(child, result)
