@@ -29,23 +29,36 @@ headers: dict = {
 }
 
 
+import re
+import requests
+
+def get_build_id(session: requests.Session, headers: dict) -> str | None:
+    url = 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html'
+    r = session.get(url, headers=headers, timeout=30)
+
+    if r.status_code != 200:
+        return None
+
+    match = re.search(r'"buildId":"([^"]+)"', r.text)
+    return match.group(1) if match else None
+
+
 # =============================================================================
 # Работа с API PropertyFinder
 # =============================================================================
 
 def get_json(headers: dict, session: Session, page: int) -> dict | None:
-    """
-    Загружает JSON-данные выдачи PropertyFinder для указанной страницы.
+    build_id = get_build_id(session, headers)
+    if not build_id:
+        print('Не удалось получить buildId')
+        return None
 
-    Используется Next.js endpoint, который возвращает
-    структурированные данные по объявлениям.
+    url = (
+        f'https://www.propertyfinder.ae/search/_next/data/'
+        f'{build_id}/en/buy/properties-for-sale.html.json'
+    )
 
-    :param headers: HTTP-заголовки запроса
-    :param session: Активная requests.Session
-    :param page: Номер страницы выдачи
-    :return: JSON-ответ в виде dict или None при ошибке
-    """
-    params: dict = {
+    params = {
         'page': page,
         'categorySlug': 'buy',
         'propertyTypeSlug': 'properties',
@@ -53,23 +66,14 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
         'pattern': '/categorySlug/propertyTypeSlug-saleType.html',
     }
 
-    try:
-        response = session.get(
-            'https://www.propertyfinder.ae/search/_next/data/j-QQFuo_Ac5zdYbWJhTfR/en/buy/properties-for-sale.html.json',
-            params=params,
-            headers=headers,
-            timeout=30
-        )
+    response = session.get(url, headers=headers, params=params, timeout=30)
 
-        if response.status_code != 200:
-            print(f'status_code: {response.status_code}')
-            return None
-
-        return response.json()
-
-    except Exception as ex:
-        print(f'get_json: {ex}')
+    if response.status_code != 200:
+        print(f'status_code: {response.status_code}')
         return None
+
+    return response.json()
+
 
 
 # =============================================================================
