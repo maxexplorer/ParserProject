@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime, date
+import re
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter
@@ -29,10 +30,7 @@ headers: dict = {
 }
 
 
-import re
-import requests
-
-def get_build_id(session: requests.Session, headers: dict) -> str | None:
+def get_build_id(session: Session, headers: dict) -> str | None:
     url = 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html'
     r = session.get(url, headers=headers, timeout=30)
 
@@ -73,7 +71,6 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
         return None
 
     return response.json()
-
 
 
 # =============================================================================
