@@ -266,7 +266,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                     row[cell.column - 2].value = storage
 
                     try:
-                        add_in_basket = driver.find_element(By.XPATH, '//div[contains(text(), "Добавить в корзину")]')
+                        add_in_basket = driver.find_element(By.XPATH, '//span[contains(text(), "В корзину")]')
                         parent_element = add_in_basket.find_element(By.XPATH, "../..")
                         parent_element.click()
                         time.sleep(randint(3, 5))
