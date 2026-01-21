@@ -250,7 +250,7 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
                     try:
                         price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
-                            'c Ozon Картой')).find_parent().text))
+                            'c Ozon Банком')).find_parent().text))
                     except Exception as ex:
                         # print(f'price - {ex}')
                         price = '-'
