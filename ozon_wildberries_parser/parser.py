@@ -140,9 +140,9 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'external-locale': 'ru',
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
+                'x_wbaas_token': '1.1000.3d8e530613874a74a73c9ecc280c6ba9.MHw5NS43OS4xMTcuMTkxfE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDQuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzcwMTkyMTEwfHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2OTU4NzMxMHwx.MEYCIQCtSqDtq0lP22Gci1w1Yq6HkwxSb0ryotyv0w6Hsz7NtwIhAMY7tQcsqD1IUvcmRPX2wTnbchgcZ/ns0fgmXIhNNtLH',
+                'routeb': '1768982551.239.1975.972523|7bfd2016a8d76673b3f5612cfa222b5e',
                 '_cp': '1',
-                'x_wbaas_token': '1.1000.9f90b3c27c4a47af87cf696da7b46cea.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0My4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Njg5MjgzOTR8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzY4MzIzNTk0fDE=.MEQCIBUBqTgB+cWm+sPHsdtR3EMzzyf34zRFGdTu5tHzFqTQAiB7j5lSCKs7bSAEaNx7aMtDy8dWVAHRdbsIPeL1slARLg==',
-                'routeb': '1767718799.345.1976.525261|fc3b37d75a18d923fd0e9c7589719997',
             }
 
             try:
@@ -354,7 +354,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
         'x-spa-version': '13.16.3',
     }
