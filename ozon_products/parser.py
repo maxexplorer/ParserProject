@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 from image_processor import process_image
-from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP
+from config import IMAGE_DIR, USE_IMAGE_PROCESSING, crop
 from yandex_disk import YandexDiskClient
 from config import YANDEX_OAUTH_TOKEN, YANDEX_DISK_BASE_DIR
 
@@ -124,7 +124,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
             continue
 
         try:
-            category = soup.find('div', {'data-widget': 'breadCrumbs'}).find_all('li')[-1].text.strip()
+            category = soup.find('div', {'data-widget': 'breadCrumbs'}).find_all('li')[-2].text.strip()
         except Exception:
             category = None
 
@@ -158,10 +158,15 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         images_urls_list = []
         try:
             images_items = soup.find('div', class_='pdp_as7').find_all('div', class_='pdp_e1a')
-            for image_item in images_items[0]:
-                image_url = re.sub(r'wc\d+', 'wc1000', image_item.find('img').get('src'))
+            # images_items = soup.find('div', {'data-widget': 'webGallery'}).find_all('div', class_='pdp_e1a')
+            for image_item in images_items:
+                try:
+                    image_url = image_item.find('img').get('src')
+                    image_url = re.sub(r'wc\d+', 'wc1000', image_url)
+                except Exception:
+                    continue
                 if USE_IMAGE_PROCESSING:
-                    local_path = process_image(image_url, session, IMAGE_DIR, crop=CROP)
+                    local_path = process_image(image_url, session, IMAGE_DIR, crop=crop)
                     if local_path:
                         uploaded_path = yandex_client.upload(local_path)
                         if uploaded_path:
