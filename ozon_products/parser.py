@@ -109,7 +109,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     session = Session()
     yandex_client = YandexDiskClient(token=YANDEX_OAUTH_TOKEN, base_dir=YANDEX_DISK_BASE_DIR)
 
-    for i, product_url in enumerate(product_urls_list, 1):
+    for i, product_url in enumerate(product_urls_list[:5], 1):
         try:
             driver.get(product_url)
             WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-widget="webProductHeading"]')))
@@ -156,27 +156,37 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
         # --- Изображения ---
         images_urls_list = []
+        first_image_url = None
+
         try:
             images_items = soup.find('div', class_='pdp_as7').find_all('div', class_='pdp_e1a')
-            # images_items = soup.find('div', {'data-widget': 'webGallery'}).find_all('div', class_='pdp_e1a')
+
             for image_item in images_items:
                 try:
                     image_url = image_item.find('img').get('src')
                     image_url = re.sub(r'wc\d+', 'wc1000', image_url)
                 except Exception:
                     continue
+
                 if USE_IMAGE_PROCESSING:
                     local_path = process_image(image_url, session, IMAGE_DIR, crop=crop)
                     if local_path:
                         uploaded_path = yandex_client.upload(local_path)
                         if uploaded_path:
-                            images_urls_list.append(uploaded_path)
+                            first_image_url = uploaded_path
+                            break  # нашли первую рабочую ссылку, выходим
                 else:
                     images_urls_list.append(image_url)
+
         except Exception:
             pass
 
-        images_urls = ' | '.join(images_urls_list) if images_urls_list else None
+        # Получаем итоговую ссылку или список
+        if USE_IMAGE_PROCESSING:
+            images_urls = first_image_url
+        else:
+            images_urls = ' | '.join(images_urls_list) if images_urls_list else None
+
 
         # --- Описание и характеристики ---
         description = ''
