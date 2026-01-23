@@ -141,13 +141,13 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
         try:
             price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
-                'без Ozon Карты')).find_parent().find_parent().find('span').text))
+                'без Ozon Банка')).find_parent().find_parent().find('span').text))
         except Exception:
             price = None
 
         try:
             discount_price = ''.join(filter(lambda x: x.isdigit(), soup.find('span', string=re.compile(
-                'c Ozon Картой')).find_parent().text))
+                'c Ozon Банком')).find_parent().text))
         except Exception:
             discount_price = None
 
@@ -168,7 +168,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                             images_urls_list.append(uploaded_path)
                 else:
                     images_urls_list.append(image_url)
-        except:
+        except Exception:
             pass
 
         images_urls = ' | '.join(images_urls_list) if images_urls_list else None
