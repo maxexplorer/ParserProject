@@ -12,9 +12,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 from image_processor import process_image
-from config import IMAGE_DIR, USE_IMAGE_PROCESSING, crop
+from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP
 from yandex_disk import YandexDiskClient
 from config import YANDEX_OAUTH_TOKEN, YANDEX_DISK_BASE_DIR
+
 
 # --- Инициализация драйвера ---
 def init_undetected_chromedriver(headless_mode=False):
@@ -28,6 +29,7 @@ def init_undetected_chromedriver(headless_mode=False):
         driver.maximize_window()
         driver.implicitly_wait(15)
     return driver
+
 
 # --- Сбор ссылок на товары ---
 def get_products_urls(driver: undetectedChrome, pages: int = 315, file_path: str = 'data/product_urls_list.txt'):
@@ -67,12 +69,14 @@ def get_products_urls(driver: undetectedChrome, pages: int = 315, file_path: str
         with open(file_path, 'a', encoding='utf-8') as f:
             print(*products_urls, file=f, sep='\n')
 
+
 # --- Убираем дубликаты URL ---
 def get_unique_urls(file_path: str):
     with open(file_path, 'r', encoding='utf-8') as f:
         unique_urls = set(line.strip() for line in f)
     with open(file_path, 'w', encoding='utf-8') as f:
         print(*unique_urls, file=f, sep='\n')
+
 
 # --- Скролл вниз ---
 def scroll_and_wait_description(driver):
@@ -81,6 +85,7 @@ def scroll_and_wait_description(driver):
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#section-description')))
     except:
         pass
+
 
 # --- Сохранение в Excel ---
 def save_excel(data: list[dict], brand: str, sheet_name: str = 'Лист1'):
@@ -98,9 +103,11 @@ def save_excel(data: list[dict], brand: str, sheet_name: str = 'Лист1'):
 
     new_df = DataFrame(data)
     with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(writer, startrow=num_existing_rows, header=(num_existing_rows == 0), sheet_name=sheet_name, index=False)
+        new_df.to_excel(writer, startrow=num_existing_rows, header=(num_existing_rows == 0), sheet_name=sheet_name,
+                        index=False)
 
     print(f'Сохранено {len(data)} записей в {file_path}')
+
 
 # --- Сбор данных о товарах + обработка/загрузка изображений ---
 def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: str):
@@ -112,7 +119,8 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     for i, product_url in enumerate(product_urls_list[:5], 1):
         try:
             driver.get(product_url)
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-widget="webProductHeading"]')))
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-widget="webProductHeading"]')))
             scroll_and_wait_description(driver)
             html = driver.page_source
         except:
@@ -120,7 +128,8 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
         soup = BeautifulSoup(html, 'lxml')
 
-        if soup.find('h2', string=re.compile('Этот товар закончился')) or soup.find('h2', string=re.compile('Такой страницы не существует')):
+        if soup.find('h2', string=re.compile('Этот товар закончился')) or soup.find('h2', string=re.compile(
+                'Такой страницы не существует')):
             continue
 
         try:
@@ -169,11 +178,12 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                     continue
 
                 if USE_IMAGE_PROCESSING:
-                    local_path = process_image(image_url, session, IMAGE_DIR, crop=crop)
+                    local_path = process_image(image_url, session, IMAGE_DIR, crop=CROP)
                     if local_path:
                         uploaded_path = yandex_client.upload(local_path)
                         if uploaded_path:
                             first_image_url = uploaded_path
+
                             break  # нашли первую рабочую ссылку, выходим
                 else:
                     images_urls_list.append(image_url)
@@ -187,19 +197,22 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         else:
             images_urls = ' | '.join(images_urls_list) if images_urls_list else None
 
-
         # --- Описание и характеристики ---
         description = ''
         for d in soup.find_all('div', id='section-description'):
-            try: description += d.find('div', class_='RA-a1').text.strip()
-            except: continue
+            try:
+                description += d.find('div', class_='RA-a1').text.strip()
+            except:
+                continue
         description = description or None
 
         characteristics = ''
-        for c in (soup.find('div', id='section-characteristics').find_all('dl') if soup.find('div', id='section-characteristics') else []):
+        for c in (soup.find('div', id='section-characteristics').find_all('dl') if soup.find('div',
+                                                                                             id='section-characteristics') else []):
             try:
                 characteristics += f"{c.find('dt').text.strip()}: {c.find('dd').text.strip()}; "
-            except: continue
+            except:
+                continue
         characteristics = characteristics or None
 
         # --- Сохраняем результат ---

@@ -1,6 +1,6 @@
 # main.py
 from parser import init_undetected_chromedriver, get_products_urls, get_unique_urls, get_products_data
-from config import brand
+from config import BRAND
 
 URLS_FILE = 'data/product_urls_list.txt'
 
@@ -16,7 +16,7 @@ def main():
             product_urls = [line.strip() for line in f]
 
         # 3) Получаем данные и работаем с изображениями
-        get_products_data(driver, product_urls, brand)
+        get_products_data(driver, product_urls, BRAND)
     finally:
         driver.quit()
 
