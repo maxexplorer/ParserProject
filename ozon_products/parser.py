@@ -12,22 +12,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 from image_processor import process_image
-from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP
+from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP, IMAGE_QUALITY
 from yandex_disk import YandexDiskClient
 from config import YANDEX_OAUTH_TOKEN, YANDEX_DISK_BASE_DIR
 
 
 # --- Инициализация драйвера ---
-def init_undetected_chromedriver(headless_mode=False):
+def init_undetected_chromedriver(headless_mode=False, page_load_timeout=10):
     if headless_mode:
         options = ChromeOptions()
         options.add_argument('--headless')
         driver = undetectedChrome(options=options)
-        driver.implicitly_wait(15)
+        driver.implicitly_wait(page_load_timeout)
     else:
         driver = undetectedChrome()
         driver.maximize_window()
-        driver.implicitly_wait(15)
+        driver.implicitly_wait(page_load_timeout)
     return driver
 
 
@@ -178,7 +178,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                     continue
 
                 if USE_IMAGE_PROCESSING:
-                    local_path = process_image(image_url, session, IMAGE_DIR, crop=CROP)
+                    local_path = process_image(image_url, session, IMAGE_DIR, crop=CROP, quality=IMAGE_QUALITY)
                     if local_path:
                         uploaded_path = yandex_client.upload(local_path)
                         if uploaded_path:

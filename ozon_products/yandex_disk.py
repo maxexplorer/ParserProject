@@ -3,10 +3,7 @@
 import os
 import requests
 
-YANDEX_UPLOAD_URL = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
-YANDEX_PUBLISH_URL = 'https://cloud-api.yandex.net/v1/disk/resources/publish'
-YANDEX_RESOURCES_URL = 'https://cloud-api.yandex.net/v1/disk/resources'
-
+from config import YANDEX_UPLOAD_URL, YANDEX_PUBLISH_URL, YANDEX_RESOURCES_URL
 
 class YandexDiskClient:
 

@@ -35,15 +35,14 @@ def process_image(
     image_url: str,
     session: Session,
     save_dir: str,
-    crop: dict | None = None
+    crop: dict | None = None,
+    quality: int = None,
 ) -> str | None:
 
     if image_url in processed_images_cache:
         return processed_images_cache[image_url]
 
     try:
-        os.makedirs(save_dir, exist_ok=True)
-
         url_path = urlparse(image_url).path
         filename = os.path.basename(url_path)
         filename = re.sub(r'[^\w\-.]', '_', filename)
@@ -64,7 +63,7 @@ def process_image(
                 pixels=crop['pixels']
             )
 
-        img.save(local_path, format='JPEG', quality=95)
+        img.save(local_path, format='JPEG', quality=quality)
 
         processed_images_cache[image_url] = local_path
         return local_path
