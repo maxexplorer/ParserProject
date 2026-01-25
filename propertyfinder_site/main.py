@@ -4,7 +4,8 @@ from datetime import datetime, date, timedelta
 import re
 
 from requests import Session
-from pandas import DataFrame, ExcelWriter
+
+from pandas import DataFrame, ExcelWriter, read_excel
 
 # =============================================================================
 # Глобальные настройки
@@ -74,7 +75,7 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
 # Сбор и обработка данных
 # =============================================================================
 
-def get_data(headers: dict, pages: int = 3, days: int = 1) -> list[dict[str, str | int | None]]:
+def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100) -> list[dict[str, str | int | None]]:
     """
     Собирает объявления о продаже недвижимости с сайта PropertyFinder.
 
@@ -225,40 +226,57 @@ def get_data(headers: dict, pages: int = 3, days: int = 1) -> list[dict[str, str
 
             print(f'Обработано страниц: {page}/{pages}')
 
+            # Сохраняем партию данных в Excel
+            if len(result_data) >= batch_size:
+                save_excel(result_data, today_utc)
+                result_data.clear()
+
+            # Сохраняем остаток
+        if result_data:
+            save_excel(result_data, today_utc)
+
     return result_data
 
 
 # =============================================================================
 # Сохранение данных
 # =============================================================================
-
-def save_excel(data: list) -> None:
+def save_excel(data: list[dict], today_utc: date) -> None:
     """
-    Сохраняет собранные данные в Excel-файл (.xlsx).
+    Сохраняет список данных в Excel-файл (results/result_data.xlsx).
 
-    Файл сохраняется в директорию `results`
-    с текущей датой в названии.
-
-    :param data: Список словарей с объявлениями
+    :param data: Список словарей с данными о товарах.
     """
-    cur_date: str = datetime.now().strftime('%d-%m-%Y')
-    directory: str = 'results'
+    cur_date: str = today_utc.strftime('%d-%m-%Y')
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    directory = 'results'
+    file_path = f'{directory}/result_data_{cur_date}.xlsx'
 
-    file_path: str = f'{directory}/result_data_{cur_date}.xlsx'
+    os.makedirs(directory, exist_ok=True)
 
-    dataframe: DataFrame = DataFrame(data)
+    # Если файла нет — создаем пустой
+    if not os.path.exists(file_path):
+        with ExcelWriter(file_path, mode='w') as writer:
+            DataFrame().to_excel(writer, sheet_name='Data', index=False)
 
-    with ExcelWriter(file_path, mode='w') as writer:
-        dataframe.to_excel(
+    # Читаем существующие данные
+    df_existing = read_excel(file_path, sheet_name='Data')
+    num_existing_rows = len(df_existing.index)
+
+    # Преобразуем новые данные в DataFrame
+    new_df = DataFrame(data)
+
+    # Дописываем новые строки в конец
+    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+        new_df.to_excel(
             writer,
-            sheet_name='data',
+            startrow=num_existing_rows + 1,
+            header=(num_existing_rows == 0),
+            sheet_name='Data',
             index=False
         )
 
-    print(f'Данные сохранены в файл {file_path}')
+    print(f'Сохранено {len(data)} записей в {file_path}')
 
 
 # =============================================================================
@@ -275,11 +293,11 @@ def main() -> None:
     """
 
     pages : int = 800
-    days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
+    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
+    batch_size = 100
 
     try:
-        result_data: list = get_data(headers=headers, pages=pages, days=days_to_collect)
-        save_excel(data=result_data)
+        result_data: list = get_data(headers=headers, pages=pages, days=days_to_collect, batch_size=batch_size)
 
     except Exception as ex:
         print(f'main: {ex}')
