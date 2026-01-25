@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import re
 
 from requests import Session
@@ -77,23 +77,22 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
 # Сбор и обработка данных
 # =============================================================================
 
-def get_data(headers: dict) -> list[dict[str, str | int | None]]:
+def get_data(headers: dict, pages: int = 3, days: int = 1) -> list[dict[str, str | int | None]]:
     """
     Собирает объявления о продаже недвижимости с сайта PropertyFinder.
 
-    В итоговую выборку попадают только объявления,
-    опубликованные **сегодня (по UTC)**.
-
     :param headers: HTTP-заголовки запроса
+    :param days: Количество дней назад (1 = только сегодня, 7 = неделя)
     :return: Список словарей с данными объявлений
     """
     result_data: list[dict[str, str | int | None]] = []
 
+    # Граница по дате (UTC)
+    today_utc: date = date.today()
+    date_from: date = today_utc - timedelta(days=days - 1)
+
     # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
-
-        pages: int = 3  # Количество страниц для обработки
-
         for page in range(1, pages + 1):
             try:
                 # Пауза между запросами для снижения риска блокировки
@@ -142,8 +141,10 @@ def get_data(headers: dict) -> list[dict[str, str | int | None]]:
                     listed_date, '%Y-%m-%dT%H:%M:%SZ'
                 )
 
-                # Фильтрация: только объявления за сегодняшний день
-                if date_obj.date() != date.today():
+                # Фильтрация по дате
+                listed_date_only: date = date_obj.date()
+
+                if not (date_from <= listed_date_only <= today_utc):
                     continue
 
                 # -----------------------------------------------------------------
@@ -275,8 +276,12 @@ def main() -> None:
     сохраняет результат в Excel
     и выводит общее время выполнения.
     """
+
+    pages : int = 100
+    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
+
     try:
-        result_data: list = get_data(headers=headers)
+        result_data: list = get_data(headers=headers, pages=pages, days=days_to_collect)
         save_excel(data=result_data)
 
     except Exception as ex:
