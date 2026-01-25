@@ -51,17 +51,14 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
         print('Не удалось получить buildId')
         return None
 
-    url = (
-        f'https://www.propertyfinder.ae/search/_next/data/'
-        f'{build_id}/en/buy/properties-for-sale.html.json'
-    )
+    url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
+
 
     params = {
+        'c': '1',
+        'fu': '0',
+        'ob': 'nd',
         'page': page,
-        'categorySlug': 'buy',
-        'propertyTypeSlug': 'properties',
-        'saleType': 'for-sale',
-        'pattern': '/categorySlug/propertyTypeSlug-saleType.html',
     }
 
     response = session.get(url, headers=headers, params=params, timeout=30)
@@ -277,8 +274,8 @@ def main() -> None:
     и выводит общее время выполнения.
     """
 
-    pages : int = 100
-    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
+    pages : int = 800
+    days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
 
     try:
         result_data: list = get_data(headers=headers, pages=pages, days=days_to_collect)
