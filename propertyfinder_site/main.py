@@ -54,7 +54,6 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
 
     url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
 
-
     params = {
         'c': '1',
         'fu': '0',
@@ -89,13 +88,14 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
     today_utc: date = date.today()
     date_from: date = today_utc - timedelta(days=days - 1)
 
+    max_consecutive_old = 3  # после 3 подряд старых объявлений выходим
+    consecutive_old = 0  # общий счётчик по всем страницам
+
     # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
         for page in range(1, pages + 1):
             try:
-                # Пауза между запросами для снижения риска блокировки
                 time.sleep(1)
-
                 json_data: dict | None = get_json(
                     headers=headers,
                     session=session,
@@ -110,7 +110,6 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 print('not json_data')
                 continue
 
-            # Извлечение списка объявлений
             items: list | None = (
                 json_data
                 .get('pageProps', {})
@@ -124,26 +123,24 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
             for item in items:
                 properties: dict | None = item.get('property')
-
                 if not properties:
                     continue
 
-                # -----------------------------------------------------------------
-                # Дата публикации объявления (UTC)
-                # -----------------------------------------------------------------
                 listed_date: str | None = properties.get('listed_date')
                 if not listed_date:
                     continue
 
-                date_obj: datetime = datetime.strptime(
-                    listed_date, '%Y-%m-%dT%H:%M:%SZ'
-                )
-
-                # Фильтрация по дате
+                date_obj: datetime = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
                 listed_date_only: date = date_obj.date()
 
+                # Проверка даты
                 if not (date_from <= listed_date_only <= today_utc):
+                    consecutive_old += 1
+                    if consecutive_old >= max_consecutive_old:
+                        return result_data  # выходим из get_data полностью
                     continue
+                else:
+                    consecutive_old = 0  # сброс счётчика, если дата подходит
 
                 # -----------------------------------------------------------------
                 # Основные данные объекта
@@ -175,16 +172,12 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 # Дополнительная информация
                 completion_status: str | None = properties.get('completion_status')
                 description: str | None = properties.get('description')
-                amenities: str = ', '.join(
-                    properties.get('amenity_names', [])
-                )
+                amenities: str = ', '.join(properties.get('amenity_names', []))
                 property_url: str | None = properties.get('share_url')
 
                 # Изображения
                 image_urls: str = ', '.join(
-                    image.get('medium')
-                    for image in properties.get('images', [])
-                    if image.get('medium')
+                    image.get('medium') for image in properties.get('images', []) if image.get('medium')
                 )
 
                 # Брокер
@@ -231,7 +224,7 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 save_excel(result_data, today_utc)
                 result_data.clear()
 
-            # Сохраняем остаток
+        # Сохраняем остаток
         if result_data:
             save_excel(result_data, today_utc)
 
@@ -292,7 +285,7 @@ def main() -> None:
     и выводит общее время выполнения.
     """
 
-    pages : int = 800
+    pages: int = 800
     days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
