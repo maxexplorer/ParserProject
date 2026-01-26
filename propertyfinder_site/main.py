@@ -69,6 +69,12 @@ def get_json(headers: dict, session: Session, page: int) -> dict | None:
 
     return response.json()
 
+def clean_text(text: str | None) -> str | None:
+    if text is None:
+        return None
+    # Удаляем символы управления, оставляем только читаемые
+    return re.sub(r'[\x00-\x1F\x7F]', ' ', text).strip()
+
 
 # =============================================================================
 # Сбор и обработка данных
@@ -147,7 +153,7 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 # -----------------------------------------------------------------
                 property_id: int | None = properties.get('id')
                 property_type: str | None = properties.get('property_type')
-                title: str | None = properties.get('title')
+                title: str | None = clean_text(properties.get('title'))
 
                 # Локация
                 location: dict = properties.get('location', {})
@@ -171,8 +177,8 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
                 # Дополнительная информация
                 completion_status: str | None = properties.get('completion_status')
-                description: str | None = properties.get('description')
-                amenities: str = ', '.join(properties.get('amenity_names', []))
+                description: str | None = clean_text(properties.get('description'))
+                amenities: str = ', '.join(clean_text(a) for a in properties.get('amenity_names', []))
                 property_url: str | None = properties.get('share_url')
 
                 # Изображения
@@ -286,7 +292,7 @@ def main() -> None:
     """
 
     pages: int = 800
-    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
+    days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
     try:
