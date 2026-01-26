@@ -48,11 +48,10 @@ class YandexDiskClient:
 
         file_info = r.json()
 
-        public_url = file_info.get('public_url')
         download_url = file_info.get('file')
-        if not public_url:
+        if not download_url:
             print(f'YD public_url missing in response: {r.json()}')
             return None
 
-        return public_url
+        return download_url
 

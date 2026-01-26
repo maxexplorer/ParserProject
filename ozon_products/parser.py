@@ -183,7 +183,6 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                         uploaded_path = yandex_client.upload(local_path)
                         if uploaded_path:
                             first_image_url = uploaded_path
-
                             break  # нашли первую рабочую ссылку, выходим
                 else:
                     images_urls_list.append(image_url)
@@ -197,7 +196,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         else:
             images_urls = ' | '.join(images_urls_list) if images_urls_list else None
 
-        # --- Описание и характеристики ---
+        # --- Описание ---
         description = ''
         for d in soup.find_all('div', id='section-description'):
             try:
@@ -206,17 +205,20 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                 continue
         description = description or None
 
-        characteristics = ''
-        for c in (soup.find('div', id='section-characteristics').find_all('dl') if soup.find('div',
-                                                                                             id='section-characteristics') else []):
-            try:
-                characteristics += f"{c.find('dt').text.strip()}: {c.find('dd').text.strip()}; "
-            except:
-                continue
-        characteristics = characteristics or None
+        # --- Характеристики в отдельные колонки ---
+        item_characteristics = {}
+        char_section = soup.find('div', id='section-characteristics')
+        if char_section:
+            for dl in char_section.find_all('dl'):
+                try:
+                    key = dl.find('dt').text.strip()
+                    value = dl.find('dd').text.strip()
+                    item_characteristics[key] = value
+                except:
+                    continue
 
         # --- Сохраняем результат ---
-        result_list.append({
+        result_item = {
             'Бренд': brand,
             'Категория': category,
             'Название': name,
@@ -224,9 +226,13 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
             'Цена без Ozon Карты': price,
             'Цена c Ozon Картой': discount_price,
             'Ссылка на изображения': images_urls,
-            'Описание': description,
-            'Характеристики': characteristics
-        })
+            'Описание': description
+        }
+
+        # Добавляем характеристики как отдельные колонки
+        result_item.update(item_characteristics)
+
+        result_list.append(result_item)
 
         print(f'Обработано: {i}/{len(product_urls_list)}')
 
@@ -236,3 +242,4 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
     if result_list:
         save_excel(result_list, brand)
+
