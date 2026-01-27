@@ -1,4 +1,4 @@
-# yandex_disk.py
+# yandex_disk_client.py
 
 import os
 import requests
@@ -34,11 +34,11 @@ class YandexDiskClient:
             print(f'YD upload error: {r.text}')
             return None
 
-        # # 3️⃣ Публикуем файл
-        # r = requests.put(YANDEX_PUBLISH_URL, headers=self.headers, params={'path': yandex_path})
-        # if r.status_code != 200:
-        #     print(f'YD publish error: {r.text}')
-        #     return None
+        # 3️⃣ Публикуем файл
+        r = requests.put(YANDEX_PUBLISH_URL, headers=self.headers, params={'path': yandex_path})
+        if r.status_code != 200:
+            print(f'YD publish error: {r.text}')
+            return None
 
         # 4️⃣ Получаем метаинформацию о файле, чтобы взять public_url
         r = requests.get(YANDEX_RESOURCES_URL, headers=self.headers, params={'path': yandex_path})

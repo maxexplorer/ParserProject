@@ -13,9 +13,8 @@ from bs4 import BeautifulSoup
 
 from image_processor import process_image
 from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP, IMAGE_QUALITY
-from yandex_disk import YandexDiskClient
-from config import YANDEX_OAUTH_TOKEN, YANDEX_DISK_BASE_DIR
 
+from image_upload_client import ImageUploader
 
 # --- Инициализация драйвера ---
 def init_undetected_chromedriver(headless_mode=False, page_load_timeout=10):
@@ -114,7 +113,8 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     result_list = []
     batch_size = 100
     session = Session()
-    yandex_client = YandexDiskClient(token=YANDEX_OAUTH_TOKEN, base_dir=YANDEX_DISK_BASE_DIR)
+    # --- инициализация клиента загрузки ---
+    image_client = ImageUploader()
 
     for i, product_url in enumerate(product_urls_list[:5], 1):
         try:
@@ -168,7 +168,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
         first_image_url = None
 
         try:
-            images_items = soup.find('div', class_='pdp_as7').find_all('div', class_='pdp_e1a')
+            images_items = soup.find('div', {'data-widget': 'webGallery'}).find_all('div', class_='pdp_ae3')
 
             for image_item in images_items:
                 try:
@@ -180,7 +180,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
                 if USE_IMAGE_PROCESSING:
                     local_path = process_image(image_url, session, IMAGE_DIR, crop=CROP, quality=IMAGE_QUALITY)
                     if local_path:
-                        uploaded_path = yandex_client.upload(local_path)
+                        uploaded_path = image_client.upload(local_path)
                         if uploaded_path:
                             first_image_url = uploaded_path
                             break  # нашли первую рабочую ссылку, выходим
