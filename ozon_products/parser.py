@@ -16,6 +16,7 @@ from config import IMAGE_DIR, USE_IMAGE_PROCESSING, CROP, IMAGE_QUALITY
 
 from image_upload_client import ImageUploader
 
+
 # --- Инициализация драйвера ---
 def init_undetected_chromedriver(headless_mode=False, page_load_timeout=10):
     if headless_mode:
@@ -77,11 +78,18 @@ def get_unique_urls(file_path: str):
         print(*unique_urls, file=f, sep='\n')
 
 
-# --- Скролл вниз ---
-def scroll_and_wait_description(driver):
+def scroll_and_wait_description(driver, timeout=10):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    wait = WebDriverWait(driver, timeout)
+
     try:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#section-description')))
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#section-description')))
+    except:
+        pass
+
+    try:
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#section-characteristics')))
     except:
         pass
 
@@ -116,7 +124,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     # --- инициализация клиента загрузки ---
     image_client = ImageUploader()
 
-    for i, product_url in enumerate(product_urls_list[:5], 1):
+    for i, product_url in enumerate(product_urls_list[500:1000], 500):
         try:
             driver.get(product_url)
             WebDriverWait(driver, 5).until(
@@ -242,4 +250,3 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
     if result_list:
         save_excel(result_list, brand)
-
