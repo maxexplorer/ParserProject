@@ -124,7 +124,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
     # --- инициализация клиента загрузки ---
     image_client = ImageUploader()
 
-    for i, product_url in enumerate(product_urls_list[500:1000], 500):
+    for i, product_url in enumerate(product_urls_list[1500:2100], 1500):
         try:
             driver.get(product_url)
             WebDriverWait(driver, 5).until(
@@ -136,8 +136,7 @@ def get_products_data(driver: undetectedChrome, product_urls_list: list, brand: 
 
         soup = BeautifulSoup(html, 'lxml')
 
-        if soup.find('h2', string=re.compile('Этот товар закончился')) or soup.find('h2', string=re.compile(
-                'Такой страницы не существует')):
+        if not soup.find('div', {'data-widget': 'webProductHeading'}):
             continue
 
         try:
