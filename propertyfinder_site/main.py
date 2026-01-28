@@ -44,7 +44,7 @@ async def main():
     bot_task = asyncio.create_task(bot_instance.dp.start_polling(bot_instance.bot))
 
     # Запускаем scheduler парсера (например, в 09:00)
-    parser_task = asyncio.create_task(parser_scheduler(bot_instance, target_time=dtime(15, 35)))
+    parser_task = asyncio.create_task(parser_scheduler(bot_instance, target_time=dtime(21, 00)))
 
     # Ждём завершения обоих (бот не завершится сам)
     await asyncio.gather(bot_task, parser_task)
