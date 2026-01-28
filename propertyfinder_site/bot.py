@@ -21,8 +21,12 @@ class ChatParserBot:
 
     async def start_handler(self, message: Message):
         chat_id = message.chat.id
-        if chat_id not in self.subscribers:
-            self.subscribers.add(chat_id)
+
+        if chat_id in self.subscribers:
+            await message.answer("ℹ️ Парсер уже запущен.")
+            return
+
+        self.subscribers.add(chat_id)
         await message.answer("✅ Привет! Ты подписан на получение Excel с объявлениями.")
 
     async def send_excel_to_subscribers(self, file_path: str):
