@@ -9,17 +9,27 @@ from config import BOT_TOKEN, PAGES_TO_COLLECT, DAYS_TO_COLLECT, BATCH_SIZE, RES
 from logger import logger
 
 async def run_parser(bot: ChatParserBot):
-    """Сбор данных и отправка Excel подписчикам"""
+    """Сбор данных и отправка Excel подписчикам без блокировки бота"""
     logger.info("Запуск парсера...")
-    get_data(headers=headers, pages=PAGES_TO_COLLECT, days=DAYS_TO_COLLECT, batch_size=BATCH_SIZE)
+
+    try:
+        # Запускаем get_data в отдельном потоке, чтобы не блокировать asyncio
+        await asyncio.to_thread(get_data, headers, PAGES_TO_COLLECT, DAYS_TO_COLLECT, BATCH_SIZE)
+    except Exception as e:
+        logger.error(f"Ошибка при выполнении парсера: {e}")
+        return
 
     today_str = datetime.today().strftime("%d-%m-%Y")
     file_path = os.path.join(RESULTS_DIR, f"result_data_{today_str}.xlsx")
 
     if os.path.exists(file_path):
-        await bot.send_excel_to_subscribers(file_path)
+        try:
+            await bot.send_excel_to_subscribers(file_path)
+        except Exception as e:
+            logger.error(f"Ошибка при отправке Excel: {e}")
     else:
         logger.warning("Файл Excel не найден для отправки.")
+
 
 async def parser_scheduler(bot: ChatParserBot, target_time: dtime):
     """Запуск парсера в заданное время каждый день"""
