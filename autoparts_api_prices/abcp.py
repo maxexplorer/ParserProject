@@ -53,7 +53,7 @@ def get_prices_abcp(
             payload[f"search[{i}][brand]"] = brand
 
         try:
-            time.sleep(1)
+            time.sleep(3)
 
             response = requests.post(
                 url=url,

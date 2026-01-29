@@ -93,7 +93,6 @@ def main() -> None:
     # Удаляем вчерашние файлы перед загрузкой
     # ----------------------
     remove_yesterday_file()
-    remove_yesterday_file()
 
     try:
 
