@@ -9,8 +9,9 @@
 - Сохраняет результаты в Excel
 """
 
+import os
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from autotrade import get_prices_autotrade
 from abcp import get_prices_abcp
@@ -55,6 +56,28 @@ headers: dict = {
 }
 
 
+def remove_yesterday_file() -> None:
+    """
+    Удаляет файл Excel с результатами за вчерашний день
+    в соответствии с save_excel().
+    """
+
+    directory = 'results'
+    os.makedirs(directory, exist_ok=True)
+
+    yesterday = datetime.now() - timedelta(days=1)
+    date_str = yesterday.strftime('%d-%m-%Y')
+
+    filename = f'result_data_{date_str}.xlsx'
+    filepath = os.path.join(directory, filename)
+
+    if os.path.isfile(filepath):
+        os.remove(filepath)
+        print(f"[OK] Удалён файл: {filepath}")
+    else:
+        print(f"[INFO] Файл не найден: {filepath}")
+
+
 def main() -> None:
     """
     Основная функция запуска.
@@ -65,6 +88,12 @@ def main() -> None:
     - Получает цены ABCP
     - Сохраняет результат в Excel
     """
+
+    # ----------------------
+    # Удаляем вчерашние файлы перед загрузкой
+    # ----------------------
+    remove_yesterday_file()
+    remove_yesterday_file()
 
     try:
 
@@ -79,7 +108,7 @@ def main() -> None:
             articles=autotrade_articles
         )
 
-        save_excel(data=autotrade_data, brand='sat')
+        save_excel(data=autotrade_data)
 
         # ---------- ABCP ----------
         abcp_file_path: str = "data/ОЕМ abcp.xlsx"
@@ -93,19 +122,17 @@ def main() -> None:
             articles=abcp_articles
         )
 
-        save_excel(data=abcp_data, brand='oem')
+        save_excel(data=abcp_data)
+
 
     except Exception as ex:
-        print(f'main: {ex}')
-        input("Нажмите Enter, чтобы закрыть программу...")
+        print(f'[ERROR] main: {ex}')
         return
 
         # ---------- Завершение ----------
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
     print(f'Время выполнения: {execution_time}')
-
-    input("Нажмите Enter, чтобы закрыть программу...")
 
 
 if __name__ == '__main__':
