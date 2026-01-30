@@ -87,8 +87,11 @@ def get_data(headers: dict, days: int = 1, batch_size: int = 100, limit: int = 5
 
     :param headers: HTTP-заголовки запроса
     :param days: Количество дней назад (1 = только сегодня, 7 = неделя)
+    :param batch_size: Количество записей для сохранения результата
+    :param limit: Количество отображения карточек на странице
     :return: Список словарей с данными объявлений
     """
+
     result_data: list[dict[str, str | int | None]] = []
 
     # Граница по дате (UTC)
@@ -105,7 +108,6 @@ def get_data(headers: dict, days: int = 1, batch_size: int = 100, limit: int = 5
         json_data: dict | None = get_json(session=session,
                             headers=headers,
                             page=1)
-
 
         if not json_data:
             print('first page not json_data')
