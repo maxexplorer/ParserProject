@@ -3,7 +3,7 @@
 import asyncio
 from datetime import datetime, time as dtime, timedelta
 import os
-from parser import get_data, headers
+from propertyfinder_parser import get_data, headers
 from bot import ChatParserBot
 from config import BOT_TOKEN, PAGES_TO_COLLECT, DAYS_TO_COLLECT, BATCH_SIZE, RESULTS_DIR
 from logger import logger

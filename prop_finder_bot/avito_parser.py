@@ -1,9 +1,10 @@
-# parser.py
+# avito_parser.py
 
 import os
 import time
 from datetime import datetime, date, timedelta
 import re
+import math
 
 from requests import Session
 
@@ -18,18 +19,10 @@ start_time: datetime = datetime.now()
 
 # HTTP-заголовки для имитации запроса от браузера
 headers: dict = {
-    'accept': '*/*',
-    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'priority': 'u=1, i',
-    'referer': 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html',
-    'sec-ch-ua': '"Not(A:Brand";v="8", "Chromium";v="144", "Google Chrome";v="144"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
-    'x-nextjs-data': '1',
+    'accept': 'application/json',
+    'referer': 'https://www.avito.ru/respublika_krym/zemelnye_uchastki?localPriority=0',
+    'user-agent': 'Mozilla/5.0',
+    'x-requested-with': 'XMLHttpRequest',
 }
 
 
@@ -45,22 +38,19 @@ def get_build_id(session: Session, headers: dict) -> str | None:
 
 
 # =============================================================================
-# Работа с API PropertyFinder
+# Работа с API Avito
 # =============================================================================
 
-def get_json(headers: dict, session: Session, page: int) -> dict | None:
-    build_id = get_build_id(session, headers)
-    if not build_id:
-        print('Не удалось получить buildId')
-        return None
+def get_json(session: Session, headers: dict, page: int) -> dict | None:
 
-    url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
+    url = 'https://www.avito.ru/web/1/js/items'
 
     params = {
-        'c': '1',
-        'fu': '0',
-        'ob': 'nd',
-        'page': page,
+        'categoryId': '26',
+        'locationId': '621550',
+        'p': page,
+        's': '104',
+        'updateListOnly': 'true',
     }
 
     response = session.get(url, headers=headers, params=params, timeout=30)
@@ -78,11 +68,20 @@ def clean_text(text: str | None) -> str | None:
     return re.sub(r'[\x00-\x1F\x7F]', ' ', text).strip()
 
 
+def parse_date(timestamp: int | None) -> datetime | None:
+    """Конвертирует timestamp (ms) в datetime"""
+    if not timestamp:
+        return None
+    if timestamp > 1e10:  # миллисекунды
+        timestamp /= 1000
+    return datetime.fromtimestamp(timestamp)
+
+
 # =============================================================================
 # Сбор и обработка данных
 # =============================================================================
 
-def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100) -> list[dict[str, str | int | None]]:
+def get_data(headers: dict, days: int = 1, batch_size: int = 100, limit: int = 50) -> list[dict[str, str | int | None]] | None:
     """
     Собирает объявления о продаже недвижимости с сайта PropertyFinder.
 
@@ -101,6 +100,23 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
     # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
+
+        # Получаем первую страницу
+        json_data: dict | None = get_json(session=session,
+                            headers=headers,
+                            page=1)
+
+
+        if not json_data:
+            print('first page not json_data')
+
+        total = json_data.get('totalCount', 0)
+        if total == 0:
+            print(f"Карточек нет")
+            return
+
+        pages = math.ceil(total / limit)
+        print(f"Всего {total} карточек, {pages} страниц")
         for page in range(1, pages + 1):
             try:
                 time.sleep(1)
@@ -120,9 +136,9 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
             items: list | None = (
                 json_data
-                .get('pageProps', {})
-                .get('searchResult', {})
-                .get('listings')
+                .get('catalog', {})
+                .get('items', [])
+
             )
 
             if not items:
@@ -130,15 +146,12 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 continue
 
             for item in items:
-                properties: dict | None = item.get('property')
-                if not properties:
+                sort_ts = item.get('sortTimeStamp')
+                date_obj = parse_date(sort_ts)
+
+                if not date_obj:
                     continue
 
-                listed_date: str | None = properties.get('listed_date')
-                if not listed_date:
-                    continue
-
-                date_obj: datetime = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
                 listed_date_only: date = date_obj.date()
 
                 # Проверка даты
@@ -153,47 +166,23 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 # -----------------------------------------------------------------
                 # Основные данные объекта
                 # -----------------------------------------------------------------
-                property_id: int | None = properties.get('id')
-                property_type: str | None = properties.get('property_type')
-                title: str | None = clean_text(properties.get('title'))
+                property_id: int | None = item.get('id')
+                property_type: str | None = item.get('category', {}).get('name')
+                title: str | None = clean_text(item.get('title'))
 
                 # Локация
-                location: dict = properties.get('location', {})
-                full_name: str | None = location.get('full_name')
-                building_type: str | None = location.get('type')
-                building_name: str | None = location.get('name')
+                location: dict = item.get('coords', {}).get('address_user')
 
                 # Цена
-                price_info: dict = properties.get('price', {})
+                price_info: dict = item.get('priceDetailed', {})
                 price: int | None = price_info.get('value')
-                currency: str | None = price_info.get('currency')
-
-                # Комнаты
-                bedrooms: int | None = properties.get('bedrooms')
-                bathrooms: int | None = properties.get('bathrooms')
-
-                # Площадь
-                size_info: dict = properties.get('size', {})
-                size: int | None = size_info.get('value')
-                unit: str | None = size_info.get('unit')
+                normalized_price: str | None = price_info.get('normalizedPrice')
 
                 # Дополнительная информация
-                completion_status: str | None = properties.get('completion_status')
-                description: str | None = clean_text(properties.get('description'))
-                amenities: str = ', '.join(clean_text(a) for a in properties.get('amenity_names', []))
-                property_url: str | None = properties.get('share_url')
+                description: str | None = clean_text(item.get('description'))
 
-                # Изображения
-                image_urls: str = ', '.join(
-                    image.get('medium') for image in properties.get('images', []) if image.get('medium')
-                )
+                property_url: str | None = f"https://www.avito.ru{item.get('urlPath')}"
 
-                # Брокер
-                broker: dict = properties.get('broker') or {}
-                broker_name: str | None = broker.get('name')
-                broker_address: str | None = broker.get('address')
-                broker_email: str | None = broker.get('email')
-                broker_phone: str | None = broker.get('phone')
 
                 # -----------------------------------------------------------------
                 # Добавление результата
@@ -204,24 +193,11 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                         'property_id': property_id,
                         'property_type': property_type,
                         'title': title,
-                        'full_name': full_name,
-                        'building_type': building_type,
-                        'building_name': building_name,
+                        'address': location,
                         'price': price,
-                        'currency': currency,
-                        'bedrooms': bedrooms,
-                        'bathrooms': bathrooms,
-                        'size': size,
-                        'size_unit': unit,
-                        'completion_status': completion_status,
+                        'normalized_price': normalized_price,
                         'description': description,
-                        'amenities': amenities,
-                        'property_url': property_url,
-                        'image_urls': image_urls,
-                        'broker_name': broker_name,
-                        'broker_address': broker_address,
-                        'broker_email': broker_email,
-                        'broker_phone': broker_phone,
+                        'property_url': property_url
                     }
                 )
 
@@ -229,12 +205,12 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
             # Сохраняем партию данных в Excel
             if len(result_data) >= batch_size:
-                save_excel(result_data, today_utc)
+                save_excel(result_data, 'Авито', today_utc)
                 result_data.clear()
 
         # Сохраняем остаток
         if result_data:
-            save_excel(result_data, today_utc)
+            save_excel(result_data, 'Авито', today_utc)
 
     return result_data
 
@@ -242,7 +218,7 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 # =============================================================================
 # Сохранение данных
 # =============================================================================
-def save_excel(data: list[dict], today_utc: date) -> None:
+def save_excel(data: list[dict], source: str, today_utc: date) -> None:
     """
     Сохраняет список данных в Excel-файл (results/result_data.xlsx).
 
@@ -251,7 +227,7 @@ def save_excel(data: list[dict], today_utc: date) -> None:
     cur_date: str = today_utc.strftime('%d-%m-%Y')
 
     directory = 'results'
-    file_path = f'{directory}/result_data_{cur_date}.xlsx'
+    file_path = f'{directory}/result_data_{source}_{cur_date}.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
@@ -293,12 +269,11 @@ def main() -> None:
     и выводит общее время выполнения.
     """
 
-    pages: int = 800
     days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
     try:
-        result_data: list = get_data(headers=headers, pages=pages, days=days_to_collect, batch_size=batch_size)
+        result_data: list = get_data(headers=headers, days=days_to_collect, batch_size=batch_size)
 
     except Exception as ex:
         print(f'main: {ex}')
