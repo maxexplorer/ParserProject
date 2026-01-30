@@ -67,6 +67,7 @@ def get_prices_autotrade(
                 url=url,
                 headers=headers,
                 data="data=" + json.dumps(payload),
+                timeout=30
             )
             response.raise_for_status()
 
