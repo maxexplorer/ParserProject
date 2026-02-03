@@ -26,7 +26,7 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     if headless_mode:
         options.add_argument('--headless')
 
-    driver = uc.Chrome(options=options)
+    driver = uc.Chrome(options=options, version_main=144)
     driver.implicitly_wait(1)  # неявное ожидание для всех элементов
     driver.maximize_window()  # максимальный размер окна для корректной работы элементов
     return driver
