@@ -11,13 +11,14 @@
 
 import os
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
+import glob
 
 from autotrade import get_prices_autotrade
 from abcp import get_prices_abcp
 
 from config import login_autotrade, password_autotrade, login_abcp, password_abcp
-from utils import load_article_info_from_excel, save_excel
+from utils import load_articles_from_data, load_prices_from_file, normalize, remove_yesterday_file, clear_prices_folder, save_excel
 
 # Фиксируем время начала выполнения
 start_time: datetime = datetime.now()
@@ -56,83 +57,83 @@ headers: dict = {
 }
 
 
-def remove_yesterday_file() -> None:
-    """
-    Удаляет файл Excel с результатами за вчерашний день
-    в соответствии с save_excel().
-    """
-
-    directory = 'results'
-    os.makedirs(directory, exist_ok=True)
-
-    yesterday = datetime.now() - timedelta(days=1)
-    date_str = yesterday.strftime('%d-%m-%Y')
-
-    filename = f'result_data_{date_str}.xlsx'
-    filepath = os.path.join(directory, filename)
-
-    if os.path.isfile(filepath):
-        os.remove(filepath)
-        print(f"[OK] Удалён файл: {filepath}")
-    else:
-        print(f"[INFO] Файл не найден: {filepath}")
-
-
-def main() -> None:
-    """
-    Основная функция запуска.
-
-    - Загружает артикулы Autotrade
-    - Получает цены Autotrade
-    - Загружает артикулы ABCP
-    - Получает цены ABCP
-    - Сохраняет результат в Excel
-    """
-
-    # ----------------------
-    # Удаляем вчерашние файлы перед загрузкой
-    # ----------------------
+def main():
     remove_yesterday_file()
 
     try:
+        # ------------------- SAT и OEM -------------------
+        articles_dict = load_articles_from_data()
 
-        # ---------- Autotrade ----------
-        autotrade_file_path: str = "data/SAT autotrade.xlsx"
-        autotrade_articles: list = load_article_info_from_excel(autotrade_file_path)
+        other_articles = {
+            article for article, _ in articles_dict.get("OTHER", [])
+        }
 
-        autotrade_data: list = get_prices_autotrade(
-            url=url_autotrade,
-            headers=headers,
-            auth_key=auth_key_autotrade,
-            articles=autotrade_articles
-        )
+        # ---------- Autotrade (SAT) ----------
+        # if articles_dict.get("SAT"):
+        #     autotrade_data = get_prices_autotrade(
+        #         url=url_autotrade,
+        #         headers=headers,
+        #         auth_key=auth_key_autotrade,
+        #         articles=articles_dict["SAT"]
+        #     )
+        #     save_excel(autotrade_data)
 
-        save_excel(data=autotrade_data)
+        # ---------- ABCP (OEM) ----------
+        # if articles_dict.get("OEM"):
+        #     abcp_data = get_prices_abcp(
+        #         url=url_abcp,
+        #         headers=headers,
+        #         userlogin=login_abcp,
+        #         userpsw=password_md5_abcp,
+        #         articles=articles_dict["OEM"]
+        #     )
+        #     save_excel(abcp_data)
 
-        # ---------- ABCP ----------
-        abcp_file_path: str = "data/ОЕМ abcp.xlsx"
-        abcp_articles: list = load_article_info_from_excel(abcp_file_path)
+        # ------------------- Прочие прайсы -------------------
+        price_files = glob.glob(os.path.join("prices", "*.xls*"))
 
-        abcp_data: list = get_prices_abcp(
-            url=url_abcp,
-            headers=headers,
-            userlogin=login_abcp,
-            userpsw=password_md5_abcp,
-            articles=abcp_articles
-        )
+        # Для каждого файла указываем структуру: (article_col, price_col, start_row)
+        file_structures = {
+            'прайс опт': (2, 18),
+            'прайс железо': (1, 7),
+            'ПРАЙС АТБ': (0, 5),
+            'прайс 1': (1, 3),
+            'Прайс - ОПТ': (0, 8),
+            'Наличие_Dominant': (1, 4),
+            'price_atek': (1, 5),
+            'Прайс': (1, 9)
+        }
 
-        save_excel(data=abcp_data)
+        # Обработка файлов prices
+        for file_path in price_files:
+            base_name = normalize(os.path.basename(file_path))
+            col_article, col_price = 0, 1
+            for key, val in file_structures.items():
+                if normalize(key) in base_name:
+                    col_article, col_price = val
+                    break
 
+            data = load_prices_from_file(
+                file_path,
+                col_article,
+                col_price,
+                allowed_articles=other_articles
+            )
+
+            if data:
+                save_excel(data)
+
+        # Очищаем папку prices после обработки
+        # clear_prices_folder()
 
     except Exception as ex:
-        print(f'[ERROR] main: {ex}')
+        print(f"[ERROR] main: {ex}")
         return
 
-        # ---------- Завершение ----------
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
     print(f'Время выполнения: {execution_time}')
 
-
 if __name__ == '__main__':
     main()
+
