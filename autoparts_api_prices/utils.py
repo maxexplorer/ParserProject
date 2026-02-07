@@ -51,20 +51,18 @@ def load_articles_from_data(folder: str = 'data') -> dict:
 def load_prices_from_file(
         file_path: str,
         col_article: int,
-        col_price: int,
-        allowed_articles: set | None = None
+        col_price: int
 ) -> list[dict]:
     """
-    Универсальная функция для загрузки прайса из Excel-файла.
-    Автоматически пропускает строки, где не удается распарсить артикул или цену.
-    Можно сразу фильтровать только нужные артикулы (allowed_articles).
+       Универсальная функция для загрузки прайса из Excel-файла.
+       Автоматически пропускает строки, где не удается распарсить артикул или цену.
+       Можно сразу фильтровать только нужные артикулы (allowed_articles).
 
-    :param file_path: путь к Excel
-    :param col_article: индекс колонки с артикулом (0-based)
-    :param col_price: индекс колонки с ценой (0-based)
-    :param allowed_articles: множество артикулов, которые нужно оставить (по умолчанию None — все)
-    :return: список словарей {'Артикул': article, 'Цена': price}
-    """
+       :param file_path: путь к Excel
+       :param col_article: индекс колонки с артикулом (0-based)
+       :param col_price: индекс колонки с ценой (0-based)
+       :return: список словарей {'Артикул': article, 'Цена': price, 'Источник': file_name}
+       """
     try:
         df = read_excel(file_path, header=None)
     except Exception as ex:
@@ -72,6 +70,7 @@ def load_prices_from_file(
         return []
 
     result = []
+
     for row in df.itertuples(index=False):
         try:
             article = str(row[col_article]).strip()
@@ -79,8 +78,11 @@ def load_prices_from_file(
             price = float(''.join(filter(lambda c: c.isdigit() or c == '.', price_str)))
 
             if article and price > 0:
-                if allowed_articles is None or article in allowed_articles:
-                    result.append({"Артикул": article, "Цена": price})
+                result.append({
+                    'Артикул': article,
+                    'Цена': price,
+                    'Источник': os.path.basename(file_path)
+                })
         except Exception:
             continue
 
@@ -90,6 +92,7 @@ def load_prices_from_file(
 
 def normalize(text: str) -> str:
     return unicodedata.normalize("NFC", text.lower())
+
 
 def chunked(iterable, size=60):
     """
@@ -134,7 +137,7 @@ def clear_prices_folder(folder: str = 'prices'):
             continue
 
 
-def save_excel(data: list[dict], sheet_name: str = 'Лист1') -> None:
+def save_excel(data: list[dict], file_name: str = 'result_data', sheet_name: str = 'Лист1') -> None:
     """
     Сохраняет данные в Excel-файл.
 
@@ -142,13 +145,14 @@ def save_excel(data: list[dict], sheet_name: str = 'Лист1') -> None:
     - Если существует — дописывает данные в конец
 
     :param data: Список словарей с данными
+    :param file_name: Имя файла
     :param sheet_name: Имя листа Excel
     """
 
     cur_date: str = datetime.now().strftime('%d-%m-%Y')
 
     directory: str = 'results'
-    file_path: str = f'{directory}/result_data_{cur_date}.xlsx'
+    file_path: str = f'{directory}/{file_name}_{cur_date}.xlsx'
 
     # Создаем директорию для результатов
     os.makedirs(directory, exist_ok=True)

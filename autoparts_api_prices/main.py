@@ -68,6 +68,8 @@ def main():
             article for article, _ in articles_dict.get("OTHER", [])
         }
 
+        not_found_articles = set(other_articles)
+
         # ---------- Autotrade (SAT) ----------
         # if articles_dict.get("SAT"):
         #     autotrade_data = get_prices_autotrade(
@@ -112,16 +114,33 @@ def main():
                 if normalize(key) in base_name:
                     col_article, col_price = val
                     break
-
             data = load_prices_from_file(
                 file_path,
                 col_article,
-                col_price,
-                allowed_articles=other_articles
+                col_price
             )
 
-            if data:
-                save_excel(data)
+            filtered_data = []
+
+            for item in data:
+                article = item["Артикул"]
+                if article in other_articles:
+                    filtered_data.append(item)
+                    not_found_articles.discard(article)
+
+            if filtered_data:
+                save_excel(filtered_data, file_name='result_data')
+
+        if not_found_articles:
+            unupdated_data = [
+                {"Артикул": article}
+                for article in not_found_articles
+            ]
+
+            save_excel(
+                unupdated_data,
+                file_name='unupdated_articles'
+            )
 
         # Очищаем папку prices после обработки
         # clear_prices_folder()
