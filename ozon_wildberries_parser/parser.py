@@ -140,9 +140,9 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'external-locale': 'ru',
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
-                'x_wbaas_token': '1.1000.3d8e530613874a74a73c9ecc280c6ba9.MHw5NS43OS4xMTcuMTkxfE1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDQuMC4wLjAgU2FmYXJpLzUzNy4zNnwxNzcwMTkyMTEwfHJldXNhYmxlfDJ8ZXlKb1lYTm9Jam9pSW4wPXwwfDN8MTc2OTU4NzMxMHwx.MEYCIQCtSqDtq0lP22Gci1w1Yq6HkwxSb0ryotyv0w6Hsz7NtwIhAMY7tQcsqD1IUvcmRPX2wTnbchgcZ/ns0fgmXIhNNtLH',
-                'routeb': '1768982551.239.1975.972523|7bfd2016a8d76673b3f5612cfa222b5e',
                 '_cp': '1',
+                'routeb': '1769681352.008.1971.963898|fc3b37d75a18d923fd0e9c7589719997',
+                'x_wbaas_token': '1.1000.17387e2b4387471b950a72de22bd8d4b.MTV8MTA5LjExMC44OC41NHxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ0LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc3MTQ5MTYwMXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzA4ODY4MDF8MQ==.MEUCIQCqEj/mtuTxXmhaqmnSemRzlluSOflsoibsJUD7RLhLKwIgR7afodS/DA+c1qH539VWBeyJAdOXPj1DFeFo+W1/i7k=',
             }
 
             try:
