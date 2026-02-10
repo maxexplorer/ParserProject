@@ -231,13 +231,24 @@ def clear_prices_folder(folder: str = 'prices') -> None:
     Удаляет все Excel-файлы (.xls и .xlsx) в папке prices.
     Используется для очистки после обработки.
     """
+
     files = glob.glob(os.path.join(folder, '*.xls*'))
+
+    if not files:
+        print(f"[INFO] В папке '{folder}' нет файлов для удаления")
+        return
+
+    removed_count = 0
 
     for f in files:
         try:
             os.remove(f)
+            removed_count += 1
         except Exception:
             continue
+
+    print(f"[OK] В папке '{folder}' удалено файлов: {removed_count}")
+
 
 
 def save_excel(
