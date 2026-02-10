@@ -139,6 +139,7 @@ def main():
 
             save_excel(
                 unupdated_data,
+                directory='unupdated',
                 file_name='unupdated_articles'
             )
 

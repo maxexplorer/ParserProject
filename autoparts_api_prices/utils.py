@@ -15,6 +15,10 @@ from pandas import DataFrame, ExcelWriter, read_excel
 
 import unicodedata
 
+SHEET_INDEX_BY_FILENAME = {
+    'прайс.xls': 1, # Прайс.xls → берём 2-й лист (index=1)
+}
+
 
 def load_articles_from_data(folder: str = 'data') -> dict:
     """
@@ -64,7 +68,14 @@ def load_prices_from_file(
        :return: список словарей {'Артикул': article, 'Цена': price, 'Источник': file_name}
        """
     try:
-        df = read_excel(file_path, header=None)
+        sheet_index = get_sheet_index(file_path)
+
+        df = read_excel(
+            file_path,
+            header=None,
+            sheet_name=sheet_index
+        )
+
     except Exception as ex:
         print(f"❌ Ошибка чтения файла {file_path}: {ex}")
         return []
@@ -92,6 +103,12 @@ def load_prices_from_file(
 
 def normalize(text: str) -> str:
     return unicodedata.normalize("NFC", text.lower())
+
+
+def get_sheet_index(file_path: str) -> int:
+    filename = normalize(os.path.basename(file_path))
+
+    return SHEET_INDEX_BY_FILENAME.get(filename, 0)
 
 
 def chunked(iterable, size=60):
@@ -137,7 +154,8 @@ def clear_prices_folder(folder: str = 'prices'):
             continue
 
 
-def save_excel(data: list[dict], file_name: str = 'result_data', sheet_name: str = 'Лист1') -> None:
+def save_excel(data: list[dict], directory: str = 'results', file_name: str = 'result_data',
+               sheet_name: str = 'Лист1') -> None:
     """
     Сохраняет данные в Excel-файл.
 
@@ -145,13 +163,13 @@ def save_excel(data: list[dict], file_name: str = 'result_data', sheet_name: str
     - Если существует — дописывает данные в конец
 
     :param data: Список словарей с данными
+    :param directory: Имя директории
     :param file_name: Имя файла
     :param sheet_name: Имя листа Excel
     """
 
     cur_date: str = datetime.now().strftime('%d-%m-%Y')
 
-    directory: str = 'results'
     file_path: str = f'{directory}/{file_name}_{cur_date}.xlsx'
 
     # Создаем директорию для результатов
