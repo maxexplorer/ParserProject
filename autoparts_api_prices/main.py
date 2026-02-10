@@ -71,25 +71,25 @@ def main():
         not_found_articles = set(other_articles)
 
         # ---------- Autotrade (SAT) ----------
-        # if articles_dict.get("SAT"):
-        #     autotrade_data = get_prices_autotrade(
-        #         url=url_autotrade,
-        #         headers=headers,
-        #         auth_key=auth_key_autotrade,
-        #         articles=articles_dict["SAT"]
-        #     )
-        #     save_excel(autotrade_data)
+        if articles_dict.get("SAT"):
+            autotrade_data = get_prices_autotrade(
+                url=url_autotrade,
+                headers=headers,
+                auth_key=auth_key_autotrade,
+                articles=articles_dict["SAT"]
+            )
+            save_excel(autotrade_data)
 
         # ---------- ABCP (OEM) ----------
-        # if articles_dict.get("OEM"):
-        #     abcp_data = get_prices_abcp(
-        #         url=url_abcp,
-        #         headers=headers,
-        #         userlogin=login_abcp,
-        #         userpsw=password_md5_abcp,
-        #         articles=articles_dict["OEM"]
-        #     )
-        #     save_excel(abcp_data)
+        if articles_dict.get("OEM"):
+            abcp_data = get_prices_abcp(
+                url=url_abcp,
+                headers=headers,
+                userlogin=login_abcp,
+                userpsw=password_md5_abcp,
+                articles=articles_dict["OEM"]
+            )
+            save_excel(abcp_data)
 
         # ------------------- Прочие прайсы -------------------
         price_files = glob.glob(os.path.join("prices", "*.xls*"))
@@ -144,7 +144,7 @@ def main():
             )
 
         # Очищаем папку prices после обработки
-        # clear_prices_folder()
+        clear_prices_folder()
 
     except Exception as ex:
         print(f"[ERROR] main: {ex}")
