@@ -22,43 +22,6 @@ def end_truss_start(y: float) -> str:
 G0 Y{y}
 G00 X0 Y{y}
 G91
-G00 X-151.884 Y-18.089
-M3
-G01 X103
-M5
-G00 X36.341 Y-0.001
-M3
-G03 X-36.414 Y-0.018 I-18.207 J-0.118
-M5
-G00 X36.42 Y0.017
-M3
-G01 X2.0
-M5
-G00 X11.347 Y-4.133
-M3
-G01 X-11.276 Y4.104
-M5
-G00 X-142.512 Y-0.006
-M3
-G03 X-36.414 Y-0.018 I-18.207 J-0.118
-M5
-G00 X-0.064 Y0.014
-M3
-G01 X-2.0
-M5
-G00 X-0.057 Y-0.04
-M3
-G01 X-11.277 Y-4.104
-M5
-G00 X203.6 Y22.274
-"""
-
-
-def end_truss_finish(y: float) -> str:
-    return f"""G90
-G0 Y{y}
-G00 X0 Y{y}
-G91
 G00 X-190.537 Y18.168
 M3
 G01 X-11.214 Y4.153
@@ -88,6 +51,43 @@ M3
 G01 X-2.021 Y0.041
 M5
 G00 X192.345 Y-18.101
+"""
+
+
+def end_truss_finish(y: float) -> str:
+    return f"""G90
+G0 Y{y}
+G00 X0 Y{y}
+G91
+G00 X-151.884 Y-18.089
+M3
+G01 X103
+M5
+G00 X36.341 Y-0.001
+M3
+G03 X-36.414 Y-0.018 I-18.207 J-0.118
+M5
+G00 X36.42 Y0.017
+M3
+G01 X2.0
+M5
+G00 X11.347 Y-4.133
+M3
+G01 X-11.276 Y4.104
+M5
+G00 X-142.512 Y-0.006
+M3
+G03 X-36.414 Y-0.018 I-18.207 J-0.118
+M5
+G00 X-0.064 Y0.014
+M3
+G01 X-2.0
+M5
+G00 X-0.057 Y-0.04
+M3
+G01 X-11.277 Y-4.104
+M5
+G00 X203.6 Y22.274
 """
 
 
@@ -197,16 +197,10 @@ def cut_length(length: float) -> str:
 G0 Y{length + 4}
 G00 X0 Y{length + 4}
 G91
-%
-(Layout "Model")
-(ABViewer 15 trial version - www.cadsofttools.com )
-(Contour 0)
 G00 X-201.9 Y0.0
 M3
 G01 X204.0
 M5
-M02
-%
 """
 
 
