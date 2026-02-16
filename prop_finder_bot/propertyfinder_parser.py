@@ -7,7 +7,7 @@ import re
 
 from requests import Session
 
-from pandas import DataFrame, ExcelWriter, read_excel
+from openpyxl import Workbook, load_workbook
 
 # =============================================================================
 # Глобальные настройки
@@ -244,44 +244,46 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 # =============================================================================
 def save_excel(data: list[dict], today_utc: date) -> None:
     """
-    Сохраняет список данных в Excel-файл (results/result_data.xlsx).
-
-    :param data: Список словарей с данными о товарах.
+     Сохраняет список данных в Excel-файл (results/result_data_date.xlsx)
+    :param data: list[dict]
+    :param today_utc: date
+    :return: None
     """
     cur_date: str = today_utc.strftime('%d-%m-%Y')
-
     directory = 'results'
     file_path = f'{directory}/result_data_{cur_date}.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
-    # Если файла нет — создаем пустой
     if not os.path.exists(file_path):
-        with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Data', index=False)
+        # Создаём новый файл
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Data'
 
-    # Читаем существующие данные
-    df_existing = read_excel(file_path, sheet_name='Data')
-    num_existing_rows = len(df_existing.index)
+        # Записываем заголовки
+        headers = list(data[0].keys())
+        ws.append(headers)
 
-    # Преобразуем новые данные в DataFrame
-    new_df = DataFrame(data)
+        for row in data:
+            ws.append(list(row.values()))
 
-    # Дописываем новые строки в конец
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(
-            writer,
-            startrow=num_existing_rows + 1,
-            header=(num_existing_rows == 0),
-            sheet_name='Data',
-            index=False
-        )
+        wb.save(file_path)
+    else:
+        # Открываем и дописываем строки
+        wb = load_workbook(file_path)
+        ws = wb['Data']
 
-    print(f'Сохранено {len(data)} записей в {file_path}')
+        for row in data:
+            ws.append(list(row.values()))
+
+        wb.save(file_path)
+
+    print(f"Сохранено {len(data)} записей в {file_path}")
 
 
 # =============================================================================
-# Точка входа
+# Точка входа для локального тестирования
 # =============================================================================
 
 def main() -> None:
