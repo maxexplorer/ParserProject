@@ -279,7 +279,7 @@ def save_excel(data: list[dict], today_utc: date) -> None:
 
         wb.save(file_path)
 
-    print(f"Сохранено {len(data)} записей в {file_path}")
+    print(f"Сохранено {ws.max_row - 1} записей в {file_path}")
 
 
 # =============================================================================
@@ -296,7 +296,7 @@ def main() -> None:
     """
 
     pages: int = 800
-    days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
+    days_to_collect: int = 2  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
     try:
