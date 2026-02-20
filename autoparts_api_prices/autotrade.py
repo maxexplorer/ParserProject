@@ -102,6 +102,7 @@ def get_prices_autotrade(
                 {
                     'Артикул': article,
                     'Цена': price,
+                    'Источник': 'Autotrade'
                 }
             )
 

@@ -34,15 +34,11 @@ SHEET_INDEX_BY_FILENAME = {
 # Загрузка артикулов из data/
 # ---------------------------------------------------------------------
 
-def load_articles_from_data(folder: str = 'data') -> dict:
+def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str] | tuple[dict, None, None]:
     """
-    Загружает артикулы и бренды из первого Excel-файла в папке data/.
-
-    Ожидаемая структура файла:
-    - колонка 0: бренд
-    - колонка 1: артикул
-
-    Возвращает словарь:
+     Загружает артикулы и бренды из исходного Excel-файла в папке data/.
+    :param folder: data
+    :return: Возвращает словарь:
     {
         "SAT":   [(article, brand), ...],
         "OEM":   [(article, brand), ...],
@@ -53,7 +49,7 @@ def load_articles_from_data(folder: str = 'data') -> dict:
     files = glob.glob(os.path.join(folder, '*.xls*'))
     if not files:
         print('❗ В папке data/ нет Excel-файлов (.xls или .xlsx)')
-        return {}
+        return {}, None, None
 
     # Используем первый найденный файл
     file_path = files[0]
@@ -87,7 +83,7 @@ def load_articles_from_data(folder: str = 'data') -> dict:
         "SAT": sat_list,
         "OEM": oem_list,
         "OTHER": other_list
-    }
+    }, df, file_path
 
 
 # ---------------------------------------------------------------------

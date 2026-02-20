@@ -61,14 +61,18 @@ def main():
     remove_yesterday_file()
 
     try:
-        # ------------------- SAT и OEM -------------------
-        articles_dict = load_articles_from_data()
+        # Получаем данные из исходного файла
+        articles_dict, df, file_path = load_articles_from_data()
+
+        if df is None:
+            return
+
+        # Общий словарь найденных данных
+        found_data = {}
 
         other_articles = {
             article for article, _ in articles_dict.get('OTHER', [])
         }
-
-        not_found_articles = set(other_articles)
 
         # ---------- Autotrade (SAT) ----------
         if articles_dict.get('SAT'):
@@ -80,6 +84,12 @@ def main():
             )
             save_excel(autotrade_data)
 
+            for item in autotrade_data:
+                found_data[item['Артикул']] = {
+                    'price': item.get('Цена'),
+                    'source': 'Autotrade'
+                }
+
         # ---------- ABCP (OEM) ----------
         if articles_dict.get('OEM'):
             abcp_data = get_prices_abcp(
@@ -90,6 +100,12 @@ def main():
                 articles=articles_dict['OEM']
             )
             save_excel(abcp_data)
+
+            for item in abcp_data:
+                found_data[item['Артикул']] = {
+                    'price': item.get('Цена'),
+                    'source': 'ABCP'
+                }
 
         # ------------------- Прочие прайсы -------------------
         price_files = glob.glob(os.path.join('prices', '*.xls*'))
@@ -105,17 +121,18 @@ def main():
             'price_atek': (1, 5),
             'Прайс': (1, 9)
         }
-
         # Обработка файлов prices
-        for file_path in price_files:
-            base_name = normalize(os.path.basename(file_path))
+        for file_path_price in price_files:
+            base_name = normalize(os.path.basename(file_path_price))
             col_article, col_price = 0, 1
+
             for key, val in file_structures.items():
                 if normalize(key) in base_name:
                     col_article, col_price = val
                     break
+
             data = load_prices_from_file(
-                file_path,
+                file_path_price,
                 col_article,
                 col_price
             )
@@ -124,27 +141,39 @@ def main():
 
             for item in data:
                 article = item['Артикул']
+
                 if article in other_articles:
                     filtered_data.append(item)
-                    not_found_articles.discard(article)
+
+                    # Добавляем в общий словарь
+                    found_data[article] = {
+                        'price': item.get('Цена'),
+                        'source': item.get('Источник')
+                    }
 
             if filtered_data:
                 save_excel(filtered_data, file_name='result_data')
 
-        if not_found_articles:
-            unupdated_data = [
-                {'Артикул': article}
-                for article in not_found_articles
-            ]
+        # ------------------- ОБНОВЛЯЕМ ИСХОДНЫЙ EXCEL -------------------
 
-            save_excel(
-                unupdated_data,
-                directory='unupdated',
-                file_name='unupdated_articles'
-            )
+        # добавляем колонки если их нет
+        if 'Цена' not in df.columns:
+            df['Новая цена'] = ''
+        if 'Файл' not in df.columns:
+            df['Файл'] = ''
+
+        for idx, row in df.iterrows():
+            article = str(row[df.columns[1]]).strip()
+
+            if article in found_data:
+                df.at[idx, 'Новая цена'] = found_data[article]['price']
+                df.at[idx, 'Файл'] = found_data[article]['source']
+
+        # Сохраняем данные в исходный файл
+        df.to_excel(file_path, index=False)
 
         # Очищаем папку prices после обработки
-        clear_prices_folder()
+        # clear_prices_folder()
 
     except Exception as ex:
         print(f'[ERROR] main: {ex}')

@@ -92,6 +92,7 @@ def get_prices_abcp(
                 {
                     'Артикул': article,
                     'Цена': price,
+                    'Источник': 'ABCP'
                 }
             )
 
