@@ -52,8 +52,8 @@ password_md5_abcp: str = hashlib.md5(
 # Заголовки HTTP-запросов
 # -------------------
 headers: dict = {
-    "Accept": "application/json",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
 }
 
 
@@ -65,34 +65,34 @@ def main():
         articles_dict = load_articles_from_data()
 
         other_articles = {
-            article for article, _ in articles_dict.get("OTHER", [])
+            article for article, _ in articles_dict.get('OTHER', [])
         }
 
         not_found_articles = set(other_articles)
 
         # ---------- Autotrade (SAT) ----------
-        if articles_dict.get("SAT"):
+        if articles_dict.get('SAT'):
             autotrade_data = get_prices_autotrade(
                 url=url_autotrade,
                 headers=headers,
                 auth_key=auth_key_autotrade,
-                articles=articles_dict["SAT"]
+                articles=articles_dict['SAT']
             )
             save_excel(autotrade_data)
 
         # ---------- ABCP (OEM) ----------
-        if articles_dict.get("OEM"):
+        if articles_dict.get('OEM'):
             abcp_data = get_prices_abcp(
                 url=url_abcp,
                 headers=headers,
                 userlogin=login_abcp,
                 userpsw=password_md5_abcp,
-                articles=articles_dict["OEM"]
+                articles=articles_dict['OEM']
             )
             save_excel(abcp_data)
 
         # ------------------- Прочие прайсы -------------------
-        price_files = glob.glob(os.path.join("prices", "*.xls*"))
+        price_files = glob.glob(os.path.join('prices', '*.xls*'))
 
         # Для каждого файла указываем структуру: (article_col, price_col, start_row)
         file_structures = {
@@ -123,7 +123,7 @@ def main():
             filtered_data = []
 
             for item in data:
-                article = item["Артикул"]
+                article = item['Артикул']
                 if article in other_articles:
                     filtered_data.append(item)
                     not_found_articles.discard(article)
@@ -133,7 +133,7 @@ def main():
 
         if not_found_articles:
             unupdated_data = [
-                {"Артикул": article}
+                {'Артикул': article}
                 for article in not_found_articles
             ]
 
@@ -147,7 +147,7 @@ def main():
         clear_prices_folder()
 
     except Exception as ex:
-        print(f"[ERROR] main: {ex}")
+        print(f'[ERROR] main: {ex}')
         return
 
     execution_time = datetime.now() - start_time
