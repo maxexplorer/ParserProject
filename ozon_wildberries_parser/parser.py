@@ -26,7 +26,7 @@ def init_undetected_chromedriver():
     """
     Инициализирует undetected_chromedriver, возвращает драйвер
     """
-    driver = Chrome(version_main=144)
+    driver = Chrome()
     driver.maximize_window()
     driver.implicitly_wait(15)
 
@@ -142,7 +142,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
                 'routeb': '1769681352.008.1971.963898|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.17387e2b4387471b950a72de22bd8d4b.MTV8MTA5LjExMC44OC41NHxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ0LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc3MTQ5MTYwMXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzA4ODY4MDF8MQ==.MEUCIQCqEj/mtuTxXmhaqmnSemRzlluSOflsoibsJUD7RLhLKwIgR7afodS/DA+c1qH539VWBeyJAdOXPj1DFeFo+W1/i7k=',
+                'x_wbaas_token': '1.1000.d92e27be1b414391b4f6a5650c45f483.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0NS4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzI3OTg1MDZ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzcyMTkzNzA2fDE=.MEYCIQClPZmmskRLho33wiJ4hE0+O+tlPV+EmlOV/HL55Px1BQIhAL5ZTtTXOw19QyVOM3p6DRsLRxyZVQVFw0XVARyeniUc',
             }
 
             try:
@@ -354,7 +354,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
         'x-spa-version': '13.16.3',
     }
