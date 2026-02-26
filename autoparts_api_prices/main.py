@@ -108,14 +108,16 @@ def main():
             for item in data:
                 article = item['Артикул']
                 company = company_names.get(base_name)
+                company_articles = articles_dict.get(company, {})
 
-                if article in articles_dict.get(company, {}):
+                if article in company_articles:
                     filtered_data.append(item)
 
                     # Добавляем в общий словарь
                     found_data[article] = {
                         'price': item.get('Цена'),
-                        'source': item.get('Источник')
+                        'quantity': item.get('Количество'),
+                        'manufacturer_name': item.get('Наименование производителя')
                     }
 
             if filtered_data:
@@ -125,16 +127,19 @@ def main():
 
         # добавляем колонки если их нет
         if 'Цена' not in df.columns:
-            df['Новая цена'] = ''
-        if 'Файл' not in df.columns:
-            df['Файл'] = ''
+            df['Цена'] = ''
+        if 'Количество' not in df.columns:
+            df['Количество'] = ''
+        if 'Наименование производителя' not in df.columns:
+            df['Наименование производителя'] = ''
 
         for idx, row in df.iterrows():
-            article = str(row[df.columns[1]]).strip()
+            article = str(row[df.columns[5]]).strip()
 
             if article in found_data:
-                df.at[idx, 'Новая цена'] = found_data[article]['price']
-                df.at[idx, 'Файл'] = found_data[article]['source']
+                df.at[idx, 'Цена'] = found_data[article]['price']
+                df.at[idx, 'Количество'] = found_data[article]['quantity']
+                df.at[idx, 'Наименование производителя'] = found_data[article]['manufacturer_name']
 
         # Сохраняем данные в исходный файл
         df.to_excel(file_path, index=False)

@@ -14,7 +14,7 @@ import os
 import glob
 from datetime import datetime, timedelta
 
-from pandas import DataFrame, ExcelWriter, read_excel
+from pandas import DataFrame, ExcelWriter, read_excel, read_csv
 import unicodedata
 
 
@@ -111,15 +111,23 @@ def load_prices_from_file(
     """
 
     try:
-        # Определяем, с какого листа читать данные
-        sheet_index = get_sheet_index(file_path)
+        ext = os.path.splitext(file_path)[1].lower()
 
-        df = read_excel(
-            file_path,
-            header=None,
-            sheet_name=sheet_index
-        )
-
+        if ext == '.csv':
+            df = read_csv(
+                file_path,
+                header=None,
+                sep=';',
+                encoding='cp1251',
+                on_bad_lines='skip'
+            )
+        else:
+            sheet_index = get_sheet_index(file_path)
+            df = read_excel(
+                file_path,
+                header=None,
+                sheet_name=sheet_index
+            )
     except Exception as ex:
         print(f"❌ Ошибка чтения файла {file_path}: {ex}")
         return []
