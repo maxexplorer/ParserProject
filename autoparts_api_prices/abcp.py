@@ -7,98 +7,103 @@
 """
 
 import time
+import hashlib
+
 import requests
 
 from utils import chunked
 
-
-def get_prices_abcp(
-        url: str,
-        headers: dict,
-        userlogin: str,
-        userpsw: str,
-        articles: list
-) -> list:
+class ABCPClient:
     """
-    Поиск цен товаров в ABCP через search/batch.
+       Клиент для работы с ABCP API.
+       """
 
-    :param url: Базовый URL ABCP
-    :param headers: HTTP-заголовки
-    :param userlogin: Логин пользователя
-    :param userpsw: MD5-хэш пароля
-    :param articles: Список (article, brand)
-    :return: Список словарей с результатами
-    """
+    def __init__(self, host: str, login: str, password: str, headers: dict):
+        self.host = host
+        self.login = login
+        self.password = password
+        self.headers = headers
 
-    # Полный URL операции
-    url = f"{url}search/batch"
+    def _generate_hash(self) -> str:
+        return hashlib.md5(self.password.encode('utf-8')).hexdigest()
 
-    results: list = []
+    def get_prices(self, articles: list) -> list:
+        """
+           Поиск цен товаров в ABCP через search/batch.
 
-    # ABCP принимает до 100 позиций за запрос
-    total_batches: int = (len(articles) + 99) // 100
-    batch_num: int = 0
+           :param url: Базовый URL ABCP
+           :param headers: HTTP-заголовки
+           :param userlogin: Логин пользователя
+           :param userpsw: MD5-хэш пароля
+           :param articles: Список (article, brand)
+           :return: Список словарей с результатами
+           """
 
-    for batch in chunked(articles, 100):
-        batch_num += 1
+        url = f"https://{self.host}/search/batch"
 
-        payload: dict = {
-            "userlogin": userlogin,
-            "userpsw": userpsw,
-        }
+        results: list = []
 
-        # Формируем параметры search[i][number] и search[i][brand]
-        for i, article in enumerate(batch):
-            payload[f"search[{i}][number]"] = article
-            payload[f"search[{i}][brand]"] = 'OEM'
+        # ABCP принимает до 100 позиций за запрос
+        total_batches: int = (len(articles) + 99) // 100
+        batch_num: int = 0
 
-        try:
-            time.sleep(3)
+        for batch in chunked(articles, 100):
+            batch_num += 1
 
-            response = requests.post(
-                url=url,
-                headers=headers,
-                data=payload,
-                timeout=30
-            )
-            response.raise_for_status()
+            payload = {
+                "userlogin": self.login,
+                "userpsw": self._generate_hash(),
+            }
 
-        except requests.exceptions.RequestException as ex:
+            for i, (article, brand) in enumerate(batch):
+                payload[f"search[{i}][number]"] = article
+                payload[f"search[{i}][brand]"] = brand
+
+            try:
+                time.sleep(3)
+
+                response = requests.post(
+                    url=url,
+                    headers=self.headers,
+                    data=payload,
+                    timeout=30
+                )
+                response.raise_for_status()
+
+            except requests.exceptions.RequestException as ex:
+                print(
+                    f'❌ ABCP батч {batch_num}/{total_batches} '
+                    f'ошибка запроса: {ex}'
+                )
+                return results
+
+            try:
+                data: list = response.json()
+            except ValueError:
+                print(
+                    f'❌ ABCP батч {batch_num}/{total_batches} '
+                    f'ошибка JSON'
+                )
+                continue
+
+            if not data:
+                continue
+
+            for item in data:
+                article: str = item.get('number')
+                brand: str = item.get('brand')
+                price: float = item.get('price')
+                description: str = item.get('description')
+
+                results.append(
+                    {
+                        'Артикул': article,
+                        'Цена': price,
+                        'Источник': 'ABCP'
+                    })
             print(
-                f'❌ ABCP батч {batch_num}/{total_batches} '
-                f'ошибка запроса: {ex}'
-            )
-            return results
-
-        try:
-            data: list = response.json()
-        except ValueError:
-            print(
-                f'❌ ABCP батч {batch_num}/{total_batches} '
-                f'ошибка JSON'
-            )
-            continue
-
-        if not data:
-            continue
-
-        for item in data:
-            article: str = item.get('number')
-            brand: str = item.get('brand')
-            price: float = item.get('price')
-            description: str = item.get('description')
-
-            results.append(
-                {
-                    'Артикул': article,
-                    'Цена': price,
-                    'Источник': 'ABCP'
-                }
+                f'📦 ABCP батч {batch_num}/{total_batches} '
+                f'({len(data)} артикулов)...'
             )
 
-        print(
-            f'📦 ABCP батч {batch_num}/{total_batches} '
-            f'({len(data)} артикулов)...'
-        )
-
-    return results
+        return results

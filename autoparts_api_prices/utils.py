@@ -64,12 +64,13 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
 
     for row in df.itertuples(index=False):
         manufacturer = str(row[2]).strip()  # 3-я колонка: Производитель (импортер)
+        brand = str(row[3]).strip()  # 4-я колонка: Производитель (бренд)
         article = str(row[5]).strip()       # 6-я колонка: Артикул
 
         if manufacturer not in articles_by_manufacturer:
             articles_by_manufacturer[manufacturer] = []
 
-        articles_by_manufacturer[manufacturer].append(article)
+        articles_by_manufacturer[manufacturer].append((article, brand))
 
     print(f"Загружено производителей: {len(articles_by_manufacturer)}")
 

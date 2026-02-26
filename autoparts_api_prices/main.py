@@ -13,18 +13,15 @@ import os
 from datetime import datetime
 import glob
 
-from autotrade import get_prices_autotrade
-from abcp import get_prices_abcp
+from abcp import ABCPClient
+from autotrade import AutotradeClient
 
 from config import (
     headers,
-    url_autotrade,
-    url_abcp,
-    auth_key_autotrade,
-    password_md5_abcp,
-    login_abcp,
     file_structures,
-    company_names
+    company_names,
+    abcp_clients,
+    autotrade_clients
 )
 
 from utils import (
@@ -54,37 +51,53 @@ def main():
         found_data = {}
 
         # ---------- Autotrade (SAT) ----------
-        # if articles_dict.get('ООО "АТМ"'):
-        #     autotrade_data = get_prices_autotrade(
-        #         url=url_autotrade,
-        #         headers=headers,
-        #         auth_key=auth_key_autotrade,
-        #         articles=articles_dict.get('ООО "АТМ"')
-        #     )
-        #     save_excel(autotrade_data)
-        #
-        #     for item in autotrade_data:
-        #         found_data[item['Артикул']] = {
-        #             'price': item.get('Цена'),
-        #             'source': 'Autotrade'
-        #         }
+        for client_name, client_data in autotrade_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
 
-        # ---------- ABCP (OEM) ----------
-        # if articles_dict.get('ИП Кунаков Ю.В.'):
-        #     abcp_data = get_prices_abcp(
-        #         url=url_abcp,
-        #         headers=headers,
-        #         userlogin=login_abcp,
-        #         userpsw=password_md5_abcp,
-        #         articles=articles_dict.get('ИП Кунаков Ю.В.')
-        #     )
-        #     save_excel(abcp_data)
-        #
-        #     for item in abcp_data:
-        #         found_data[item['Артикул']] = {
-        #             'price': item.get('Цена'),
-        #             'source': 'ABCP'
-        #         }
+            autotrade_client = AutotradeClient(
+                url=client_data['url'],
+                login=client_data['login'],
+                password=client_data['password'],
+                headers=headers
+            )
+
+            autotrade_data = autotrade_client.get_prices(articles)
+            save_excel(autotrade_data)
+
+            for item in autotrade_data:
+                article = item['Артикул']
+                found_data[article] = {
+                    'price': item.get('Цена'),
+                    'source': 'Autotrade'
+                }
+
+        # ---------- ABCP ----------
+        for client_name, client_data in abcp_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
+
+            # Создаем экземпляр клиента ABCP
+            client = ABCPClient(
+                host=client_data['host'],
+                login=client_data['login'],
+                password=client_data['password'],
+                headers=headers
+            )
+
+            # Получаем данные
+            abcp_data = client.get_prices(articles)
+            save_excel(abcp_data)
+
+            # Обновляем найденные данные
+            for item in abcp_data:
+                article = item['Артикул']
+                found_data[article] = {
+                    'price': item.get('Цена'),
+                    'source': 'ABCP'
+                }
 
         # ------------------- Прочие прайсы -------------------
         price_files = glob.glob(os.path.join('prices', '*.xls*')) + glob.glob(os.path.join('prices', '*.csv'))
@@ -103,17 +116,23 @@ def main():
                 name_col
             )
 
+            data_dict = {item['Артикул']: item for item in data}
+
+            company = company_names.get(base_name)
+            company_articles_data = articles_dict.get(company, [])
+
+            company_articles = [
+                article for article, _ in company_articles_data
+            ]
+
             filtered_data = []
 
-            for item in data:
-                article = item['Артикул']
-                company = company_names.get(base_name)
-                company_articles = articles_dict.get(company, {})
+            for article in company_articles:
+                if article in data_dict:
+                    item = data_dict[article]
 
-                if article in company_articles:
                     filtered_data.append(item)
 
-                    # Добавляем в общий словарь
                     found_data[article] = {
                         'price': item.get('Цена'),
                         'quantity': item.get('Количество'),
