@@ -26,7 +26,7 @@ import unicodedata
 # Используется, если в файле есть служебный (скрытый) лист,
 # который необходимо пропустить.
 SHEET_INDEX_BY_FILENAME = {
-    'прайс.xls': 1,  # Прайс.xls → данные находятся на 2-м листе
+    'авто-парти.xls': 1,  # Прайс.xls → данные находятся на 2-м листе
 }
 
 
@@ -36,14 +36,15 @@ SHEET_INDEX_BY_FILENAME = {
 
 def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str] | tuple[dict, None, None]:
     """
-     Загружает артикулы и бренды из исходного Excel-файла в папке data/.
-    :param folder: data
-    :return: Возвращает словарь:
-    {
-        "SAT":   [(article, brand), ...],
-        "OEM":   [(article, brand), ...],
-        "OTHER": [(article, brand), ...]
-    }
+    Загружает артикулы из исходного Excel-файла в папке data/,
+    группируя их по производителю (импортеру алкогольной продукции).
+
+    :param folder: папка с Excel-файлами
+    :return: Словарь:
+        {
+            "ООО \"А-2\" - 0": ["FFG22779", "NG20263", ...],
+            ...
+        }, df исходного файла, путь к файлу
     """
 
     files = glob.glob(os.path.join(folder, '*.xls*'))
@@ -53,37 +54,26 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
 
     # Используем первый найденный файл
     file_path = files[0]
-
     df = read_excel(file_path)
     df.columns = df.columns.str.strip()
 
-    # Убираем строки без бренда или артикула
-    df = df.dropna(subset=[df.columns[0], df.columns[1]])
+    # Убираем строки без артикула или производителя
+    df = df.dropna(subset=[df.columns[2], df.columns[5]])
 
-    sat_list, oem_list, other_list = [], [], []
+    articles_by_manufacturer = {}
 
     for row in df.itertuples(index=False):
-        brand = str(row[0]).strip()
-        article = str(row[1]).strip()
+        manufacturer = str(row[2]).strip()  # 3-я колонка: Производитель (импортер)
+        article = str(row[5]).strip()       # 6-я колонка: Артикул
 
-        if brand.upper() == "SAT":
-            sat_list.append((article, brand))
-        elif brand.upper() == "OEM":
-            oem_list.append((article, brand))
-        else:
-            other_list.append((article, brand))
+        if manufacturer not in articles_by_manufacturer:
+            articles_by_manufacturer[manufacturer] = []
 
-    print(
-        f"Загружено: SAT={len(sat_list)}, "
-        f"OEM={len(oem_list)}, "
-        f"OTHER={len(other_list)} артикулов"
-    )
+        articles_by_manufacturer[manufacturer].append(article)
 
-    return {
-        "SAT": sat_list,
-        "OEM": oem_list,
-        "OTHER": other_list
-    }, df, file_path
+    print(f"Загружено производителей: {len(articles_by_manufacturer)}")
+
+    return articles_by_manufacturer, df, file_path
 
 
 # ---------------------------------------------------------------------
@@ -92,8 +82,10 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
 
 def load_prices_from_file(
         file_path: str,
-        col_article: int,
-        col_price: int
+        article_col: int,
+        price_col: int,
+        quantity_col,
+        name_col
 ) -> list[dict]:
     """
     Универсальная функция загрузки прайса из Excel-файла.
@@ -104,14 +96,17 @@ def load_prices_from_file(
     - пропускает строки с некорректными данными
 
     :param file_path: путь к Excel-файлу
-    :param col_article: индекс колонки с артикулом (0-based)
-    :param col_price: индекс колонки с ценой (0-based)
+    :param article_col: индекс колонки с артикулом (0-based)
+    :param price_col: индекс колонки с ценой (0-based)
+    :param quantity_col: индекс колонки с количеством
+    :param name_col: индекс колонки с наименованием производителя
 
     :return: список словарей:
         {
             'Артикул': str,
             'Цена': float,
-            'Источник': имя файла
+            'Количество': int,
+            'Наименование произваодителя': str
         }
     """
 
@@ -133,17 +128,22 @@ def load_prices_from_file(
 
     for row in df.itertuples(index=False):
         try:
-            article = str(row[col_article]).strip()
+            article = str(row[article_col]).strip()
 
             # Приводим цену к float (учёт запятых и мусорных символов)
-            price_str = str(row[col_price]).replace(',', '.')
+            price_str = str(row[price_col]).replace(',', '.')
             price = float(''.join(filter(lambda c: c.isdigit() or c == '.', price_str)))
+
+            quantity = str(row[quantity_col]).strip()
+
+            manufacturer_name = str(row[name_col]).strip()
 
             if article and price > 0:
                 result.append({
                     'Артикул': article,
                     'Цена': price,
-                    'Источник': os.path.basename(file_path)
+                    'Количество': quantity,
+                    'Наименование производителя': manufacturer_name,
                 })
 
         except Exception:

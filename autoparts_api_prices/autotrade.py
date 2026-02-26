@@ -42,8 +42,8 @@ def get_prices_autotrade(
         items_payload: dict = {}
 
         # Формируем payload items
-        for article, brand in batch:
-            items_payload[article] = {brand: 1}
+        for article in batch:
+            items_payload[article] = {'SAT': 1}
 
         payload: dict = {
             "auth_key": auth_key,
