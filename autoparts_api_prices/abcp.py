@@ -48,9 +48,9 @@ def get_prices_abcp(
         }
 
         # Формируем параметры search[i][number] и search[i][brand]
-        for i, (article, brand) in enumerate(batch):
+        for i, article in enumerate(batch):
             payload[f"search[{i}][number]"] = article
-            payload[f"search[{i}][brand]"] = brand
+            payload[f"search[{i}][brand]"] = 'OEM'
 
         try:
             time.sleep(3)
