@@ -35,12 +35,18 @@ from utils import (
     save_excel
 )
 
+from download_prices import download_prices
+
 # Фиксируем время начала выполнения
 start_time: datetime = datetime.now()
 
 
 def main():
-    # remove_yesterday_file()
+    # Очищаем папку prices перед обработкой
+    # clear_prices_folder()
+    # Загружаем прайсы
+    # download_prices()
+
 
     try:
         # Получаем данные из исходного файла
@@ -80,34 +86,34 @@ def main():
         #         continue
 
         # ---------- ABCP ----------
-        for client_name, client_data in abcp_clients.items():
-            articles = articles_dict.get(client_name)
-            if not articles:
-                continue
-
-            try:
-                # Создаем экземпляр клиента ABCP
-                abcp_client = ABCPClient(
-                    host=client_data['host'],
-                    login=client_data['login'],
-                    password=client_data['password'],
-                    headers=headers
-                )
-
-                # Получаем данные
-                abcp_data = abcp_client.get_data(articles)
-                save_excel(abcp_data)
-
-                # Обновляем найденные данные
-                for item in abcp_data:
-                    article = item['Артикул']
-                    found_data[article] = {
-                        'price': item.get('Цена'),
-                        'source': 'ABCP'
-                    }
-            except Exception as ex:
-                print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
-                continue
+        # for client_name, client_data in abcp_clients.items():
+        #     articles = articles_dict.get(client_name)
+        #     if not articles:
+        #         continue
+        #
+        #     try:
+        #         # Создаем экземпляр клиента ABCP
+        #         abcp_client = ABCPClient(
+        #             host=client_data['host'],
+        #             login=client_data['login'],
+        #             password=client_data['password'],
+        #             headers=headers
+        #         )
+        #
+        #         # Получаем данные
+        #         abcp_data = abcp_client.get_data(articles)
+        #         save_excel(abcp_data)
+        #
+        #         # Обновляем найденные данные
+        #         for item in abcp_data:
+        #             article = item['Артикул']
+        #             found_data[article] = {
+        #                 'price': item.get('Цена'),
+        #                 'source': 'ABCP'
+        #             }
+        #     except Exception as ex:
+        #         print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
+        #         continue
 
         # ---------- Adeopro ----------
         # for client_name, client_data in adeopro_clients.items():
@@ -145,15 +151,19 @@ def main():
         for file_path_price in price_files:
             base_name = normalize(os.path.basename(file_path_price))
 
-            article_col, price_col, quantity_col, name_col = file_structures.get(base_name, (None, None, None))
+            try:
+                article_col, price_col, quantity_col, name_col = file_structures.get(base_name, (None, None, None, None))
 
-            data = load_prices_from_file(
-                file_path_price,
-                article_col,
-                price_col,
-                quantity_col,
-                name_col
-            )
+                data = load_prices_from_file(
+                    file_path_price,
+                    article_col,
+                    price_col,
+                    quantity_col,
+                    name_col
+                )
+            except Exception as ex:
+                print(f"[WARNING] Прайс '{file_path_price}' пропущен из-за ошибки: {ex}")
+                continue
 
             data_dict = {item['Артикул']: item for item in data}
 
@@ -201,9 +211,6 @@ def main():
 
         # Сохраняем данные в исходный файл
         df.to_excel(file_path, index=False)
-
-        # Очищаем папку prices после обработки
-        # clear_prices_folder()
 
     except Exception as ex:
         print(f'[ERROR] main: {ex}')
