@@ -15,13 +15,15 @@ import glob
 
 from abcp import ABCPClient
 from autotrade import AutotradeClient
+from adeopro import AdeoproClient
 
 from config import (
     headers,
     file_structures,
     company_names,
     abcp_clients,
-    autotrade_clients
+    autotrade_clients,
+    adeopro_clients
 )
 
 from utils import (
@@ -78,33 +80,62 @@ def main():
         #         continue
 
         # ---------- ABCP ----------
-        for client_name, client_data in abcp_clients.items():
+        # for client_name, client_data in abcp_clients.items():
+        #     articles = articles_dict.get(client_name)
+        #     if not articles:
+        #         continue
+        #
+        #     try:
+        #         # Создаем экземпляр клиента ABCP
+        #         abcp_client = ABCPClient(
+        #             host=client_data['host'],
+        #             login=client_data['login'],
+        #             password=client_data['password'],
+        #             headers=headers
+        #         )
+        #
+        #         # Получаем данные
+        #         abcp_data = abcp_client.get_data(articles)
+        #         save_excel(abcp_data)
+        #
+        #         # Обновляем найденные данные
+        #         for item in abcp_data:
+        #             article = item['Артикул']
+        #             found_data[article] = {
+        #                 'price': item.get('Цена'),
+        #                 'source': 'ABCP'
+        #             }
+        #     except Exception as ex:
+        #         print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
+        #         continue
+
+        # ---------- Adeopro ----------
+        for client_name, client_data in adeopro_clients.items():
             articles = articles_dict.get(client_name)
             if not articles:
                 continue
 
             try:
-                # Создаем экземпляр клиента ABCP
-                abcp_client = ABCPClient(
-                    host=client_data['host'],
+                adeopro_client = AdeoproClient(
+                    url=client_data['url'],
                     login=client_data['login'],
                     password=client_data['password'],
                     headers=headers
                 )
 
-                # Получаем данные
-                abcp_data = abcp_client.get_data(articles)
-                save_excel(abcp_data)
+                adeopro_data = adeopro_client.get_data(articles, interval=1.5)
+                save_excel(adeopro_data)
 
-                # Обновляем найденные данные
-                for item in abcp_data:
+                for item in adeopro_data:
                     article = item['Артикул']
                     found_data[article] = {
                         'price': item.get('Цена'),
-                        'source': 'ABCP'
+                        'quantity': item.get('Количество'),
+                        'manufacturer_name': item.get('Наименование производителя')
                     }
+
             except Exception as ex:
-                print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
+                print(f"[WARNING] Adeopro клиент '{client_name}' пропущен из-за ошибки: {ex}")
                 continue
 
         # ------------------- Прочие прайсы -------------------
@@ -126,8 +157,8 @@ def main():
 
             data_dict = {item['Артикул']: item for item in data}
 
-            company = company_names.get(base_name)
-            company_articles_data = articles_dict.get(company, [])
+            company_name = company_names.get(base_name)
+            company_articles_data = articles_dict.get(company_name, [])
 
             company_articles = [
                 article for article, _ in company_articles_data

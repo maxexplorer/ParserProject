@@ -37,10 +37,11 @@ class AutotradeClient:
         Получение цен и остатков для списка (article, brand)
         """
         results = []
-        total_batches = (len(articles) + 59) // 60
-        batch_num = 0
+        # Autotrade принимает до 60 позиций за запрос
+        batch_size = 60
+        total_batches = (len(articles) + batch_size - 1) // batch_size
 
-        for batch in chunked(articles, 60):
+        for batch_num, batch in enumerate(chunked(articles, batch_size), start=1):
             batch_num += 1
             items_payload = {article: {brand: 1} for article, brand in batch}
 

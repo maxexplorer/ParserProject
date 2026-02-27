@@ -43,13 +43,11 @@ class ABCPClient:
         url = f"https://{self.host}/search/batch"
 
         results: list = []
-
         # ABCP принимает до 100 позиций за запрос
-        total_batches: int = (len(articles) + 99) // 100
-        batch_num: int = 0
+        batch_size = 100
+        total_batches: int = (len(articles) + batch_size - 1) // batch_size
 
-        for batch in chunked(articles, 100):
-            batch_num += 1
+        for batch_num, batch in enumerate(chunked(articles, batch_size), start=1):
 
             payload = {
                 "userlogin": self.login,
