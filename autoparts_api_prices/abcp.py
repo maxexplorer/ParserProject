@@ -93,8 +93,7 @@ class ABCPClient:
                 brand: str = item.get('brand')
                 price: float = item.get('price')
                 description: str = item.get('description')
-                quantity: int = item.get('availability')
-
+                quantity: int = item.get('availability', 0)
 
                 results.append({
                     'Артикул': article,

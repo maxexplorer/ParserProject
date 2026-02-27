@@ -39,7 +39,7 @@ class AdeoproClient:
                 )
                 response.raise_for_status()
                 data = response.text
-                results.extend(self._parse_response(data))
+                results.extend(self.parse_response(data))
             except requests.RequestException as ex:
                 print(f"❌ Adeopro батч {batch_num}/{total_batches} ошибка: {ex}")
                 continue

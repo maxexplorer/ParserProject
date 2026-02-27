@@ -91,9 +91,6 @@ class AutotradeClient:
                 price: float = item.get('price')
                 quantity: int = self.get_quantity(item)
 
-                if not quantity:
-                    continue
-
                 results.append({
                     'Артикул': article,
                     'Цена': price,
@@ -116,4 +113,4 @@ class AutotradeClient:
 
         quantity = total_quantity_packed + total_quantity_unpacked
 
-        return quantity
+        return quantity if quantity > 0 else 0
