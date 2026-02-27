@@ -8,15 +8,15 @@ import re
 from email.header import decode_header
 
 from config import (
-    IMAP_SERVER,
-    IMAP_PORT,
-    MAILBOX,
-    EMAIL_LOGIN,
-    EMAIL_PASSWORD,
-    KEYWORDS,
-    SENDERS,
-    SAVE_BASE_PATH,
-    ALLOWED_EXTS
+    imap_server,
+    imap_port,
+    mailbox,
+    email_login,
+    email_password,
+    keywords,
+    senders,
+    save_base_path,
+    allowed_exts
 )
 
 
@@ -55,10 +55,10 @@ def extract_valid_attachments(msg):
         filename = decode_mime(filename).lower()
         ext = os.path.splitext(filename)[1]
 
-        if ext not in ALLOWED_EXTS:
+        if ext not in allowed_exts:
             continue
 
-        if not any(k in filename for k in KEYWORDS):
+        if not any(k in filename for k in keywords):
             continue
 
         payload = part.get_payload(decode=True)
@@ -95,13 +95,13 @@ def find_latest_valid_email(mail, sender: str):
 # ---------------------------------------------------------------------
 
 def download_prices():
-    os.makedirs(SAVE_BASE_PATH, exist_ok=True)
+    os.makedirs(save_base_path, exist_ok=True)
 
-    mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
-    mail.login(EMAIL_LOGIN, EMAIL_PASSWORD)
-    mail.select(MAILBOX)
+    mail = imaplib.IMAP4_SSL(imap_server, imap_port)
+    mail.login(email_login, email_password)
+    mail.select(mailbox)
 
-    for sender, company in SENDERS.items():
+    for sender, company in senders.items():
         print(f"\n--- {company} ---")
 
         msg = find_latest_valid_email(mail, sender)
@@ -117,7 +117,7 @@ def download_prices():
         for filename, payload in attachments:
             ext = os.path.splitext(filename)[1]
             out_name = f"{company}{ext}"
-            out_path = os.path.join(SAVE_BASE_PATH, safe_name(out_name))
+            out_path = os.path.join(save_base_path, safe_name(out_name))
 
             with open(out_path, "wb") as f:
                 f.write(payload)
