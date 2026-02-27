@@ -23,26 +23,20 @@ class AutotradeClient:
 
     def __init__(self, url: str, login: str, password: str, headers: dict):
         self.url = url
-        self.login = login
-        self.password = password
+        self.auth_key = self._generate_auth_key(login, password)
         self.headers = headers
 
-        self.salt = '1>6)/MI~{J'  # как в config
+    @staticmethod
+    def _generate_auth_key(login, password) -> str:
+        salt = '1>6)/MI~{J'
+        password_md5 = hashlib.md5(password.encode('utf-8')).hexdigest()
+        return hashlib.md5((login + password_md5 + salt).encode('utf-8')).hexdigest()
 
-    def _generate_auth_key(self) -> str:
-        """
-        Генерирует auth_key на основе логина и пароля.
-        """
-        password_md5 = hashlib.md5(self.password.encode('utf-8')).hexdigest()
-        auth_key = hashlib.md5((self.login + password_md5 + self.salt).encode('utf-8')).hexdigest()
-        return auth_key
-
-    def get_prices(self, articles: list) -> list:
+    def get_data(self, articles: list) -> list:
         """
         Получение цен и остатков для списка (article, brand)
         """
         results = []
-        auth_key = self._generate_auth_key()
         total_batches = (len(articles) + 59) // 60
         batch_num = 0
 
@@ -51,7 +45,7 @@ class AutotradeClient:
             items_payload = {article: {brand: 1} for article, brand in batch}
 
             payload = {
-                "auth_key": auth_key,
+                "auth_key": self.auth_key,
                 "method": "getStocksAndPrices",
                 "params": {
                     "storages": [0],
@@ -94,13 +88,31 @@ class AutotradeClient:
                 brand: str = item.get('brand')
                 name: str = item.get('name')
                 price: float = item.get('price')
+                quantity: int = self.get_quantity(item)
+
+                if not quantity:
+                    continue
 
                 results.append({
                     'Артикул': article,
                     'Цена': price,
-                    'Источник': 'Autotrade'
+                    'Количество': quantity,
+                    'Наименование производителя': name,
                 })
 
             print(f"📦 Autotrade батч {batch_num}/{total_batches} ({len(items)} артикулов)...")
 
         return results
+
+    @staticmethod
+    def get_quantity(item: dict) -> int:
+        total_quantity_packed = 0
+        total_quantity_unpacked = 0
+
+        for stock_id, stock_info in item.get('stocks', {}).items():
+            total_quantity_packed += stock_info.get('quantity_packed', 0)
+            total_quantity_unpacked += stock_info.get('quantity_unpacked', 0)
+
+        quantity = total_quantity_packed + total_quantity_unpacked
+
+        return quantity

@@ -21,13 +21,14 @@ class ABCPClient:
     def __init__(self, host: str, login: str, password: str, headers: dict):
         self.host = host
         self.login = login
-        self.password = password
+        self.password_hash = self._generate_hash(password)
         self.headers = headers
 
-    def _generate_hash(self) -> str:
-        return hashlib.md5(self.password.encode('utf-8')).hexdigest()
+    @staticmethod
+    def _generate_hash(password: str) -> str:
+        return hashlib.md5(password.encode('utf-8')).hexdigest()
 
-    def get_prices(self, articles: list) -> list:
+    def get_data(self, articles: list) -> list:
         """
            Поиск цен товаров в ABCP через search/batch.
 
@@ -52,7 +53,7 @@ class ABCPClient:
 
             payload = {
                 "userlogin": self.login,
-                "userpsw": self._generate_hash(),
+                "userpsw": self.password_hash,
             }
 
             for i, (article, brand) in enumerate(batch):
@@ -94,13 +95,16 @@ class ABCPClient:
                 brand: str = item.get('brand')
                 price: float = item.get('price')
                 description: str = item.get('description')
+                quantity: int = 0
+                name: str = ''
 
-                results.append(
-                    {
-                        'Артикул': article,
-                        'Цена': price,
-                        'Источник': 'ABCP'
-                    })
+                results.append({
+                    'Артикул': article,
+                    'Цена': price,
+                    'Количество': quantity,
+                    'Наименование производителя': name,
+                })
+
             print(
                 f'📦 ABCP батч {batch_num}/{total_batches} '
                 f'({len(data)} артикулов)...'

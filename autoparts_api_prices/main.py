@@ -51,27 +51,31 @@ def main():
         found_data = {}
 
         # ---------- Autotrade (SAT) ----------
-        for client_name, client_data in autotrade_clients.items():
-            articles = articles_dict.get(client_name)
-            if not articles:
-                continue
-
-            autotrade_client = AutotradeClient(
-                url=client_data['url'],
-                login=client_data['login'],
-                password=client_data['password'],
-                headers=headers
-            )
-
-            autotrade_data = autotrade_client.get_prices(articles)
-            save_excel(autotrade_data)
-
-            for item in autotrade_data:
-                article = item['Артикул']
-                found_data[article] = {
-                    'price': item.get('Цена'),
-                    'source': 'Autotrade'
-                }
+        # for client_name, client_data in autotrade_clients.items():
+        #     articles = articles_dict.get(client_name)
+        #     if not articles:
+        #         continue
+        #
+        #     try:
+        #         autotrade_client = AutotradeClient(
+        #             url=client_data['url'],
+        #             login=client_data['login'],
+        #             password=client_data['password'],
+        #             headers=headers
+        #         )
+        #
+        #         autotrade_data = autotrade_client.get_data(articles)
+        #         save_excel(autotrade_data)
+        #
+        #         for item in autotrade_data:
+        #             article = item['Артикул']
+        #             found_data[article] = {
+        #                 'price': item.get('Цена'),
+        #                 'source': 'Autotrade'
+        #             }
+        #     except Exception as ex:
+        #         print(f"[WARNING] Autotrade клиент '{client_name}' пропущен из-за ошибки: {ex}")
+        #         continue
 
         # ---------- ABCP ----------
         for client_name, client_data in abcp_clients.items():
@@ -79,25 +83,29 @@ def main():
             if not articles:
                 continue
 
-            # Создаем экземпляр клиента ABCP
-            client = ABCPClient(
-                host=client_data['host'],
-                login=client_data['login'],
-                password=client_data['password'],
-                headers=headers
-            )
+            try:
+                # Создаем экземпляр клиента ABCP
+                abcp_client = ABCPClient(
+                    host=client_data['host'],
+                    login=client_data['login'],
+                    password=client_data['password'],
+                    headers=headers
+                )
 
-            # Получаем данные
-            abcp_data = client.get_prices(articles)
-            save_excel(abcp_data)
+                # Получаем данные
+                abcp_data = abcp_client.get_data(articles)
+                save_excel(abcp_data)
 
-            # Обновляем найденные данные
-            for item in abcp_data:
-                article = item['Артикул']
-                found_data[article] = {
-                    'price': item.get('Цена'),
-                    'source': 'ABCP'
-                }
+                # Обновляем найденные данные
+                for item in abcp_data:
+                    article = item['Артикул']
+                    found_data[article] = {
+                        'price': item.get('Цена'),
+                        'source': 'ABCP'
+                    }
+            except Exception as ex:
+                print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
+                continue
 
         # ------------------- Прочие прайсы -------------------
         price_files = glob.glob(os.path.join('prices', '*.xls*')) + glob.glob(os.path.join('prices', '*.csv'))
