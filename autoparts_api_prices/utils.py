@@ -17,17 +17,7 @@ from datetime import datetime, timedelta
 from pandas import DataFrame, ExcelWriter, read_excel, read_csv
 import unicodedata
 
-
-# ---------------------------------------------------------------------
-# Конфигурация листов Excel
-# ---------------------------------------------------------------------
-
-# Маппинг: имя файла → индекс листа с данными
-# Используется, если в файле есть служебный (скрытый) лист,
-# который необходимо пропустить.
-SHEET_INDEX_BY_FILENAME = {
-    'авто-парти.xls': 1,  # Прайс.xls → данные находятся на 2-м листе
-}
+from config import sheet_index_by_filename, paint_price
 
 
 # ---------------------------------------------------------------------
@@ -65,7 +55,7 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
     for row in df.itertuples(index=False):
         manufacturer = str(row[2]).strip()  # 3-я колонка: Производитель (импортер)
         brand = str(row[3]).strip()  # 4-я колонка: Производитель (бренд)
-        article = str(row[5]).strip()       # 6-я колонка: Артикул
+        article = str(row[5]).strip()  # 6-я колонка: Артикул
 
         if manufacturer not in articles_by_manufacturer:
             articles_by_manufacturer[manufacturer] = []
@@ -168,6 +158,82 @@ def load_prices_from_file(
 
 
 # ---------------------------------------------------------------------
+# Работа с ЛеонКарс Покраска
+# ---------------------------------------------------------------------
+def clean_name(name: str) -> str:
+    return name.split('(')[0].strip().lower()
+
+
+def get_paint_type(name: str) -> int:
+    for key, price in paint_price.items():
+        if key in name:
+            return price
+    return 0
+
+
+def process_paint_prices(file_path: str):
+    df = read_excel(file_path)
+
+    # колонки
+    name_col = 0      # 'Наименование'
+    manufacturer_col = 2  # 'Производитель'
+    price_col = 6     # 'Цена'
+    quantity_col = 7       # 'Количество'
+    name_manufacturer_col = 8  # 'Наименование производителя'
+
+    target_manufacturer = 'ЛеонКарс Покраска'
+    exclude_manufacturer = 'ООО "Бампер-НН"'
+
+    # проход по строкам через itertuples
+    for row in df.itertuples(index=False):
+        manufacturer = str(row[manufacturer_col]).strip()
+        if manufacturer != target_manufacturer:
+            continue
+
+        # очищаем имя для поиска
+        name = str(row[name_col]).split('(')[0].strip().lower()
+
+        # кандидаты среди других производителей
+        candidates = []
+        for r in df.itertuples(index=False):
+            other_manufacturer = str(r[manufacturer_col]).strip()
+            if r[name_col] is None or other_manufacturer in (target_manufacturer, exclude_manufacturer):
+                continue
+
+            other_name = str(r[name_col]).split('(')[0].strip().lower()
+
+            if other_name != name:
+                continue
+
+            # безопасное приведение цены и количества
+            try:
+                price_val = float(str(r[price_col]).replace(',', '.'))
+                quantity_val = int(str(r[quantity_col]))
+                name_val = str(r[name_col])
+            except (ValueError, TypeError):
+                continue  # пропускаем строки с некорректной ценой/кол-во
+
+            candidates.append((price_val, quantity_val, name_val))
+
+        if not candidates:
+            continue  # ничего не найдено
+
+        # выбираем минимальную цену и соответствующее количество
+        min_price, min_quantity, name = min(candidates, key=lambda x: x[0])
+
+        # определяем покраску
+        paint_cost = get_paint_type(name)
+
+        final_price = min_price + paint_cost
+
+        # запись обратно в DataFrame
+        df.at['Цена', price_col] = final_price
+        df.at['Количество', quantity_col] = min_quantity
+        df.at['Наименование производителя', name_manufacturer_col] = name
+
+    df.to_excel(file_path, index=False)
+
+# ---------------------------------------------------------------------
 # Вспомогательные утилиты
 # ---------------------------------------------------------------------
 
@@ -192,7 +258,7 @@ def get_sheet_index(file_path: str) -> int:
     :return: индекс листа (0-based)
     """
     filename = normalize(os.path.basename(file_path))
-    return SHEET_INDEX_BY_FILENAME.get(filename, 0)
+    return sheet_index_by_filename.get(filename, 0)
 
 
 def chunked(iterable, size: int = 60):
@@ -253,7 +319,6 @@ def clear_prices_folder(folder: str = 'prices') -> None:
             continue
 
     print(f"[OK] В папке '{folder}' удалено файлов: {removed_count}")
-
 
 
 def save_excel(
