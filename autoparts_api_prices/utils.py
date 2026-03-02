@@ -13,11 +13,11 @@
 import os
 import glob
 from datetime import datetime, timedelta
-
-from pandas import DataFrame, ExcelWriter, read_excel, read_csv
 import unicodedata
 
-from config import sheet_index_by_filename, paint_price
+from pandas import DataFrame, ExcelWriter, read_excel, read_csv
+
+from config import sheet_index_by_filename, excel_cols, paint_price
 
 
 # ---------------------------------------------------------------------
@@ -174,24 +174,23 @@ def get_paint_type(name: str) -> int:
 def process_paint_prices(file_path: str):
     df = read_excel(file_path)
 
-    # колонки
-    name_col = 0      # 'Наименование'
-    manufacturer_col = 2  # 'Производитель'
-    price_col = 6     # 'Цена'
-    quantity_col = 7       # 'Количество'
-    name_manufacturer_col = 8  # 'Наименование производителя'
+    name_col = excel_cols['name']
+    manufacturer_col = excel_cols['manufacturer']
+    price_col = excel_cols['price']
+    quantity_col = excel_cols['quantity']
+    name_manufacturer_col = excel_cols['name_manufacturer']
 
     target_manufacturer = 'ЛеонКарс Покраска'
     exclude_manufacturer = 'ООО "Бампер-НН"'
 
-    # проход по строкам через itertuples
-    for row in df.itertuples(index=False):
+    # проход по строкам через itertuples с enumerate, чтобы получить индекс
+    for i, row in enumerate(df.itertuples(index=False)):
         manufacturer = str(row[manufacturer_col]).strip()
         if manufacturer != target_manufacturer:
             continue
 
         # очищаем имя для поиска
-        name = str(row[name_col]).split('(')[0].strip().lower()
+        name_clean = str(row[name_col]).split('(')[0].strip().lower()
 
         # кандидаты среди других производителей
         candidates = []
@@ -201,38 +200,35 @@ def process_paint_prices(file_path: str):
                 continue
 
             other_name = str(r[name_col]).split('(')[0].strip().lower()
-
-            if other_name != name:
+            if other_name != name_clean:
                 continue
 
             # безопасное приведение цены и количества
             try:
                 price_val = float(str(r[price_col]).replace(',', '.'))
                 quantity_val = int(str(r[quantity_col]))
-                name_val = str(r[name_col])
             except (ValueError, TypeError):
-                continue  # пропускаем строки с некорректной ценой/кол-во
+                continue
 
-            candidates.append((price_val, quantity_val, name_val))
+            candidates.append((price_val, quantity_val))
 
         if not candidates:
             continue  # ничего не найдено
 
-        # выбираем минимальную цену и соответствующее количество
-        min_price, min_quantity, name = min(candidates, key=lambda x: x[0])
+        # минимальная цена и соответствующее количество
+        min_price, min_quantity = min(candidates, key=lambda x: x[0])
 
-        # определяем покраску
-        paint_cost = get_paint_type(name)
-
+        # определяем стоимость покраски
+        paint_cost = get_paint_type(name_clean)
         final_price = min_price + paint_cost
 
-        # запись обратно в DataFrame
-        df.at['Цена', price_col] = final_price
-        df.at['Количество', quantity_col] = min_quantity
-        df.at['Наименование производителя', name_manufacturer_col] = name
+        # запись обратно в DataFrame в ту же строку
+        df.iat[i, price_col] = final_price
+        df.iat[i, quantity_col] = min_quantity
+        df.iat[i, name_manufacturer_col] = row[name_col]  # оставляем оригинальное имя
 
+    # сохраняем файл
     df.to_excel(file_path, index=False)
-
 # ---------------------------------------------------------------------
 # Вспомогательные утилиты
 # ---------------------------------------------------------------------
