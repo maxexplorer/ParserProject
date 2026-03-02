@@ -1,0 +1,108 @@
+# froza_client.py
+
+"""
+Модуль работы с Froza XML API.
+
+Поиск товаров через search_xml4.php (price_list).
+"""
+
+import time
+import requests
+import xml.etree.ElementTree as ET
+
+
+class FrozaClient:
+    """
+    Клиент для работы с Froza API.
+    """
+
+    def __init__(self, url: str, login: str, password: str, headers: dict):
+        self.url = url
+        self.login = login
+        self.password = password
+        self.headers = headers
+
+    def build_url(self, article: str) -> str:
+        return (
+            f"{self.url}"
+            f"?get=price_list"
+            f"&user={self.login}"
+            f"&password={self.password}"
+            f"&code={article}"
+        )
+
+    @staticmethod
+    def safe_float(value):
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    @staticmethod
+    def safe_int(value):
+        try:
+            return int(value)
+        except Exception:
+            return 0
+
+    def get_data(self, articles: list, interval: float = 1.0) -> list:
+        """
+        Получение данных по артикулам.
+
+        :param articles: список [(article, brand), ...]
+        :param interval: задержка между запросами
+        :return: список словарей
+        """
+
+        results = []
+        total = len(articles)
+
+        for article, brand in articles:
+
+            url = self.build_url(article)
+
+            try:
+                time.sleep(interval)
+                response = requests.get(url=url, headers=self.headers, timeout=20)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as ex:
+                print(f"❌ Froza ошибка запроса: {ex}")
+                continue
+
+            try:
+                root = ET.fromstring(response.text)
+            except ET.ParseError:
+                print(f"❌ Froza ошибка XML")
+                continue
+
+            # собираем все предложения для артикула
+            offers = []
+            for item in root.findall('.//item'):
+                price = self.safe_float(item.findtext('price'))
+                if price is None:
+                    continue
+                quantity = self.safe_int(item.findtext('quantity'))
+                description = item.findtext('description_rus') or item.findtext('description')
+                offers.append({
+                    'Цена': price,
+                    'Количество': quantity,
+                    'Описание': description
+                })
+
+            if not offers:
+                print(f"❌ Froza {article} ничего не найдено")
+                continue
+
+            # выбираем минимальное предложение
+            min_offer = min(offers, key=lambda x: x['Цена'])
+
+            results.append({
+                'Артикул': article,
+                'Минимальная цена': min_offer['Цена'],
+                'Количество': min_offer['Количество'],
+                'Описание': min_offer['Описание'],
+            })
+
+            print(f"📦 Froza {article} минимальная цена: {min_offer['Цена']}")
+
+        return results
