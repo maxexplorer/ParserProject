@@ -30,9 +30,9 @@ from utils import (
     load_articles_from_data,
     load_prices_from_file,
     normalize,
-    remove_yesterday_file,
     clear_prices_folder,
-    save_excel
+    save_excel,
+    process_paint_prices
 )
 
 from download_prices import download_prices
@@ -42,10 +42,10 @@ start_time: datetime = datetime.now()
 
 
 def main():
-    # Очищаем папку prices перед обработкой
-    clear_prices_folder()
-    # Загружаем прайсы
-    download_prices()
+    # # Очищаем папку prices перед обработкой
+    # clear_prices_folder()
+    # # Загружаем прайсы
+    # download_prices()
 
 
     try:
@@ -211,6 +211,9 @@ def main():
 
         # Сохраняем данные в исходный файл
         df.to_excel(file_path, index=False)
+
+        # ------------------- ДОБАВЛЯЕМ ЦЕНЫ ПОКРАСКИ -------------------
+        process_paint_prices(file_path)  # применяем покрасочные цены к файлу
 
     except Exception as ex:
         print(f'[ERROR] main: {ex}')
