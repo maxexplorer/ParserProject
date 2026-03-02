@@ -180,7 +180,7 @@ def update_prices_ozon(article_info: dict) -> dict:
             'price_strategy_enabled': 'UNKNOWN',
             'product_id': 0,
             'quant_size': 1,
-            'vat': '0.05'
+            'vat': '0'
         })
 
     if prices['prices']:
