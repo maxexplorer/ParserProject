@@ -13,7 +13,11 @@ import hashlib
 
 import requests
 
-from utils import chunked
+from utils import (
+    chunked,
+    safe_float,
+    safe_int
+)
 
 
 class AutotradeClient:
@@ -88,8 +92,8 @@ class AutotradeClient:
                 article: str = item.get('article')
                 brand: str = item.get('brand')
                 name: str = item.get('name')
-                price: float = item.get('price')
-                quantity: int = self.get_quantity(item)
+                price: float = safe_float(item.get('price'))
+                quantity: int = safe_int(self.get_quantity(item))
 
                 results.append({
                     'Артикул': article,
@@ -113,4 +117,4 @@ class AutotradeClient:
 
         quantity = total_quantity_packed + total_quantity_unpacked
 
-        return quantity if quantity > 0 else 0
+        return quantity

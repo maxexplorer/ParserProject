@@ -257,6 +257,20 @@ def get_sheet_index(file_path: str) -> int:
     return sheet_index_by_filename.get(filename, 0)
 
 
+def safe_float(value):
+    try:
+        return float(value)
+    except Exception:
+        return 0.0
+
+
+def safe_int(value):
+    try:
+        return int(value)
+    except Exception:
+        return 0
+
+
 def chunked(iterable, size: int = 60):
     """
     Делит итерируемый объект на части фиксированного размера.

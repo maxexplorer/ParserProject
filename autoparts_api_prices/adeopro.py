@@ -3,7 +3,10 @@ import xml.etree.ElementTree as ET
 
 import requests
 
-from utils import chunked
+from utils import (
+    chunked,
+    safe_float,
+    safe_int)
 
 
 class AdeoproClient:
@@ -79,22 +82,22 @@ class AdeoproClient:
         try:
             root = ET.fromstring(xml_data)
             for detail in root.findall('detail'):
-                stock_element = detail.find('stock')
-                price_element = detail.find('price')
-                article_element = detail.find('code')
-                brand_element = detail.find('producer')
+                stock_element = detail.findtext('stock')
+                price_element = detail.findtext('price')
+                article_element = detail.findtext('code')
+                brand_element = detail.findtext('producer')
 
                 # Пропуск "Cella2108", если нужно
-                if stock_element is not None and "Cella2108" in stock_element.text:
+                if stock_element is not None and "Cella2108" in stock_element:
                     continue
 
-                article = article_element.text if article_element is not None else ""
-                brand = brand_element.text if brand_element is not None else ""
-                price = float(price_element.text) if price_element is not None else 0.0
+                article = article_element if article_element is not None else ""
+                brand = brand_element if brand_element is not None else ""
+                price = safe_float(price_element)
 
                 # Остатки
                 rest_element = detail.find('rest')
-                quantity = int(rest_element.text) if rest_element is not None else 0
+                quantity = safe_int(rest_element.text)
 
                 results.append({
                     'Артикул': article,

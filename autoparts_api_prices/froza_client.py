@@ -7,8 +7,14 @@
 """
 
 import time
-import requests
 import xml.etree.ElementTree as ET
+
+import requests
+
+from utils import (
+    safe_float,
+    safe_int
+)
 
 
 class FrozaClient:
@@ -31,20 +37,6 @@ class FrozaClient:
             f"&code={article}"
         )
 
-    @staticmethod
-    def safe_float(value):
-        try:
-            return float(value)
-        except Exception:
-            return None
-
-    @staticmethod
-    def safe_int(value):
-        try:
-            return int(value)
-        except Exception:
-            return 0
-
     def get_data(self, articles: list, interval: float = 1.0) -> list:
         """
         Получение данных по артикулам.
@@ -57,7 +49,7 @@ class FrozaClient:
         results = []
         total = len(articles)
 
-        for article, brand in articles:
+        for i, article, brand in enumerate(articles, start=1):
 
             url = self.build_url(article)
 
@@ -78,10 +70,10 @@ class FrozaClient:
             # собираем все предложения для артикула
             offers = []
             for item in root.findall('.//item'):
-                price = self.safe_float(item.findtext('price'))
+                price = safe_float(item.findtext('price'))
                 if price is None:
                     continue
-                quantity = self.safe_int(item.findtext('quantity'))
+                quantity = safe_int(item.findtext('quantity'))
                 description = item.findtext('description_rus') or item.findtext('description')
                 offers.append({
                     'Цена': price,
@@ -103,6 +95,6 @@ class FrozaClient:
                 'Описание': min_offer['Описание'],
             })
 
-            print(f"📦 Froza {article} минимальная цена: {min_offer['Цена']}")
+            print(f"📦 Froza {i}/{total} артикулов")
 
         return results

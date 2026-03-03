@@ -11,7 +11,12 @@ import hashlib
 
 import requests
 
-from utils import chunked
+from utils import (
+    chunked,
+    safe_float,
+    safe_int
+)
+
 
 class ABCPClient:
     """
@@ -91,9 +96,9 @@ class ABCPClient:
             for item in data:
                 article: str = item.get('number')
                 brand: str = item.get('brand')
-                price: float = item.get('price')
+                price: float = safe_float(item.get('price'))
+                quantity: int = safe_int(item.get('availability', 0))
                 description: str = item.get('description')
-                quantity: int = item.get('availability', 0)
 
                 results.append({
                     'Артикул': article,
