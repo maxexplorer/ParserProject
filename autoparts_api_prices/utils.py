@@ -354,7 +354,8 @@ def clear_prices_folder(folder: str = 'prices') -> None:
     Используется для очистки после обработки.
     """
 
-    files = glob.glob(os.path.join(folder, '*.xls*'))
+    # Ищем xls, xlsx и csv
+    files = glob.glob(os.path.join(folder, '*.xls*')) + glob.glob(os.path.join(folder, '*.csv'))
 
     if not files:
         print(f"[INFO] В папке '{folder}' нет файлов для удаления")
