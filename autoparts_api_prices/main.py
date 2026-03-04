@@ -43,9 +43,9 @@ start_time: datetime = datetime.now()
 
 
 def main():
-    # # Очищаем папку prices перед обработкой
+    # Очищаем папку prices перед обработкой
     clear_prices_folder()
-    # # Загружаем прайсы
+    # Загружаем прайсы
     download_prices()
 
     try:
