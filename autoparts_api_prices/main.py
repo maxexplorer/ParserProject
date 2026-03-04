@@ -45,9 +45,9 @@ start_time: datetime = datetime.now()
 
 def main():
     # # Очищаем папку prices перед обработкой
-    # clear_prices_folder()
+    clear_prices_folder()
     # # Загружаем прайсы
-    # download_prices()
+    download_prices()
 
     try:
         # Получаем данные из исходного файла
@@ -60,118 +60,118 @@ def main():
         found_data = {}
 
         # ---------- Autotrade (SAT) ----------
-        # for client_name, client_data in autotrade_clients.items():
-        #     articles = articles_dict.get(client_name)
-        #     if not articles:
-        #         continue
-        #
-        #     try:
-        #         autotrade_client = AutotradeClient(
-        #             url=client_data['url'],
-        #             login=client_data['login'],
-        #             password=client_data['password'],
-        #             headers=headers
-        #         )
-        #
-        #         autotrade_data = autotrade_client.get_data(articles, client_name, interval=1.0)
-        #
-        #         for item in autotrade_data:
-        #             article = item['Артикул']
-        #             found_data[(article, client_name)] = {
-        #                 'price': item.get('Цена'),
-        #                 'quantity': item.get('Количество'),
-        #                 'name_manufacturer': item.get('Наименование производителя')
-        #
-        #             }
-        #     except Exception as ex:
-        #         print(f"[WARNING] Autotrade клиент '{client_name}' пропущен из-за ошибки: {ex}")
-        #         continue
+        for client_name, client_data in autotrade_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
+
+            try:
+                autotrade_client = AutotradeClient(
+                    url=client_data['url'],
+                    login=client_data['login'],
+                    password=client_data['password'],
+                    headers=headers
+                )
+
+                autotrade_data = autotrade_client.get_data(articles, client_name, interval=1.0)
+
+                for item in autotrade_data:
+                    article = item['Артикул']
+                    found_data[(article, client_name)] = {
+                        'price': item.get('Цена'),
+                        'quantity': item.get('Количество'),
+                        'name_manufacturer': item.get('Наименование производителя')
+
+                    }
+            except Exception as ex:
+                print(f"[WARNING] Autotrade клиент '{client_name}' пропущен из-за ошибки: {ex}")
+                continue
 
         # ---------- ABCP ----------
-        # for client_name, client_data in abcp_clients.items():
-        #     articles = articles_dict.get(client_name)
-        #     if not articles:
-        #         continue
-        #
-        #     try:
-        #         # Создаем экземпляр клиента ABCP
-        #         abcp_client = ABCPClient(
-        #             host=client_data['host'],
-        #             login=client_data['login'],
-        #             password=client_data['password'],
-        #             headers=headers
-        #         )
-        #
-        #         # Получаем данные
-        #         abcp_data = abcp_client.get_data(articles, client_name, interval=3.0)
-        #
-        #         # Обновляем найденные данные
-        #         for item in abcp_data:
-        #             article = item['Артикул']
-        #             found_data[(article, client_name)] = {
-        #                 'price': item.get('Цена'),
-        #                 'quantity': item.get('Количество'),
-        #                 'name_manufacturer': item.get('Наименование производителя')
-        #             }
-        #     except Exception as ex:
-        #         print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
-        #         continue
+        for client_name, client_data in abcp_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
+
+            try:
+                # Создаем экземпляр клиента ABCP
+                abcp_client = ABCPClient(
+                    host=client_data['host'],
+                    login=client_data['login'],
+                    password=client_data['password'],
+                    headers=headers
+                )
+
+                # Получаем данные
+                abcp_data = abcp_client.get_data(articles, client_name, interval=3.0)
+
+                # Обновляем найденные данные
+                for item in abcp_data:
+                    article = item['Артикул']
+                    found_data[(article, client_name)] = {
+                        'price': item.get('Цена'),
+                        'quantity': item.get('Количество'),
+                        'name_manufacturer': item.get('Наименование производителя')
+                    }
+            except Exception as ex:
+                print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
+                continue
 
         # ---------- Adeopro ----------
-        # for client_name, client_data in adeopro_clients.items():
-        #     articles = articles_dict.get(client_name)
-        #     if not articles:
-        #         continue
-        #
-        #     try:
-        #         adeopro_client = AdeoproClient(
-        #             url=client_data['url'],
-        #             login=client_data['login'],
-        #             password=client_data['password'],
-        #             headers=headers
-        #         )
-        #
-        #         adeopro_data = adeopro_client.get_data(articles, client_name, interval=1.5)
-        #
-        #         for item in adeopro_data:
-        #             article = item['Артикул']
-        #             found_data[(article, client_name)] = {
-        #                 'price': item.get('Цена'),
-        #                 'quantity': item.get('Количество'),
-        #                 'name_manufacturer': item.get('Наименование производителя')
-        #             }
-        #
-        #     except Exception as ex:
-        #         print(f"[WARNING] Adeopro клиент '{client_name}' пропущен из-за ошибки: {ex}")
-        #         continue
+        for client_name, client_data in adeopro_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
+
+            try:
+                adeopro_client = AdeoproClient(
+                    url=client_data['url'],
+                    login=client_data['login'],
+                    password=client_data['password'],
+                    headers=headers
+                )
+
+                adeopro_data = adeopro_client.get_data(articles, client_name, interval=1.5)
+
+                for item in adeopro_data:
+                    article = item['Артикул']
+                    found_data[(article, client_name)] = {
+                        'price': item.get('Цена'),
+                        'quantity': item.get('Количество'),
+                        'name_manufacturer': item.get('Наименование производителя')
+                    }
+
+            except Exception as ex:
+                print(f"[WARNING] Adeopro клиент '{client_name}' пропущен из-за ошибки: {ex}")
+                continue
 
         # ---------- Froza ----------
-        # for client_name, client_data in froza_clients.items():
-        #     articles = articles_dict.get(client_name)
-        #     if not articles:
-        #         continue
-        #
-        #     try:
-        #         froza_client = FrozaClient(
-        #             url=client_data['url'],
-        #             login=client_data['login'],
-        #             password=client_data['password'],
-        #             headers=headers
-        #         )
-        #
-        #         froza_data = froza_client.get_data(articles[:3], client_name, interval=1.0)
-        #
-        #         for item in froza_data:
-        #             article = item['Артикул']
-        #             found_data[(article, client_name)] = {
-        #                 'price': item.get('Цена'),
-        #                 'quantity': item.get('Количество'),
-        #                 'name_manufacturer': item.get('Наименование производителя')
-        #             }
-        #
-        #     except Exception as ex:
-        #         print(f"[WARNING] Froza клиент '{client_name}' ошибка: {ex}")
-        #         continue
+        for client_name, client_data in froza_clients.items():
+            articles = articles_dict.get(client_name)
+            if not articles:
+                continue
+
+            try:
+                froza_client = FrozaClient(
+                    url=client_data['url'],
+                    login=client_data['login'],
+                    password=client_data['password'],
+                    headers=headers
+                )
+
+                froza_data = froza_client.get_data(articles, client_name, interval=1.0)
+
+                for item in froza_data:
+                    article = item['Артикул']
+                    found_data[(article, client_name)] = {
+                        'price': item.get('Цена'),
+                        'quantity': item.get('Количество'),
+                        'name_manufacturer': item.get('Наименование производителя')
+                    }
+
+            except Exception as ex:
+                print(f"[WARNING] Froza клиент '{client_name}' ошибка: {ex}")
+                continue
 
         # ------------------- Прочие прайсы -------------------
         price_files = glob.glob(os.path.join('prices', '*.xls*')) + glob.glob(os.path.join('prices', '*.csv'))
@@ -244,7 +244,7 @@ def main():
         df.to_excel(file_path, index=False)
 
         # ------------------- ДОБАВЛЯЕМ ЦЕНЫ ПОКРАСКИ -------------------
-        # process_paint_prices(file_path)  # применяем покрасочные цены к файлу
+        process_paint_prices(file_path)  # применяем покрасочные цены к файлу
 
     except Exception as ex:
         print(f'[ERROR] main: {ex}')

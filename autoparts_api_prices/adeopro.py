@@ -1,20 +1,16 @@
+# adeopro.py
+
 import time
 import xml.etree.ElementTree as ET
-
 import requests
 
 from utils import (
-    chunked,
     safe_float,
-    safe_int)
+    safe_int
+)
 
 
 class AdeoproClient:
-    """
-    Клиент для работы с Adeopro API.
-    Поддерживает пакетную проверку артикула + бренда через priceBatch.
-    """
-
     def __init__(self, url: str, login: str, password: str, headers: dict = None):
         self.url = url
         self.login = login
@@ -23,91 +19,95 @@ class AdeoproClient:
 
     def get_data(self, articles: list, client_name: str, interval: float = 1.0) -> list:
         """
-        Получение цен и остатков для списка (article, brand)
-        :param articles: список кортежей [(article, brand), ...]
-        :param client_name: Наименование компании поставщика
-        :param interval: интервал между пакетными запросами
+        Одиночный запрос по каждому артикулу (как Froza)
         """
         results = []
-        batch_size = 100  # можно регулировать по документации
-        total_batches = (len(articles) + batch_size - 1) // batch_size
+        total = len(articles)
 
-        for batch_num, batch in enumerate(chunked(articles, batch_size), start=1):
-            xml_payload = self.build_xml(batch)
+        for i, (article, brand) in enumerate(articles, start=1):
+
+            xml_payload = self.build_xml(article, brand)
+
             try:
                 time.sleep(interval)
+
                 response = requests.post(
                     url=self.url,
                     headers=self.headers,
                     data={"xml": xml_payload},
-                    timeout=60
+                    timeout=30
                 )
                 response.raise_for_status()
-                data = response.text
-                results.extend(self.parse_response(data))
+
             except requests.RequestException as ex:
-                print(f"❌ Adeopro батч {batch_num}/{total_batches} ошибка: {ex}")
+                print(f"❌ Adeopro {article} ошибка запроса: {ex}")
                 continue
 
-            print(f"📦 Adeopro {client_name} батч {batch_num}/{total_batches} ({len(batch)} артикулов)...")
+            try:
+                root = ET.fromstring(response.text)
+            except ET.ParseError:
+                print(f"❌ Adeopro {article} ошибка XML")
+                continue
 
+            # собираем все предложения
+            offers = []
 
-        return results
-
-    def build_xml(self, batch: list) -> str:
-        """
-        Формирует XML для batch запроса
-        """
-        items_xml = "".join(
-            f"<items><pn>{article}</pn><brand>{brand}</brand></items>"
-            for article, brand in batch
-        )
-
-        xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-        <message>
-            <param>
-                <action>priceBatch</action>
-                <login>{self.login}</login>
-                <password>{self.password}</password>
-            </param>
-            {items_xml}
-        </message>"""
-        return xml
-
-    @staticmethod
-    def parse_response(xml_data: str) -> list:
-        """
-        Парсинг ответа XML. Возвращает список словарей:
-        [{'Артикул': article, 'Цена': price, 'Количество': quantity, 'Наименование производителя': name}, ...]
-        """
-        results = []
-        try:
-            root = ET.fromstring(xml_data)
-            for detail in root.findall('detail'):
-                stock_element = detail.findtext('stock')
-                price_element = detail.findtext('price')
-                article_element = detail.findtext('code')
-                brand_element = detail.findtext('producer')
-
-                # Пропуск "Cella2108", если нужно
-                if stock_element is not None and "Cella2108" in stock_element:
+            for detail in root.findall('.//detail'):
+                price = safe_float(detail.findtext('price'))
+                if price is None:
                     continue
 
-                article = article_element if article_element is not None else ""
-                brand = brand_element if brand_element is not None else ""
-                price = safe_float(price_element)
+                quantity = safe_int(detail.findtext('rest'))
+                description = detail.findtext('caption')
+                stock = detail.findtext('stock')
+                delivery = safe_int(detail.findtext('delivery'))
+                percent_refuse = safe_int(detail.findtext('PercentRefuse'))
+                good_return = detail.findtext('good_return')
 
-                # Остатки
-                rest_element = detail.find('rest')
-                quantity = safe_int(rest_element.text)
+                if (
+                        delivery > 3 or
+                        percent_refuse > 30 or
+                        stock == "Cella2108" or
+                        good_return != "Возврат без уценки"
+                ):
+                    continue
 
-                results.append({
-                    'Артикул': article,
+                offers.append({
                     'Цена': price,
                     'Количество': quantity,
-                    'Наименование производителя': brand,
+                    'Наименование производителя': description
                 })
-        except ET.ParseError as ex:
-            print(f"Ошибка разбора XML: {ex}")
+
+            if not offers:
+                print(f"❌ Adeopro {article} ничего не найдено")
+                continue
+
+            # выбираем минимальную цену
+            min_offer = min(offers, key=lambda x: x['Цена'])
+
+            results.append({
+                'Артикул': article,
+                'Цена': min_offer['Цена'],
+                'Количество': min_offer['Количество'],
+                'Наименование производителя': min_offer['Наименование производителя'],
+            })
+
+            print(f"📦 Adeopro {client_name} {i}/{total} артикулов")
 
         return results
+
+    def build_xml(self, article: str, brand: str) -> str:
+        """
+        XML для одного артикула
+        """
+        return f"""<?xml version="1.0" encoding="UTF-8"?>
+        <message>
+            <param>
+                <action>price</action>
+                <login>{self.login}</login>
+                <password>{self.password}</password>
+                <code>{article}</code>
+                <brand>{brand}</brand>
+                <crosses>disallow</crosses>
+            </param>
+        </message>"""

@@ -86,7 +86,7 @@ class FrozaClient:
                 print(f"❌ Froza {article} ничего не найдено")
                 continue
 
-            # выбираем минимальное предложение
+            # выбираем минимальную цену
             min_offer = min(offers, key=lambda x: x['Цена'])
 
             results.append({

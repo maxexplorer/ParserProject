@@ -46,7 +46,7 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
     file_path = files[0]
     df = read_excel(file_path)
     # Делаем дубликаты поставщика A-2 → Froza
-    # df = duplicate_froza_rows(df)
+    df = duplicate_froza_rows(df)
     df.columns = df.columns.str.strip()
 
     # Убираем строки без артикула или производителя
@@ -68,31 +68,38 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
 
     return articles_by_manufacturer, df, file_path
 
+
 def duplicate_froza_rows(df):
     source_name = 'ООО "А-2" - 0'
     target_name = 'ООО "Фроза" - 1'
-
     manufacturer_col = 2  # 3-я колонка
 
-    # фильтр по индексу колонки
+    # Проверяем, есть ли уже дубликаты Froza
+    if (df.iloc[:, manufacturer_col] == target_name).any():
+        print("✅ Дубликаты для Froza уже существуют, новые не создаем")
+        return df
+
+    # фильтр по исходному поставщику
     df_a2 = df[df.iloc[:, manufacturer_col] == source_name]
 
     if df_a2.empty:
         return df
 
-    # копия
+    # копия строк для Froza
     df_froza = df_a2.copy()
 
-    # меняем значение через iloc
+    # меняем производителя
     df_froza.iloc[:, manufacturer_col] = target_name
 
-    # объединяем
+    # объединяем DataFrame
     df = concat([df, df_froza], ignore_index=True)
 
-    # сортировка (оставляем как было)
+    # сортировка
     df = df.sort_values(
         by=[df.columns[0], df.columns[manufacturer_col]]
     ).reset_index(drop=True)
+
+    print(f"📄 Создано {len(df_froza)} дубликатов для Froza")
 
     return df
 
