@@ -71,7 +71,7 @@ class ABCPClient:
 
             except requests.exceptions.RequestException as ex:
                 print(
-                    f'❌ ABCP батч {batch_num}/{total_batches} '
+                    f'❌ ABCP батч {client_name} {batch_num}/{total_batches} '
                     f'ошибка запроса: {ex}'
                 )
                 return results
@@ -80,7 +80,7 @@ class ABCPClient:
                 data: list = response.json()
             except ValueError:
                 print(
-                    f'❌ ABCP батч {batch_num}/{total_batches} '
+                    f'❌ ABCP батч {client_name} {batch_num}/{total_batches} '
                     f'ошибка JSON'
                 )
                 continue
