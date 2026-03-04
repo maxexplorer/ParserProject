@@ -33,7 +33,7 @@ class ABCPClient:
     def _generate_hash(password: str) -> str:
         return hashlib.md5(password.encode('utf-8')).hexdigest()
 
-    def get_data(self, articles: list, client_name: str, interval: float = 3.0) -> list:
+    def get_data(self, articles: list, client_name: str, interval: float = 1.0) -> list:
         """
            Поиск цен товаров в ABCP через search/batch.
            :param articles: Список (article, brand)
