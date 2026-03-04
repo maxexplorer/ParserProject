@@ -33,15 +33,11 @@ class ABCPClient:
     def _generate_hash(password: str) -> str:
         return hashlib.md5(password.encode('utf-8')).hexdigest()
 
-    def get_data(self, articles: list) -> list:
+    def get_data(self, articles: list, client_name: str, interval: float = 3.0) -> list:
         """
            Поиск цен товаров в ABCP через search/batch.
-
-           :param url: Базовый URL ABCP
-           :param headers: HTTP-заголовки
-           :param userlogin: Логин пользователя
-           :param userpsw: MD5-хэш пароля
            :param articles: Список (article, brand)
+           :param interval: интервал между пакетными запросами
            :return: Список словарей с результатами
            """
 
@@ -64,8 +60,7 @@ class ABCPClient:
                 payload[f"search[{i}][brand]"] = brand
 
             try:
-                time.sleep(3)
-
+                time.sleep(interval)
                 response = requests.post(
                     url=url,
                     headers=self.headers,
@@ -108,7 +103,7 @@ class ABCPClient:
                 })
 
             print(
-                f'📦 ABCP батч {batch_num}/{total_batches} '
+                f'📦 ABCP {client_name} батч {batch_num}/{total_batches} '
                 f'({len(data)} артикулов)...'
             )
 

@@ -21,11 +21,12 @@ class AdeoproClient:
         self.password = password
         self.headers = headers
 
-    def get_data(self, articles: list, interval: float = 1.0) -> list:
+    def get_data(self, articles: list, client_name: str, interval: float = 1.0) -> list:
         """
         Получение цен и остатков для списка (article, brand)
-        articles: список кортежей [(article, brand), ...]
-        interval: интервал между пакетными запросами
+        :param articles: список кортежей [(article, brand), ...]
+        :param client_name: Наименование компании поставщика
+        :param interval: интервал между пакетными запросами
         """
         results = []
         batch_size = 100  # можно регулировать по документации
@@ -34,6 +35,7 @@ class AdeoproClient:
         for batch_num, batch in enumerate(chunked(articles, batch_size), start=1):
             xml_payload = self.build_xml(batch)
             try:
+                time.sleep(interval)
                 response = requests.post(
                     url=self.url,
                     headers=self.headers,
@@ -47,8 +49,8 @@ class AdeoproClient:
                 print(f"❌ Adeopro батч {batch_num}/{total_batches} ошибка: {ex}")
                 continue
 
-            print(f"📦 Adeopro батч {batch_num}/{total_batches} ({len(batch)} артикулов)...")
-            time.sleep(interval)
+            print(f"📦 Adeopro {client_name} батч {batch_num}/{total_batches} ({len(batch)} артикулов)...")
+
 
         return results
 

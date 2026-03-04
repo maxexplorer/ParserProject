@@ -15,7 +15,7 @@ import glob
 from datetime import datetime, timedelta
 import unicodedata
 
-from pandas import DataFrame, ExcelWriter, read_excel, read_csv
+from pandas import DataFrame, ExcelWriter, read_excel, read_csv, concat
 
 from config import sheet_index_by_filename, excel_cols, paint_price
 
@@ -45,6 +45,8 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
     # Используем первый найденный файл
     file_path = files[0]
     df = read_excel(file_path)
+    # Делаем дубликаты поставщика A-2 → Froza
+    # df = duplicate_froza_rows(df)
     df.columns = df.columns.str.strip()
 
     # Убираем строки без артикула или производителя
@@ -65,6 +67,34 @@ def load_articles_from_data(folder: str = 'data') -> tuple[dict, DataFrame, str]
     print(f"Загружено производителей: {len(articles_by_manufacturer)}")
 
     return articles_by_manufacturer, df, file_path
+
+def duplicate_froza_rows(df):
+    source_name = 'ООО "А-2" - 0'
+    target_name = 'ООО "Фроза" - 1'
+
+    manufacturer_col = 2  # 3-я колонка
+
+    # фильтр по индексу колонки
+    df_a2 = df[df.iloc[:, manufacturer_col] == source_name]
+
+    if df_a2.empty:
+        return df
+
+    # копия
+    df_froza = df_a2.copy()
+
+    # меняем значение через iloc
+    df_froza.iloc[:, manufacturer_col] = target_name
+
+    # объединяем
+    df = concat([df, df_froza], ignore_index=True)
+
+    # сортировка (оставляем как было)
+    df = df.sort_values(
+        by=[df.columns[0], df.columns[manufacturer_col]]
+    ).reset_index(drop=True)
+
+    return df
 
 
 # ---------------------------------------------------------------------
@@ -229,6 +259,10 @@ def process_paint_prices(file_path: str):
 
     # сохраняем файл
     df.to_excel(file_path, index=False)
+
+    print(f"📦 Обработан {target_manufacturer}")
+
+
 # ---------------------------------------------------------------------
 # Вспомогательные утилиты
 # ---------------------------------------------------------------------

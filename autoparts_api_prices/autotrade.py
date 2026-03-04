@@ -36,7 +36,7 @@ class AutotradeClient:
         password_md5 = hashlib.md5(password.encode('utf-8')).hexdigest()
         return hashlib.md5((login + password_md5 + salt).encode('utf-8')).hexdigest()
 
-    def get_data(self, articles: list) -> list:
+    def get_data(self, articles: list, client_name: str, interval: float=1.0) -> list:
         """
         Получение цен и остатков для списка (article, brand)
         """
@@ -65,7 +65,7 @@ class AutotradeClient:
             }
 
             try:
-                time.sleep(1)
+                time.sleep(interval)
                 response = requests.post(
                     url=self.url,
                     headers=self.headers,
@@ -102,7 +102,7 @@ class AutotradeClient:
                     'Наименование производителя': name,
                 })
 
-            print(f"📦 Autotrade батч {batch_num}/{total_batches} ({len(items)} артикулов)...")
+            print(f"📦 Autotrade {client_name} батч {batch_num}/{total_batches} ({len(items)} артикулов)...")
 
         return results
 

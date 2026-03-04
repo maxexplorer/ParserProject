@@ -37,7 +37,7 @@ class FrozaClient:
             f"&code={article}"
         )
 
-    def get_data(self, articles: list, interval: float = 1.0) -> list:
+    def get_data(self, articles: list, client_name: str, interval: float = 1.0) -> list:
         """
         Получение данных по артикулам.
 
@@ -49,7 +49,7 @@ class FrozaClient:
         results = []
         total = len(articles)
 
-        for i, article, brand in enumerate(articles, start=1):
+        for i, (article, brand) in enumerate(articles, start=1):
 
             url = self.build_url(article)
 
@@ -76,9 +76,10 @@ class FrozaClient:
                 quantity = safe_int(item.findtext('quantity'))
                 description = item.findtext('description_rus') or item.findtext('description')
                 offers.append({
+                    'Артикул': article,
                     'Цена': price,
                     'Количество': quantity,
-                    'Описание': description
+                    'Наименование производителя': description
                 })
 
             if not offers:
@@ -90,11 +91,11 @@ class FrozaClient:
 
             results.append({
                 'Артикул': article,
-                'Минимальная цена': min_offer['Цена'],
+                'Цена': min_offer['Цена'],
                 'Количество': min_offer['Количество'],
-                'Описание': min_offer['Описание'],
+                'Наименование производителя': min_offer['Наименование производителя'],
             })
 
-            print(f"📦 Froza {i}/{total} артикулов")
+            print(f"📦 Froza {client_name} {i}/{total} артикулов")
 
         return results

@@ -73,14 +73,15 @@ def main():
         #             headers=headers
         #         )
         #
-        #         autotrade_data = autotrade_client.get_data(articles)
-        #         save_excel(autotrade_data)
+        #         autotrade_data = autotrade_client.get_data(articles, client_name, interval=1.0)
         #
         #         for item in autotrade_data:
         #             article = item['Артикул']
-        #             found_data[article] = {
+        #             found_data[(article, client_name)] = {
         #                 'price': item.get('Цена'),
-        #                 'source': 'Autotrade'
+        #                 'quantity': item.get('Количество'),
+        #                 'name_manufacturer': item.get('Наименование производителя')
+        #
         #             }
         #     except Exception as ex:
         #         print(f"[WARNING] Autotrade клиент '{client_name}' пропущен из-за ошибки: {ex}")
@@ -102,21 +103,21 @@ def main():
         #         )
         #
         #         # Получаем данные
-        #         abcp_data = abcp_client.get_data(articles)
-        #         save_excel(abcp_data)
+        #         abcp_data = abcp_client.get_data(articles, client_name, interval=3.0)
         #
         #         # Обновляем найденные данные
         #         for item in abcp_data:
         #             article = item['Артикул']
-        #             found_data[article] = {
+        #             found_data[(article, client_name)] = {
         #                 'price': item.get('Цена'),
-        #                 'source': 'ABCP'
+        #                 'quantity': item.get('Количество'),
+        #                 'name_manufacturer': item.get('Наименование производителя')
         #             }
         #     except Exception as ex:
         #         print(f"[WARNING] ABCP клиент '{client_name}' пропущен из-за ошибки: {ex}")
         #         continue
-        #
-        # # ---------- Adeopro ----------
+
+        # ---------- Adeopro ----------
         # for client_name, client_data in adeopro_clients.items():
         #     articles = articles_dict.get(client_name)
         #     if not articles:
@@ -130,15 +131,14 @@ def main():
         #             headers=headers
         #         )
         #
-        #         adeopro_data = adeopro_client.get_data(articles, interval=1.5)
-        #         save_excel(adeopro_data)
+        #         adeopro_data = adeopro_client.get_data(articles, client_name, interval=1.5)
         #
         #         for item in adeopro_data:
         #             article = item['Артикул']
-        #             found_data[article] = {
+        #             found_data[(article, client_name)] = {
         #                 'price': item.get('Цена'),
         #                 'quantity': item.get('Количество'),
-        #                 'manufacturer_name': item.get('Наименование производителя')
+        #                 'name_manufacturer': item.get('Наименование производителя')
         #             }
         #
         #     except Exception as ex:
@@ -146,104 +146,104 @@ def main():
         #         continue
 
         # ---------- Froza ----------
-        for client_name, client_data in froza_clients.items():
-            articles = articles_dict.get(client_name)
-            if not articles:
-                continue
-
-            try:
-                froza_client = FrozaClient(
-                    url=client_data['url'],
-                    login=client_data['login'],
-                    password=client_data['password'],
-                    headers=headers
-                )
-
-                froza_data = froza_client.get_data(articles, interval=1.0)
-                save_excel(froza_data)
-
-                for item in froza_data:
-                    article = item['Артикул']
-                    found_data[article] = {
-                        'price': item.get('Цена'),
-                        'quantity': item.get('Количество'),
-                        'manufacturer_name': item.get('Наименование производителя')
-                    }
-
-            except Exception as ex:
-                print(f"[WARNING] Froza клиент '{client_name}' ошибка: {ex}")
-                continue
-
-        # ------------------- Прочие прайсы -------------------
-        # price_files = glob.glob(os.path.join('prices', '*.xls*')) + glob.glob(os.path.join('prices', '*.csv'))
-        #
-        # # Обработка файлов prices
-        # for file_path_price in price_files:
-        #     base_name = normalize(os.path.basename(file_path_price))
-        #
-        #     try:
-        #         article_col, price_col, quantity_col, name_col = file_structures.get(base_name,
-        #                                                                              (None, None, None, None))
-        #
-        #         data = load_prices_from_file(
-        #             file_path_price,
-        #             article_col,
-        #             price_col,
-        #             quantity_col,
-        #             name_col
-        #         )
-        #     except Exception as ex:
-        #         print(f"[WARNING] Прайс '{file_path_price}' пропущен из-за ошибки: {ex}")
+        # for client_name, client_data in froza_clients.items():
+        #     articles = articles_dict.get(client_name)
+        #     if not articles:
         #         continue
         #
-        #     data_dict = {item['Артикул']: item for item in data}
+        #     try:
+        #         froza_client = FrozaClient(
+        #             url=client_data['url'],
+        #             login=client_data['login'],
+        #             password=client_data['password'],
+        #             headers=headers
+        #         )
         #
-        #     company_name = company_names.get(base_name)
-        #     company_articles_data = articles_dict.get(company_name, [])
+        #         froza_data = froza_client.get_data(articles[:3], client_name, interval=1.0)
         #
-        #     company_articles = [
-        #         article for article, _ in company_articles_data
-        #     ]
-        #
-        #     filtered_data = []
-        #
-        #     for article in company_articles:
-        #         if article in data_dict:
-        #             item = data_dict[article]
-        #
-        #             filtered_data.append(item)
-        #
-        #             found_data[article] = {
+        #         for item in froza_data:
+        #             article = item['Артикул']
+        #             found_data[(article, client_name)] = {
         #                 'price': item.get('Цена'),
         #                 'quantity': item.get('Количество'),
-        #                 'manufacturer_name': item.get('Наименование производителя')
+        #                 'name_manufacturer': item.get('Наименование производителя')
         #             }
         #
-        #     if filtered_data:
-        #         save_excel(filtered_data, file_name='result_data')
+        #     except Exception as ex:
+        #         print(f"[WARNING] Froza клиент '{client_name}' ошибка: {ex}")
+        #         continue
+
+        # ------------------- Прочие прайсы -------------------
+        price_files = glob.glob(os.path.join('prices', '*.xls*')) + glob.glob(os.path.join('prices', '*.csv'))
+
+        # Обработка файлов prices
+        for file_path_price in price_files:
+            base_name = normalize(os.path.basename(file_path_price))
+
+            try:
+                article_col, price_col, quantity_col, name_col = file_structures.get(base_name,
+                                                                                     (None, None, None, None))
+
+                data = load_prices_from_file(
+                    file_path_price,
+                    article_col,
+                    price_col,
+                    quantity_col,
+                    name_col
+                )
+            except Exception as ex:
+                print(f"[WARNING] Прайс '{file_path_price}' пропущен из-за ошибки: {ex}")
+                continue
+
+            data_dict = {item['Артикул']: item for item in data}
+
+            company_name = company_names.get(base_name)
+            company_articles_data = articles_dict.get(company_name, [])
+
+            company_articles = [
+                article for article, _ in company_articles_data
+            ]
+
+            found_count = 0
+
+            for article in company_articles:
+                if article in data_dict:
+                    item = data_dict[article]
+
+                    found_data[(article, company_name)] = {
+                        'price': item.get('Цена'),
+                        'quantity': item.get('Количество'),
+                        'name_manufacturer': item.get('Наименование производителя')
+                    }
+
+                    found_count += 1
+
+            print(f'✅ Найдено {found_count} артикулов для {company_name}')
 
         # ------------------- ОБНОВЛЯЕМ ИСХОДНЫЙ EXCEL -------------------
-
         # добавляем колонки если их нет
-        # if 'Цена' not in df.columns:
-        #     df['Цена'] = ''
-        # if 'Количество' not in df.columns:
-        #     df['Количество'] = ''
-        # if 'Наименование производителя' not in df.columns:
-        #     df['Наименование производителя'] = ''
-        #
-        # for idx, row in df.iterrows():
-        #     article = str(row[df.columns[5]]).strip()
-        #
-        #     if article in found_data:
-        #         df.at[idx, 'Цена'] = found_data[article]['price']
-        #         df.at[idx, 'Количество'] = found_data[article]['quantity']
-        #         df.at[idx, 'Наименование производителя'] = found_data[article]['manufacturer_name']
-        #
-        # # Сохраняем данные в исходный файл
-        # df.to_excel(file_path, index=False)
-        #
-        # # ------------------- ДОБАВЛЯЕМ ЦЕНЫ ПОКРАСКИ -------------------
+        if 'Цена' not in df.columns:
+            df['Цена'] = ''
+        if 'Количество' not in df.columns:
+            df['Количество'] = ''
+        if 'Наименование производителя' not in df.columns:
+            df['Наименование производителя'] = ''
+
+        for idx, row in df.iterrows():
+            article = str(row[df.columns[5]]).strip()
+            manufacturer = str(row[df.columns[2]]).strip()
+
+            key = (article, manufacturer)
+
+            if key in found_data:
+                df.at[idx, 'Цена'] = found_data[key]['price']
+                df.at[idx, 'Количество'] = found_data[key]['quantity']
+                df.at[idx, 'Наименование производителя'] = found_data[key]['name_manufacturer']
+
+        # Сохраняем данные в исходный файл
+        df.to_excel(file_path, index=False)
+
+        # ------------------- ДОБАВЛЯЕМ ЦЕНЫ ПОКРАСКИ -------------------
         # process_paint_prices(file_path)  # применяем покрасочные цены к файлу
 
     except Exception as ex:
