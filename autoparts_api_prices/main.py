@@ -102,7 +102,7 @@ def main():
                 )
 
                 # Получаем данные
-                abcp_data = abcp_client.get_data(articles, client_name, interval=3.0)
+                abcp_data = abcp_client.get_data(articles, client_name, interval=1.0)
 
                 # Обновляем найденные данные
                 for item in abcp_data:
