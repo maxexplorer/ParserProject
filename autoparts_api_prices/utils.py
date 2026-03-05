@@ -15,9 +15,20 @@ import glob
 from datetime import datetime, timedelta
 import unicodedata
 
-from pandas import DataFrame, ExcelWriter, read_excel, read_csv, concat
+from pandas import (
+    DataFrame,
+    ExcelWriter,
+    read_excel,
+    read_csv,
+    concat,
+    isna
+)
 
-from config import sheet_index_by_filename, excel_cols, paint_price
+from config import (
+    sheet_index_by_filename,
+    excel_cols,
+    paint_price
+)
 
 
 # ---------------------------------------------------------------------
@@ -242,9 +253,13 @@ def process_paint_prices(file_path: str):
 
             # безопасное приведение цены и количества
             try:
-                price_val = float(str(r[price_col]).replace(',', '.'))
-                quantity_val = int(str(r[quantity_col]))
+                price_val = safe_float(r[price_col])
+                quantity_val = safe_int(r[quantity_col])
             except (ValueError, TypeError):
+                continue
+
+            # пропускаем, если цена или количество nan или 0
+            if isna(price_val) or isna(quantity_val) or price_val == 0 or quantity_val == 0:
                 continue
 
             candidates.append((price_val, quantity_val))
