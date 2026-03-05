@@ -130,7 +130,7 @@ def main():
                     headers=headers
                 )
 
-                adeopro_data = adeopro_client.get_data(articles, client_name, interval=1.5)
+                adeopro_data = adeopro_client.get_data(articles, client_name, interval=1.0)
 
                 for item in adeopro_data:
                     article = item['Артикул']
