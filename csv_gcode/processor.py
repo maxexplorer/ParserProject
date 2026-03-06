@@ -68,6 +68,7 @@ def process_csv_file(file_path: str, output_folder: str):
                 csv_command = row[col_idx].strip()
                 try:
                     y_value = float(row[col_idx + 1])
+                    #TODO y_value - prev_value
                 except ValueError:
                     print(f'[WARN] {file_name} — строка {row_num}, столбец {col_idx + 1}: некорректное значение Y')
                     y_value = 0.0

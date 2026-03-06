@@ -1,6 +1,5 @@
 def dimple(y: float) -> str:
     return f"""G90
-G0 Y{y} 
 G00 X0 Y{y}
 G91
 G00 X-26.5 Y0
@@ -19,7 +18,6 @@ G00 X140.978 Y0
 
 def end_truss_start(y: float) -> str:
     return f"""G90
-G0 Y{y}
 G00 X0 Y{y}
 G91
 G00 X-190.537 Y18.168
@@ -56,7 +54,6 @@ G00 X192.345 Y-18.101
 
 def end_truss_finish(y: float) -> str:
     return f"""G90
-G0 Y{y}
 G00 X0 Y{y}
 G91
 G00 X-151.884 Y-18.089
@@ -93,7 +90,6 @@ G00 X203.6 Y22.274
 
 def lip_notch(y: float) -> str:
     return f"""G90
-G0 Y{y}
 G00 X0 Y{y}
 G91
 G00 X-189.64 Y-27.724
@@ -130,7 +126,6 @@ G00 Y-0.769
 
 def web_notch(y: float) -> str:
     return f"""G90
-G0 Y{y}
 G00 X0 Y{y}
 G91
 G00 X-48.106 Y-25.23
@@ -167,7 +162,6 @@ G00 X51.907 Y0
 
 def service(y: float) -> str:
     return f"""G90
-G0 Y{y}
 G00 X0 Y{y}
 G91
 G00 X-82.5 Y0
@@ -181,20 +175,17 @@ G00 Y0
 
 def cut(length) -> str:
     return f"""G90
-G0 Y{length}
 G00 X0 Y{length}
 G91
 G00 X-201.9 Y0.0
 M3
 G01 X204.0
 M5
-%
 """
 
 
 def cut_length(length: float) -> str:
     return f"""G90
-G0 Y{length + 4}
 G00 X0 Y{length + 4}
 G91
 G00 X-201.9 Y0.0
