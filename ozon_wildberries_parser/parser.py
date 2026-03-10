@@ -67,13 +67,6 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list | None:
             time.sleep(3)
         except Exception as ex:
             print(f'input_text: {ex}')
-        #
-        # try:
-        #     search_product = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Поиск"]')
-        #     search_product.click()
-        #     time.sleep(3)
-        # except Exception as ex:
-        #     print(f'search_product: {ex}')
 
         for i in range(pages):
             # driver.execute_script("window.scrollTo(0, 4000);")
@@ -142,7 +135,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
                 'routeb': '1769681352.008.1971.963898|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.d92e27be1b414391b4f6a5650c45f483.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0NS4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzI3OTg1MDZ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzcyMTkzNzA2fDE=.MEYCIQClPZmmskRLho33wiJ4hE0+O+tlPV+EmlOV/HL55Px1BQIhAL5ZTtTXOw19QyVOM3p6DRsLRxyZVQVFw0XVARyeniUc',
+                'x_wbaas_token': '1.1000.605429696a91424384758df1a672a2b2.MTV8MTA5LjExMC44OC41NHxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ1LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc3NDMzNTMzMXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzM3MzA1MzF8MQ==.MEUCIQDuq1WB49IaAomLhIx+NlmTPawDfoHfhbFXZE6Eku+FfQIgPKMXCGRK+qhWECv10tyBSK/WGEufv2VViW7B14aiE8w=',
             }
 
             try:
