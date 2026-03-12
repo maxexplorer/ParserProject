@@ -6,6 +6,7 @@ import glob
 from typing import List, Tuple
 
 from data import gcode_header
+from macros import command_map
 from command_processor import CommandProcessor
 
 
@@ -31,27 +32,29 @@ def process_all_csv(folder: str, output_folder: str) -> None:
 
 def extract_commands(row: List[str]) -> List[Tuple[str, float]]:
     """
-    Извлекает команды и координаты Y из строки CSV.
+    Извлекает команды и координаты Y из строки CSV,
+    оставляя только команды, присутствующие в command_map.
 
     Args:
         row (List[str]): Одна строка CSV файла.
 
     Returns:
-        List[Tuple[str, float]]: Список кортежей (command, y).
+        List[Tuple[str, float]]: Список кортежей (command, y), фильтрованных по command_map.
     """
     commands: List[Tuple[str, float]] = []
-    col_idx = 12  # начиная с 13-го столбца
+    col_idx = 12
 
     while col_idx < len(row) - 1:
-        command = row[col_idx].strip()
+        command = row[col_idx].strip().upper()
         try:
             y = float(row[col_idx + 1])
         except ValueError:
-            # некорректное значение Y, пропускаем
             col_idx += 2
             continue
 
-        commands.append((command, y))
+        if command in command_map:
+            commands.append((command, y))
+
         col_idx += 2
 
     return commands
@@ -77,7 +80,7 @@ def calculate_deltas(commands: List[Tuple[str, float]]) -> Tuple[List[Tuple[str,
         else:
             delta = y - prev
 
-        result.append((command, delta))
+        result.append((command, round(delta, 2)))
         prev = y
 
     last_y: float = prev if prev is not None else 0.0

@@ -1,7 +1,6 @@
 # command_processor.py
 
-from typing import List, Tuple
-from macros import macros
+from macros import macros, command_map
 
 
 class CommandProcessor:
@@ -15,11 +14,11 @@ class CommandProcessor:
     """
 
     def __init__(self) -> None:
-        self.blocks: List[str] = []
-        self.commands_in_row: List[str] = []
+        self.blocks: list[str] = []
+        self.commands_in_row: list[str] = []
         self.last_y: float | None = None
 
-    def process(self, commands_with_delta: List[Tuple[str, float]]) -> None:
+    def process(self, commands_with_delta: list[tuple[str, float]]) -> None:
         """
         Обрабатывает список команд с дельтами Y.
         END_TRUSS в начале строки вставляет START, обычные команды вставляются через macros.
@@ -30,20 +29,27 @@ class CommandProcessor:
         for i, (command, delta_y) in enumerate(commands_with_delta):
             cmd = command.strip().upper()
 
-            # игнорируем неизвестные команды, кроме END_TRUSS
-            if cmd not in macros and cmd != 'END_TRUSS':
+            if cmd not in command_map:
                 continue
 
-            # END_TRUSS в начале строки
-            if cmd == 'END_TRUSS' and i == 0:
-                self.blocks.extend(macros['END_TRUSS_START'](delta_y).splitlines())
-                self.commands_in_row.append(cmd)
-                continue
+            macro_key = command_map[cmd]
+
+            # команда имеет tuple (start_macro, finish_macro)
+            if isinstance(macro_key, tuple):
+                start_macro, finish_macro = macro_key
+
+                # первая команда — START
+                if i == 0:
+                    self.blocks.extend(macros[start_macro](delta_y).splitlines())
+                # последняя команда — FINISH
+                elif i == len(commands_with_delta) - 1:
+                    self.blocks.extend(macros[finish_macro](delta_y).splitlines())
 
             # обычная команда
-            self.blocks.extend(macros[cmd](delta_y).splitlines())
+            else:
+                self.blocks.extend(macros[macro_key](delta_y).splitlines())
+
             self.commands_in_row.append(cmd)
-            self.last_y = delta_y
 
     def finalize(self, length: float) -> None:
         """
@@ -58,7 +64,6 @@ class CommandProcessor:
 
         if last_command == 'END_TRUSS':
             # END_TRUSS в конце строки
-            self.blocks.extend(macros['END_TRUSS_FINISH'](remaining_length).splitlines())
-            self.blocks.extend(macros['CUT_LENGTH'](length).splitlines())
+            self.blocks.extend(macros['CUT_LENGTH']().splitlines())
         else:
             self.blocks.extend(macros['CUT'](remaining_length).splitlines())

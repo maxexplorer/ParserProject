@@ -186,9 +186,9 @@ M5
 """
 
 
-def cut_length(length: float) -> str:
+def cut_length() -> str:
     return f"""G90
-G00 X0 Y{length + 4}
+G00 X0 Y4
 G91
 G00 X-201.9 Y0.0
 M3
