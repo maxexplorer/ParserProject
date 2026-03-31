@@ -26,7 +26,7 @@ def init_undetected_chromedriver():
     """
     Инициализирует undetected_chromedriver, возвращает драйвер
     """
-    driver = Chrome(version_main=145)
+    driver = Chrome(version_main=146)
     driver.maximize_window()
     driver.implicitly_wait(15)
 
@@ -135,7 +135,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
                 '_cp': '1',
                 'routeb': '1769681352.008.1971.963898|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.605429696a91424384758df1a672a2b2.MTV8MTA5LjExMC44OC41NHxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ1LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc3NDMzNTMzMXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzM3MzA1MzF8MQ==.MEUCIQDuq1WB49IaAomLhIx+NlmTPawDfoHfhbFXZE6Eku+FfQIgPKMXCGRK+qhWECv10tyBSK/WGEufv2VViW7B14aiE8w=',
+                'isAuthAccessToken': 'true',
+                'x_wbaas_token': '1.1000.f3078654a023438386b7696a176cb1d8.MTV8MTA5LjExMC44OC41NHxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ2LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc3NTU1MjQzNnxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MHwzfDE3NzQ5NDc2MzZ8MQ==.MEUCIQDnYs8zd4fxIzv1a5EfjHEQDPZ/Um1GKp8LKzU17LBn7wIgH+y+XuAEcKD1HiKG0V6BRezFVYfADxitNq8utrgYG1M=',
             }
 
             try:
@@ -347,7 +348,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
         'x-spa-version': '13.16.3',
     }
