@@ -53,7 +53,6 @@ def get_json(session: Session, headers: dict, build_id: str, page: int) -> dict 
         print('Не удалось получить buildId')
         return None
 
-    # url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
     url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/buy/properties-for-sale.html.json'
 
     params = {
