@@ -28,7 +28,7 @@ headers: dict = {
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
     'x-nextjs-data': '1',
 }
 
@@ -48,19 +48,20 @@ def get_build_id(session: Session, headers: dict) -> str | None:
 # Работа с API PropertyFinder
 # =============================================================================
 
-def get_json(session: Session, headers: dict, page: int) -> dict | None:
-    build_id = get_build_id(session, headers)
+def get_json(session: Session, headers: dict, build_id: str, page: int) -> dict | None:
     if not build_id:
         print('Не удалось получить buildId')
         return None
 
-    url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
+    # url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/search.json'
+    url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/buy/properties-for-sale.html.json'
 
     params = {
-        'c': '1',
-        'fu': '0',
-        'ob': 'nd',
         'page': page,
+        'categorySlug': 'buy',
+        'propertyTypeSlug': 'properties',
+        'saleType': 'for-sale',
+        'pattern': '/categorySlug/propertyTypeSlug-saleType.html',
     }
 
     response = session.get(url=url, headers=headers, params=params, timeout=30)
@@ -101,12 +102,15 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
     # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
+        build_id = get_build_id(session, headers)
+
         for page in range(1, pages + 1):
             try:
                 time.sleep(1)
                 json_data: dict | None = get_json(
                     session=session,
                     headers=headers,
+                    build_id=build_id,
                     page=page
                 )
 
