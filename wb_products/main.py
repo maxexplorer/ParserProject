@@ -272,6 +272,8 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
         for category_name in category_list:
 
             processed_ids = set()
+            brand_none_list = []
+            duplicates_count = 0
 
             # Параметры запроса для первой страницы
             first_params = {
@@ -356,10 +358,13 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     count_products = len(data)
 
                     brand = item.get('brand')
-                    if brand is None or brand == '':
-                        continue
 
                     product_id = item.get('id')
+
+                    if brand is None or brand == '':
+                        brand_none_list.append(product_id)
+                        continue
+
                     name = item.get('name')
 
                     size = item.get('sizes', [])[0].get('origName')
@@ -367,6 +372,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
 
                     if product_id in processed_ids:
+                        duplicates_count += 1
                         continue
 
                     values = get_product_card(product_id=product_id, session=session)
@@ -389,6 +395,8 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     print(f'Page: {page} Products {i}/{count_products}')
 
                 print(f'Processed page: {page}/{pages}')
+                print(f'Duplicates: {duplicates_count}')
+                print(f'No brands {len(brand_none_list)}')
 
             # Агрегируем данные
             # result = aggregate_products(result_list=result_list, group_fields=keys,
