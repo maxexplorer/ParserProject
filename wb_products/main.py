@@ -262,7 +262,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     )
 
                     if response.status_code != 200:
-                        print(f' category_name: {category_name} page: {page} статус ответа: {response.status_code}')
+                        print(f' category_name: {category_name}: статус ответа {response.status_code}')
+                        if response.status_code == 498:
+                            return
                         continue
 
                     json_data: dict = response.json()
