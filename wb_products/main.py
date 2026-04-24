@@ -124,86 +124,6 @@ def get_product_card(product_id: int, session: Session) -> dict | None:
     return values
 
 
-def aggregate_products(result_list, group_fields=None, category_name=None):
-    """
-    Агрегирует данные по бренду и дополнительным полям (например, Размер, Объем скороварки).
-    Цена агрегируется (min, max, median), остальные поля подтягиваются без агрегации.
-    """
-    df = pd.DataFrame(result_list)
-    if df.empty:
-        return pd.DataFrame()  # если нет данных
-
-    # Базовые агрегаты для цен
-    agg_dict = {
-        'Min цена': ('Цена', 'min'),
-        'Max цена': ('Цена', 'max'),
-        'Медианная цена': ('Цена', median_mean)
-    }
-
-    # Допустимые поля для группировки
-    allowed_group_fields = [
-        'Модель',
-        'Размер',
-        'Объем накопителя',
-        'Тип накопителя',
-        'Емкость аккумулятора',
-        'Мощность устройства',
-        'Модель транспортного средства',
-        'Модель спортивная',
-        'Модель тренажера',
-        'Объем скороварки'
-    ]
-
-    # Оставляем только реально существующие и разрешённые для группировки поля
-    if group_fields is None:
-        group_fields = []
-    group_fields = [col for col in group_fields if col in df.columns and col in allowed_group_fields]
-
-    # Колонки для группировки
-    group_cols = ['Бренд'] + group_fields
-
-    # Агрегируем по цене
-    result = df.groupby(group_cols).agg(**agg_dict).reset_index()
-
-    # Добавляем колонку "Товар"
-    result['Товар'] = category_name if category_name else ''
-
-    # Желаемый порядок колонок
-    desired_order = [
-        'Товар', 'Max цена', 'Min цена', 'Медианная цена', 'Бренд', 'Модель',
-        'Объем накопителя', 'Тип накопителя', 'Емкость аккумулятора',
-        'Мощность устройства', 'Модель транспортного средства',
-        'Модель спортивная', 'Модель тренажера',
-        'Размер', 'Объем скороварки'
-    ]
-
-    for col in desired_order:
-        if col not in result.columns:
-            result[col] = ''
-
-    result = result[desired_order]
-
-    return result
-
-
-def median_mean(x, lower=0.1, upper=0.1):
-    """
-    Вычисляет среднее после усечения нижних и верхних процентов и округляет результат.
-
-    :param x: Series с ценами
-    :param lower: Процент для отсечения снизу
-    :param upper: Процент для отсечения сверху
-    :return: Округленное среднее значение
-    """
-    sorted_x = x.sort_values()
-    n = len(sorted_x)
-    lower_idx = int(n * lower)
-    upper_idx = int(n * (1 - upper))
-    truncated = sorted_x.iloc[lower_idx:upper_idx]
-    value = truncated.mean() if len(truncated) > 0 else x.mean()
-    return round(value)
-
-
 def save_excel(data: list[dict], category_name: str) -> None:
     """
     Сохраняет список данных в Excel-файл, добавляя новые строки к существующему листу.
@@ -401,10 +321,6 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 print(f'Processed page: {page}/{pages}')
                 print(f'Duplicates: {duplicates_count}')
                 print(f'No brands {len(brand_none_list)}')
-
-            # Агрегируем данные
-            # result = aggregate_products(result_list=result_list, group_fields=keys,
-            #                             category_name=category_name)
 
             # Сохраняем в Excel
             save_excel(result_list, category_name=category_name)
