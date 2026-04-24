@@ -77,7 +77,7 @@ def get_basket_number(product_id: int) -> str | None:
     return None
 
 
-def get_product_card(product_id: int, session: Session, keys: list) -> dict | None:
+def get_product_card(product_id: int, session: Session) -> dict | None:
     """
     Получает значение опции "Объем скороварки" для конкретного товара через API корзины.
 
@@ -91,8 +91,8 @@ def get_product_card(product_id: int, session: Session, keys: list) -> dict | No
     headers = {
         'sec-ch-ua-platform': '"Windows"',
         'Referer': f'https://www.wildberries.ru/catalog/{product_id}/detail.aspx',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-        'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
         'sec-ch-ua-mobile': '?0',
     }
 
@@ -101,6 +101,7 @@ def get_product_card(product_id: int, session: Session, keys: list) -> dict | No
             f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{product_id // 1000}/{product_id}/info/ru/card.json',
             headers=headers
         )
+
         if response.status_code != 200:
             print(f'get_product_card: {product_id} status_code: {response.status_code}')
             return None
@@ -113,8 +114,9 @@ def get_product_card(product_id: int, session: Session, keys: list) -> dict | No
         return None
 
     values = {
-        key: next((opt.get('value') for opt in options if opt.get('name') == key), 'нет данных')
-        for key in keys
+        opt.get('name'): opt.get('value')
+        for opt in options
+        if opt.get('name')
     }
 
     return values
@@ -232,7 +234,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
     """
     Собирает данные о товарах по категориям и сохраняет min/max/median цены в Excel.
 
-    :param category_dict: Словарь категорий и их URL
+    :param category_list: Список категорий
     :param batch_size: Количество товаров на страницу
     """
 
@@ -263,10 +265,14 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
         '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
         'routeb': '1776081038.566.2243.203049|fc3b37d75a18d923fd0e9c7589719997',
         'x_wbaas_token': '1.1000.73c8daf45d2242b7983afd5c1cd304b6.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Ny4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Nzc5NjI2NDF8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc3MzU3ODQxfDE=.MEUCIAZsPQy8q0IwvTBBjDDsWqTbGt7vXxKo13tympPabacDAiEAofCqDQ7Klz2YEC7FkNiQ10Jvva7FAKwzmkmry0FN+54=',
+        '_cp': '1',
     }
 
     with Session() as session:
         for category_name in category_list:
+
+            processed_ids = set()
+
             # Параметры запроса для первой страницы
             first_params = {
                 'appType': '1',
@@ -285,9 +291,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 # time.sleep(1)
                 response = session.get(
                     'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
-                    params=params,
-                    cookies=cookies,
                     headers=headers,
+                    cookies=cookies,
+                    params=first_params,
                     timeout=(3, 5)
                 )
 
@@ -323,8 +329,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     # time.sleep(1)
                     response = session.get(
                         'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
-                        params=params,
                         headers=headers,
+                        cookies=cookies,
+                        params=params,
                         timeout=(3, 5)
                     )
 
@@ -344,7 +351,10 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     continue
 
                 # Обрабатываем товары на странице
-                for item in data:
+                for i, item in enumerate(data, 1):
+
+                    count_products = len(data)
+
                     brand = item.get('brand')
                     if brand is None or brand == '':
                         continue
@@ -356,15 +366,15 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
 
                     price = item.get('sizes', [])[0].get('price', {}).get('product') // 100
 
-                    keys = ['Модель тренажера']
-
-                    values = get_product_card(product_id=product_id, session=session, keys=keys)
-
-                    if len(values) == 1 and values[keys[0]] == 'нет данных':
+                    if product_id in processed_ids:
                         continue
+
+                    values = get_product_card(product_id=product_id, session=session)
 
                     if values is None or values == {}:
                         continue
+
+                    processed_ids.add(product_id)
 
                     result_list.append(
                         {
@@ -376,7 +386,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                         }
                     )
 
-                print(f'Обработано страниц: {page}/{pages}')
+                    print(f'Page: {page} Products {i}/{count_products}')
+
+                print(f'Processed page: {page}/{pages}')
 
             # Агрегируем данные
             # result = aggregate_products(result_list=result_list, group_fields=keys,
