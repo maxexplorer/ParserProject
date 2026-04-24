@@ -97,6 +97,8 @@ def get_product_card(product_id: int, session: Session) -> dict | None:
     }
 
     try:
+        time.sleep(0.5)
+
         response = session.get(
             f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{product_id // 1000}/{product_id}/info/ru/card.json',
             headers=headers
@@ -290,7 +292,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             }
 
             try:
-                # time.sleep(1)
+                time.sleep(0.5)
                 response = session.get(
                     'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                     headers=headers,
@@ -301,6 +303,8 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
 
                 if response.status_code != 200:
                     print(f' category_name: {category_name}: статус ответа {response.status_code}')
+                    if response.status_code == 498:
+                        return
                     continue
 
                 json_data: dict = response.json()
@@ -328,7 +332,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 params['page'] = page
 
                 try:
-                    # time.sleep(1)
+                    time.sleep(0.5)
                     response = session.get(
                         'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                         headers=headers,
