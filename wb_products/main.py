@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 import math
+import random
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter, read_excel
@@ -221,11 +222,15 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     timeout=(3, 5)
                 )
 
-                if response.status_code != 200:
-                    print(f' category_name: {category_name}: статус ответа {response.status_code}')
-                    if response.status_code == 498:
-                        return
+                if response.status_code == 498:
+                    print('498 → пауза 15 сек (total)')
+                    time.sleep(10 + random.uniform(5, 10))
                     continue
+
+                if response.status_code != 200:
+                    print(f'category_name: {category_name}: статус ответа {response.status_code}')
+                    continue
+
 
                 json_data: dict = response.json()
                 total = json_data.get('total', 0)
@@ -261,10 +266,13 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                         timeout=(3, 5)
                     )
 
+                    if response.status_code == 498:
+                        print(f'498 → пауза 15 сек (page {page})')
+                        time.sleep(10 + random.uniform(5, 10))
+                        continue
+
                     if response.status_code != 200:
-                        print(f' category_name: {category_name}: статус ответа {response.status_code}')
-                        if response.status_code == 498:
-                            return
+                        print(f'category_name: {category_name} page: {page} статус ответа {response.status_code}')
                         continue
 
                     json_data: dict = response.json()
