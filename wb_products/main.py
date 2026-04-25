@@ -224,7 +224,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 )
 
                 if response.status_code == 498:
-                    print(f'{category_name}: 498 → пауза 15 сек (total)')
+                    print(f'{category_name}: 498 → пауза 1500 сек (total)')
                     time.sleep(1500 + random.uniform(10, 20))
                     continue
 
@@ -266,7 +266,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     )
 
                     if response.status_code == 498:
-                        print(f'{category_name} (page {page}) 498 → пауза 15 сек')
+                        print(f'{category_name} (page {page}) 498 → пауза 1500 сек')
                         time.sleep(1500 + random.uniform(10, 20))
                         continue
 
