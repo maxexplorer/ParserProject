@@ -335,8 +335,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     save_excel(result_list, category_name=category_name)
                     result_list.clear()
 
-            # Сохраняем в Excel
-            save_excel(result_list, category_name=category_name)
+            if result_list:
+                # Сохраняем в Excel
+                save_excel(result_list, category_name=category_name)
 
             print(f"{category_name}: данные сохранены, {len(result_list)} записей")
 
