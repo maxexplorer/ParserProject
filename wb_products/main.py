@@ -4,7 +4,6 @@ from datetime import datetime
 import math
 
 from requests import Session
-import pandas as pd
 from pandas import DataFrame, ExcelWriter, read_excel
 
 from data.data import category_list
@@ -97,7 +96,7 @@ def get_product_card(product_id: int, session: Session) -> dict | None:
     }
 
     try:
-        time.sleep(0.5)
+        # time.sleep(1)
 
         response = session.get(
             f'https://basket-{basket}.wbbasket.ru/vol{short_id}/part{product_id // 1000}/{product_id}/info/ru/card.json',
@@ -149,7 +148,7 @@ def save_excel(data: list[dict], category_name: str) -> None:
         new_df.to_excel(writer, startrow=num_existing_rows + 1, header=(num_existing_rows == 0),
                         sheet_name='Data', index=False)
 
-    print(f'Сохранено {len(data)} записей в {file_path}')
+    print(f'Saved {len(data)} entries to {file_path}')
 
 
 def get_products_data(category_list: list, batch_size: int = 100) -> None:
@@ -190,6 +189,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
         '_cp': '1',
     }
 
+
     with Session() as session:
         for category_name in category_list:
 
@@ -212,7 +212,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             }
 
             try:
-                time.sleep(0.5)
+                # time.sleep(1)
                 response = session.get(
                     'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                     headers=headers,
@@ -252,7 +252,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 params['page'] = page
 
                 try:
-                    time.sleep(0.5)
+                    # time.sleep(1)
                     response = session.get(
                         'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                         headers=headers,
@@ -323,6 +323,9 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 print(f'Processed page: {page}/{pages}')
                 print(f'Duplicates: {duplicates_count}')
                 print(f'No brands {len(brand_none_list)}')
+
+                if page % 5 == 0:
+                    save_excel(result_list, category_name=category_name)
 
             # Сохраняем в Excel
             save_excel(result_list, category_name=category_name)
