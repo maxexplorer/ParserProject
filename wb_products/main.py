@@ -190,14 +190,13 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
         '_cp': '1',
     }
 
-
     with Session() as session:
         for category_name in category_list:
-
             processed_ids = set()
-            brand_none_list = []
+            brand_none_count = 0
             duplicates_count = 0
             result_list = []
+            pause = 600
 
             # Параметры запроса для первой страницы
             first_params = {
@@ -224,14 +223,13 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 )
 
                 if response.status_code == 498:
-                    print(f'{category_name}: 498 → пауза 1500 сек (total)')
-                    time.sleep(1500 + random.uniform(10, 20))
+                    print(f'{category_name}: 498 → пауза {pause} сек (total)')
+                    time.sleep(pause + random.uniform(10, 20))
                     continue
 
                 if response.status_code != 200:
                     print(f'category_name: {category_name}: статус ответа {response.status_code}')
                     continue
-
 
                 json_data: dict = response.json()
                 total = json_data.get('total', 0)
@@ -242,7 +240,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                 pages = math.ceil(total / batch_size)
 
                 if pages > 100:
-                    pages = 100
+                    pages = 60
 
                 print(f"{category_name}: всего {total} товаров, {pages} страниц")
 
@@ -266,8 +264,8 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     )
 
                     if response.status_code == 498:
-                        print(f'{category_name} (page {page}) 498 → пауза 1500 сек')
-                        time.sleep(1500 + random.uniform(10, 20))
+                        print(f'{category_name} (page {page}) 498 → пауза {pause} сек')
+                        time.sleep(pause + random.uniform(10, 20))
                         continue
 
                     if response.status_code != 200:
@@ -295,7 +293,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
                     product_id = item.get('id')
 
                     if brand is None or brand == '':
-                        brand_none_list.append(product_id)
+                        brand_none_count += 1
                         continue
 
                     name = item.get('name')
@@ -329,7 +327,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
 
                 print(f'Processed page: {page}/{pages}')
                 print(f'Duplicates: {duplicates_count}')
-                print(f'No brands {len(brand_none_list)}')
+                print(f'No brands {brand_none_count}')
 
                 if page % 5 == 0:
                     save_excel(result_list, category_name=category_name)
@@ -338,8 +336,6 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             if result_list:
                 # Сохраняем в Excel
                 save_excel(result_list, category_name=category_name)
-
-            print(f"{category_name}: данные сохранены, {len(result_list)} записей")
 
 
 def main() -> None:
