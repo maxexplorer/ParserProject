@@ -197,6 +197,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             processed_ids = set()
             brand_none_list = []
             duplicates_count = 0
+            result_list = []
 
             # Параметры запроса для первой страницы
             first_params = {
@@ -248,8 +249,6 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             except Exception as ex:
                 print(f"{category_name}: ошибка получения total: {ex}")
                 continue
-
-            result_list = []
 
             # Проходим по всем страницам
             for page in range(1, pages + 1):
@@ -334,6 +333,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
 
                 if page % 5 == 0:
                     save_excel(result_list, category_name=category_name)
+                    result_list.clear()
 
             # Сохраняем в Excel
             save_excel(result_list, category_name=category_name)
