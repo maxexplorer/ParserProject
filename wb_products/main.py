@@ -196,7 +196,7 @@ def get_products_data(category_list: list, batch_size: int = 100) -> None:
             brand_none_count = 0
             duplicates_count = 0
             result_list = []
-            pause = 600
+            pause = 300
 
             # Параметры запроса для первой страницы
             first_params = {
