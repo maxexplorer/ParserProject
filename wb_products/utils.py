@@ -1,34 +1,42 @@
 import os
-from pandas import read_excel
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 
-def merge_excel_files(input_dir: str = 'results', output_file: str = 'result_data.xlsx') -> None:
+def merge_excel_files(input_dir='results', output_file='result_data.xlsx'):
 
-    print(f'Старт объединения файлов из: {input_dir}')
-
-    wb = Workbook(write_only=True)
-    ws = wb.create_sheet()
-
-    all_columns = set()
-    header_written = False
+    print(f'Старт: {input_dir}')
 
     files = [f for f in os.listdir(input_dir) if f.endswith('.xlsx')]
 
-    # 1. сначала собираем все колонки (без загрузки всех df в память)
+    all_columns = set()
+
+    # ----------------------
+    # 1. собираем колонки
+    # ----------------------
     for file in files:
-        file_path = os.path.join(input_dir, file)
+        path = os.path.join(input_dir, file)
 
         try:
-            df = read_excel(file_path, header=1, sheet_name='Data', nrows=1)
+            wb = load_workbook(path, read_only=True, data_only=True)
 
-            df.columns = df.columns.str.strip()
-            df = df.loc[:, ~df.columns.str.contains('^Unnamed', case=False)]
+            if 'Data' not in wb.sheetnames:
+                continue
 
-            all_columns.update(df.columns)
+            ws = wb['Data']
 
-        except Exception as ex:
-            print(f'Ошибка чтения (columns) {file}: {ex}')
+            headers = next(ws.iter_rows(min_row=2, max_row=2, values_only=True), None)
+
+            if not headers:
+                continue
+
+            headers = [str(h).strip() if h else None for h in headers]
+
+            all_columns.update(
+                [h for h in headers if h and not str(h).startswith('Unnamed')]
+            )
+
+        except Exception as e:
+            print(f'Ошибка колонок {file}: {e}')
 
     base_columns = ['Название', 'Бренд', 'Цена', 'Размер']
     other_columns = sorted(col for col in all_columns if col not in base_columns)
@@ -36,51 +44,61 @@ def merge_excel_files(input_dir: str = 'results', output_file: str = 'result_dat
 
     print(f'Всего колонок: {len(final_columns)}')
 
-    # 2. пишем header
-    ws.append(final_columns)
-    header_written = True
+    # ----------------------
+    # 2. output
+    # ----------------------
+    wb_out = Workbook(write_only=True)
+    ws_out = wb_out.create_sheet()
+    ws_out.append(final_columns)
+
+    col_index = {col: i for i, col in enumerate(final_columns)}
 
     total_rows = 0
 
-    # 3. читаем файлы по одному и сразу пишем
+    # ----------------------
+    # 3. данные
+    # ----------------------
     for file in files:
-        file_path = os.path.join(input_dir, file)
+        path = os.path.join(input_dir, file)
 
         try:
-            print(f'Читаю файл: {file}')
+            print(f'Читаю: {file}')
 
-            df = read_excel(file_path, header=1, sheet_name='Data')
+            wb = load_workbook(path, read_only=True, data_only=True)
 
-            if df.empty:
+            if 'Data' not in wb.sheetnames:
                 continue
 
-            df.columns = df.columns.str.strip()
-            df = df.loc[:, ~df.columns.str.contains('^Unnamed', case=False)]
+            ws = wb['Data']
 
-            # нормализация под общий набор колонок
-            df = df.reindex(columns=final_columns)
+            headers = next(ws.iter_rows(min_row=2, max_row=2, values_only=True), None)
 
-            # запись построчно
-            for row in df.itertuples(index=False, name=None):
-                ws.append(row)
+            if not headers:
+                continue
 
-            total_rows += len(df)
+            headers = [str(h).strip() if h else None for h in headers]
+            header_map = {h: i for i, h in enumerate(headers) if h}
 
-            print(f'Добавлено строк: {len(df)}')
+            rows = ws.iter_rows(min_row=3, values_only=True)
 
-        except Exception as ex:
-            print(f'Ошибка чтения {file}: {ex}')
+            for row in rows:
+                out = [None] * len(final_columns)
 
-    # 4. сохраняем
-    wb.save(output_file)
+                for h, i in header_map.items():
+                    if h in col_index and i < len(row):
+                        out[col_index[h]] = row[i]
 
-    print(f'Готово. Сохранено в {output_file}')
-    print(f'Всего строк: {total_rows}')
+                ws_out.append(out)
+                total_rows += 1   # 🔥 ВАЖНО
 
+        except Exception as e:
+            print(f'Ошибка {file}: {e}')
 
-def main():
-    merge_excel_files(input_dir='results', output_file='result_data.xlsx')
+    wb_out.save(output_file)
+
+    print(f'Готово: {output_file}')
+    print(f'Строк: {total_rows}')
 
 
 if __name__ == '__main__':
-    main()
+    merge_excel_files()
