@@ -2,142 +2,196 @@ import os
 import glob
 import requests
 import pandas as pd
+from datetime import datetime
 
-from requests.exceptions import RequestException, SSLError
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from bs4 import BeautifulSoup
+from requests.exceptions import RequestException, SSLError, Timeout, ConnectionError
 
+start_time = datetime.now()
 
 # =======================
 # CONFIG
 # =======================
 
-FOLDER: str = "data"
-OUTPUT_FILE: str = "result.xlsx"
-TIMEOUT: int = 5
+FOLDER = "data"
+OUTPUT_FILE = "results/result.xlsx"
+TIMEOUT = 8
+MAX_WORKERS = 20
 
-HEADERS: dict[str, str] = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0 Safari/537.36"
-    )
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
 }
 
 PARKING_PHRASES = [
-    "domain for sale",
-    "buy this domain",
-    "coming soon",
-    "under construction",
-    "domain is parked",
-    "this domain is for sale",
-    "прилинкуйте домен",
-    "домен никуда не направлен"
+    "domain for sale", "buy this domain", "coming soon",
+    "under construction", "domain is parked",
+    "домен продается", "домен на продажу",
+    "премиум-домен", "купить домен"
 ]
+
+BAD_REDIRECTS = ["login", "signin", "auth", "account", "register"]
 
 
 # =======================
 # HELPERS
 # =======================
 
+def is_trash_url(url: str) -> bool:
+    return str(url).strip().lower() in ["", "nan", "none", "-", "null"]
+
+
 def normalize_url(url: str) -> str:
-    if not url.startswith("http"):
-        return "http://" + url
+    url = str(url).strip()
+    if not url.startswith(("http://", "https://")):
+        return "https://" + url
     return url
 
 
-def detect_parking(text: str) -> bool:
-    text = text.lower()
-    return any(p in text for p in PARKING_PHRASES)
+def try_connect(url: str, session: requests.Session):
+    try:
+        return session.get(url, timeout=TIMEOUT, allow_redirects=True)
+    except SSLError:
+        if url.startswith("https://"):
+            try:
+                return session.get(url.replace("https://", "http://"), timeout=TIMEOUT)
+            except:
+                return None
+    except (Timeout, ConnectionError, RequestException):
+        return None
 
 
-def extract_text(html: str) -> str:
-    """
-    Минимальная очистка HTML → текст
-    """
-    html = html.lower()
+def extract_text(html: str):
+    soup = BeautifulSoup(html, "html.parser")
 
-    # грубое удаление шумных блоков
-    for tag in ["script", "style", "noscript"]:
-        html = html.replace(f"<{tag}", " <")
+    title = soup.title.get_text(strip=True) if soup.title else ""
 
-    return html
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside"]):
+        tag.decompose()
+
+    text = " ".join(soup.get_text(" ").split()).lower()
+
+    return text, soup, title.lower()
+
+
+def detect_parking(text: str, title: str) -> bool:
+    for phrase in PARKING_PHRASES:
+        if phrase in text or phrase in title:
+            return True
+    return False
+
+
+def content_score(text: str, soup: BeautifulSoup) -> int:
+    score = 0
+    words = len(text.split())
+
+    # контент
+    if words > 1000:
+        score += 3
+    elif words > 500:
+        score += 2
+    elif words > 100:
+        score += 1
+    elif words < 20:
+        score -= 2
+
+    # структура
+    if soup.find("article"):
+        score += 2
+    if soup.find("main"):
+        score += 2
+    if len(soup.find_all("p")) > 5:
+        score += 1
+    if soup.find("h1"):
+        score += 1
+
+    # ссылки / признаки сайта
+    if len(soup.find_all("a")) > 10:
+        score += 1
+
+    # повторяемость
+    unique_ratio = len(set(text.split())) / max(words, 1)
+    if unique_ratio < 0.3 and words > 100:
+        score -= 5
+
+    return score
 
 
 # =======================
 # CLASSIFICATION
 # =======================
 
-def classify_website(url: str, session: requests.Session) -> str:
+def classify_website(url: str, session: requests.Session) -> tuple[str, str]:
+    if is_trash_url(url):
+        return url, "not_working"
+
     url = normalize_url(url)
 
-    try:
-        r = session.get(url, timeout=TIMEOUT, allow_redirects=True)
+    r = try_connect(url, session)
 
-        # =======================
-        # PROTECTED
-        # =======================
-        if r.status_code == 403:
-            return "protected"
+    if r is None:
+        return url, "not_working"
 
-        if r.status_code in (401, 429):
-            return "protected"
+    status = r.status_code
 
-        if "cloudflare" in r.text.lower() and "captcha" in r.text.lower():
-            return "protected"
+    # PROTECTED
+    if status in (401, 403, 429):
+        return url, "protected"
 
-        # =======================
-        # NOT WORKING
-        # =======================
-        if r.status_code in (404, 410):
-            return "not_working"
+    # редиректы
+    if any(x in r.url.lower() for x in BAD_REDIRECTS):
+        return url, "protected"
 
-        if r.status_code != 200:
-            return "not_working"
+    # NOT WORKING
+    if status >= 400:
+        return url, "not_working"
 
-        html = extract_text(r.text)
+    # парсинг
+    text, soup, title = extract_text(r.text)
+    word_count = len(text.split())
 
-        if detect_parking(html):
-            return "not_working"
+    if len(r.content) < 300 and word_count < 30:
+        return url, "not_working"
 
-        # слишком пустая страница
-        if len(html) < 300:
-            return "not_working"
+    is_parked = detect_parking(text, title)
+    if is_parked:
+        return url, "not_working"
 
-        # =======================
-        # WORKING
-        # =======================
-        return "working"
+    score = content_score(text, soup)
 
-    except SSLError:
-        return "protected"
+    if score >= 4:
+        return url, "working"
 
-    except RequestException:
-        return "not_working"
+    return url, "not_working"
 
 
 # =======================
-# LOAD DATA
+# LOAD
 # =======================
 
-def load_urls_from_excels(folder: str) -> list[str]:
+def load_urls(folder: str):
     files = glob.glob(os.path.join(folder, "*.xls*"))
 
     urls = []
 
     for file in files:
-        df = pd.read_excel(file, sheet_name=0, header=None)
-        urls.extend(df.iloc[:, 0].dropna().tolist())
+        df = pd.read_excel(file, header=None)
+        urls.extend(df.iloc[:, 0].dropna().astype(str).tolist())
 
-    return urls
+    return list(dict.fromkeys(urls))
 
 
 # =======================
 # SAVE
 # =======================
 
-def save_results(results: dict[str, list[str]]):
-    with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
+def save_results(results):
+    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+
+    with pd.ExcelWriter(OUTPUT_FILE) as writer:
         for k, v in results.items():
-            pd.DataFrame({"url": v}).to_excel(writer, sheet_name=k, index=False)
+            if v:
+                pd.DataFrame({"url": v}).to_excel(writer, sheet_name=k, index=False)
 
 
 # =======================
@@ -145,10 +199,7 @@ def save_results(results: dict[str, list[str]]):
 # =======================
 
 def main():
-    print("Loading URLs...")
-    urls = load_urls_from_excels(FOLDER)
-
-    print(f"Total: {len(urls)}")
+    urls = load_urls(FOLDER)
 
     results = {
         "working": [],
@@ -156,20 +207,24 @@ def main():
         "protected": []
     }
 
-    with requests.Session() as session:
-        session.headers.update(HEADERS)
+    session = requests.Session()
+    session.headers.update(HEADERS)
 
-        for i, url in enumerate(urls, 1):
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [executor.submit(classify_website, url, session) for url in urls]
 
-            status = classify_website(url, session)
+        for i, future in enumerate(as_completed(futures), 1):
+            url, status = future.result()
             results[status].append(url)
 
-            if i % 50 == 0:
-                print(f"{i}/{len(urls)} processed")
+            if i % 30 == 0:
+                print(f"{i}/{len(urls)} urls")
 
     save_results(results)
 
-    print("Done")
+    print("\nDone:", {k: len(v) for k, v in results.items()})
+    execution_time = datetime.now() - start_time
+    print(f"Total time: {execution_time}")
 
 
 if __name__ == "__main__":
