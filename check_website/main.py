@@ -22,20 +22,20 @@ HEADERS: dict[str, str] = {
     )
 }
 
-
 PARKING_PHRASES = [
     "domain for sale",
     "buy this domain",
     "coming soon",
     "under construction",
     "domain is parked",
+    "this domain is for sale",
     "прилинкуйте домен",
     "домен никуда не направлен"
 ]
 
 
 # =======================
-# CORE LOGIC
+# HELPERS
 # =======================
 
 def normalize_url(url: str) -> str:
@@ -44,37 +44,27 @@ def normalize_url(url: str) -> str:
     return url
 
 
-def detect_parking(html: str) -> bool:
+def detect_parking(text: str) -> bool:
+    text = text.lower()
+    return any(p in text for p in PARKING_PHRASES)
+
+
+def extract_text(html: str) -> str:
+    """
+    Минимальная очистка HTML → текст
+    """
     html = html.lower()
-    return any(p in html for p in PARKING_PHRASES)
+
+    # грубое удаление шумных блоков
+    for tag in ["script", "style", "noscript"]:
+        html = html.replace(f"<{tag}", " <")
+
+    return html
 
 
-def content_score(html: str) -> int:
-    """
-    Оценивает "живость" сайта
-    """
-    score = 0
-
-    html_lower = html.lower()
-
-    # базовые признаки контента
-    if "<h1" in html_lower:
-        score += 2
-    if "<p" in html_lower:
-        score += 2
-    if "<article" in html_lower:
-        score += 3
-    if len(html_lower) > 1500:
-        score += 2
-
-    # негатив
-    if "javascript" in html_lower:
-        score += 1  # SPA не плохо
-    if detect_parking(html_lower):
-        score -= 10
-
-    return score
-
+# =======================
+# CLASSIFICATION
+# =======================
 
 def classify_website(url: str, session: requests.Session) -> str:
     url = normalize_url(url)
@@ -82,31 +72,40 @@ def classify_website(url: str, session: requests.Session) -> str:
     try:
         r = session.get(url, timeout=TIMEOUT, allow_redirects=True)
 
-        # --- HTTP level ---
+        # =======================
+        # PROTECTED
+        # =======================
         if r.status_code == 403:
             return "protected"
 
+        if r.status_code in (401, 429):
+            return "protected"
+
+        if "cloudflare" in r.text.lower() and "captcha" in r.text.lower():
+            return "protected"
+
+        # =======================
+        # NOT WORKING
+        # =======================
         if r.status_code in (404, 410):
             return "not_working"
 
         if r.status_code != 200:
             return "not_working"
 
-        html = r.text
+        html = extract_text(r.text)
 
-        # --- parking detection ---
         if detect_parking(html):
             return "not_working"
 
-        # --- content scoring ---
-        score = content_score(html)
-
-        if score >= 4:
-            return "working"
-        elif score >= 1:
-            return "uncertain"
-        else:
+        # слишком пустая страница
+        if len(html) < 300:
             return "not_working"
+
+        # =======================
+        # WORKING
+        # =======================
+        return "working"
 
     except SSLError:
         return "protected"
@@ -116,7 +115,7 @@ def classify_website(url: str, session: requests.Session) -> str:
 
 
 # =======================
-# FILE LOADING
+# LOAD DATA
 # =======================
 
 def load_urls_from_excels(folder: str) -> list[str]:
@@ -154,8 +153,7 @@ def main():
     results = {
         "working": [],
         "not_working": [],
-        "protected": [],
-        "uncertain": []
+        "protected": []
     }
 
     with requests.Session() as session:
