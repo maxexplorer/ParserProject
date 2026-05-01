@@ -304,9 +304,6 @@ def save_batch(results: dict[str, list[str]]) -> None:
                 startrow=startrow
             )
 
-    print(f"Saved batch → {output_file}")
-
-
 
 # =======================
 # MAIN
@@ -319,7 +316,6 @@ def main():
     total = len(urls)
     print(f"Total (deduplicated): {total}")
 
-
     batch_counter = 0
 
     batch_results = {
@@ -330,6 +326,12 @@ def main():
 
     processed = 0
 
+    total_stats = {
+        "working": 0,
+        "not_working": 0,
+        "protected": 0,
+    }
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {executor.submit(classify_website, url): url for url in urls}
 
@@ -338,6 +340,7 @@ def main():
             batch_results[status].append(original_url)
             batch_counter += 1
             processed += 1
+            total_stats[status] += 1
 
             if batch_counter >= BATCH_SIZE:
                 save_batch(batch_results)
@@ -352,16 +355,17 @@ def main():
             if processed % 50 == 0 or processed == total:
                 print(
                     f"{processed}/{total} | "
-                    f"working: {len(batch_results['working'])} | "
-                    f"protected: {len(batch_results['protected'])} | "
-                    f"not_working: {len(batch_results['not_working'])}"
+                    f"working: {total_stats['working']} | "
+                    f"protected: {total_stats['protected']} | "
+                    f"not_working: {total_stats['not_working']}"
                 )
 
     if batch_counter > 0:
         save_batch(batch_results)
 
     execution_time = datetime.now() - start_time
-    print(f'Executed time: {execution_time}')
+    print(f"Saved result → results/result_date.xlsx")
+    print(f"Executed time: {execution_time}")
 
 
 if __name__ == "__main__":
