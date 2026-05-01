@@ -114,7 +114,7 @@ def detect_parking(text: str) -> bool:
 
 def is_excluded_content(html: str) -> bool:
     """Проверяет страницу на нежелательную тематику."""
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style", "svg"]):
         tag.decompose()
 
@@ -137,7 +137,7 @@ def is_alive(html: str, domain: str) -> bool:
     Скоринг признаков живого сайта.
     Проверяет принадлежность контента домену, а не хостингу.
     """
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
     domain_root = domain.lower().split("/")[0]
 
     for tag in soup(["script", "style", "svg"]):
