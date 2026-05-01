@@ -3,17 +3,18 @@ import re
 import glob
 import requests
 import pandas as pd
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.exceptions import RequestException, SSLError
 
+start_time = datetime.now()
+
 # =======================
 # CONFIG
 # =======================
 
-FOLDER: str = "data"
-OUTPUT_FILE: str = "results/result.xlsx"
 TIMEOUT: int = 8
 MAX_WORKERS: int = 20
 
@@ -266,10 +267,23 @@ def load_urls_from_excels(folder: str) -> list[str]:
 # =======================
 
 def save_results(results: dict[str, list[str]]):
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-    with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
+
+    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
+    folder = 'results'
+
+    os.makedirs(folder, exist_ok=True)
+
+    output_file = f"{folder}/result_{cur_time}.xlsx"
+
+    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
         for status, urls in results.items():
-            pd.DataFrame({"url": urls}).to_excel(writer, sheet_name=status, index=False)
+            pd.DataFrame({"url": urls}).to_excel(
+                writer,
+                sheet_name=status,
+                index=False
+            )
+
+    print(f"\nDone → {output_file}")
 
 
 # =======================
@@ -277,8 +291,9 @@ def save_results(results: dict[str, list[str]]):
 # =======================
 
 def main():
+    folder = 'data'
     print("Loading URLs...")
-    urls = load_urls_from_excels(FOLDER)
+    urls = load_urls_from_excels(folder)
     total = len(urls)
     print(f"Total (deduplicated): {total}")
 
@@ -307,7 +322,9 @@ def main():
                 )
 
     save_results(results)
-    print(f"\nDone → {OUTPUT_FILE}")
+
+    execution_time = datetime.now() - start_time
+    print(f'Executed time: {execution_time}')
 
 
 if __name__ == "__main__":
