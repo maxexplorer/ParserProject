@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.exceptions import RequestException, SSLError
 
-
 # =======================
 # CONFIG
 # =======================
@@ -27,10 +26,10 @@ HEADERS: dict[str, str] = {
 }
 
 # HTTP-коды, которые означают защиту
-PROTECTED_CODES = {401, 429}
+PROTECTED_CODES = {401, 403, 429}
 
 # HTTP-коды, которые означают "не работает"
-DEAD_CODES = {403, 404, 410, 500, 502, 503, 504}
+DEAD_CODES = {404, 410, 500, 502, 503, 504}
 
 # Фразы-маркеры парковки/заглушки — дополнительный фильтр
 PARKING_PHRASES = [
@@ -67,6 +66,12 @@ EXCLUDED_PHRASES = [
     "эротика", "erotica", "nude", "голые", "онлифанс", "onlyfans",
     # эскорт
     "эскорт", "escort", "интим", "dosug",
+    # пиратские фильмы / сериалы
+    "смотреть онлайн", "смотреть бесплатно", "смотреть фильм",
+    "смотреть сериал", "lordfilm", "lordserial", "kinopoisk",
+    "kinogo", "rezka", "hdrezka", "filmix", "seasonvar",
+    "все серии", "новая серия", "в хорошем качестве",
+    "hd 720", "hd 1080", "fullhd",
 ]
 
 # Стоп-домены в ссылках (партнёрки казино/букмекеров)
