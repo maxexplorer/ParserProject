@@ -17,7 +17,7 @@ start_time = datetime.now()
 
 TIMEOUT: int = 5
 MAX_WORKERS: int = 20
-BATCH_SIZE = 100
+BATCH_SIZE = 1000
 
 HEADERS: dict[str, str] = {
     "User-Agent": (
@@ -28,10 +28,10 @@ HEADERS: dict[str, str] = {
 }
 
 # HTTP-коды, которые означают защиту
-PROTECTED_CODES = {401, 403, 429}
+PROTECTED_CODES = {401, 429}
 
 # HTTP-коды, которые означают "не работает"
-DEAD_CODES = {404, 410, 500, 502, 503, 504}
+DEAD_CODES = {403, 404, 410, 500, 502, 503, 504}
 
 # Фразы-маркеры парковки/заглушки — дополнительный фильтр
 PARKING_PHRASES = [
