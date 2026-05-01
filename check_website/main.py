@@ -1,8 +1,10 @@
 import os
+import re
 import glob
 import requests
 import pandas as pd
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.exceptions import RequestException, SSLError
 
 
@@ -12,7 +14,8 @@ from requests.exceptions import RequestException, SSLError
 
 FOLDER: str = "data"
 OUTPUT_FILE: str = "result.xlsx"
-TIMEOUT: int = 5
+TIMEOUT: int = 8
+MAX_WORKERS: int = 20  # кол-во параллельных потоков
 
 HEADERS: dict[str, str] = {
     "User-Agent": (
@@ -30,7 +33,25 @@ PARKING_PHRASES = [
     "domain is parked",
     "this domain is for sale",
     "прилинкуйте домен",
-    "домен никуда не направлен"
+    "домен никуда не направлен",
+    "this domain has expired",
+    "renew this domain",
+    "domain expired",
+    "website coming soon",
+    "сайт находится на обслуживании",
+]
+
+PROTECTION_SIGNATURES = [
+    "just a moment",           # Cloudflare JS challenge
+    "checking your browser",
+    "cf_chl_opt",
+    "ddos-guard",
+    "please wait while we check",
+    "are you human",
+    "robot or human",
+    "enable javascript and cookies",
+    "sucuri website firewall",
+    "this site is protected",
 ]
 
 
@@ -39,8 +60,14 @@ PARKING_PHRASES = [
 # =======================
 
 def normalize_url(url: str) -> str:
-    if not url.startswith("http"):
-        return "http://" + url
+    """Парсит markdown-ссылки и добавляет схему если нет."""
+    url = url.strip()
+    # markdown вида [text](url)
+    md_match = re.match(r'\[.*?\]\((.*?)\)', url)
+    if md_match:
+        url = md_match.group(1).strip()
+    # убираем схему — будем пробовать сами
+    url = re.sub(r'^https?://', '', url)
     return url
 
 
@@ -49,69 +76,85 @@ def detect_parking(text: str) -> bool:
     return any(p in text for p in PARKING_PHRASES)
 
 
-def extract_text(html: str) -> str:
-    """
-    Минимальная очистка HTML → текст
-    """
-    html = html.lower()
+def detect_protection(response: requests.Response) -> bool:
+    """Проверяет заголовки и тело ответа на признаки защиты."""
+    # заголовки
+    server = response.headers.get("server", "").lower()
+    if "cloudflare" in server or "ddos-guard" in server:
+        return True
+    if "cf-ray" in response.headers:
+        return True
 
-    # грубое удаление шумных блоков
-    for tag in ["script", "style", "noscript"]:
-        html = html.replace(f"<{tag}", " <")
-
-    return html
+    # тело ответа
+    text = response.text.lower()
+    return any(sig in text for sig in PROTECTION_SIGNATURES)
 
 
 # =======================
 # CLASSIFICATION
 # =======================
 
-def classify_website(url: str, session: requests.Session) -> str:
-    url = normalize_url(url)
-
+def _fetch(url: str, session: requests.Session):
+    """Один HTTP-запрос. Возвращает Response или None."""
     try:
-        r = session.get(url, timeout=TIMEOUT, allow_redirects=True)
-
-        # =======================
-        # PROTECTED
-        # =======================
-        if r.status_code == 403:
-            return "protected"
-
-        if r.status_code in (401, 429):
-            return "protected"
-
-        if "cloudflare" in r.text.lower() and "captcha" in r.text.lower():
-            return "protected"
-
-        # =======================
-        # NOT WORKING
-        # =======================
-        if r.status_code in (404, 410):
-            return "not_working"
-
-        if r.status_code != 200:
-            return "not_working"
-
-        html = extract_text(r.text)
-
-        if detect_parking(html):
-            return "not_working"
-
-        # слишком пустая страница
-        if len(html) < 300:
-            return "not_working"
-
-        # =======================
-        # WORKING
-        # =======================
-        return "working"
-
+        return session.get(url, timeout=TIMEOUT, allow_redirects=True)
     except SSLError:
-        return "protected"
-
+        return "ssl_error"
     except RequestException:
-        return "not_working"
+        return None
+
+
+def classify_website(raw_url: str) -> tuple[str, str]:
+    """
+    Возвращает (original_url, status).
+    Статусы: working | protected | not_working
+    Создаёт свою сессию — безопасно для потоков.
+    """
+    domain = normalize_url(raw_url)
+
+    with requests.Session() as session:
+        session.headers.update(HEADERS)
+
+        for scheme in ("https://", "http://"):
+            url = scheme + domain
+            result = _fetch(url, session)
+
+            if result is None:
+                continue
+
+            if result == "ssl_error":
+                # сертификат сломан — сайт существует, но не работает
+                return raw_url, "not_working"
+
+            r: requests.Response = result
+
+            # — Защита по коду ответа —
+            if r.status_code in (401, 403, 429):
+                return raw_url, "protected"
+
+            # — Защита по содержимому (Cloudflare, WAF и т.д.) —
+            if detect_protection(r):
+                return raw_url, "protected"
+
+            # — Не работает —
+            if r.status_code in (404, 410):
+                return raw_url, "not_working"
+
+            if r.status_code != 200:
+                return raw_url, "not_working"
+
+            # — Парковка —
+            if detect_parking(r.text):
+                return raw_url, "not_working"
+
+            # — Пустая страница —
+            if len(r.text.strip()) < 300:
+                return raw_url, "not_working"
+
+            return raw_url, "working"
+
+    # оба протокола не ответили
+    return raw_url, "not_working"
 
 
 # =======================
@@ -120,14 +163,12 @@ def classify_website(url: str, session: requests.Session) -> str:
 
 def load_urls_from_excels(folder: str) -> list[str]:
     files = glob.glob(os.path.join(folder, "*.xls*"))
-
     urls = []
-
     for file in files:
         df = pd.read_excel(file, sheet_name=0, header=None)
-        urls.extend(df.iloc[:, 0].dropna().tolist())
-
-    return urls
+        urls.extend(df.iloc[:, 0].dropna().astype(str).tolist())
+    # дедупликация с сохранением порядка
+    return list(dict.fromkeys(u.strip() for u in urls if u.strip()))
 
 
 # =======================
@@ -136,8 +177,8 @@ def load_urls_from_excels(folder: str) -> list[str]:
 
 def save_results(results: dict[str, list[str]]):
     with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
-        for k, v in results.items():
-            pd.DataFrame({"url": v}).to_excel(writer, sheet_name=k, index=False)
+        for status, urls in results.items():
+            pd.DataFrame({"url": urls}).to_excel(writer, sheet_name=status, index=False)
 
 
 # =======================
@@ -147,29 +188,35 @@ def save_results(results: dict[str, list[str]]):
 def main():
     print("Loading URLs...")
     urls = load_urls_from_excels(FOLDER)
+    total = len(urls)
+    print(f"Total (deduplicated): {total}")
 
-    print(f"Total: {len(urls)}")
-
-    results = {
+    results: dict[str, list[str]] = {
         "working": [],
         "not_working": [],
-        "protected": []
+        "protected": [],
     }
 
-    with requests.Session() as session:
-        session.headers.update(HEADERS)
+    processed = 0
 
-        for i, url in enumerate(urls, 1):
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(classify_website, url): url for url in urls}
 
-            status = classify_website(url, session)
-            results[status].append(url)
+        for future in as_completed(futures):
+            original_url, status = future.result()
+            results[status].append(original_url)
+            processed += 1
 
-            if i % 50 == 0:
-                print(f"{i}/{len(urls)} processed")
+            if processed % 50 == 0 or processed == total:
+                print(
+                    f"{processed}/{total} | "
+                    f"working: {len(results['working'])} | "
+                    f"protected: {len(results['protected'])} | "
+                    f"not_working: {len(results['not_working'])}"
+                )
 
     save_results(results)
-
-    print("Done")
+    print(f"\nDone → {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":
