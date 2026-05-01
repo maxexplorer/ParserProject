@@ -15,8 +15,9 @@ start_time = datetime.now()
 # CONFIG
 # =======================
 
-TIMEOUT: int = 8
+TIMEOUT: int = 5
 MAX_WORKERS: int = 20
+BATCH_SIZE = 100
 
 HEADERS: dict[str, str] = {
     "User-Agent": (
@@ -266,24 +267,45 @@ def load_urls_from_excels(folder: str) -> list[str]:
 # SAVE
 # =======================
 
-def save_results(results: dict[str, list[str]]):
-
-    cur_time = datetime.now().strftime('%d-%m-%Y-%H-%M')
+def save_batch(results: dict[str, list[str]]) -> None:
+    cur_date = datetime.now().strftime('%d-%m-%Y')
     folder = 'results'
-
     os.makedirs(folder, exist_ok=True)
 
-    output_file = f"{folder}/result_{cur_time}.xlsx"
+    output_file = f"{folder}/result_{cur_date}.xlsx"
 
-    with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
-        for status, urls in results.items():
-            pd.DataFrame({"url": urls}).to_excel(
+    sheets = ["working", "not_working", "protected"]
+
+    # создаём файл если нет
+    if not os.path.exists(output_file):
+        with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
+            for sheet in sheets:
+                pd.DataFrame(columns=["url"]).to_excel(writer, sheet_name=sheet, index=False)
+
+    # ДОЗАПИСЬ ПО ЛИСТАМ
+    with pd.ExcelWriter(output_file, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+        for sheet in sheets:
+
+            df_new = pd.DataFrame({"url": results.get(sheet, [])})
+            if df_new.empty:
+                continue
+
+            try:
+                df_old = pd.read_excel(output_file, sheet_name=sheet)
+                startrow = len(df_old) + 1
+            except:
+                startrow = 0
+
+            df_new.to_excel(
                 writer,
-                sheet_name=status,
-                index=False
+                sheet_name=sheet,
+                index=False,
+                header=(startrow == 0),
+                startrow=startrow
             )
 
-    print(f"\nDone → {output_file}")
+    print(f"Saved batch → {output_file}")
+
 
 
 # =======================
@@ -297,7 +319,10 @@ def main():
     total = len(urls)
     print(f"Total (deduplicated): {total}")
 
-    results: dict[str, list[str]] = {
+
+    batch_counter = 0
+
+    batch_results = {
         "working": [],
         "not_working": [],
         "protected": [],
@@ -310,18 +335,30 @@ def main():
 
         for future in as_completed(futures):
             original_url, status = future.result()
-            results[status].append(original_url)
+            batch_results[status].append(original_url)
+            batch_counter += 1
             processed += 1
+
+            if batch_counter >= BATCH_SIZE:
+                save_batch(batch_results)
+
+                batch_results = {
+                    "working": [],
+                    "not_working": [],
+                    "protected": [],
+                }
+                batch_counter = 0
 
             if processed % 50 == 0 or processed == total:
                 print(
                     f"{processed}/{total} | "
-                    f"working: {len(results['working'])} | "
-                    f"protected: {len(results['protected'])} | "
-                    f"not_working: {len(results['not_working'])}"
+                    f"working: {len(batch_results['working'])} | "
+                    f"protected: {len(batch_results['protected'])} | "
+                    f"not_working: {len(batch_results['not_working'])}"
                 )
 
-    save_results(results)
+    if batch_counter > 0:
+        save_batch(batch_results)
 
     execution_time = datetime.now() - start_time
     print(f'Executed time: {execution_time}')
