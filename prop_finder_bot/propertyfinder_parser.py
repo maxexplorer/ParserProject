@@ -4,8 +4,10 @@ import os
 import time
 from datetime import datetime, date, timedelta
 import re
+import json
 
 from requests import Session
+from bs4 import BeautifulSoup
 
 from openpyxl import Workbook, load_workbook
 
@@ -15,6 +17,8 @@ from openpyxl import Workbook, load_workbook
 
 # Время старта программы (используется для подсчёта времени выполнения)
 start_time: datetime = datetime.now()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 # HTTP-заголовки для имитации запроса от браузера
 headers: dict = {
@@ -33,43 +37,66 @@ headers: dict = {
 }
 
 
-def get_build_id(session: Session, headers: dict) -> str | None:
-    url = 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html'
-    r = session.get(url, headers=headers, timeout=30)
+def get_html_headers(headers: dict) -> dict:
+    html_headers = headers.copy()
+    html_headers.pop('x-nextjs-data', None)
+    html_headers['accept'] = (
+        'text/html,application/xhtml+xml,application/xml;q=0.9,'
+        'image/avif,image/webp,image/apng,*/*;q=0.8'
+    )
+    html_headers['sec-fetch-dest'] = 'document'
+    html_headers['sec-fetch-mode'] = 'navigate'
+    return html_headers
 
-    if r.status_code != 200:
+
+def parse_next_data(html: str) -> dict | None:
+    soup = BeautifulSoup(html, 'lxml')
+    script = soup.find('script', id='__NEXT_DATA__', type='application/json')
+
+    if not script or not script.string:
+        print('Не найден script#__NEXT_DATA__')
         return None
 
-    match = re.search(r'"buildId":"([^"]+)"', r.text)
-    return match.group(1) if match else None
+    try:
+        next_data = json.loads(script.string)
+    except json.JSONDecodeError as ex:
+        print(f'Не удалось разобрать __NEXT_DATA__: {ex}')
+        return None
+
+    page_props = (
+        next_data
+        .get('props', {})
+        .get('pageProps', {})
+    )
+
+    if not page_props:
+        print('В __NEXT_DATA__ не найден props.pageProps')
+        return None
+
+    return {'pageProps': page_props}
 
 
 # =============================================================================
 # Работа с API PropertyFinder
 # =============================================================================
 
-def get_json(session: Session, headers: dict, build_id: str, page: int) -> dict | None:
-    if not build_id:
-        print('Не удалось получить buildId')
-        return None
-
-    url = f'https://www.propertyfinder.ae/search/_next/data/{build_id}/en/buy/properties-for-sale.html.json'
+def get_json(session: Session, headers: dict, page: int) -> dict | None:
+    url = 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html'
 
     params = {
         'page': page,
-        'categorySlug': 'buy',
-        'propertyTypeSlug': 'properties',
-        'saleType': 'for-sale',
-        'pattern': '/categorySlug/propertyTypeSlug-saleType.html',
+        'ob': 'nd',
     }
+    if page == 1:
+        params = {'ob': 'nd'}
 
-    response = session.get(url=url, headers=headers, params=params, timeout=30)
+    response = session.get(url=url, headers=get_html_headers(headers), params=params, timeout=30)
 
     if response.status_code != 200:
         print(f'status_code: {response.status_code}')
         return None
 
-    return response.json()
+    return parse_next_data(response.text)
 
 def clean_text(text: str | None) -> str | None:
     if text is None:
@@ -101,15 +128,12 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
 
     # Используем одну HTTP-сессию для всех запросов
     with Session() as session:
-        build_id = get_build_id(session, headers)
-
         for page in range(1, pages + 1):
             try:
                 time.sleep(1)
                 json_data: dict | None = get_json(
                     session=session,
                     headers=headers,
-                    build_id=build_id,
                     page=page
                 )
 
@@ -133,15 +157,22 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 continue
 
             for item in items:
+                if not isinstance(item, dict):
+                    continue
+
                 properties: dict | None = item.get('property')
-                if not properties:
+                if not isinstance(properties, dict) or not properties:
                     continue
 
                 listed_date: str | None = properties.get('listed_date')
                 if not listed_date:
                     continue
 
-                date_obj: datetime = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
+                try:
+                    date_obj: datetime = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
+                except (TypeError, ValueError) as ex:
+                    print(f"page {page}: пропуск property_id={properties.get('id')} из-за даты {listed_date}: {ex}")
+                    continue
                 listed_date_only: date = date_obj.date()
 
                 # Проверка даты
@@ -153,54 +184,41 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
                 else:
                     consecutive_old = 0  # сброс счётчика, если дата подходит
 
-                # -----------------------------------------------------------------
-                # Основные данные объекта
-                # -----------------------------------------------------------------
                 property_id: int | None = properties.get('id')
                 property_type: str | None = properties.get('property_type')
                 title: str | None = clean_text(properties.get('title'))
 
-                # Локация
-                location: dict = properties.get('location', {})
+                location: dict = properties.get('location') or {}
                 full_name: str | None = location.get('full_name')
                 building_type: str | None = location.get('type')
                 building_name: str | None = location.get('name')
 
-                # Цена
-                price_info: dict = properties.get('price', {})
+                price_info: dict = properties.get('price') or {}
                 price: int | None = price_info.get('value')
                 currency: str | None = price_info.get('currency')
 
-                # Комнаты
                 bedrooms: int | None = properties.get('bedrooms')
                 bathrooms: int | None = properties.get('bathrooms')
 
-                # Площадь
-                size_info: dict = properties.get('size', {})
+                size_info: dict = properties.get('size') or {}
                 size: int | None = size_info.get('value')
                 unit: str | None = size_info.get('unit')
 
-                # Дополнительная информация
                 completion_status: str | None = properties.get('completion_status')
                 description: str | None = clean_text(properties.get('description'))
                 amenities: str = ', '.join(clean_text(a) for a in properties.get('amenity_names', []))
                 property_url: str | None = properties.get('share_url')
 
-                # Изображения
                 image_urls: str = ', '.join(
                     image.get('medium') for image in properties.get('images', []) if image.get('medium')
                 )
 
-                # Брокер
                 broker: dict = properties.get('broker') or {}
                 broker_name: str | None = broker.get('name')
                 broker_address: str | None = broker.get('address')
                 broker_email: str | None = broker.get('email')
                 broker_phone: str | None = broker.get('phone')
 
-                # -----------------------------------------------------------------
-                # Добавление результата
-                # -----------------------------------------------------------------
                 result_data.append(
                     {
                         'listed_date': date_obj,
@@ -253,10 +271,9 @@ def save_excel(data: list[dict], today_utc: date) -> None:
     :return: None
     """
     cur_date: str = today_utc.strftime('%d-%m-%Y')
-    directory = 'results'
-    file_path = f'{directory}/result_data_{cur_date}.xlsx'
+    file_path = os.path.join(RESULTS_DIR, f'result_data_{cur_date}.xlsx')
 
-    os.makedirs(directory, exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     if not os.path.exists(file_path):
         # Создаём новый файл
@@ -299,7 +316,7 @@ def main() -> None:
     """
 
     pages: int = 800
-    days_to_collect: int = 2  # 1 = сегодня, 7 = неделя
+    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
     try:
