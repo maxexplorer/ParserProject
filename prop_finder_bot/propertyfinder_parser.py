@@ -316,7 +316,7 @@ def main() -> None:
     """
 
     pages: int = 800
-    days_to_collect: int = 7  # 1 = сегодня, 7 = неделя
+    days_to_collect: int = 1  # 1 = сегодня, 7 = неделя
     batch_size = 100
 
     try:
