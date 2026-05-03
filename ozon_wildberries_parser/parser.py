@@ -133,9 +133,9 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'external-locale': 'ru',
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
-                '_cp': '1',
-                'x_wbaas_token': '1.1000.450e81a0f768476d9e6c827125eb160d.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Ny4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzcyOTA2MzN8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc2Njg1ODMzfDE=.MEUCIF2NozIGW1qJHLat+RWcwDOqFA8kgvZAxBGO3a2XZmT6AiEAlnN9wc1zgAw2Eb+/VYSe9UXgTQrcTba3yOwSWhz6sbA=',
                 'routeb': '1776081038.566.2243.203049|fc3b37d75a18d923fd0e9c7589719997',
+                '_cp': '1',
+                'x_wbaas_token': '1.1000.dc6374682fdf47c8ba519ca6c9aa2b28.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Ny4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzkwMzU2NzJ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc4NDMwODcyfDE=.MEYCIQCmKSU/ZbtiInk0pm4CGIEnvW5QkR1FzaqoL+fS9npYEAIhAIEXnb4dphlulbYE6uZIIcMq1ThGPW6kjI0jWB2LSbVA',
             }
 
             try:
@@ -185,6 +185,8 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
 
             if not text:
                 continue
+
+            text = str(text).strip()
 
             # Если text уже обработан, берем product_ids из словаря, иначе вызываем функцию
             if text in processed_texts:
@@ -363,6 +365,8 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
         if not text:
             continue
+
+        text = str(text).strip()
 
         # Если text уже обработан, берем product_ids из словаря, иначе вызываем функцию
         if text in processed_texts:
