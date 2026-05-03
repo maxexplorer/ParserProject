@@ -51,14 +51,14 @@ def main():
             '6 - Обновить цены Ozon и Wildberries\n'
             '7 - Получить отчет заказов Ozon за месяц\n'
             '8 - Получить отчет заказов Ozon за неделю\n'
-            '9 - Получить отчет заказов WB за месяц\n'
-            '10 - Получить отчет заказов WB за неделю\n'
+            '9 - Получить отчет заказов Wildberries за месяц\n'
+            '10 - Получить отчет заказов Wildberries за неделю\n'
             '11 - Получить отчет заказов Ozon за указанный период\n'
-            '12 - Получить отчет заказов WB за указанный период\n'
+            '12 - Получить отчет заказов Wildberries за указанный период\n'
             '13 - Обновить объемы товаров Ozon\n'
             '14 - Обновить остатки FBS Ozon\n'
-            '15 - Обновить остатки FBS WB\n'
-            '16 - Загрузить изображения OZON и WB\n'
+            '15 - Обновить остатки FBS Wildberries\n'
+            '16 - Загрузить изображения OZON и Wildberries\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -142,16 +142,16 @@ def main():
                     print('✅ Отчет Ozon за неделю собран и записан.')
 
                 case '9':
-                    print('Получение отчета WB за месяц...')
+                    print('Получение отчета Wildberries за месяц...')
                     wb_orders = get_wb_orders_report(period='month')
                     write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='month')
-                    print('✅ Отчет WB за месяц собран и записан.')
+                    print('✅ Отчет Wildberries за месяц собран и записан.')
 
                 case '10':
-                    print('Получение отчета WB за неделю...')
+                    print('Получение отчета Wildberries за неделю...')
                     wb_orders = get_wb_orders_report(period='week')
                     write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='week')
-                    print('✅ Отчет WB за неделю собран и записан.')
+                    print('✅ Отчет Wildberries за неделю собран и записан.')
 
                 case '11':
                     print('Получение отчета Ozon за указанный период...')
@@ -218,7 +218,7 @@ def main():
                     print('✅ Остатки FBS обновлены и записаны.')
 
                 case '15':
-                    print('Обновление остатков FBS WB...')
+                    print('Обновление остатков FBS Wildberries...')
                     offer_ids = load_offer_id_from_excel(sheet_name='ВБ')
                     fbs_data = get_fbs_quantity_wb(offer_ids)
                     write_fbs_quantity_to_excel(fbs_data, marketplace='ВБ')
