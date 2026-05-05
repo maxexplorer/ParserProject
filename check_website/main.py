@@ -1,13 +1,16 @@
 import os
 import re
 import glob
+import warnings
 import requests
 import pandas as pd
 from datetime import datetime
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from requests.exceptions import RequestException, SSLError
+
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 start_time = datetime.now()
 
