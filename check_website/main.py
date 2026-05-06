@@ -113,7 +113,20 @@ def get_root_domain(domain: str) -> str:
 def detect_parking(text: str) -> bool:
     """Проверяет текст страницы на явные маркеры парковки."""
     text = text.lower()
-    return any(phrase in text for phrase in PARKING_PHRASES)
+    return any(phrase_found(text, phrase) for phrase in PARKING_PHRASES)
+
+
+def phrase_found(text: str, phrase: str) -> bool:
+    """Ищет короткие стоп-слова без совпадений внутри других слов."""
+    phrase = phrase.lower().strip()
+    if not phrase:
+        return False
+
+    if re.search(r"\w", phrase) and " " not in phrase:
+        pattern = rf"(?<![\w-]){re.escape(phrase)}(?![\w-])"
+        return re.search(pattern, text) is not None
+
+    return phrase in text
 
 
 def is_excluded_content(html: str) -> bool:
@@ -124,7 +137,7 @@ def is_excluded_content(html: str) -> bool:
 
     text = soup.get_text(separator=" ", strip=True).lower()
 
-    if any(phrase in text for phrase in EXCLUDED_PHRASES):
+    if any(phrase_found(text, phrase) for phrase in EXCLUDED_PHRASES):
         return True
 
     links = soup.find_all("a", href=True)
@@ -218,7 +231,7 @@ def classify_website(raw_url: str) -> tuple[str, str]:
                 continue
 
             if result == "ssl_error":
-                return raw_url, "not_working"
+                continue
 
             r: requests.Response = result
 
