@@ -58,26 +58,61 @@ PARKING_PHRASES = [
 ]
 
 # Стоп-слова — нежелательная тематика
-EXCLUDED_PHRASES = [
-    # казино / ставки
+EXCLUDED_GAMBLING_PHRASES = [
     "казино", "casino", "слоты", "slots", "рулетка", "roulette",
     "ставки", "букмекер", "bets", "betting", "покер", "poker",
     "джекпот", "jackpot", "игровые автоматы", "spin",
-    # крипто-скам
+]
+
+EXCLUDED_CRYPTO_SCAM_PHRASES = [
     "криптовалюта", "bitcoin", "btc", "ethereum",
     "пассивный доход", "торговый робот",
-    # 18+ / порно
+]
+
+EXCLUDED_ADULT_PHRASES = [
     "порно", "porno", "xxx", "porn", "секс видео", "sex video",
     "эротика", "erotica", "nude", "голые", "онлифанс", "onlyfans",
-    # эскорт
     "эскорт", "escort", "интим", "dosug",
-    # пиратские фильмы / сериалы
+]
+
+EXCLUDED_PIRACY_PHRASES = [
     "смотреть онлайн", "смотреть бесплатно", "смотреть фильм",
     "смотреть сериал", "lordfilm", "lordserial", "kinopoisk",
     "kinogo", "rezka", "hdrezka", "filmix", "seasonvar",
     "все серии", "новая серия", "в хорошем качестве",
     "hd 720", "hd 1080", "fullhd",
 ]
+
+EXCLUDED_SERVICE_PHRASES = [
+    "ремонт стиральных машин",
+    "ремонт стиральной машины",
+    "вызвать мастера",
+    "выезд мастера",
+    "срочный выезд",
+    "сантехник",
+    "электрик",
+    "seo продвижение",
+    "seo-продвижение",
+    "seo услуги",
+    "seo-услуги",
+    "коттеджные поселки",
+    "загородная недвижимость",
+    "загородной недвижимости",
+    "электронный документооборот",
+    "эдо диадок",
+    "подключить диадок",
+    "1с:бухгалтерия",
+    "настройка 1с",
+    "внедрение 1с",
+]
+
+EXCLUDED_PHRASE_GROUPS = {
+    "gambling": EXCLUDED_GAMBLING_PHRASES,
+    "crypto_scam": EXCLUDED_CRYPTO_SCAM_PHRASES,
+    "adult": EXCLUDED_ADULT_PHRASES,
+    "piracy": EXCLUDED_PIRACY_PHRASES,
+    "services": EXCLUDED_SERVICE_PHRASES,
+}
 
 # Стоп-домены в ссылках (партнёрки казино/букмекеров)
 EXCLUDED_LINK_DOMAINS = [
@@ -137,8 +172,9 @@ def is_excluded_content(html: str) -> bool:
 
     text = soup.get_text(separator=" ", strip=True).lower()
 
-    if any(phrase_found(text, phrase) for phrase in EXCLUDED_PHRASES):
-        return True
+    for phrases in EXCLUDED_PHRASE_GROUPS.values():
+        if any(phrase_found(text, phrase) for phrase in phrases):
+            return True
 
     links = soup.find_all("a", href=True)
     for link in links:
@@ -203,7 +239,8 @@ def _fetch(url: str, session: requests.Session):
     """Один HTTP-запрос. Возвращает Response, 'ssl_error' или None."""
     try:
         r = session.get(url, timeout=TIMEOUT, allow_redirects=True)
-        r.encoding = r.apparent_encoding
+        if not r.encoding or r.encoding.lower() == "iso-8859-1":
+            r.encoding = r.apparent_encoding
         return r
     except SSLError:
         return "ssl_error"
