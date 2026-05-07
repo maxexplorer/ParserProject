@@ -120,8 +120,6 @@ def get_size_ids() -> dict[str, list[int]]:
 
     while True:
         params = {
-            'order': 'nmId',
-            'direction': 'asc',
             'limit': limit,
             'offset': offset
         }
