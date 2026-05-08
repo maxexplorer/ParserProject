@@ -154,6 +154,9 @@ def get_size_ids() -> dict[str, list[int]]:
 
                 vendor_code_to_size_ids.setdefault(vendor_code, []).append(int(size_id))
 
+        if len(goods) < limit:
+            break
+
         offset += limit
 
     return vendor_code_to_size_ids

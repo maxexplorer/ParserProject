@@ -2,6 +2,7 @@
 
 import os
 import glob
+import time
 from datetime import datetime, timedelta
 
 import requests
@@ -141,8 +142,8 @@ def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_
     else:
         raise ValueError('period должен быть "month", "week" или "custom"')
 
-    page = 1
-    limit = 100
+    limit = 1000
+    offset = 0
     orders: dict[str, int] = {}
 
     while True:
@@ -154,10 +155,11 @@ def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_
             "nmIds": [],  # можно оставить пустым для всех товаров
             "skipDeletedNm": True,
             "limit": limit,
-            "offset": (page - 1) * limit
+            "offset": offset
         }
 
         try:
+            time.sleep(1)
             response = requests.post(
                 API_URLS_WB['products'],
                 headers=WB_ANALYTICS_HEADERS,
@@ -187,7 +189,7 @@ def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_
         # Проверяем, если меньше limit, значит последняя страница
         if len(products) < limit:
             break
-        page += 1
+        offset += limit
 
     return orders
 
