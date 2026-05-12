@@ -62,11 +62,11 @@ def cad_number_to_tuple(cad_number: str | None) -> tuple[int, ...] | None:
         return None
 
 
-def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
+def extract_land_records(root: ET.Element) -> list[dict[str, str | None]]:
     """
     Извлекает данные о земельных участках из XML-дерева.
     """
-    records: list[dict[str, str]] = []
+    records: list[dict[str, str | None]] = []
     min_cad_number = cad_number_to_tuple('38:27:000152:460')
 
     for land_record in root.findall('.//land_record'):
@@ -148,7 +148,7 @@ def parse_xml_file(folder: str) -> None:
 # ===============================
 # 📊 Сохранение в Excel
 # ===============================
-def save_excel(data: list[dict[str, str]], file_name: str) -> None:
+def save_excel(data: list[dict[str, str | None]], file_name: str) -> None:
     """
     Сохраняет данные в Excel-файл в папке 'results'.
     """
