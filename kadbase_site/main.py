@@ -49,11 +49,25 @@ def get_xml_files(folder: str) -> list[str]:
     return glob.glob(os.path.join(folder, '*.xml*'))
 
 
+def cad_number_to_tuple(cad_number: str | None) -> tuple[int, ...] | None:
+    """
+    Преобразует кадастровый номер в кортеж чисел для корректного сравнения.
+    """
+    if not cad_number:
+        return None
+
+    try:
+        return tuple(int(part) for part in cad_number.split(':'))
+    except ValueError:
+        return None
+
+
 def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
     """
     Извлекает данные о земельных участках из XML-дерева.
     """
     records: list[dict[str, str]] = []
+    min_cad_number = cad_number_to_tuple('38:27:000152:460')
 
     for land_record in root.findall('.//land_record'):
         obj = land_record.find('./object')
@@ -67,6 +81,10 @@ def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
 
         # Извлекаем необходимые поля
         cad_number = (obj.findtext('./common_data/cad_number') or '').strip() or None
+        current_cad_number = cad_number_to_tuple(cad_number)
+        if current_cad_number is None or min_cad_number is None or current_cad_number < min_cad_number:
+            continue
+
         address = (land_record.findtext('./address_location/address/readable_address') or '').strip() or None
         area_val = land_record.findtext('./params/area/value')
         area_unit = land_record.findtext('./params/area/unit')
@@ -98,37 +116,45 @@ def extract_land_records(root: ET.Element) -> list[dict[str, str]]:
     return records
 
 
-def parse_xml_file(folder: str) -> list[dict[str, str]]:
+def get_result_file_name(file_path: str) -> str:
+    """
+    Возвращает имя Excel-файла на основе имени входного XML-файла.
+    """
+    file_name = os.path.basename(file_path)
+    xml_index = file_name.lower().find('.xml')
+    if xml_index != -1:
+        return f'{file_name[:xml_index]}.xlsx'
+    return f'{os.path.splitext(file_name)[0]}.xlsx'
+
+
+def parse_xml_file(folder: str) -> None:
     """
     Обрабатывает все XML-файлы в указанной папке.
     """
     xml_files: list[str] = get_xml_files(folder)
-    all_records: list[dict[str, str]] = []
 
     for file_path in xml_files:
         try:
             tree = ET.parse(file_path)
             root = tree.getroot()
             records = extract_land_records(root)
-            all_records.extend(records)
+            save_excel(records, get_result_file_name(file_path))
         except ET.ParseError as e:
             print(f'❌ Ошибка парсинга файла {file_path}: {e}')
 
         print(f'Обработан файл: {file_path} ')
 
-    return all_records
-
 
 # ===============================
 # 📊 Сохранение в Excel
 # ===============================
-def save_excel(data: list[dict[str, str]], cur_date: str) -> None:
+def save_excel(data: list[dict[str, str]], file_name: str) -> None:
     """
     Сохраняет данные в Excel-файл в папке 'results'.
     """
     directory = 'results'
     os.makedirs(directory, exist_ok=True)
-    file_path: str = os.path.join(directory, f'result_data_{cur_date}.xlsx')
+    file_path: str = os.path.join(directory, file_name)
 
     df = DataFrame(data)
     with ExcelWriter(file_path, mode='w') as writer:
@@ -314,22 +340,21 @@ def main() -> None:
     url: str = 'https://kadbase.ru/'
 
     # Если нужно — распарсить XML и создать Excel
-    # all_records = parse_xml_file(data_folder)
-    # save_excel(all_records, cur_date=cur_date)
-    excel_path: str = f'results/result_data_{cur_date}.xlsx'
-
-    driver = init_undetected_chromedriver(headless_mode=False)
-    try:
-        # Авторизация вручную
-        driver.get("https://kadbase.ru/lk/")
-        time.sleep(60)
-        print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
-
-        # update_ownership_excel(driver, excel_path, url)
-        update_restrictions_excel(driver, excel_path, url)
-    finally:
-        driver.close()
-        driver.quit()
+    parse_xml_file(data_folder)
+    # excel_path: str = f'results/result_data_{cur_date}.xlsx'
+    #
+    # driver = init_undetected_chromedriver(headless_mode=False)
+    # try:
+    #     # Авторизация вручную
+    #     driver.get("https://kadbase.ru/lk/")
+    #     time.sleep(60)
+    #     print("⏳ У вас есть 60 секунд, чтобы авторизоваться вручную...")
+    #
+    #     # update_ownership_excel(driver, excel_path, url)
+    #     update_restrictions_excel(driver, excel_path, url)
+    # finally:
+    #     driver.close()
+    #     driver.quit()
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен!')
