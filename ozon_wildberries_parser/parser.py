@@ -133,9 +133,11 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'external-locale': 'ru',
                 '_ga': 'GA1.1.1098996660.1758261326',
                 '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
-                'routeb': '1776081038.566.2243.203049|fc3b37d75a18d923fd0e9c7589719997',
                 '_cp': '1',
-                'x_wbaas_token': '1.1000.dc6374682fdf47c8ba519ca6c9aa2b28.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Ny4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzkwMzU2NzJ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc4NDMwODcyfDE=.MEYCIQCmKSU/ZbtiInk0pm4CGIEnvW5QkR1FzaqoL+fS9npYEAIhAIEXnb4dphlulbYE6uZIIcMq1ThGPW6kjI0jWB2LSbVA',
+                '__zzatw-wb': 'MDA0dBA=Fz2+aQ==',
+                'cfidsw-wb': '/Cb1YoYAOLI/SCEhfiZq8bnsN+vkHtARk4gqgA18RS6OXNFdyhYUxbJ4hZrUcizLbBeETTj0/ZNVni2V+7QENlraGmsmO1zjyyprzCY8z9eb+NqimrZ2P+RKbDzDFrw5EOPOcl037573sXLDBCbz8vyJxMSTii0QuDR/',
+                'x_wbaas_token': '1.1000.e873d6463f25494cba453b44a7997f22.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzkzNjY0MTh8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc5MjM2ODE4fDE=.MEQCIGOpo44XkAOFMec5TlcRD4o8ADuK269YjMfCnzURIcPWAiBk+xVg6d/KCE8R5uh2DPku7lXC1aAaEr6mR6YN1UiTGw==',
+                'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
             }
 
             try:
