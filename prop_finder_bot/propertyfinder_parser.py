@@ -20,6 +20,22 @@ start_time: datetime = datetime.now()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
+SEARCH_URLS: tuple[str, ...] = (
+    'https://www.propertyfinder.ae/en/buy/apartments-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/villas-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/townhouses-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/land-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/penthouses-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/whole-buildings-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/duplexes-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/hotels-hotel-apartments-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/compounds-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/full-floors-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/bulk-sale-units-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/half-floors-for-sale.html',
+    'https://www.propertyfinder.ae/en/buy/bungalows-for-sale.html',
+)
+
 # HTTP-заголовки для имитации запроса от браузера
 headers: dict = {
     'accept': '*/*',
@@ -80,20 +96,19 @@ def parse_next_data(html: str) -> dict | None:
 # Работа с API PropertyFinder
 # =============================================================================
 
-def get_json(session: Session, headers: dict, page: int) -> dict | None:
-    url = 'https://www.propertyfinder.ae/en/buy/properties-for-sale.html'
-
+def get_json(session: Session, headers: dict, page: int, url: str) -> dict | None:
     params = {
-        'page': page,
+        'c': '1',
+        'fu': '0',
         'ob': 'nd',
     }
-    if page == 1:
-        params = {'ob': 'nd'}
+    if page != 1:
+        params['page'] = page
 
     response = session.get(url=url, headers=get_html_headers(headers), params=params, timeout=30)
 
     if response.status_code != 200:
-        print(f'status_code: {response.status_code}')
+        print(f'{url} page {page}: status_code {response.status_code}')
         return None
 
     return parse_next_data(response.text)
@@ -109,7 +124,9 @@ def clean_text(text: str | None) -> str | None:
 # Сбор и обработка данных
 # =============================================================================
 
-def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100) -> list[dict[str, str | int | None]]:
+def get_data_legacy(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100) -> list[dict[str, str | int | None]]:
+    return get_data(headers=headers, pages=pages, days=days, batch_size=batch_size)
+
     """
     Собирает объявления о продаже недвижимости с сайта PropertyFinder.
 
@@ -258,6 +275,161 @@ def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100
             save_excel(result_data, today_utc)
 
     return result_data
+
+
+def get_data(headers: dict, pages: int = 3, days: int = 1, batch_size: int = 100) -> list[dict[str, str | int | None]]:
+    result_data: list[dict[str, str | int | None]] = []
+    all_data: list[dict[str, str | int | None]] = []
+    seen_property_ids: set[int] = set()
+
+    today_utc: date = date.today()
+    date_from: date = today_utc - timedelta(days=days - 1)
+    max_consecutive_old = 3
+
+    with Session() as session:
+        for search_url in SEARCH_URLS:
+            consecutive_old = 0
+            print(f'Search URL: {search_url}')
+
+            for page in range(1, pages + 1):
+                try:
+                    time.sleep(1)
+                    json_data: dict | None = get_json(
+                        session=session,
+                        headers=headers,
+                        page=page,
+                        url=search_url,
+                    )
+
+                except Exception as ex:
+                    print(f'{search_url} page {page}: {ex}')
+                    continue
+
+                if not json_data:
+                    print(f'{search_url} page {page}: not json_data')
+                    continue
+
+                items: list | None = (
+                    json_data
+                    .get('pageProps', {})
+                    .get('searchResult', {})
+                    .get('listings')
+                )
+
+                if not items:
+                    print(f'{search_url} page {page}: not items')
+                    break
+
+                stop_category = False
+
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+
+                    properties: dict | None = item.get('property')
+                    if not isinstance(properties, dict) or not properties:
+                        continue
+
+                    property_id: int | None = properties.get('id')
+                    if property_id in seen_property_ids:
+                        continue
+
+                    listed_date: str | None = properties.get('listed_date')
+                    if not listed_date:
+                        continue
+
+                    try:
+                        date_obj: datetime = datetime.strptime(listed_date, '%Y-%m-%dT%H:%M:%SZ')
+                    except (TypeError, ValueError) as ex:
+                        print(f'page {page}: skip property_id={property_id} because of date {listed_date}: {ex}')
+                        continue
+                    listed_date_only: date = date_obj.date()
+
+                    if not (date_from <= listed_date_only <= today_utc):
+                        consecutive_old += 1
+                        if consecutive_old >= max_consecutive_old:
+                            stop_category = True
+                            break
+                        continue
+                    else:
+                        consecutive_old = 0
+
+                    seen_property_ids.add(property_id)
+                    property_type: str | None = properties.get('property_type')
+                    title: str | None = clean_text(properties.get('title'))
+
+                    location: dict = properties.get('location') or {}
+                    full_name: str | None = location.get('full_name')
+                    building_type: str | None = location.get('type')
+                    building_name: str | None = location.get('name')
+
+                    price_info: dict = properties.get('price') or {}
+                    price: int | None = price_info.get('value')
+                    currency: str | None = price_info.get('currency')
+
+                    bedrooms: int | None = properties.get('bedrooms')
+                    bathrooms: int | None = properties.get('bathrooms')
+
+                    size_info: dict = properties.get('size') or {}
+                    size: int | None = size_info.get('value')
+                    unit: str | None = size_info.get('unit')
+
+                    completion_status: str | None = properties.get('completion_status')
+                    description: str | None = clean_text(properties.get('description'))
+                    amenities: str = ', '.join(clean_text(a) for a in properties.get('amenity_names', []))
+                    property_url: str | None = properties.get('share_url')
+
+                    image_urls: str = ', '.join(
+                        image.get('medium') for image in properties.get('images', []) if image.get('medium')
+                    )
+
+                    broker: dict = properties.get('broker') or {}
+                    broker_name: str | None = broker.get('name')
+                    broker_address: str | None = broker.get('address')
+                    broker_email: str | None = broker.get('email')
+                    broker_phone: str | None = broker.get('phone')
+
+                    row = {
+                        'listed_date': date_obj,
+                        'property_id': property_id,
+                        'property_type': property_type,
+                        'title': title,
+                        'full_name': full_name,
+                        'building_type': building_type,
+                        'building_name': building_name,
+                        'price': price,
+                        'currency': currency,
+                        'bedrooms': bedrooms,
+                        'bathrooms': bathrooms,
+                        'size': size,
+                        'size_unit': unit,
+                        'completion_status': completion_status,
+                        'description': description,
+                        'amenities': amenities,
+                        'property_url': property_url,
+                        'image_urls': image_urls,
+                        'broker_name': broker_name,
+                        'broker_address': broker_address,
+                        'broker_email': broker_email,
+                        'broker_phone': broker_phone,
+                    }
+                    result_data.append(row)
+                    all_data.append(row)
+
+                print(f'Processed: {search_url} page {page}/{pages}')
+
+                if len(result_data) >= batch_size:
+                    save_excel(result_data, today_utc)
+                    result_data.clear()
+
+                if stop_category:
+                    print(f'{search_url}: old listings reached, moving to next category')
+                    break
+
+        if result_data:
+            save_excel(result_data, today_utc)
+
+    return all_data
 
 
 # =============================================================================
