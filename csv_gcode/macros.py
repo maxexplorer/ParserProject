@@ -54,7 +54,7 @@ G00 X202.79 Y22.274
 """
 
 
-def end_truss_finish(y: float) -> str:
+def end_truss_end(y: float) -> str:
     return f"""G90
 G00 X0 Y{y}
 G91
@@ -195,13 +195,14 @@ G00 X-201.9 Y0.0
 M3
 G01 X204.0
 M5
+G00 X-2.1
 """
 
 
 macros = {
     'DIMPLE': dimple,
     'END_TRUSS_START': end_truss_start,
-    'END_TRUSS_FINISH': end_truss_finish,
+    'END_TRUSS_END': end_truss_end,
     'LIP NOTCH': lip_notch,
     'WEB NOTCH': web_notch,
     'SERVICE': service,
@@ -211,7 +212,7 @@ macros = {
 
 command_map = {
     'DIMPLE': 'DIMPLE',
-    'END_TRUSS': ('END_TRUSS_START', 'END_TRUSS_FINISH'),
+    'END_TRUSS': ('END_TRUSS_START', 'END_TRUSS_END'),
     'LIP NOTCH': 'LIP NOTCH',
     'WEB NOTCH': 'WEB NOTCH',
     'SERVICE': 'SERVICE',

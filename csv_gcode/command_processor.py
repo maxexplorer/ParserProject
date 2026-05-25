@@ -36,14 +36,14 @@ class CommandProcessor:
 
             # команда имеет tuple (start_macro, finish_macro)
             if isinstance(macro_key, tuple):
-                start_macro, finish_macro = macro_key
+                start_macro, end_macro = macro_key
 
                 # первая команда — START
                 if i == 0:
-                    self.blocks.extend(macros[start_macro](delta_y).splitlines())
+                    self.blocks.extend(macros[end_macro](delta_y).splitlines())
                 # последняя команда — FINISH
                 elif i == len(commands_with_delta) - 1:
-                    self.blocks.extend(macros[finish_macro](delta_y).splitlines())
+                    self.blocks.extend(macros[start_macro](delta_y).splitlines())
 
             # обычная команда
             else:
