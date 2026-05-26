@@ -128,7 +128,6 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
             }
 
             cookies = {
-                'wbx-validation-key': '042261a8-d7e3-4266-8343-31fb35d5a295',
                 '_wbauid': '7163656111752145777',
                 'external-locale': 'ru',
                 '_ga': 'GA1.1.1098996660.1758261326',
@@ -136,8 +135,9 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '_cp': '1',
                 '__zzatw-wb': 'MDA0dBA=Fz2+aQ==',
                 'cfidsw-wb': '/Cb1YoYAOLI/SCEhfiZq8bnsN+vkHtARk4gqgA18RS6OXNFdyhYUxbJ4hZrUcizLbBeETTj0/ZNVni2V+7QENlraGmsmO1zjyyprzCY8z9eb+NqimrZ2P+RKbDzDFrw5EOPOcl037573sXLDBCbz8vyJxMSTii0QuDR/',
-                'x_wbaas_token': '1.1000.e873d6463f25494cba453b44a7997f22.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3NzkzNjY0MTh8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzc5MjM2ODE4fDE=.MEQCIGOpo44XkAOFMec5TlcRD4o8ADuK269YjMfCnzURIcPWAiBk+xVg6d/KCE8R5uh2DPku7lXC1aAaEr6mR6YN1UiTGw==',
                 'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
+                'x_wbaas_token': '1.1000.e873d6463f25494cba453b44a7997f22.MTV8MTg1LjE2LjI4LjR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Nzk5NzU3NTJ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDF8M3wxNzc5ODQ2MTUyfDE=.MEYCIQDGsWJwtr3Y447lp5+gzbCPH3jV31oZ0MwnECyKJpNv2AIhAJKqWxGIWmUgQeYRAuCNQG7pV1c2zZmJzcvQYmy4gHKG',
+                'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
             }
 
             try:
