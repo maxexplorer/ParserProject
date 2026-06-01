@@ -136,8 +136,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 '__zzatw-wb': 'MDA0dBA=Fz2+aQ==',
                 'cfidsw-wb': '/Cb1YoYAOLI/SCEhfiZq8bnsN+vkHtARk4gqgA18RS6OXNFdyhYUxbJ4hZrUcizLbBeETTj0/ZNVni2V+7QENlraGmsmO1zjyyprzCY8z9eb+NqimrZ2P+RKbDzDFrw5EOPOcl037573sXLDBCbz8vyJxMSTii0QuDR/',
                 'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
-                'x_wbaas_token': '1.1000.e873d6463f25494cba453b44a7997f22.MTV8MTg1LjE2LjI4LjR8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3Nzk5NzU3NTJ8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDF8M3wxNzc5ODQ2MTUyfDE=.MEYCIQDGsWJwtr3Y447lp5+gzbCPH3jV31oZ0MwnECyKJpNv2AIhAJKqWxGIWmUgQeYRAuCNQG7pV1c2zZmJzcvQYmy4gHKG',
                 'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
+                'x_wbaas_token': '1.1000.fd0c089b48bf44ad91cb625d8e3431aa.MHw0NS4xMjkuMTQxLjE5NXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ4LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MDU3MjMyM3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MXwzfDE3ODA0NDI3MjN8MQ==.MEYCIQDAKvDkfy7HM+IT1RwAILRZCzFkSWW7VQgFJCzQwahLMAIhAKWJjWGGg0Rset/L4gd43AAfWfDSzXlvYUGvVaf4lluQ',
             }
 
             try:
