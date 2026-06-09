@@ -20,9 +20,9 @@ def process_excel_file(path: str) -> dict:
         row = df.iloc[i]
 
         # Строка группы
-        if pd.notna(row[5]) and pd.notna(row[6]):
+        if pd.notna(row[6]) and pd.notna(row[7]):
             try:
-                current_price = float(str(row[6]).replace(' ', '').replace(',', '.'))
+                current_price = float(str(row[7]).replace(' ', '').replace(',', '.'))
             except Exception:
                 current_price = None
 
@@ -57,12 +57,12 @@ def process_excel_file(path: str) -> dict:
         row = df.iloc[i]
 
         # Строка группы
-        if pd.notna(row[5]) and pd.notna(row[6]):
+        if pd.notna(row[6]) and pd.notna(row[7]):
             continue
 
         if isinstance(row[2], str) and row[2].startswith('BNN'):
             article = row[2]
-            series = str(row[7]).strip() if pd.notna(row[7]) else None
+            series = str(row[8]).strip() if pd.notna(row[8]) else None
             serial_rows.append({
                 'Артикул': article,
                 'Серия': series
