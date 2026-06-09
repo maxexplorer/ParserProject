@@ -40,7 +40,6 @@ def process_excel_file(path: str) -> dict:
         except Exception:
             return None
 
-    item_rows = []
     summary_by_article = {}
 
     # Item rows: article in F, quantity in G, price in H.
@@ -54,11 +53,6 @@ def process_excel_file(path: str) -> dict:
         quantity = get_number(row[qty_col]) or 0
         price = get_number(row[price_col])
         name = str(row[name_col]).strip() if pd.notna(row[name_col]) else None
-
-        item_rows.append({
-            'article': article,
-            'quantity': int(quantity) if quantity.is_integer() else quantity,
-        })
 
         if article not in summary_by_article:
             summary_by_article[article] = {
@@ -82,35 +76,46 @@ def process_excel_file(path: str) -> dict:
         row[col_quantity] = int(quantity) if float(quantity).is_integer() else quantity
         summary.append(row)
 
-    serial_rows = []
     serial_count_by_article = {}
 
-    # Serial rows: article in C, serial in I.
+    # First count real serial rows: article in C, serial in I.
     for i in range(len(df)):
         row = df.iloc[i]
         article = get_article(row[serial_article_col])
 
-        if not article:
-            continue
+        if article:
+            serial_count_by_article[article] = serial_count_by_article.get(article, 0) + 1
 
-        series = str(row[serial_col]).strip() if pd.notna(row[serial_col]) else None
-        serial_rows.append({
-            col_article: article,
-            col_series: series,
-        })
-        serial_count_by_article[article] = serial_count_by_article.get(article, 0) + 1
+    serial_rows = []
+    added_blank_serials = {}
 
-    # Some top/bottom item rows have no serial breakdown. Add blank serials
-    # up to the item quantity so both output blocks keep the same total count.
-    for item in item_rows:
-        article = item['article']
-        quantity = int(item['quantity'])
-        found = serial_count_by_article.get(article, 0)
+    # Build serial output in source order. Some item rows have no serial
+    # breakdown, so blank serials are inserted at the item row, not at the end.
+    for i in range(len(df)):
+        row = df.iloc[i]
+        item_article = get_article(row[item_article_col])
 
-        for _ in range(max(quantity - found, 0)):
+        if item_article:
+            quantity = int(get_number(row[qty_col]) or 0)
+            real_serials = serial_count_by_article.get(item_article, 0)
+            already_added = added_blank_serials.get(item_article, 0)
+            missing = max(quantity - real_serials - already_added, 0)
+
+            for _ in range(missing):
+                serial_rows.append({
+                    col_article: item_article,
+                    col_series: None,
+                })
+
+            added_blank_serials[item_article] = already_added + missing
+
+        serial_article = get_article(row[serial_article_col])
+
+        if serial_article:
+            series = str(row[serial_col]).strip() if pd.notna(row[serial_col]) else None
             serial_rows.append({
-                col_article: article,
-                col_series: None,
+                col_article: serial_article,
+                col_series: series,
             })
 
     return {'summary': summary, 'serials': serial_rows}
