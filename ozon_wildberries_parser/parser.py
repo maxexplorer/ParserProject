@@ -137,7 +137,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'cfidsw-wb': '/Cb1YoYAOLI/SCEhfiZq8bnsN+vkHtARk4gqgA18RS6OXNFdyhYUxbJ4hZrUcizLbBeETTj0/ZNVni2V+7QENlraGmsmO1zjyyprzCY8z9eb+NqimrZ2P+RKbDzDFrw5EOPOcl037573sXLDBCbz8vyJxMSTii0QuDR/',
                 'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
                 'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
-                'x_wbaas_token': '1.1000.fd0c089b48bf44ad91cb625d8e3431aa.MHw0NS4xMjkuMTQxLjE5NXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ4LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MTE3NDcxMXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18M3wzfDE3ODEwNDUxMTF8MQ==.MEUCIQCv/dvf3/mB+hj1CFB1wcl6Qp4qXbb3EWo4a0t+T7OWlQIgBJEATrCUHkGrGS0s9p3ZCU7isT/vRaM3wKqGorakgbI=',
+                'tours-city-id': '274286',
+                'x_wbaas_token': '1.1000.0dd273ce44f44bf88a5714d5ea41b016.MHwxMDkuMTY4LjIwNC43OXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ5LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MTkzNjU1MXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MXwzfDE3ODE4MDY5NTF8MQ==.MEYCIQCdZqg5DeGxKMhN6fJsi97wLWEWVNenvBjN3Gq7TqJYCwIhAMIb7Cbmk4lAhLKIyrHM46SKuik5k0PBH/J12qZB4z44',
             }
 
             try:
