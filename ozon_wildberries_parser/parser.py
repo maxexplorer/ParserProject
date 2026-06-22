@@ -138,7 +138,7 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
                 'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
                 'tours-city-id': '274286',
-                'x_wbaas_token': '1.1000.0dd273ce44f44bf88a5714d5ea41b016.MHwxMDkuMTY4LjIwNC43OXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ5LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MTkzNjU1MXxyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MXwzfDE3ODE4MDY5NTF8MQ==.MEYCIQCdZqg5DeGxKMhN6fJsi97wLWEWVNenvBjN3Gq7TqJYCwIhAMIb7Cbmk4lAhLKIyrHM46SKuik5k0PBH/J12qZB4z44',
+                'x_wbaas_token': '1.1000.6896bcfa48aa4e4a9957bdd4965090d9.MHw0Ni42My4xNzQuODd8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OS4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODIzNjc0NzR8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgyMjM3ODc0fDE=.MEQCIHr4KOFY9dBL2MMkLAsNi6jlqm77ZAp8eIwQdxr1XMenAiAYlHPgAfBio4w64728FKfy8BnCB6cftiDk9yqLmIyC3w==',
             }
 
             try:
