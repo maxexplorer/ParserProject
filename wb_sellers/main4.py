@@ -100,7 +100,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
     result_list = []
 
-    pause = 5
+    pause = 60
 
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
