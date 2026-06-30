@@ -150,8 +150,6 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
                     break
 
-                print(f'Обработан продавец: {seller_id}')
-
                 if response.status_code != 200:
                     print(f'Продавец {seller_id}: статус ответа {response.status_code}')
                     continue
@@ -159,11 +157,13 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 json_data = response.json()
                 data_products = json_data.get('products', [])
                 if not data_products:
+                    print(f'Обработан продавец: {seller_id}')
                     continue
 
                 result = get_registration_date_and_inn(session, url, seller_id)
 
                 if result is None:
+                    print(f'Обработан продавец ID: {seller_id}')
                     continue
 
                 result_list.append(
@@ -172,6 +172,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                         'ИНН': result[1]
                     }
                 )
+                print(f'Обработан продавец ID: {seller_id}, inn: {result[1]}')
 
             except Exception as ex:
                 print(f'{url}: {ex}')
