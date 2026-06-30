@@ -157,7 +157,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 json_data = response.json()
                 data_products = json_data.get('products', [])
                 if not data_products:
-                    print(f'Обработан продавец: {seller_id}')
+                    print(f'Обработан продавец ID: {seller_id}')
                     continue
 
                 result = get_registration_date_and_inn(session, url, seller_id)
