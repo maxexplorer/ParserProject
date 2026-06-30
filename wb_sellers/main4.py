@@ -47,14 +47,14 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'origin': 'https://www.wildberries.ru',
         'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/seller/1422974',
-        'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
+        'referer': 'https://www.wildberries.ru/seller/840704',
+        'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
         'x-client-name': 'site',
     }
 
@@ -107,17 +107,18 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
             headers = {
                 'accept': '*/*',
                 'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                'origin': 'https://www.wildberries.ru',
+                'deviceid': 'site_d65c92c0ae19412c9cf011a89c998cf1',
                 'priority': 'u=1, i',
-                'referer': f'https://www.wildberries.ru/seller/{seller_id}',
-                'sec-ch-ua': '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+                'referer': 'https://www.wildberries.ru/seller/840704',
+                'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"',
                 'sec-fetch-dest': 'empty',
                 'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-site',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
-                'x-client-name': 'site',
+                'sec-fetch-site': 'same-origin',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest',
+                'x-spa-version': '14.15.2',
             }
 
             params = {
@@ -204,8 +205,8 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1_423_230
-    end_id = 5_000_000
+    start_id = 840704
+    end_id = 2_000_000
 
     process_sellers_range(start_id, end_id)
 
