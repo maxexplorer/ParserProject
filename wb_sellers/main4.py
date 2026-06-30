@@ -100,6 +100,8 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
     result_list = []
 
+    pause = 10
+
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
             url = f'https://www.wildberries.ru/seller/{seller_id}'
@@ -131,12 +133,22 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
             }
 
             try:
-                response = session.get(
-                    'https://catalog.wb.ru/sellers/v4/catalog',
-                    params=params,
-                    headers=headers,
-                    timeout=(3, 5)
-                )
+                while True:
+                    time.sleep(0.5)
+                    response = session.get(
+                        'https://catalog.wb.ru/sellers/v4/catalog',
+                        params=params,
+                        headers=headers,
+                        timeout=(3, 5)
+                    )
+
+                    # Если WB ограничил запросы, ждем и повторяем этот же seller_id.
+                    if response.status_code == 429:
+                        print(f'Продавец {seller_id}: статус ответа 429. Пауза {pause} секунд, затем повтор этого же ID')
+                        time.sleep(pause)
+                        continue
+
+                    break
 
                 print(f'Обработан продавец: {seller_id}')
 
@@ -205,7 +217,7 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 840704
+    start_id = 1
     end_id = 2_000_000
 
     process_sellers_range(start_id, end_id)
