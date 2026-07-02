@@ -208,8 +208,6 @@ def get_registration_date_and_inn(seller_id: int) -> dict | None:
         return {
             'Ссылка': f'https://www.wildberries.ru/seller/{seller_id}',
             'ИНН': get_inn(seller_id),
-            'Лет на WB': years_on_wb,
-            'Продано товаров': sale_item_quantity,
         }
 
     return None
@@ -239,8 +237,6 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
             print(f'Продавец {seller_id}: нет товаров')
             continue
 
-        random_pause(INNER_REQUEST_PAUSE_SECONDS)
-
         result = get_registration_date_and_inn(seller_id)
 
         if result is None:
@@ -262,7 +258,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
 def save_excel(data: list[dict]) -> None:
     directory = 'results'
-    file_path = f'{directory}/result_data_main1.xlsx'
+    file_path = f'{directory}/result_data.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
@@ -287,8 +283,8 @@ def save_excel(data: list[dict]) -> None:
 
 
 def main() -> None:
-    start_id = 1
-    end_id = 2_000_000
+    start_id = 4_000_000
+    end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
 
