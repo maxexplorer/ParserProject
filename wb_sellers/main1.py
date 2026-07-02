@@ -8,7 +8,7 @@ from pandas import DataFrame, ExcelWriter, read_excel
 
 
 start_time = datetime.now()
-SELLER_PAUSE_SECONDS = (4, 8)
+SELLER_PAUSE_SECONDS = (1, 8)
 INNER_REQUEST_PAUSE_SECONDS = (1, 3)
 
 cookies = {
@@ -22,7 +22,8 @@ cookies = {
     'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
     'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
     'tours-city-id': '274286',
-    'x_wbaas_token': '1.1000.cda4ebf4f79247e5a29ecd3b015915a7.MHw0NS4xMjkuMTQxLjE5NXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ5LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MzA4NTQyM3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MXwzfDE3ODI5NTU4MjN8MQ==.MEYCIQCJgUm4XWZDnGDG/efbAyqNv9puSCTImPD5NalXi69IGwIhAL4gqaJ4duV8d0VOWNFQeJP7/tqltDnNP33o7Vf04bv5',
+    'x_wbaas_token': '1.1000.572e80c4acca43c489bd3e3ef40f5a0d.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OS4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODMxNTgyNjB8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgzMDI4NjYwfDE=.MEYCIQDqfiQ7E2+7bReujM6pv9ucjDjnyZx/wDa04GDeNco5cAIhAOtyxOEEV8JKd1s+SCs6Mxmj9rHLMbuWPbwwmE1RCxPP',
+    'feedbacks_link_accepted': '1',
 }
 
 seller_page_headers = {
@@ -128,7 +129,6 @@ def seller_has_products(seller_id: int) -> bool:
             response = requests.get(
                 'https://catalog.wb.ru/sellers/v4/catalog',
                 params=params,
-                cookies=cookies,
                 headers=get_catalog_headers(seller_id),
                 timeout=(5, 20),
             )
@@ -158,7 +158,6 @@ def get_inn(seller_id: int) -> str | None:
     try:
         response = requests.get(
             f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
-            cookies=cookies,
             headers=get_api_headers(seller_id),
             timeout=(5, 20),
         )
@@ -177,7 +176,6 @@ def get_registration_date_and_inn(seller_id: int) -> dict | None:
     try:
         response = requests.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
-            cookies=cookies,
             headers=get_api_headers(seller_id),
             timeout=(5, 20),
         )
