@@ -75,9 +75,9 @@ def sleep_if_429(response: requests.Response) -> bool:
 
     retry_after = response.headers.get('Retry-After')
     try:
-        pause = int(retry_after) if retry_after else 60
+        pause = int(retry_after) if retry_after else 5
     except ValueError:
-        pause = 60
+        pause = 5
 
     print(f'429. Пауза {pause} секунд')
     time.sleep(pause)
