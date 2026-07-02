@@ -100,7 +100,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
     result_list = []
 
-    pause = 60
+    pause = 5
 
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
@@ -134,7 +134,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
             try:
                 while True:
-                    time.sleep(1)
+                    # time.sleep(1)
                     response = session.get(
                         'https://catalog.wb.ru/sellers/v4/catalog',
                         params=params,
