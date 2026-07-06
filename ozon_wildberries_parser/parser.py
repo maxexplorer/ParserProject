@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urlunparse
 import requests
 from requests import Session
 
-from new_undetected_chromedriver import Chrome
+from new_undetected_chromedriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,6 +20,50 @@ from bs4 import BeautifulSoup
 import openpyxl
 
 workbook = openpyxl.load_workbook('data/data.xlsx')
+
+def refresh_wb_session(
+        session: Session,
+        headers: dict
+) -> None:
+    """
+    Refreshes WB cookies in the current requests session before API calls.
+    """
+    session.cookies.clear()
+
+    driver = None
+
+    try:
+        driver = init_undetected_chromedriver()
+
+        driver.get(url='https://www.wildberries.ru/')
+        time.sleep(7)
+
+        try:
+            user_agent = driver.execute_script('return navigator.userAgent')
+            if user_agent:
+                headers['user-agent'] = user_agent
+        except Exception:
+            pass
+
+        cookie_names = set()
+
+        for cookie in driver.get_cookies():
+            cookie_names.add(cookie.get('name'))
+            session.cookies.set(
+                name=cookie.get('name'),
+                value=cookie.get('value'),
+                domain=cookie.get('domain'),
+                path=cookie.get('path', '/')
+            )
+
+        if not ({'x_wbaas_token', 'cfidsw-wb', '__zzatw-wb'} & cookie_names):
+            print('refresh_wb_session: WB token cookies not found')
+    except Exception as ex:
+        print(f'refresh_wb_session browser: {ex}')
+    finally:
+        if driver:
+            driver.quit()
+
 
 
 def init_undetected_chromedriver():
@@ -111,6 +155,8 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
     products_ids_list = list()
 
     with Session() as session:
+        refresh_wb_session(session=session, headers=headers)
+
         for page in range(1, pages + 1):
             params = {
                 'appType': '1',
@@ -127,32 +173,32 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                 'suppressSpellcheck': 'false',
             }
 
-            cookies = {
-                '_wbauid': '7163656111752145777',
-                'external-locale': 'ru',
-                '_ga': 'GA1.1.1098996660.1758261326',
-                '_ga_TXRZMJQDFE': 'GS2.1.s1759146135$o7$g0$t1759146135$j60$l0$h0',
-                '_cp': '1',
-                '__zzatw-wb': 'MDA0dBA=Fz2+aQ==',
-                'cfidsw-wb': '/Cb1YoYAOLI/SCEhfiZq8bnsN+vkHtARk4gqgA18RS6OXNFdyhYUxbJ4hZrUcizLbBeETTj0/ZNVni2V+7QENlraGmsmO1zjyyprzCY8z9eb+NqimrZ2P+RKbDzDFrw5EOPOcl037573sXLDBCbz8vyJxMSTii0QuDR/',
-                'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
-                'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
-                'tours-city-id': '274286',
-                'x_wbaas_token': '1.1000.cda4ebf4f79247e5a29ecd3b015915a7.MHw0NS4xMjkuMTQxLjE5NXxNb3ppbGxhLzUuMCAoV2luZG93cyBOVCAxMC4wOyBXaW42NDsgeDY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ5LjAuMC4wIFNhZmFyaS81MzcuMzZ8MTc4MzA4NTQyM3xyZXVzYWJsZXwyfGV5Sm9ZWE5vSWpvaUluMD18MXwzfDE3ODI5NTU4MjN8MQ==.MEYCIQCJgUm4XWZDnGDG/efbAyqNv9puSCTImPD5NalXi69IGwIhAL4gqaJ4duV8d0VOWNFQeJP7/tqltDnNP33o7Vf04bv5',
-            }
-
             try:
                 time.sleep(1)
+
                 response = session.get(
                     'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                     params=params,
                     headers=headers,
-                    cookies=cookies,
                     timeout=60
                 )
 
+                if response.status_code in (401, 403, 429, 498):
+                    refresh_wb_session(session=session, headers=headers)
+                    response = session.get(
+                        'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
+                        params=params,
+                        headers=headers,
+                        timeout=60
+                    )
+
+                if response is None:
+                    print('get_products_ids_wb: empty response')
+                    continue
+
                 if response.status_code != 200:
                     print(f'get_products_ids_wb: status_code {response.status_code}')
+                    continue
 
             except Exception as ex:
                 print(f'get_products_ids_wb: {ex}')

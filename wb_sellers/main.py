@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+from random import randint
 
 from requests import Session
 from pandas import DataFrame, ExcelWriter, read_excel
@@ -59,6 +60,7 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
     }
 
     try:
+        time.sleep(randint(3, 5))
         response = session.get(
             f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
             headers=headers,
