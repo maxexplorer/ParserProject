@@ -70,7 +70,7 @@ def init_undetected_chromedriver():
     """
     Инициализирует undetected_chromedriver, возвращает драйвер
     """
-    driver = Chrome(version_main=149)
+    driver = Chrome(version_main=150)
     driver.maximize_window()
     driver.implicitly_wait(15)
 
