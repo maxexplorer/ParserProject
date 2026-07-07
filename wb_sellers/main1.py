@@ -22,8 +22,8 @@ cookies = {
     'routeb': '1779107226.277.2237.497709|fc3b37d75a18d923fd0e9c7589719997',
     'device_id': '2fabf07d-d2d6-4030-a541-d7db3985e3d1',
     'tours-city-id': '274286',
-    'x_wbaas_token': '1.1000.572e80c4acca43c489bd3e3ef40f5a0d.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0OS4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODMxNTgyNjB8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgzMDI4NjYwfDE=.MEYCIQDqfiQ7E2+7bReujM6pv9ucjDjnyZx/wDa04GDeNco5cAIhAOtyxOEEV8JKd1s+SCs6Mxmj9rHLMbuWPbwwmE1RCxPP',
     'feedbacks_link_accepted': '1',
+    'x_wbaas_token': '1.1000.258e67699ccf48eab059401c32394ea6.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE1MC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODM2NjM0ODh8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgzNTMzODg4fDE=.MEQCIFPSRo3bUiyS9kjUxLz1qwV7GNGfowtoQz6ADKgUKwikAiAGHY0UqhUDFXiYerIHIDPNbohfHaODzbrfYaG3WCaw8Q==',
 }
 
 seller_page_headers = {
@@ -272,9 +272,9 @@ def save_excel(data: list[dict]) -> None:
         if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
             ws.append(list(data[0].keys()))
 
-    headers = [cell.value for cell in ws[1]]
+    excel_headers = [cell.value for cell in ws[1]]
     for row in data:
-        ws.append([row.get(header) for header in headers])
+        ws.append([row.get(header) for header in excel_headers])
 
     wb.save(file_path)
 

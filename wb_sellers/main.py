@@ -48,7 +48,7 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'origin': 'https://www.wildberries.ru',
         'priority': 'u=1, i',
-        'referer': 'https://www.wildberries.ru/seller/840704',
+        'referer': f'https://www.wildberries.ru/seller/{seller_id}',
         'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
@@ -113,7 +113,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
                 'deviceid': 'site_d65c92c0ae19412c9cf011a89c998cf1',
                 'priority': 'u=1, i',
-                'referer': 'https://www.wildberries.ru/seller/840704',
+                'referer': f'https://www.wildberries.ru/seller/{seller_id}',
                 'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"',
@@ -211,9 +211,9 @@ def save_excel(data: list[dict]) -> None:
         if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
             ws.append(list(data[0].keys()))
 
-    headers = [cell.value for cell in ws[1]]
+    excel_headers = [cell.value for cell in ws[1]]
     for row in data:
-        ws.append([row.get(header) for header in headers])
+        ws.append([row.get(header) for header in excel_headers])
 
     wb.save(file_path)
 
