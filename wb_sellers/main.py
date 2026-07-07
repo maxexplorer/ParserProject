@@ -136,7 +136,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
             try:
                 while True:
-                    # time.sleep(1)
+                    time.sleep(1)
                     response = session.get(
                         'https://catalog.wb.ru/sellers/v4/catalog',
                         params=params,

@@ -256,7 +256,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
 def save_excel(data: list[dict]) -> None:
     directory = 'results'
-    file_path = f'{directory}/result_data.xlsx'
+    file_path = f'{directory}/result_data_250_000_000.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
@@ -282,8 +282,8 @@ def save_excel(data: list[dict]) -> None:
 
 
 def main() -> None:
-    start_id = 4_000_000
-    end_id = 5_000_000
+    start_id = 250_034_461
+    end_id = 251_000_000
 
     process_sellers_range(start_id, end_id)
 
