@@ -3,47 +3,16 @@ import time
 from datetime import datetime
 from random import randint
 
-from requests import Session
+from requests import Response, Session
 from openpyxl import Workbook, load_workbook
 
 start_time = datetime.now()
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
+DEFAULT_429_PAUSE = 5
 
 
-def get_inn(session: Session, headers: dict, seller_id: int) -> str | None:
-    """
-    Получает ИНН продавца по его ID через статичный JSON-эндпоинт WB.
-
-    :param session: Активная сессия requests
-    :param headers: Заголовки HTTP-запроса
-    :param seller_id: ID продавца (строка)
-    :return: ИНН как строка или None, если не найден
-    """
-    try:
-        response = session.get(
-            f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
-            headers=headers,
-            timeout=(3, 5)
-        )
-        json_data = response.json()
-        inn = json_data.get('inn')
-        return inn
-    except Exception as ex:
-        print(f'Ошибка при получении ИНН для {seller_id}: {ex}')
-        return None
-
-
-def get_registration_date_and_inn(session: Session, url: str, seller_id: int) -> tuple[str, str] | None:
-    """
-    Получает дату регистрации и общее количество продаж продавца.
-    Проверяет, является ли продавец активным согласно условиям.
-
-    :param session: Активная HTTP-сессия
-    :param headers: Заголовки запроса
-    :param seller_id: ID продавца
-    :return: Кортеж (ссылка на продавца, ИНН) или None, если продавец неактивен или ошибка
-    """
-
-    headers = {
+def get_api_headers(seller_id: int) -> dict:
+    return {
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         'origin': 'https://www.wildberries.ru',
@@ -55,20 +24,103 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+        'user-agent': USER_AGENT,
         'x-client-name': 'site',
     }
 
+
+def get_catalog_headers(seller_id: int) -> dict:
+    headers = get_api_headers(seller_id)
+    headers.update({
+        'deviceid': 'site_d65c92c0ae19412c9cf011a89c998cf1',
+        'sec-fetch-site': 'same-origin',
+        'x-requested-with': 'XMLHttpRequest',
+        'x-spa-version': '14.15.2',
+    })
+    return headers
+
+
+def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
+    if response.status_code != 429:
+        return False
+
+    retry_after = response.headers.get('Retry-After')
     try:
+        pause = int(retry_after) if retry_after else DEFAULT_429_PAUSE
+    except ValueError:
+        pause = DEFAULT_429_PAUSE
+
+    print(f'Продавец {seller_id}: {request_name} вернул 429. Пауза {pause} секунд, затем повтор')
+    time.sleep(pause)
+    return True
+
+
+def get_inn(session: Session, seller_id: int) -> str | None:
+    """
+    Получает ИНН продавца по его ID через статичный JSON-эндпоинт WB.
+
+    :param session: Активная сессия requests
+    :param seller_id: ID продавца (строка)
+    :return: ИНН как строка или None, если не найден
+    """
+    for _ in range(3):
+        try:
+            response = session.get(
+                f'https://static-basket-01.wbbasket.ru/vol0/data/supplier-by-id/{seller_id}.json',
+                headers=get_api_headers(seller_id),
+                timeout=(3, 5)
+            )
+
+            if sleep_if_429(response, seller_id, 'запрос ИНН'):
+                continue
+
+            if response.status_code != 200:
+                print(f'Продавец {seller_id}: статус ИНН {response.status_code}')
+                return None
+
+            json_data = response.json()
+            inn = json_data.get('inn')
+            return inn
+        except Exception as ex:
+            print(f'Ошибка при получении ИНН для {seller_id}: {ex}')
+            time.sleep(DEFAULT_429_PAUSE)
+
+    return None
+
+
+def get_registration_date_and_inn(session: Session, seller_id: int) -> str | None:
+    """
+    Получает дату регистрации и общее количество продаж продавца.
+    Проверяет, является ли продавец активным согласно условиям.
+
+    :param session: Активная HTTP-сессия
+    :param seller_id: ID продавца
+    :return: ИНН или None, если продавец неактивен или ошибка
+    """
+    json_data = None
+    for _ in range(3):
         time.sleep(randint(3, 5))
-        response = session.get(
-            f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
-            headers=headers,
-            timeout=(3, 5)
-        )
-        json_data = response.json()
-    except Exception as ex:
-        print(f'Ошибка при получении данных о регистрации для {seller_id}: {ex}')
+        try:
+            response = session.get(
+                f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
+                headers=get_api_headers(seller_id),
+                timeout=(3, 5)
+            )
+
+            if sleep_if_429(response, seller_id, 'запрос статистики'):
+                continue
+
+            if response.status_code != 200:
+                print(f'Продавец {seller_id}: статус статистики {response.status_code}')
+                return None
+
+            json_data = response.json()
+            break
+        except Exception as ex:
+            print(f'Ошибка при получении данных о регистрации для {seller_id}: {ex}')
+            time.sleep(DEFAULT_429_PAUSE)
+
+    if json_data is None:
         return None
 
     registration_date = json_data.get('registrationDate')
@@ -84,10 +136,11 @@ def get_registration_date_and_inn(session: Session, url: str, seller_id: int) ->
                 (years_on_wb == 2 and sale_item_quantity >= 4001) or
                 (years_on_wb >= 3 and sale_item_quantity >= 9001)
         ):
-            inn = get_inn(session, headers, seller_id)
-            return url, inn
+            return get_inn(session, seller_id)
 
         return None
+
+    return None
 
 
 def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> None:
@@ -102,29 +155,8 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
     result_list = []
 
-    pause = 5
-
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
-            url = f'https://www.wildberries.ru/seller/{seller_id}'
-
-            headers = {
-                'accept': '*/*',
-                'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                'deviceid': 'site_d65c92c0ae19412c9cf011a89c998cf1',
-                'priority': 'u=1, i',
-                'referer': f'https://www.wildberries.ru/seller/{seller_id}',
-                'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
-                'x-requested-with': 'XMLHttpRequest',
-                'x-spa-version': '14.15.2',
-            }
-
             params = {
                 'appType': '1',
                 'curr': 'rub',
@@ -140,14 +172,11 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                     response = session.get(
                         'https://catalog.wb.ru/sellers/v4/catalog',
                         params=params,
-                        headers=headers,
+                        headers=get_catalog_headers(seller_id),
                         timeout=(3, 5)
                     )
 
-                    # Если WB ограничил запросы, ждем и повторяем этот же seller_id.
-                    if response.status_code == 429:
-                        print(f'Продавец {seller_id}: статус ответа 429. Пауза {pause} секунд, затем повтор этого же ID')
-                        time.sleep(pause)
+                    if sleep_if_429(response, seller_id, 'запрос каталога'):
                         continue
 
                     break
@@ -162,22 +191,22 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                     print(f'Обработан продавец ID: {seller_id}')
                     continue
 
-                result = get_registration_date_and_inn(session, url, seller_id)
+                inn = get_registration_date_and_inn(session, seller_id)
 
-                if result is None:
+                if inn is None:
                     print(f'Обработан продавец ID: {seller_id}')
                     continue
 
                 result_list.append(
                     {
-                        'Ссылка': result[0],
-                        'ИНН': result[1]
+                        'Ссылка': f'https://www.wildberries.ru/seller/{seller_id}',
+                        'ИНН': inn
                     }
                 )
-                print(f'Обработан продавец ID: {seller_id}, inn: {result[1]}')
+                print(f'Обработан продавец ID: {seller_id}, inn: {inn}')
 
             except Exception as ex:
-                print(f'{url}: {ex}')
+                print(f'https://www.wildberries.ru/seller/{seller_id}: {ex}')
                 continue
 
             if len(result_list) >= batch_size:
@@ -225,8 +254,8 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 1
-    end_id = 2_000_000
+    start_id = 250_034_461
+    end_id = 251_000_000
 
     process_sellers_range(start_id, end_id)
 
