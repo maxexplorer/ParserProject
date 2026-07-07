@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 import requests
-from pandas import DataFrame, ExcelWriter, read_excel
+from openpyxl import Workbook, load_workbook
 
 
 start_time = datetime.now()
@@ -76,9 +76,9 @@ def sleep_if_429(response: requests.Response) -> bool:
 
     retry_after = response.headers.get('Retry-After')
     try:
-        pause = int(retry_after) if retry_after else 5
+        pause = int(retry_after) if retry_after else 10
     except ValueError:
-        pause = 5
+        pause = 10
 
     print(f'429. Пауза {pause} секунд')
     time.sleep(pause)
@@ -261,21 +261,22 @@ def save_excel(data: list[dict]) -> None:
     os.makedirs(directory, exist_ok=True)
 
     if not os.path.exists(file_path):
-        with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name='Sellers', index=False)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Sellers'
+        ws.append(list(data[0].keys()))
+    else:
+        wb = load_workbook(file_path)
+        ws = wb['Sellers'] if 'Sellers' in wb.sheetnames else wb.active
 
-    df_existing = read_excel(file_path, sheet_name='Sellers')
-    num_existing_rows = len(df_existing.index)
+        if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
+            ws.append(list(data[0].keys()))
 
-    new_df = DataFrame(data)
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(
-            writer,
-            startrow=num_existing_rows + 1,
-            header=(num_existing_rows == 0),
-            sheet_name='Sellers',
-            index=False,
-        )
+    headers = [cell.value for cell in ws[1]]
+    for row in data:
+        ws.append([row.get(header) for header in headers])
+
+    wb.save(file_path)
 
     print(f'Сохранено {len(data)} записей в {file_path}')
 
