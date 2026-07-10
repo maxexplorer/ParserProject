@@ -122,9 +122,10 @@ def get_registration_date_and_inn(session: Session, seller_id: int) -> str | Non
 
         # Проверка условий "активности"
         if (
-                (years_on_wb == 1 and sale_item_quantity >= 1000) or
-                (years_on_wb == 2 and sale_item_quantity >= 4001) or
-                (years_on_wb >= 3 and sale_item_quantity >= 9001)
+                (years_on_wb == 0 and sale_item_quantity >= 2000) or
+                (years_on_wb == 1 and sale_item_quantity >= 4000) or
+                (years_on_wb == 2 and sale_item_quantity >= 8000) or
+                (years_on_wb >= 3 and sale_item_quantity >= 15000)
         ):
             return get_inn(session, seller_id)
 
