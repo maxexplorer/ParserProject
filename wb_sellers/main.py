@@ -97,30 +97,20 @@ def get_registration_date_and_inn(session: Session, seller_id: int) -> str | Non
     :param seller_id: ID продавца
     :return: ИНН или None, если продавец неактивен или ошибка
     """
-    json_data = None
-    for _ in range(3):
-        time.sleep(randint(3, 5))
-        try:
-            response = session.get(
-                f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
-                headers=get_api_headers(seller_id),
-                timeout=(3, 5)
-            )
+    try:
+        response = session.get(
+            f'https://suppliers-shipment-2.wildberries.ru/api/v1/suppliers/{seller_id}',
+            headers=get_api_headers(seller_id),
+            timeout=(3, 5)
+        )
 
-            if sleep_if_429(response, seller_id, 'запрос статистики'):
-                continue
+        if response.status_code != 200:
+            print(f'Продавец {seller_id}: статус статистики {response.status_code}')
+            return None
 
-            if response.status_code != 200:
-                print(f'Продавец {seller_id}: статус статистики {response.status_code}')
-                return None
-
-            json_data = response.json()
-            break
-        except Exception as ex:
-            print(f'Ошибка при получении данных о регистрации для {seller_id}: {ex}')
-            time.sleep(DEFAULT_429_PAUSE)
-
-    if json_data is None:
+        json_data = response.json()
+    except Exception as ex:
+        print(f'Ошибка при получении данных о регистрации для {seller_id}: {ex}')
         return None
 
     registration_date = json_data.get('registrationDate')
@@ -168,7 +158,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
 
             try:
                 while True:
-                    time.sleep(1)
+                    time.sleep(randint(1, 3))
                     response = session.get(
                         'https://catalog.wb.ru/sellers/v4/catalog',
                         params=params,
