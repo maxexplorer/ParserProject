@@ -220,7 +220,7 @@ def save_excel(data: list[dict]) -> None:
     :param data: Список словарей с данными о продавцах
     """
     directory = 'results'
-    file_path = f'{directory}/result_data.xlsx'
+    file_path = f'{directory}/result_data_4_000_000.xlsx'
 
     os.makedirs(directory, exist_ok=True)
 
@@ -250,8 +250,8 @@ def main() -> None:
     Точка входа в программу. Запускает обработку продавцов в заданном диапазоне.
     """
     # Укажи нужный диапазон ID
-    start_id = 250_034_461
-    end_id = 251_000_000
+    start_id = 4_011_731
+    end_id = 4_300_000
 
     process_sellers_range(start_id, end_id)
 
