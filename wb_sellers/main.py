@@ -55,6 +55,17 @@ def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
     return True
 
 
+def is_active_seller(years_on_wb: int, sale_item_quantity: int) -> bool:
+    if years_on_wb == 0:
+        return sale_item_quantity >= 2000
+    if years_on_wb == 1:
+        return sale_item_quantity >= 4000
+    if years_on_wb == 2:
+        return sale_item_quantity >= 8000
+
+    return sale_item_quantity >= 15000
+
+
 def get_inn(session: Session, seller_id: int) -> str | None:
     """
     Получает ИНН продавца по его ID через статичный JSON-эндпоинт WB.
@@ -120,13 +131,7 @@ def get_registration_date_and_inn(session: Session, seller_id: int) -> str | Non
         reg_date = datetime.strptime(registration_date, '%Y-%m-%dT%H:%M:%SZ')
         years_on_wb = (datetime.now() - reg_date).days // 365
 
-        # Проверка условий "активности"
-        if (
-                (years_on_wb == 0 and sale_item_quantity >= 2000) or
-                (years_on_wb == 1 and sale_item_quantity >= 4000) or
-                (years_on_wb == 2 and sale_item_quantity >= 8000) or
-                (years_on_wb >= 3 and sale_item_quantity >= 15000)
-        ):
+        if is_active_seller(years_on_wb, sale_item_quantity):
             return get_inn(session, seller_id)
 
         return None
