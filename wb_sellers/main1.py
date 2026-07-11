@@ -19,6 +19,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
+BATCH_SIZE = 50
 
 SupplierData = dict[str, Any]
 SellerResult = dict[str, str]
@@ -205,13 +206,12 @@ def get_active_seller_inn(session: Session, seller_id: int) -> str | None:
     return get_inn(session, seller_id)
 
 
-def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> None:
+def process_sellers_range(start_id: int, end_id: int) -> None:
     """Обработать диапазон продавцов и сохранять найденные ИНН пачками.
 
     Args:
         start_id: Первый seller_id в диапазоне.
         end_id: Последний seller_id в диапазоне включительно.
-        batch_size: Размер пачки результатов перед записью в Excel.
     """
     result_list: list[SellerResult] = []
 
@@ -236,7 +236,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 continue
 
             # Запись пачками снижает риск потери данных при долгом запуске.
-            if len(result_list) >= batch_size:
+            if len(result_list) >= BATCH_SIZE:
                 save_excel(result_list)
                 result_list.clear()
 

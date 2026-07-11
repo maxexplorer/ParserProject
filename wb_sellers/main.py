@@ -9,6 +9,7 @@ from openpyxl import Workbook, load_workbook
 start_time = datetime.now()
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
 DEFAULT_429_PAUSE = 5
+BATCH_SIZE = 50
 
 
 def get_api_headers(seller_id: int) -> dict:
@@ -139,14 +140,13 @@ def get_registration_date_and_inn(session: Session, seller_id: int) -> str | Non
     return None
 
 
-def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> None:
+def process_sellers_range(start_id: int, end_id: int) -> None:
     """
     Обрабатывает продавцов в заданном диапазоне ID.
     Проверяет, активен ли продавец, и сохраняет данные в Excel.
 
     :param start_id: Начальный ID (включительно)
     :param end_id: Конечный ID (включительно)
-    :param batch_size: Размер пакета для записи в Excel
     """
 
     result_list = []
@@ -205,7 +205,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 print(f'https://www.wildberries.ru/seller/{seller_id}: {ex}')
                 continue
 
-            if len(result_list) >= batch_size:
+            if len(result_list) >= BATCH_SIZE:
                 save_excel(result_list)
                 result_list.clear()
 

@@ -17,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000_with_products.xlsx')
 START_ROW = 2
+BATCH_SIZE = 50
 
 
 def get_api_headers(seller_id: int) -> dict[str, str]:
@@ -137,15 +138,22 @@ def save_excel(data: list[SellerRow], file_path: str) -> None:
     directory = os.path.dirname(file_path)
     os.makedirs(directory, exist_ok=True)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Sellers'
+    if not data:
+        return
 
-    if data:
+    if not os.path.exists(file_path):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Sellers'
         headers = list(data[0].keys())
         ws.append(headers)
-        for row in data:
-            ws.append([row.get(header) for header in headers])
+    else:
+        wb = load_workbook(file_path)
+        ws = wb['Sellers'] if 'Sellers' in wb.sheetnames else wb.active
+        headers = [cell.value for cell in ws[1] if isinstance(cell.value, str) and cell.value]
+
+    for row in data:
+        ws.append([row.get(header) for header in headers])
 
     wb.save(file_path)
     print(f'Сохранено {len(data)} записей в {file_path}')
@@ -180,12 +188,16 @@ def filter_sellers_with_products() -> None:
                     continue
 
                 result_list.append(row_data)
+                if len(result_list) >= BATCH_SIZE:
+                    save_excel(result_list, RESULT_FILE_PATH)
+                    result_list.clear()
                 print(f'Продавец {seller_id}: товары есть')
             except Exception as ex:
                 print(f'{seller_url}: {ex}')
                 continue
 
-    save_excel(result_list, RESULT_FILE_PATH)
+    if result_list:
+        save_excel(result_list, RESULT_FILE_PATH)
 
 
 def main() -> None:
