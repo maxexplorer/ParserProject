@@ -273,9 +273,6 @@ def save_excel(data: list[SellerResult]) -> None:
                 header = cell.value
                 if isinstance(header, str) and header:
                     excel_headers.append(header)
-            if not excel_headers:
-                excel_headers = list(data[0].keys())
-                ws.append(excel_headers)
 
     # Используем порядок заголовков из файла, чтобы новые строки совпадали
     # с уже существующей структурой таблицы.
