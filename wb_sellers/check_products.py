@@ -3,11 +3,14 @@ import re
 import time
 from datetime import datetime
 from random import randint
+from typing import Any, TypeAlias
 
 from openpyxl import Workbook, load_workbook
 from requests import Response, Session
 
 start_time = datetime.now()
+SellerRow: TypeAlias = dict[str, Any]
+
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
 DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +18,9 @@ SOURCE_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000_with_products.xlsx')
 
 
-def get_api_headers(seller_id: int) -> dict:
+def get_api_headers(seller_id: int) -> dict[str, str]:
+    """Вернуть базовые HTTP-заголовки для запросов к API продавца Wildberries."""
+
     return {
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -33,7 +38,9 @@ def get_api_headers(seller_id: int) -> dict:
     }
 
 
-def get_catalog_headers(seller_id: int) -> dict:
+def get_catalog_headers(seller_id: int) -> dict[str, str]:
+    """Вернуть HTTP-заголовки для эндпоинта каталога Wildberries."""
+
     headers = get_api_headers(seller_id)
     headers.update({
         'deviceid': 'site_d65c92c0ae19412c9cf011a89c998cf1',
@@ -45,6 +52,8 @@ def get_catalog_headers(seller_id: int) -> dict:
 
 
 def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
+    """Сделать паузу после rate limit и вернуть признак необходимости повтора."""
+
     if response.status_code != 429:
         return False
 
@@ -60,6 +69,8 @@ def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
 
 
 def extract_seller_id(seller_url: str) -> int | None:
+    """Извлечь числовой ID продавца Wildberries из URL страницы продавца."""
+
     match = re.search(r'/seller/(\d+)', seller_url)
     if not match:
         return None
@@ -67,12 +78,15 @@ def extract_seller_id(seller_url: str) -> int | None:
     return int(match.group(1))
 
 
-def load_sellers(file_path: str) -> list[dict]:
+def load_sellers(file_path: str) -> list[SellerRow]:
+    """Загрузить строки продавцов из Excel и пропустить строки без ссылки."""
+
     wb = load_workbook(file_path)
+    # В старых файлах может не быть листа Sellers, поэтому берем активный лист.
     ws = wb['Sellers'] if 'Sellers' in wb.sheetnames else wb.active
     headers = [cell.value for cell in ws[1]]
 
-    sellers = []
+    sellers: list[SellerRow] = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         row_data = dict(zip(headers, row))
         seller_url = row_data.get('Ссылка')
@@ -83,6 +97,8 @@ def load_sellers(file_path: str) -> list[dict]:
 
 
 def has_products(session: Session, seller_id: int) -> bool:
+    """Проверить, есть ли товары продавца Wildberries в поиске каталога."""
+
     params = {
         'appType': '1',
         'curr': 'rub',
@@ -93,6 +109,7 @@ def has_products(session: Session, seller_id: int) -> bool:
     }
 
     while True:
+        # Wildberries может временно ограничивать запросы; повторяем только при 429.
         response = session.get(
             'https://catalog.wb.ru/sellers/v4/catalog',
             params=params,
@@ -113,7 +130,9 @@ def has_products(session: Session, seller_id: int) -> bool:
     return bool(json_data.get('products', []))
 
 
-def save_excel(data: list[dict], file_path: str) -> None:
+def save_excel(data: list[SellerRow], file_path: str) -> None:
+    """Сохранить строки продавцов в Excel, создав целевую папку при необходимости."""
+
     directory = os.path.dirname(file_path)
     os.makedirs(directory, exist_ok=True)
 
@@ -132,22 +151,28 @@ def save_excel(data: list[dict], file_path: str) -> None:
 
 
 def filter_sellers_with_products() -> None:
+    """Отфильтровать продавцов по наличию товаров и записать итоговый файл."""
+
     if not os.path.exists(SOURCE_FILE_PATH):
         print(f'Файл не найден: {SOURCE_FILE_PATH}')
         return
 
     sellers = load_sellers(SOURCE_FILE_PATH)
-    result_list = []
+    result_list: list[SellerRow] = []
 
     with Session() as session:
         for row_data in sellers:
             seller_url = row_data.get('Ссылка')
+            if not isinstance(seller_url, str):
+                continue
+
             seller_id = extract_seller_id(seller_url)
             if seller_id is None:
                 print(f'Не удалось получить seller_id из ссылки: {seller_url}')
                 continue
 
             try:
+                # Разносим запросы по времени, чтобы снизить риск ограничения.
                 time.sleep(randint(1, 3))
                 if not has_products(session, seller_id):
                     print(f'Продавец {seller_id}: товаров нет')
@@ -163,6 +188,8 @@ def filter_sellers_with_products() -> None:
 
 
 def main() -> None:
+    """Запустить проверку наличия товаров и вывести время выполнения."""
+
     filter_sellers_with_products()
 
     execution_time = datetime.now() - start_time
