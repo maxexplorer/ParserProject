@@ -1,19 +1,38 @@
+"""Сбор ИНН активных продавцов Wildberries и сохранение результата в Excel.
+
+Скрипт проходит по диапазону seller_id, получает публичную статистику продавца,
+проверяет активность по возрасту аккаунта и количеству товаров в продаже,
+а затем сохраняет ссылку на продавца и его ИНН в XLSX-файл.
+"""
+
 import os
 import time
 from datetime import datetime
-from random import randint
+from typing import Any
 
 from openpyxl import Workbook, load_workbook
 from requests import Response, Session
 
 start_time = datetime.now()
+
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
 DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
 
+SupplierData = dict[str, Any]
+SellerResult = dict[str, str]
 
-def get_api_headers(seller_id: int) -> dict:
+
+def get_api_headers(seller_id: int) -> dict[str, str]:
+    """Сформировать HTTP-заголовки для запросов к публичным API Wildberries.
+
+    Args:
+        seller_id: Идентификатор продавца Wildberries.
+
+    Returns:
+        Словарь заголовков, имитирующий запросы из браузера.
+    """
     return {
         'accept': '*/*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -32,9 +51,21 @@ def get_api_headers(seller_id: int) -> dict:
 
 
 def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
+    """Обработать ответ 429 Too Many Requests и выдержать паузу перед повтором.
+
+    Args:
+        response: Ответ сервера.
+        seller_id: Идентификатор продавца, для которого выполнялся запрос.
+        request_name: Человекочитаемое название запроса для логов.
+
+    Returns:
+        True, если сервер вернул 429 и была выполнена пауза, иначе False.
+    """
     if response.status_code != 429:
         return False
 
+    # Wildberries может вернуть рекомендуемую задержку в Retry-After.
+    # Если заголовка нет или он некорректный, используем стандартную паузу.
     retry_after = response.headers.get('Retry-After')
     try:
         pause = int(retry_after) if retry_after else DEFAULT_429_PAUSE
@@ -47,6 +78,17 @@ def sleep_if_429(response: Response, seller_id: int, request_name: str) -> bool:
 
 
 def is_active_seller(years_on_wb: int, sale_item_quantity: int) -> bool:
+    """Проверить, считается ли продавец активным по возрасту и числу товаров.
+
+    Чем старше аккаунт продавца, тем выше минимальный порог товаров в продаже.
+
+    Args:
+        years_on_wb: Количество полных лет с даты регистрации продавца.
+        sale_item_quantity: Количество товаров продавца в продаже.
+
+    Returns:
+        True, если продавец проходит порог активности.
+    """
     if years_on_wb == 0:
         return sale_item_quantity >= 2000
     if years_on_wb == 1:
@@ -58,6 +100,15 @@ def is_active_seller(years_on_wb: int, sale_item_quantity: int) -> bool:
 
 
 def get_inn(session: Session, seller_id: int) -> str | None:
+    """Получить ИНН продавца из публичного supplier-by-id endpoint.
+
+    Args:
+        session: Переиспользуемая HTTP-сессия.
+        seller_id: Идентификатор продавца Wildberries.
+
+    Returns:
+        ИНН продавца, если его удалось получить, иначе None.
+    """
     for _ in range(3):
         try:
             response = session.get(
@@ -83,7 +134,17 @@ def get_inn(session: Session, seller_id: int) -> str | None:
     return None
 
 
-def get_supplier_data(session: Session, seller_id: int) -> dict | None:
+def get_supplier_data(session: Session, seller_id: int) -> SupplierData | None:
+    """Получить статистику продавца из suppliers-shipment API.
+
+    Args:
+        session: Переиспользуемая HTTP-сессия.
+        seller_id: Идентификатор продавца Wildberries.
+
+    Returns:
+        JSON-данные продавца в виде словаря или None, если продавец не найден
+        либо запрос завершился ошибкой.
+    """
     params = {
         'curr': 'RUB',
     }
@@ -114,6 +175,16 @@ def get_supplier_data(session: Session, seller_id: int) -> dict | None:
 
 
 def get_active_seller_inn(session: Session, seller_id: int) -> str | None:
+    """Получить ИНН продавца только если он проходит фильтр активности.
+
+    Args:
+        session: Переиспользуемая HTTP-сессия.
+        seller_id: Идентификатор продавца Wildberries.
+
+    Returns:
+        ИНН активного продавца или None, если продавец неактивен либо данные
+        получить не удалось.
+    """
     json_data = get_supplier_data(session, seller_id)
     if not json_data:
         return None
@@ -124,6 +195,7 @@ def get_active_seller_inn(session: Session, seller_id: int) -> str | None:
     if not registration_date or sale_item_quantity is None:
         return None
 
+    # API возвращает дату регистрации в UTC-формате вроде 2024-01-31T12:34:56Z.
     reg_date = datetime.strptime(registration_date, '%Y-%m-%dT%H:%M:%SZ')
     years_on_wb = (datetime.now() - reg_date).days // 365
 
@@ -134,12 +206,18 @@ def get_active_seller_inn(session: Session, seller_id: int) -> str | None:
 
 
 def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> None:
-    result_list = []
+    """Обработать диапазон продавцов и сохранять найденные ИНН пачками.
+
+    Args:
+        start_id: Первый seller_id в диапазоне.
+        end_id: Последний seller_id в диапазоне включительно.
+        batch_size: Размер пачки результатов перед записью в Excel.
+    """
+    result_list: list[SellerResult] = []
 
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
             try:
-                # time.sleep(randint(1, 3))
                 inn = get_active_seller_inn(session, seller_id)
 
                 if inn is None:
@@ -157,6 +235,7 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
                 print(f'https://www.wildberries.ru/seller/{seller_id}: {ex}')
                 continue
 
+            # Запись пачками снижает риск потери данных при долгом запуске.
             if len(result_list) >= batch_size:
                 save_excel(result_list)
                 result_list.clear()
@@ -165,7 +244,13 @@ def process_sellers_range(start_id: int, end_id: int, batch_size: int = 50) -> N
         save_excel(result_list)
 
 
-def save_excel(data: list[dict]) -> None:
+def save_excel(data: list[SellerResult]) -> None:
+    """Добавить пачку результатов в XLSX-файл.
+
+    Args:
+        data: Список словарей с данными продавцов. Ключи первого элемента
+            используются как заголовки при создании нового файла.
+    """
     directory = os.path.dirname(RESULT_FILE_PATH)
     os.makedirs(directory, exist_ok=True)
 
@@ -181,6 +266,8 @@ def save_excel(data: list[dict]) -> None:
         if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
             ws.append(list(data[0].keys()))
 
+    # Используем порядок заголовков из файла, чтобы новые строки совпадали
+    # с уже существующей структурой таблицы.
     excel_headers = [cell.value for cell in ws[1]]
     for row in data:
         ws.append([row.get(header) for header in excel_headers])
@@ -190,8 +277,9 @@ def save_excel(data: list[dict]) -> None:
 
 
 def main() -> None:
-    start_id = 4_000_000
-    end_id = 4_300_000
+    """Точка входа: запустить сбор по заданному диапазону seller_id."""
+    start_id = 4_013_362
+    end_id = 5_000_000
 
     process_sellers_range(start_id, end_id)
 
