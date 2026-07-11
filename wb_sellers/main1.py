@@ -258,17 +258,27 @@ def save_excel(data: list[SellerResult]) -> None:
         wb = Workbook()
         ws = wb.active
         ws.title = 'Sellers'
-        ws.append(list(data[0].keys()))
+        excel_headers = list(data[0].keys())
+        ws.append(excel_headers)
     else:
         wb = load_workbook(RESULT_FILE_PATH)
         ws = wb['Sellers'] if 'Sellers' in wb.sheetnames else wb.active
 
         if ws.max_row == 1 and all(cell.value is None for cell in ws[1]):
-            ws.append(list(data[0].keys()))
+            excel_headers = list(data[0].keys())
+            ws.append(excel_headers)
+        else:
+            excel_headers = []
+            for cell in ws[1]:
+                header = cell.value
+                if isinstance(header, str) and header:
+                    excel_headers.append(header)
+            if not excel_headers:
+                excel_headers = list(data[0].keys())
+                ws.append(excel_headers)
 
     # Используем порядок заголовков из файла, чтобы новые строки совпадали
     # с уже существующей структурой таблицы.
-    excel_headers = [cell.value for cell in ws[1]]
     for row in data:
         ws.append([row.get(header) for header in excel_headers])
 
