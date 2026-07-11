@@ -16,6 +16,7 @@ DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000_with_products.xlsx')
+START_ROW = 2
 
 
 def get_api_headers(seller_id: int) -> dict[str, str]:
@@ -87,7 +88,7 @@ def load_sellers(file_path: str) -> list[SellerRow]:
     headers = [cell.value for cell in ws[1]]
 
     sellers: list[SellerRow] = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
+    for row in ws.iter_rows(min_row=START_ROW, values_only=True):
         row_data = dict(zip(headers, row))
         seller_url = row_data.get('Ссылка')
         if seller_url:
