@@ -11,7 +11,7 @@ start_time = datetime.now()
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
 DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
+RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_1.xlsx')
 BATCH_SIZE = 50
 FILTERS_COOKIES = {
     'external-locale': 'ru',
@@ -25,7 +25,7 @@ FILTERS_COOKIES = {
     'tours-city-id': '274286',
     'feedbacks_link_accepted': '1',
     '_wbauid': '2522710481783690074',
-    'x_wbaas_token': '1.1000.91ceb65ffea74181a7d736137306f833.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE1MC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODQwMjg0MzN8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgzODk4ODMzfDE=.MEYCIQCrJgywud6osRc1VMCW7EELGAhRyVfeuA5dwA8NzSmwUAIhAP85yvlwLa6eWaEcazN6BDCQ9prke50oDVIPASulHs+m',
+    'x_wbaas_token': '1.1000.c5d279d3c77945eda3a58e1c8a304df5.MTV8NDUuMTI5LjE0MS4xOTV8TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE1MC4wLjAuMCBTYWZhcmkvNTM3LjM2fDE3ODQxMDI3Mzh8cmV1c2FibGV8MnxleUpvWVhOb0lqb2lJbjA9fDB8M3wxNzgzOTczMTM4fDE=.MEUCIBE9xkTq3bzri4cccqyyutBzKpGnJVFRLhpEHcm23GY+AiEA05JiXjau4rjSc9gYU+rpiZ3BITaB3GKs6cQnPqKYeAw=',
 }
 
 SupplierData = dict[str, Any]
@@ -232,7 +232,6 @@ def process_sellers_range(start_id: int, end_id: int) -> None:
     with Session() as session:
         for seller_id in range(start_id, end_id + 1):
             try:
-                time.sleep(randint(1, 3))
                 if not has_products(session, seller_id):
                     print(f'Обработан продавец ID: {seller_id}')
                     continue
