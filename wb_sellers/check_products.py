@@ -2,7 +2,6 @@ import os
 import re
 import time
 from datetime import datetime
-from random import randint
 from typing import Any, TypeAlias
 
 from openpyxl import Workbook, load_workbook
@@ -192,8 +191,6 @@ def filter_sellers_with_products() -> None:
                 continue
 
             try:
-                # Разносим запросы по времени, чтобы снизить риск ограничения.
-                time.sleep(randint(1, 3))
                 if not has_products(session, seller_id):
                     print(f'Продавец {seller_id}: товаров нет')
                     continue

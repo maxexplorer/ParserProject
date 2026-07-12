@@ -1,7 +1,6 @@
 import os
 import time
 from datetime import datetime
-from random import randint
 from typing import Any
 
 from requests import Response, Session
