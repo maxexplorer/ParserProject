@@ -31,6 +31,10 @@ SupplierData = dict[str, Any]
 SellerResult = dict[str, str]
 
 
+class AuthExpiredError(Exception):
+    """Сессия WB перестала подходить для запросов."""
+
+
 def get_api_headers(seller_id: int) -> dict:
     return {
         'accept': '*/*',
@@ -121,6 +125,9 @@ def has_products(session: Session, seller_id: int) -> bool:
 
         break
 
+    if response.status_code == 498:
+        raise AuthExpiredError(f'Продавец {seller_id}: 498 на запросе каталога, обнови cookies')
+
     if response.status_code != 200:
         print(f'Продавец {seller_id}: статус каталога {response.status_code}')
         return False
@@ -153,6 +160,9 @@ def get_inn(session: Session, seller_id: int) -> str | None:
             if sleep_if_429(response, seller_id, 'запрос ИНН'):
                 continue
 
+            if response.status_code == 498:
+                raise AuthExpiredError(f'Продавец {seller_id}: 498 на запросе ИНН, обнови cookies')
+
             if response.status_code != 200:
                 print(f'Продавец {seller_id}: статус ИНН {response.status_code}')
                 return None
@@ -160,6 +170,8 @@ def get_inn(session: Session, seller_id: int) -> str | None:
             json_data = response.json()
             inn = json_data.get('inn')
             return inn
+        except AuthExpiredError:
+            raise
         except Exception as ex:
             print(f'Ошибка при получении ИНН для {seller_id}: {ex}')
             time.sleep(DEFAULT_429_PAUSE)
@@ -184,6 +196,9 @@ def get_supplier_data(session: Session, seller_id: int) -> SupplierData | None:
             if sleep_if_429(response, seller_id, 'запрос статистики'):
                 continue
 
+            if response.status_code == 498:
+                raise AuthExpiredError(f'Продавец {seller_id}: 498 на запросе статистики, обнови cookies')
+
             if response.status_code == 404:
                 return None
 
@@ -192,6 +207,8 @@ def get_supplier_data(session: Session, seller_id: int) -> SupplierData | None:
                 return None
 
             return response.json()
+        except AuthExpiredError:
+            raise
         except Exception as ex:
             print(f'Ошибка при получении статистики для {seller_id}: {ex}')
             return None
@@ -249,6 +266,13 @@ def process_sellers_range(start_id: int, end_id: int) -> None:
                 )
                 print(f'Обработан продавец ID: {seller_id}, inn: {inn}')
 
+            except AuthExpiredError as ex:
+                print(ex)
+                if result_list:
+                    save_excel(result_list)
+                    result_list.clear()
+                print('Остановка: cookies/token устарели или не подходят.')
+                return
             except Exception as ex:
                 print(f'https://www.wildberries.ru/seller/{seller_id}: {ex}')
                 continue

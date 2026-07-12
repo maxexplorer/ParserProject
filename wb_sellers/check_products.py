@@ -10,12 +10,17 @@ from requests import Response, Session
 start_time = datetime.now()
 SellerRow: TypeAlias = dict[str, Any]
 
+
+class AuthExpiredError(Exception):
+    """Сессия WB перестала подходить для запросов."""
+
+
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
 DEFAULT_429_PAUSE = 5
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000.xlsx')
 RESULT_FILE_PATH = os.path.join(BASE_DIR, 'results', 'result_data_4_000_000_with_products.xlsx')
-START_ROW = 2
+START_ROW = 5402
 BATCH_SIZE = 50
 FILTERS_COOKIES = {
     'external-locale': 'ru',
@@ -129,6 +134,9 @@ def has_products(session: Session, seller_id: int) -> bool:
 
         break
 
+    if response.status_code == 498:
+        raise AuthExpiredError(f'Продавец {seller_id}: 498, обнови cookies')
+
     if response.status_code != 200:
         print(f'Продавец {seller_id}: статус каталога {response.status_code}')
         return False
@@ -200,6 +208,13 @@ def filter_sellers_with_products() -> None:
                     save_excel(result_list, RESULT_FILE_PATH)
                     result_list.clear()
                 print(f'Продавец {seller_id}: товары есть')
+            except AuthExpiredError as ex:
+                print(ex)
+                if result_list:
+                    save_excel(result_list, RESULT_FILE_PATH)
+                    result_list.clear()
+                print('Остановка: cookies/token устарели или не подходят.')
+                return
             except Exception as ex:
                 print(f'{seller_url}: {ex}')
                 continue
