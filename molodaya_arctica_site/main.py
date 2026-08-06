@@ -26,7 +26,7 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     if headless_mode:
         options.add_argument('--headless')
 
-    driver = uc.Chrome(options=options, version_main=144)
+    driver = uc.Chrome(options=options, version_main=151)
     driver.implicitly_wait(1)  # неявное ожидание для всех элементов
     driver.maximize_window()  # максимальный размер окна для корректной работы элементов
     return driver
@@ -222,7 +222,7 @@ def main() -> None:
     file_path = os.path.join(directory, file_name)
 
     # Получение вакансий (можно раскомментировать)
-    get_product_ids(file_path=file_path)
+    # get_product_ids(file_path=file_path)
 
     driver = init_undetected_chromedriver(headless_mode=True)
     try:
