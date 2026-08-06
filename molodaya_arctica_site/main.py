@@ -1,35 +1,173 @@
 import os
 import time
 from datetime import datetime
+from html.parser import HTMLParser
 
 from requests import Session
-
-import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from requests.exceptions import RequestException
 
 # Начало отсчёта времени выполнения
 start_time: datetime = datetime.now()
 
+BASE_URL = 'https://molodaya-arctica.ru'
+VACANCIES_API_URL = f'{BASE_URL}/api/vacancies'
+REQUEST_TIMEOUT = (5, 20)
+MAX_RETRIES = 3
+REQUEST_DELAY = 0.3
 
-def init_undetected_chromedriver(headless_mode: bool = False):
+HEADERS = {
+    'Accept': '*/*',
+    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Connection': 'keep-alive',
+    'Referer': f'{BASE_URL}/jobs',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+    'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+}
+
+
+class ApplyLinkParser(HTMLParser):
     """
-    Инициализирует браузер Chrome с использованием undetected_chromedriver.
+    Простой HTML-парсер для сбора ссылок со страницы вакансии.
 
-    :param headless_mode: Если True — браузер запускается без интерфейса.
-    :return: объект WebDriver для управления браузером.
+    Нужен, чтобы достать href кнопки "Откликнуться" без Selenium.
+    В self.links сохраняются кортежи вида: (href, text).
     """
-    options = ChromeOptions()
-    if headless_mode:
-        options.add_argument('--headless')
 
-    driver = uc.Chrome(options=options, version_main=151)
-    driver.implicitly_wait(1)  # неявное ожидание для всех элементов
-    driver.maximize_window()  # максимальный размер окна для корректной работы элементов
-    return driver
+    def __init__(self):
+        super().__init__()
+        self.links = []
+        self._current_link = None
+
+    def handle_starttag(self, tag, attrs):
+        """Запоминает начало ссылки <a> и её href."""
+        if tag == 'a':
+            self._current_link = {
+                'href': dict(attrs).get('href'),
+                'text': [],
+            }
+
+    def handle_data(self, data):
+        """Собирает текст внутри текущей ссылки."""
+        if self._current_link is not None:
+            self._current_link['text'].append(data)
+
+    def handle_endtag(self, tag):
+        """На закрытии </a> сохраняет ссылку и её очищенный текст."""
+        if tag == 'a' and self._current_link is not None:
+            self.links.append((
+                self._current_link['href'],
+                ' '.join(''.join(self._current_link['text']).split()),
+            ))
+            self._current_link = None
+
+
+def request_with_retries(session: Session, url: str, **kwargs):
+    """
+    Выполняет GET-запрос с небольшой паузой, таймаутом и повторами.
+
+    Ошибки сети и ответы 5xx повторяются до MAX_RETRIES раз.
+    Ответы 4xx возвращаются сразу: например 404 на trudvsem.ru означает,
+    что вакансия скрыта или удалена.
+    """
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            # Небольшая пауза есть даже перед первой попыткой.
+            time.sleep(REQUEST_DELAY)
+            response = session.get(url, timeout=REQUEST_TIMEOUT, **kwargs)
+            if response.status_code < 500:
+                return response
+            last_error = f'status {response.status_code}'
+        except RequestException as ex:
+            last_error = ex
+
+        if attempt < MAX_RETRIES:
+            time.sleep(attempt)
+
+    raise RuntimeError(f'{url}: {last_error}')
+
+
+def load_ids(file_path: str) -> set[str]:
+    """
+    Загружает числовые ID из файла в set.
+
+    Если файла ещё нет, возвращает пустой set, чтобы первый запуск начинался
+    без ошибок.
+    """
+    if not os.path.exists(file_path):
+        return set()
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return {
+            line.strip()
+            for line in file
+            if line.strip().isdigit()
+        }
+
+
+def append_id(file_path: str, vacancy_id: str) -> None:
+    """Добавляет один ID в конец файла."""
+    with open(file_path, 'a', encoding='utf-8') as file:
+        file.write(f'{vacancy_id}\n')
+
+
+def get_apply_url(session: Session, vacancy_id: str) -> str:
+    """
+    Получает ссылку "Откликнуться" для вакансии на molodaya-arctica.ru.
+
+    На странице вакансии эта кнопка ведёт на trudvsem.ru. Мы достаём её href
+    из HTML напрямую, без открытия браузера и клика Selenium.
+    """
+    response = request_with_retries(
+        session,
+        f'{BASE_URL}/jobs/{vacancy_id}',
+        headers=HEADERS,
+    )
+
+    response.raise_for_status()
+
+    parser = ApplyLinkParser()
+    parser.feed(response.text)
+
+    # На странице есть две одинаковые кнопки "Откликнуться"; достаточно первой.
+    for href, _ in parser.links:
+        if href and 'trudvsem.ru/vacancy/card' in href:
+            return href
+
+    raise ValueError('ссылка "Откликнуться" не найдена')
+
+
+def is_hidden_vacancy(session: Session, apply_url: str) -> bool:
+    """
+    Проверяет, скрыта ли вакансия на trudvsem.ru.
+
+    Для скрытых/удалённых вакансий trudvsem.ru часто отдаёт 404/410.
+    Дополнительно проверяем текст страницы на случай, если сайт вернул 200
+    со страницей-заглушкой.
+    """
+    response = request_with_retries(
+        session,
+        apply_url,
+        headers=HEADERS,
+        allow_redirects=True,
+    )
+
+    if response.status_code in {404, 410}:
+        return True
+
+    response.raise_for_status()
+    page_text = response.text
+
+    return (
+        'Вакансия была скрыта' in page_text
+        or 'скрыта или удалена работодателем' in page_text
+    )
 
 
 def get_product_ids(file_path: str) -> None:
@@ -41,32 +179,16 @@ def get_product_ids(file_path: str) -> None:
     with Session() as session:
         vacancy_ids = []
 
-        # Заголовки запроса
-        headers = {
-            'Accept': '*/*',
-            'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Connection': 'keep-alive',
-            'Referer': 'https://molodaya-arctica.ru/jobs',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
-            'X-XSRF-TOKEN': 'eyJpdiI6ImxaSEFYOGI5bGJraGl2M1BqQjRwNkE9PSIsInZhbHVlIjoiVDlIV2MvQjh6cDNRUXlya0hSc1RBcVlZOGpYaFZIZjNzT3FKcXRaeFViekVWTlhHbWNsWFVSNTlYV3lXODMyQzhvazlTYmJZMWtNb3gwaytaMWV6aXdxNnZ1V0o5SGhBV1U1ZFB6cCtJczhKQjZ0WjE4Y3RBY3YxSjBuSUt6TW4iLCJtYWMiOiJhMzg5MjllOWZhNzRiMGE1NGE0M2UxYjlmNzBjMmEwY2M1ODFiNjE1YjcxYzQzNDgxMjk2ZjI5ODc4MjdiNGYyIiwidGFnIjoiIn0=',
-            'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-        }
-
         first_params = {
             'page': 1,
         }
 
         # Получаем первую страницу, чтобы узнать общее количество
-        response = session.get(
-            'https://molodaya-arctica.ru/api/vacancies',
-            headers=headers,
+        response = request_with_retries(
+            session,
+            VACANCIES_API_URL,
+            headers=HEADERS,
             params=first_params,
-            timeout=(3, 5)
         )
 
         response.raise_for_status()
@@ -83,12 +205,11 @@ def get_product_ids(file_path: str) -> None:
             params['page'] = page
 
             try:
-                time.sleep(1)  # пауза между запросами
-                response = session.get(
-                    'https://molodaya-arctica.ru/api/vacancies',
-                    headers=headers,
+                response = request_with_retries(
+                    session,
+                    VACANCIES_API_URL,
+                    headers=HEADERS,
                     params=params,
-                    timeout=(3, 5)
                 )
 
                 if response.status_code != 200:
@@ -117,103 +238,84 @@ def get_product_ids(file_path: str) -> None:
         print(*vacancy_ids, file=file, sep='\n')
 
 
-def process_vacancy_ids(driver, file_path: str) -> None:
+def process_vacancy_ids(file_path: str) -> None:
     """
     Обрабатывает вакансии:
-    1. Открывает страницу вакансии
-    2. Кликает кнопку "Откликнуться"
-    3. Переключается на новую вкладку
-    4. Проверяет, скрыта ли вакансия
-    5. Сохраняет ID скрытых вакансий в result_data.txt
-    6. Выводит прогресс i/total и статистику по скрытым вакансиям
+    1. Открывает страницу вакансии прямым HTTP-запросом
+    2. Достаёт ссылку "Откликнуться" на trudvsem.ru
+    3. Проверяет, скрыта ли вакансия
+    4. Сохраняет ID скрытых вакансий в result_data.txt
+    5. Сохраняет прогресс в processed_ids.txt
 
-    :param driver: объект WebDriver
     :param file_path: путь к файлу с ID вакансий
     """
-
-    exceptions_list = []
 
     directory: str = 'results'
     os.makedirs(directory, exist_ok=True)
     result_file = os.path.join(directory, 'result_data.txt')
+    processed_file = os.path.join(directory, 'processed_ids.txt')
+    exceptions_file = os.path.join(directory, 'exceptions_list.txt')
 
     total_processed = 0
-    hidden_count = 0
+    # result_data.txt хранит найденные скрытые вакансии, processed_ids.txt — все успешно проверенные.
+    hidden_ids = load_ids(result_file)
+    processed_ids = load_ids(processed_file)
+    exceptions_list = []
 
     # Загружаем список вакансий
     with open(file_path, 'r', encoding='utf-8') as file:
-        vacancy_ids = [line.strip() for line in file.readlines()]
+        # dict.fromkeys убирает дубли и сохраняет исходный порядок ID.
+        vacancy_ids = list(dict.fromkeys(
+            line.strip()
+            for line in file.readlines()
+            if line.strip()
+        ))
 
-    total_count = len(vacancy_ids)
+        total_count = len(vacancy_ids)
 
-    for i, vacancy_id in enumerate(vacancy_ids, start=1):
-        total_processed += 1
-        print(f"🔄 Обработка {i}/{total_count}: Вакансия {vacancy_id}")
+    with Session() as session:
+        for i, vacancy_id in enumerate(vacancy_ids, start=1):
+            # processed_ids позволяет продолжить работу после остановки скрипта.
+            if vacancy_id in processed_ids:
+                continue
 
-        try:
-            # Открываем страницу вакансии
-            driver.get(url=f"https://molodaya-arctica.ru/jobs/{vacancy_id}")
+            print(f"🔄 Обработка {i}/{total_count}: Вакансия {vacancy_id}")
 
-            # Ждём кнопку "Откликнуться" и кликаем по ней
-            button = WebDriverWait(driver, 5).until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, '/html/body/div[1]/div/div/main/div/div[2]/div/div/div/a/span')
-                )
-            )
-            button.click()
-
-            # Ждём открытия новой вкладки и переключаемся
-            WebDriverWait(driver, 5).until(lambda d: len(d.window_handles) > 1)
-            driver.switch_to.window(driver.window_handles[-1])
-
-            # Ждём полной загрузки новой страницы
-            WebDriverWait(driver, 5).until(
-                lambda d: d.execute_script('return document.readyState') == 'complete'
-            )
-
-            # Проверяем, скрыта ли вакансия
             try:
-                title_el = WebDriverWait(driver, 1).until(
-                    EC.presence_of_element_located((By.XPATH, "//h1[@class='content__title']"))
-                )
-                if 'Вакансия была скрыта или удалена работодателем' in title_el.text:
-                    hidden_count += 1
-                    with open(result_file, 'a', encoding='utf-8') as f:
-                        f.write(f"{vacancy_id}\n")
+                apply_url = get_apply_url(session=session, vacancy_id=vacancy_id)
+
+                if is_hidden_vacancy(session=session, apply_url=apply_url):
+                    # hidden_ids защищает result_data.txt от дублей при повторном запуске.
+                    if vacancy_id not in hidden_ids:
+                        hidden_ids.add(vacancy_id)
+                        append_id(result_file, vacancy_id)
                     print(f'✅ Вакансия {vacancy_id} скрыта — ID сохранён.')
-            except NoSuchElementException:
-                pass
 
-        except Exception:
-            # Игнорируем ошибки, чтобы не прерывать цикл
-            exceptions_list.append(vacancy_id)
-            continue
-
-        finally:
-            # Закрываем вкладку с формой и возвращаемся на основную
-            if len(driver.window_handles) > 1:
-                driver.close()
-                driver.switch_to.window(driver.window_handles[0])
+                append_id(processed_file, vacancy_id)
+                processed_ids.add(vacancy_id)
+                total_processed += 1
+            except Exception as ex:
+                exceptions_list.append(vacancy_id)
+                print(f'⚠️ Вакансия {vacancy_id}: {ex}')
 
     # В конце добавляем статистику
     with open(result_file, 'a', encoding='utf-8') as f:
         f.write(f'\nВсего обработано: {total_processed}\n')
-        f.write(f'Скрытых вакансий: {hidden_count}\n')
+        f.write(f'Скрытых вакансий: {len(hidden_ids)}\n')
 
-    with open('data/exceptions_list.txt', 'w', encoding='utf-8') as file:
+    with open(exceptions_file, 'w', encoding='utf-8') as file:
         print(*exceptions_list, file=file, sep='\n')
 
-    print(f"📊 Обработка завершена: всего {total_processed}, скрытых {hidden_count}")
+    print(f"📊 Обработка завершена: всего {total_processed}, скрытых {len(hidden_ids)}")
 
 
 def main() -> None:
     """
     Основная функция:
     1. Создаёт папку data
-    2. Получает список вакансий (закомментировано для теста)
-    3. Запускает Chrome через undetected_chromedriver
-    4. Запускает обработку вакансий
-    5. Закрывает браузер и выводит время выполнения
+    2. Получает список вакансий
+    3. Проверяет вакансии прямыми HTTP-запросами
+    4. Выводит время выполнения
     """
     directory: str = 'data'
     os.makedirs(directory, exist_ok=True)
@@ -224,12 +326,7 @@ def main() -> None:
     # Получение вакансий (можно раскомментировать)
     get_product_ids(file_path=file_path)
 
-    driver = init_undetected_chromedriver(headless_mode=True)
-    try:
-        process_vacancy_ids(driver=driver, file_path=file_path)
-    finally:
-        driver.close()
-        driver.quit()
+    process_vacancy_ids(file_path=file_path)
 
     execution_time = datetime.now() - start_time
     print('Сбор данных завершен.')
