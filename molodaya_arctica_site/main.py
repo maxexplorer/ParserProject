@@ -222,7 +222,7 @@ def main() -> None:
     file_path = os.path.join(directory, file_name)
 
     # Получение вакансий (можно раскомментировать)
-    # get_product_ids(file_path=file_path)
+    get_product_ids(file_path=file_path)
 
     driver = init_undetected_chromedriver(headless_mode=True)
     try:
