@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse
 
 from bs4 import BeautifulSoup
-from pandas import DataFrame, ExcelWriter
+from openpyxl import Workbook, load_workbook
 
 try:
     from selenium.webdriver.common.by import By
@@ -849,10 +849,16 @@ def parse_products_from_urls(
     driver: Any,
     product_urls: list[str],
     batch_size: int = 20,
+    start_from: int = 1,
+    stop_at: int | None = None,
 ) -> list[dict[str, Any]]:
     products: list[dict[str, Any]] = []
+    total_saved = 0
+    start_index = max(1, start_from)
+    end_index = min(stop_at or len(product_urls), len(product_urls))
+    product_urls = product_urls[start_index - 1:end_index]
 
-    for index, product_url in enumerate(product_urls, 1):
+    for index, product_url in enumerate(product_urls, start_index):
         try:
             safe_get(driver, product_url)
             time.sleep(BROWSER_DELAY_SECONDS)
@@ -878,14 +884,22 @@ def parse_products_from_urls(
 
         products.append(product_data)
         print(
-            f"Браузер: обработано {index}/{len(product_urls)}: "
+            f"Браузер: обработано {index}/{end_index}: "
             f"{product_data.get('title') or 'без заголовка'} "
             f"({len(product_data.get('images', []))} фото)"
         )
 
-        if batch_size > 0 and len(products) % batch_size == 0:
+        if batch_size > 0 and len(products) >= batch_size:
             file_path = save_excel(products)
-            print(f"Промежуточно сохранено {len(products)} объявлений: {file_path}")
+            total_saved += len(products)
+            print(f"Промежуточно сохранено {total_saved} объявлений: {file_path}")
+            products.clear()
+
+    if products:
+        file_path = save_excel(products)
+        total_saved += len(products)
+        print(f"Сохранён остаток. Всего сохранено {total_saved} объявлений: {file_path}")
+        products.clear()
 
     return products
 
@@ -893,9 +907,8 @@ def parse_products_from_urls(
 def build_rows(products: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
-    for index, product in enumerate(products, 1):
+    for product in products:
         row = {
-            "№": index,
             "Заголовок": product.get("title"),
             "Цена": product.get("price"),
             "Ссылка": product.get("url"),
@@ -908,23 +921,30 @@ def build_rows(products: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def save_excel(products: list[dict[str, Any]]) -> str:
+    if not products:
+        return ""
+
     os.makedirs(RESULT_DIR, exist_ok=True)
 
     current_date = datetime.now().strftime("%d%m%Y")
     file_path = RESULT_DIR / f"result_data_{current_date}.xlsx"
     rows = build_rows(products)
 
-    try:
-        with ExcelWriter(file_path, mode="w", engine="openpyxl") as writer:
-            DataFrame(rows).to_excel(writer, sheet_name="data", index=False)
-    except PermissionError:
-        fallback_path = RESULT_DIR / f"result_data_{current_date}_{datetime.now().strftime('%H%M%S')}.xlsx"
-        with ExcelWriter(fallback_path, mode="w", engine="openpyxl") as writer:
-            DataFrame(rows).to_excel(writer, sheet_name="data", index=False)
+    if not file_path.exists():
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "data"
+        worksheet.append(list(rows[0].keys()))
+    else:
+        workbook = load_workbook(file_path)
+        worksheet = workbook["data"] if "data" in workbook.sheetnames else workbook.active
 
-        print(f"Основной Excel открыт или заблокирован, сохранил в новый файл: {fallback_path}")
-        return str(fallback_path)
+    for row in rows:
+        worksheet.append(list(row.values()))
 
+    workbook.save(file_path)
+
+    print(f"Сохранено {worksheet.max_row - 1} записей в {file_path}")
     return str(file_path)
 
 
@@ -934,6 +954,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stage", choices=("all", "links", "data"), default="data", help="Этап: all, links или data")
     parser.add_argument("--urls-file", default=str(URLS_FILE), help="Файл для сохранения/чтения ссылок")
     parser.add_argument("--max-items", type=int, default=None, help="Ограничение количества объявлений для теста")
+    parser.add_argument("--start-from", type=int, default=1, help="Начать обработку data-этапа с N-й ссылки")
+    parser.add_argument("--stop-at", type=int, default=400, help="Остановить обработку data-этапа на N-й ссылке")
     parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES, help="Максимум страниц выдачи для сбора ссылок")
     parser.add_argument("--batch-size", type=int, default=20, help="Сохранять Excel каждые N объявлений, 0 отключает")
     return parser.parse_args()
@@ -970,6 +992,8 @@ def main() -> None:
             driver=driver,
             product_urls=product_urls,
             batch_size=args.batch_size,
+            start_from=args.start_from,
+            stop_at=args.stop_at,
         )
 
     finally:
