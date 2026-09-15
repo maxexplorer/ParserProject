@@ -114,13 +114,14 @@ def sort_and_dedupe_images(images: list[str]) -> list[str]:
         current = best_by_identity.get(identity)
 
         if current is None or score > current[0]:
-            best_by_identity[identity] = (score, index, normalized_url)
+            original_index = current[1] if current else index
+            best_by_identity[identity] = (score, original_index, normalized_url)
 
     return [
         image_url
         for _, _, image_url in sorted(
             best_by_identity.values(),
-            key=lambda item: (-item[0], item[1]) if item[0] else (0, item[1]),
+            key=lambda item: item[1],
         )
     ]
 
@@ -954,8 +955,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stage", choices=("all", "links", "data"), default="data", help="Этап: all, links или data")
     parser.add_argument("--urls-file", default=str(URLS_FILE), help="Файл для сохранения/чтения ссылок")
     parser.add_argument("--max-items", type=int, default=None, help="Ограничение количества объявлений для теста")
-    parser.add_argument("--start-from", type=int, default=1, help="Начать обработку data-этапа с N-й ссылки")
-    parser.add_argument("--stop-at", type=int, default=400, help="Остановить обработку data-этапа на N-й ссылке")
+    parser.add_argument("--start-from", type=int, default=1522, help="Начать обработку data-этапа с N-й ссылки")
+    parser.add_argument("--stop-at", type=int, default=None, help="Остановить обработку data-этапа на N-й ссылке")
     parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES, help="Максимум страниц выдачи для сбора ссылок")
     parser.add_argument("--batch-size", type=int, default=20, help="Сохранять Excel каждые N объявлений, 0 отключает")
     return parser.parse_args()
