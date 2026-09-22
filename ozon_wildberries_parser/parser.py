@@ -398,7 +398,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36',
         'x-requested-with': 'XMLHttpRequest',
         'x-spa-version': '13.16.3',
     }
@@ -408,6 +408,8 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
     # Словарь для хранения уже обработанных текстов и их product_ids
     processed_texts = {}
+    session = Session()
+    refresh_wb_session(session=session, headers=headers)
 
     for row in ws.iter_rows(min_row=4):
         text = row[3].value
@@ -440,7 +442,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
                 try:
                     time.sleep(randint(1, 3))
-                    response = requests.get('https://card.wb.ru/cards/v4/detail', params=params, headers=headers)
+                    response = session.get('https://www.wildberries.ru/__internal/u-card/cards/v4/detail', params=params, headers=headers)
                     if response.status_code != 200:
                         print(f'{product_url}: {response.status_code}')
                 except Exception as ex:
@@ -482,6 +484,8 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
                 print(
                     f'{product_url}: position - {product_position}, price - {price}, quantity - {quantity}, storage - {storage}')
+
+    session.close()
 
     if not os.path.exists('data'):
         os.makedirs('data')
