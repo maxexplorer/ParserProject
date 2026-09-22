@@ -148,34 +148,40 @@ def get_products_ids_ozon(driver: Chrome, pages: int, text: str) -> list | None:
         print(f'get_products_urls: {ex}')
 
 
-def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
+def get_products_ids_wb(session: Session, headers: dict, pages: int, text: str) -> list[str]:
     """
     Парсит Wildberries, возвращает список product_ids по запросу text
     """
     products_ids_list = list()
 
-    with Session() as session:
-        refresh_wb_session(session=session, headers=headers)
+    for page in range(1, pages + 1):
+        params = {
+            'appType': '1',
+            'curr': 'rub',
+            'dest': '1259570222',
+            'hide_dtype': '11',
+            'inheritFilters': 'false',
+            'lang': 'ru',
+            'page': page,
+            'query': text,
+            'resultset': 'catalog',
+            'sort': 'popular',
+            'spp': '30',
+            'suppressSpellcheck': 'false',
+        }
 
-        for page in range(1, pages + 1):
-            params = {
-                'appType': '1',
-                'curr': 'rub',
-                'dest': '1259570222',
-                'hide_dtype': '11',
-                'inheritFilters': 'false',
-                'lang': 'ru',
-                'page': page,
-                'query': text,
-                'resultset': 'catalog',
-                'sort': 'popular',
-                'spp': '30',
-                'suppressSpellcheck': 'false',
-            }
+        try:
+            time.sleep(1)
 
-            try:
-                time.sleep(1)
+            response = session.get(
+                'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
+                params=params,
+                headers=headers,
+                timeout=60
+            )
 
+            if response.status_code in (401, 403, 429, 498):
+                refresh_wb_session(session=session, headers=headers)
                 response = session.get(
                     'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
                     params=params,
@@ -183,35 +189,26 @@ def get_products_ids_wb(headers: dict, pages: int, text: str) -> list[str]:
                     timeout=60
                 )
 
-                if response.status_code in (401, 403, 429, 498):
-                    refresh_wb_session(session=session, headers=headers)
-                    response = session.get(
-                        'https://www.wildberries.ru/__internal/u-search/exactmatch/ru/common/v18/search',
-                        params=params,
-                        headers=headers,
-                        timeout=60
-                    )
-
-                if response is None:
-                    print('get_products_ids_wb: empty response')
-                    continue
-
-                if response.status_code != 200:
-                    print(f'get_products_ids_wb: status_code {response.status_code}')
-                    continue
-
-            except Exception as ex:
-                print(f'get_products_ids_wb: {ex}')
+            if response is None:
+                print('get_products_ids_wb: empty response')
                 continue
 
-            data = response.json()
+            if response.status_code != 200:
+                print(f'get_products_ids_wb: status_code {response.status_code}')
+                continue
 
-            try:
-                for item in data['products']:
-                    product_id = item.get('id')
-                    products_ids_list.append(str(product_id))
-            except Exception as ex:
-                print(f'products_ids: {ex}')
+        except Exception as ex:
+            print(f'get_products_ids_wb: {ex}')
+            continue
+
+        data = response.json()
+
+        try:
+            for item in data['products']:
+                product_id = item.get('id')
+                products_ids_list.append(str(product_id))
+        except Exception as ex:
+            print(f'products_ids: {ex}')
 
     print(f'Получено: {len(products_ids_list)} ids')
 
@@ -423,7 +420,7 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
         if text in processed_texts:
             product_ids = processed_texts[text]
         else:
-            product_ids = get_products_ids_wb(headers=headers, pages=pages, text=text)
+            product_ids = get_products_ids_wb(session=session, headers=headers, pages=pages, text=text)
             processed_texts[text] = product_ids
 
         for cell in row:
