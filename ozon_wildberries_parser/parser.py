@@ -440,6 +440,10 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                 try:
                     time.sleep(randint(1, 3))
                     response = session.get('https://www.wildberries.ru/__internal/u-card/cards/v4/detail', params=params, headers=headers)
+                    if response.status_code in (401, 403, 429, 498):
+                        refresh_wb_session(session=session, headers=headers)
+                        response = session.get('https://www.wildberries.ru/__internal/u-card/cards/v4/detail', params=params, headers=headers)
+
                     if response.status_code != 200:
                         print(f'{product_url}: {response.status_code}')
                 except Exception as ex:
