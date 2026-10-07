@@ -92,7 +92,7 @@ def move_last_photo_to_first(input_file, output_file):
             continue
 
         # Последнюю переносим на первое место
-        photos = photos[1:] + [photos[0]]
+        photos = photos[:-1]
 
         # Собираем обратно через |
         cell.value = " | ".join(photos)
