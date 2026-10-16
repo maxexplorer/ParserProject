@@ -7,6 +7,11 @@ import json
 from random import randint
 from urllib.parse import urlparse, urlunparse
 
+try:
+    import winreg
+except ImportError:
+    winreg = None
+
 import requests
 from requests import Session
 
@@ -66,11 +71,34 @@ def refresh_wb_session(
 
 
 
+def get_chrome_major_version() -> int | None:
+    """Возвращает основную версию установленного Google Chrome в Windows."""
+    if winreg is None:
+        return None
+
+    registry_path = r'SOFTWARE\Google\Chrome\BLBeacon'
+
+    for registry_root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(registry_root, registry_path) as registry_key:
+                version, _ = winreg.QueryValueEx(registry_key, 'version')
+                return int(version.split('.')[0])
+        except (FileNotFoundError, OSError, TypeError, ValueError):
+            continue
+
+    return None
+
+
 def init_undetected_chromedriver():
     """
     Инициализирует undetected_chromedriver, возвращает драйвер
     """
-    driver = Chrome(version_main=153)
+    chrome_major_version = get_chrome_major_version()
+
+    if chrome_major_version is None:
+        driver = Chrome()
+    else:
+        driver = Chrome(version_main=chrome_major_version)
     driver.maximize_window()
     driver.implicitly_wait(15)
 
