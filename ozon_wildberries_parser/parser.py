@@ -96,8 +96,10 @@ def init_undetected_chromedriver():
     chrome_major_version = get_chrome_major_version()
 
     if chrome_major_version is None:
+        print('Версия Chrome не определена, используется автоматический режим')
         driver = Chrome()
     else:
+        print(f'Определена основная версия Chrome: {chrome_major_version}')
         driver = Chrome(version_main=chrome_major_version)
     driver.maximize_window()
     driver.implicitly_wait(15)
