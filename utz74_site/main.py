@@ -96,15 +96,22 @@ def normalize_header(value: str) -> str:
 def get_html(
     url: str,
     session: Session,
-    retries: int = 3,
+    retries: int = 2,
 ) -> str | None:
     for attempt in range(1, retries + 1):
         try:
-            response = session.get(url=url, headers=HEADERS, timeout=90)
+            response = session.get(
+                url=url,
+                headers=HEADERS,
+                timeout=(10, 30),
+            )
             response.raise_for_status()
             return response.text
         except Exception as error:
-            print(f'Ошибка запроса {url} ({attempt}/{retries}): {error}')
+            print(
+                f'Ошибка запроса {url} ({attempt}/{retries}): {error}',
+                flush=True,
+            )
             if attempt < retries:
                 time.sleep(attempt * 3)
 
