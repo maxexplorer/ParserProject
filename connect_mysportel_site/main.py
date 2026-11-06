@@ -38,7 +38,7 @@ def init_undetected_chromedriver(headless_mode: bool = False):
     if headless_mode:
         options.add_argument('--headless')
 
-    driver = uc.Chrome(options=options)
+    driver = uc.Chrome(version_main=156, options=options)
     driver.implicitly_wait(1)
     driver.maximize_window()
     return driver
@@ -326,9 +326,9 @@ def main() -> None:
         print("⏳ У вас есть 30 секунд, чтобы авторизоваться вручную...")
         time.sleep(30)
 
-        # process_participants_ids(driver=driver)
-        # process_companies_ids(driver=driver)
-        process_participants_photo(driver)
+        process_participants_ids(driver=driver)
+        process_companies_ids(driver=driver)
+        process_participants_photo(driver=driver)
     finally:
         driver.close()
         driver.quit()
