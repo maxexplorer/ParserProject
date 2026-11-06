@@ -3,13 +3,14 @@ import json
 import os
 import re
 import time
+from copy import copy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from bs4 import BeautifulSoup
-from pandas import DataFrame, ExcelWriter
+from openpyxl import load_workbook
 from requests import Session
 
 from data.data import category_data_list
@@ -17,6 +18,7 @@ from data.data import category_data_list
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / 'data' / 'product_data_list.json'
+TEMPLATE_FILE = BASE_DIR / 'data' / 'export_template.xlsx'
 RESULTS_DIR = BASE_DIR / 'results'
 SHEET_NAME = 'Export Products Sheet'
 BASE_URL = 'https://agrobaza74.ru'
@@ -83,9 +85,48 @@ MODEL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+CATALOG_NUMBER_PATTERN = re.compile(
+    r'(?<![0-9A-Za-zА-яЁё])'
+    r'[0-9A-Za-zА-яЁё]+'
+    r'(?:[./-][0-9A-Za-zА-яЁё]+)+'
+    r'(?![0-9A-Za-zА-яЁё])'
+)
+LONG_NUMBER_PATTERN = re.compile(r'(?<!\d)\d{5,}(?!\d)')
+TRACTOR_MODEL_PATTERN = re.compile(r'^[КK]-?(?:700|701|702|744)$', re.IGNORECASE)
+
 
 def clean_text(value: str) -> str:
     return ' '.join(value.split())
+
+
+def extract_identifier_from_name(name: str) -> str:
+    candidates: list[tuple[str, int]] = []
+
+    for match in CATALOG_NUMBER_PATTERN.finditer(name):
+        value = match.group(0).strip('./-')
+        values = (
+            [part.strip('./-') for part in value.split('/')]
+            if len(value) > 25 and '/' in value
+            else [value]
+        )
+        for candidate in values:
+            digit_count = sum(character.isdigit() for character in candidate)
+            if (
+                candidate
+                and len(candidate) <= 25
+                and digit_count >= 4
+                and not TRACTOR_MODEL_PATTERN.fullmatch(candidate)
+            ):
+                separator_count = sum(character in './-' for character in candidate)
+                candidates.append((candidate, separator_count))
+
+    for match in LONG_NUMBER_PATTERN.finditer(name):
+        candidates.append((match.group(0), 0))
+
+    if not candidates:
+        return ''
+
+    return max(candidates, key=lambda item: item[1])[0]
 
 
 def get_html(
@@ -264,7 +305,7 @@ def parse_product_card(
         if open_graph_image is not None:
             image_url = urljoin(BASE_URL, open_graph_image.get('content', ''))
 
-    identifier = sku or code or name
+    identifier = sku or code or extract_identifier_from_name(name)
 
     return {
         'name': name,
@@ -337,10 +378,66 @@ def safe_file_name(value: str) -> str:
 def save_excel(data: list[dict[str, Any]], category_name: str) -> Path:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     file_path = RESULTS_DIR / f'result_data_{safe_file_name(category_name)}.xlsx'
-    data_frame = DataFrame(data, columns=EXPORT_COLUMNS)
+    if not TEMPLATE_FILE.exists():
+        raise FileNotFoundError(f'Не найден шаблон выгрузки: {TEMPLATE_FILE}')
 
-    with ExcelWriter(file_path, mode='w', engine='openpyxl') as writer:
-        data_frame.to_excel(writer, sheet_name=SHEET_NAME, index=False)
+    workbook = load_workbook(TEMPLATE_FILE)
+    products_sheet = workbook[SHEET_NAME]
+    groups_sheet = workbook['Export Groups Sheet']
+    headers = [cell.value for cell in products_sheet[1]]
+    header_indexes = {header: index for index, header in enumerate(headers)}
+    template_styles = [copy(cell._style) for cell in products_sheet[2]]
+    template_address = products_sheet.cell(
+        row=2,
+        column=header_indexes['Адрес_подраздела'] + 1,
+    ).value
+    address_hyperlink = products_sheet.cell(
+        row=2,
+        column=header_indexes['Адрес_подраздела'] + 1,
+    ).hyperlink
+
+    group_headers = {
+        cell.value: index
+        for index, cell in enumerate(groups_sheet[1])
+    }
+    group_names = {
+        row[group_headers['Номер_группы']].value:
+        row[group_headers['Название_группы']].value
+        for row in groups_sheet.iter_rows(min_row=2)
+    }
+    source_aliases = {
+        'Срок_действия_скидки_от': 'Cрок действия скидки от',
+        'Срок_действия_скидки_до': 'Cрок действия скидки до',
+        'Цена_от': 'Цена от',
+    }
+
+    if products_sheet.max_row > 1:
+        products_sheet.delete_rows(2, products_sheet.max_row - 1)
+
+    for product in data:
+        row_values = [
+            product.get(source_aliases.get(header, header))
+            for header in headers
+        ]
+        identifier = product['Идентификатор_товара']
+        group_number = product['Номер_группы']
+        row_values[header_indexes['Код_товара']] = identifier
+        row_values[header_indexes['Описание']] = product['Название_позиции']
+        row_values[header_indexes['Название_группы']] = group_names.get(group_number)
+        row_values[header_indexes['Адрес_подраздела']] = template_address
+        row_values[header_indexes['Цена_от']] = '-'
+        products_sheet.append(row_values)
+
+        row_index = products_sheet.max_row
+        for column_index, style in enumerate(template_styles, 1):
+            products_sheet.cell(row=row_index, column=column_index)._style = copy(style)
+        if address_hyperlink is not None:
+            products_sheet.cell(
+                row=row_index,
+                column=header_indexes['Адрес_подраздела'] + 1,
+            ).hyperlink = copy(address_hyperlink)
+
+    workbook.save(file_path)
 
     print(f'Сохранено {len(data)} записей в {file_path}')
     return file_path
@@ -394,6 +491,12 @@ def parse_category(
 
         if not product['name']:
             print(f'Пропущен товар без названия: {product_url}')
+            continue
+        if not product['sku']:
+            print(
+                f'Пропущен товар без артикула '
+                f'и каталожного номера: {product_url}'
+            )
             continue
 
         result_data.append(build_export_row(product, group_number))
