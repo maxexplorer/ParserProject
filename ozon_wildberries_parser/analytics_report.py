@@ -9,7 +9,7 @@ import requests
 import pandas as pd
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_ANALYTICS_HEADERS
+from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS
 
 
 def load_sku_article_from_excel(sheet_name: str) -> dict:
@@ -162,7 +162,7 @@ def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_
             time.sleep(1)
             response = requests.post(
                 API_URLS_WB['products'],
-                headers=WB_ANALYTICS_HEADERS,
+                headers=WB_HEADERS,
                 json=payload,
                 timeout=20
             )

@@ -4,7 +4,7 @@ import time
 import requests
 
 from configs.config import API_URLS_OZON, OZON_HEADERS
-from configs.config import API_URLS_WB, WB_PRICES_AND_DISCOUNTS_HEADERS
+from configs.config import API_URLS_WB, WB_HEADERS
 
 
 def get_all_products_ozon() -> dict[int, str]:
@@ -84,7 +84,7 @@ def get_all_products_wb() -> dict[int, str]:
             time.sleep(1)  # защита от лимитов
             response = requests.get(
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_PRICES_AND_DISCOUNTS_HEADERS,
+                headers=WB_HEADERS,
                 params=params,
                 timeout=15
             )

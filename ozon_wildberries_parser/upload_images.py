@@ -8,7 +8,7 @@ import re
 import requests
 import pandas as pd
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_CONTENT_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 from configs.config import FIGMA_HEADERS
 from figma_utils import get_figma_nodes
 
@@ -122,7 +122,7 @@ def upload_images_wb(nm_id: int, image_urls: list) -> dict | None:
         }
         response = requests.post(
             API_URLS_WB['content_media'],
-            headers=WB_CONTENT_HEADERS,
+            headers=WB_HEADERS,
             json=payload,
             timeout=15
         )

@@ -7,7 +7,7 @@ import time
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_PRICES_AND_DISCOUNTS_HEADERS, WB_MARKETPLACE_HEADERS
+from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS
 from utils import chunk_list
 
 
@@ -80,7 +80,7 @@ def get_wb_fbs_warehouses() -> list[dict]:
     try:
         response = requests.get(
             API_URLS_WB['warehouses'],
-            headers=WB_MARKETPLACE_HEADERS,
+            headers=WB_HEADERS,
             timeout=15
         )
         response.raise_for_status()
@@ -128,7 +128,7 @@ def get_size_ids() -> dict[str, list[int]]:
             time.sleep(1)
             response = requests.get(
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_PRICES_AND_DISCOUNTS_HEADERS,
+                headers=WB_HEADERS,
                 params=params,
                 timeout=15
             )
@@ -195,7 +195,7 @@ def get_fbs_quantity_wb(offer_ids: list[str]) -> dict[str, int]:
             try:
                 response = requests.post(
                     API_URLS_WB['stocks'].format(warehouseId=warehouse_id),
-                    headers=WB_MARKETPLACE_HEADERS,
+                    headers=WB_HEADERS,
                     json=payload,
                     timeout=15
                 )
