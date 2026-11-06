@@ -1,5 +1,6 @@
 import os
 import time
+from io import BytesIO
 from datetime import datetime
 import re
 from urllib.parse import urljoin
@@ -11,6 +12,7 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from bs4 import BeautifulSoup
 from pandas import DataFrame, ExcelWriter
+from PIL import Image, UnidentifiedImageError
 
 # Отметка начала выполнения
 start_time: datetime = datetime.now()
@@ -250,23 +252,26 @@ def find_participant_image_url(soup: BeautifulSoup) -> str:
     if heading is None:
         return ''
 
-    # Ищем изображение в ближайшем общем блоке с именем участника. Глобальный
-    # поиск по g-mb-20 захватывает рекламные баннеры в верхней части страницы.
+    profile_container = None
     for parent in heading.parents:
-        if parent.name in {'body', 'html'}:
+        if parent.name in {'div', 'section'} and 'row' in parent.get('class', []):
+            profile_container = parent
             break
 
-        for image in parent.find_all('img', src=True):
-            image_url = urljoin(BASE_URL, image['src'])
-            image_description = ' '.join([
-                image_url,
-                image.get('alt', ''),
-                image.get('title', ''),
-                ' '.join(image.get('class', [])),
-            ]).lower()
+    if profile_container is None:
+        return ''
 
-            if not any(word in image_description for word in ('anonymous', 'banner', 'logo', 'advert')):
-                return image_url
+    for image in profile_container.find_all('img', src=True):
+        image_url = urljoin(BASE_URL, image['src'])
+        image_description = ' '.join([
+            image_url,
+            image.get('alt', ''),
+            image.get('title', ''),
+            ' '.join(image.get('class', [])),
+        ]).lower()
+
+        if not any(word in image_description for word in ('anonymous', 'banner', 'logo', 'advert')):
+            return image_url
 
     return ''
 
@@ -295,6 +300,17 @@ def download_imgs(session: Session, image_url: str, name: str) -> None:
     extension = get_image_extension(response.content)
     if not extension:
         print(f'Пропущен файл неизвестного формата: {image_url}')
+        return
+
+    try:
+        with Image.open(BytesIO(response.content)) as image:
+            width, height = image.size
+    except (UnidentifiedImageError, OSError):
+        print(f'Пропущен повреждённый файл: {image_url}')
+        return
+
+    if width > height * 3:
+        print(f'Пропущен рекламный баннер вместо фото: {name}')
         return
 
     safe_name = re.sub(r'[<>:"/\\|?*]', '_', name).strip(' .')
