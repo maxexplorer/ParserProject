@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 import re
+from urllib.parse import urljoin
 
 from requests import Session
 
@@ -9,7 +10,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from bs4 import BeautifulSoup
-from pandas import DataFrame, ExcelWriter, read_excel
+from pandas import DataFrame, ExcelWriter
 
 # Отметка начала выполнения
 start_time: datetime = datetime.now()
@@ -22,6 +23,8 @@ headers = {
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
 }
+
+BASE_URL = 'https://connect.mysportel.com/'
 
 
 def init_undetected_chromedriver(headless_mode: bool = False):
@@ -58,25 +61,24 @@ def save_excel(data: list[dict], sheet_name: str) -> None:
     # Создаём директорию при необходимости
     os.makedirs(directory, exist_ok=True)
 
-    # Создать пустой Excel-файл, если он отсутствует
+    new_df = DataFrame(data)
+    if new_df.empty:
+        return
+
     if not os.path.exists(file_path):
         with ExcelWriter(file_path, mode='w') as writer:
-            DataFrame().to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # Загружаем существующие данные
-    df_existing = read_excel(file_path, sheet_name=sheet_name)
-    num_existing_rows = len(df_existing.index)
-
-    # Добавляем новые строки
-    new_df = DataFrame(data)
-    with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
-        new_df.to_excel(
-            writer,
-            startrow=num_existing_rows + 1,
-            header=(num_existing_rows == 0),
-            sheet_name=sheet_name,
-            index=False
-        )
+            new_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    else:
+        with ExcelWriter(file_path, mode='a', if_sheet_exists='overlay') as writer:
+            sheet_exists = sheet_name in writer.sheets
+            startrow = writer.sheets[sheet_name].max_row if sheet_exists else 0
+            new_df.to_excel(
+                writer,
+                startrow=startrow,
+                header=not sheet_exists,
+                sheet_name=sheet_name,
+                index=False,
+            )
 
     print(f'Сохранено {len(data)} записей в {file_path}')
 
@@ -99,7 +101,7 @@ def process_participants_ids(driver) -> None:
     batch_size = 100
     result_data: list[dict] = []
 
-    for participant_id in range(1, 3265):
+    for participant_id in range(3266, 4130):
 
         print(f"📊 Обработка: {participant_id}/3264")
 
@@ -186,7 +188,7 @@ def process_companies_ids(driver) -> None:
     batch_size = 100
     result_data: list[dict] = []
 
-    for company_id in range(1, 2073):
+    for company_id in range(1, 3039):
 
         print(f"📊 Обработка: {company_id}/3264")
 
@@ -243,15 +245,63 @@ def process_companies_ids(driver) -> None:
         save_excel(result_data, sheet_name='Companies')
 
 
+def find_participant_image_url(soup: BeautifulSoup) -> str:
+    heading = soup.find('h2', class_='g-font-weight-300 g-mr-10')
+    if heading is None:
+        return ''
+
+    # Ищем изображение в ближайшем общем блоке с именем участника. Глобальный
+    # поиск по g-mb-20 захватывает рекламные баннеры в верхней части страницы.
+    for parent in heading.parents:
+        if parent.name in {'body', 'html'}:
+            break
+
+        for image in parent.find_all('img', src=True):
+            image_url = urljoin(BASE_URL, image['src'])
+            image_description = ' '.join([
+                image_url,
+                image.get('alt', ''),
+                image.get('title', ''),
+                ' '.join(image.get('class', [])),
+            ]).lower()
+
+            if not any(word in image_description for word in ('anonymous', 'banner', 'logo', 'advert')):
+                return image_url
+
+    return ''
+
+
+def get_image_extension(content: bytes) -> str:
+    if content.startswith(b'\xff\xd8\xff'):
+        return '.jpg'
+    if content.startswith(b'\x89PNG\r\n\x1a\n'):
+        return '.png'
+    if content.startswith((b'GIF87a', b'GIF89a')):
+        return '.gif'
+    if content.startswith(b'RIFF') and content[8:12] == b'WEBP':
+        return '.webp'
+    return ''
+
+
 def download_imgs(session: Session, image_url: str, name: str) -> None:
     directory = 'images'
 
     # Создаём директорию при необходимости
     os.makedirs(directory, exist_ok=True)
 
-    response = session.get(url=image_url, headers=headers)
+    response = session.get(url=image_url, headers=headers, timeout=30)
+    response.raise_for_status()
 
-    with open(f"images/{name}.jpg", "wb") as file:
+    extension = get_image_extension(response.content)
+    if not extension:
+        print(f'Пропущен файл неизвестного формата: {image_url}')
+        return
+
+    safe_name = re.sub(r'[<>:"/\\|?*]', '_', name).strip(' .')
+    if not safe_name:
+        safe_name = 'participant'
+
+    with open(os.path.join(directory, f'{safe_name}{extension}'), 'wb') as file:
         file.write(response.content)
 
     print(f'Обработано фото: {name}')
@@ -274,7 +324,15 @@ def process_participants_photo(driver) -> None:
     """
 
     with Session() as session:
-        for participant_id in range(1, 3265):
+        for cookie in driver.get_cookies():
+            session.cookies.set(
+                cookie['name'],
+                cookie['value'],
+                domain=cookie.get('domain'),
+                path=cookie.get('path', '/'),
+            )
+
+        for participant_id in range(1, 4130):
 
             print(f"📊 Обработка: {participant_id}/3264")
 
@@ -299,15 +357,15 @@ def process_participants_photo(driver) -> None:
             if not name:
                 continue
 
-            try:
-                image_url = f"https://connect.mysportel.com{soup.find('div', class_='g-mb-20').find('img').get('src')}"
-            except Exception:
-                image_url = ''
+            image_url = find_participant_image_url(soup)
 
-            if 'anonymous' in image_url:
+            if not image_url:
                 continue
 
-            download_imgs(session, image_url, name)
+            try:
+                download_imgs(session, image_url, name)
+            except Exception as error:
+                print(f'Не удалось загрузить фото {name}: {error}')
 
 
 def main() -> None:
@@ -326,8 +384,8 @@ def main() -> None:
         print("⏳ У вас есть 30 секунд, чтобы авторизоваться вручную...")
         time.sleep(30)
 
-        process_participants_ids(driver=driver)
-        process_companies_ids(driver=driver)
+        # process_participants_ids(driver=driver)
+        # process_companies_ids(driver=driver)
         process_participants_photo(driver=driver)
     finally:
         driver.close()
