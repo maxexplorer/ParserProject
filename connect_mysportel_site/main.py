@@ -348,9 +348,9 @@ def process_participants_photo(driver) -> None:
                 path=cookie.get('path', '/'),
             )
 
-        for participant_id in range(1, 4130):
+        for participant_id in range(3324, 4130):
 
-            print(f"📊 Обработка: {participant_id}/3264")
+            print(f"📊 Обработка: {participant_id}")
 
             try:
                 time.sleep(1)
