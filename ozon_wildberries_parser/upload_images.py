@@ -8,9 +8,8 @@ import re
 import requests
 import pandas as pd
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
 from configs.config import FIGMA_HEADERS
-from api_requests import ApiError, read_json, send_request, wb_json
 from figma_utils import get_figma_nodes
 
 def gdrive_direct_link(url: str) -> str | None:
@@ -33,7 +32,8 @@ def load_image_tasks_from_excel() -> list:
     folder = 'figma_data'
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
-        raise FileNotFoundError('В папке figma_data нет Excel-файла с задачами.')
+        print('❗ Нет Excel файлов')
+        return []
 
     df = pd.read_excel(excel_files[0])
     df.columns = df.columns.str.strip()  # убираем пробелы в названиях колонок
@@ -88,83 +88,85 @@ def get_figma_image_urls(figma_key: str, node_ids: list) -> list:
         'scale': 2
     }
     time.sleep(3)  # пауза для лимитов Figma
-    response = requests.get(url, headers=FIGMA_HEADERS, params=params, timeout=15)
+    response = requests.get(url, headers=FIGMA_HEADERS, params=params)
     response.raise_for_status()
     data = response.json()
     images = data.get('images', {})
     return [img_url for img_url in images.values() if img_url]
 
 
-def upload_images_ozon(product_id: int, image_urls: list) -> dict:
-    label = 'Ozon (изображения)'
-    response = send_request(
-        'POST', API_URLS_OZON['product_pictures_import'], label=label,
-        headers=OZON_HEADERS, json={'product_id': product_id, 'images': image_urls}, timeout=15,
-    )
-    result = read_json(response, label)
-    if not isinstance(result, dict) or not result:
-        raise ApiError(f'{label}: API не подтвердил приём запроса.')
-    return result
+def upload_images_ozon(product_id: int, image_urls: list) -> dict | None:
+    try:
+        payload = {
+            'product_id': product_id,
+            'images': image_urls,
+        }
+        response = requests.post(
+            API_URLS_OZON['product_pictures_import'],
+            headers=OZON_HEADERS,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"❌ Ошибка загрузки на OZON для product_id={product_id}: {e}")
+        return None
 
 
-def upload_images_wb(nm_id: int, image_urls: list) -> dict:
-    if not image_urls:
-        raise ApiError('Wildberries (изображения): нет ссылок для загрузки.')
-    result = wb_json(
-        'POST', API_URLS_WB['content_media'], 'media',
-        json={'nmId': nm_id, 'data': image_urls}, timeout=15, retry=False,
-    )
-    if not isinstance(result, dict) or result.get('error') is not False:
-        raise ApiError('Wildberries (изображения): API не подтвердил приём запроса.')
-    return result
+def upload_images_wb(nm_id: int, image_urls: list) -> dict | None:
+    try:
+        payload = {
+            'nmId': nm_id,
+            'data': image_urls
+        }
+        response = requests.post(
+            API_URLS_WB['content_media'],
+            headers=WB_HEADERS,
+            json=payload,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"❌ Ошибка загрузки на WB для nmId={nm_id}: {e}")
+        return None
 
 
 def process_image_uploads():
-    """Обрабатывает задачи по каждой площадке и сообщает итог по запросам."""
+    """
+    Основная функция обработки всех задач.
+    """
     tasks = load_image_tasks_from_excel()
-    figma_cache = {}
-    accepted = failed = 0
+    figma_cache = {}  # кеш слоев по ключу
 
-    for number, task in enumerate(tasks, start=1):
-        targets = [
-            (label, task[id_field], upload) for flag, label, id_field, upload in (
-                ('ozon', 'Ozon', 'product_id_ozon', upload_images_ozon),
-                ('wb', 'Wildberries', 'nm_id_wb', upload_images_wb),
-            ) if task[flag]
-        ]
-        if not targets:
-            continue
-        try:
-            figma_key = task['figma_key']
-            if figma_key not in figma_cache:
-                figma_cache[figma_key] = get_figma_nodes(figma_key)
-            node_mapping = figma_cache[figma_key]
-            node_ids = [node_mapping[name] for name in task['layer_names'] if name in node_mapping]
-            image_urls = get_figma_image_urls(figma_key=figma_key, node_ids=node_ids)
-            missing_layers = len(task['layer_names']) - len(node_ids)
-            missing_exports = len(set(node_ids)) - len(image_urls)
-            if task['wb'] and (missing_layers or missing_exports > 0):
-                print(f'⚠️ Задача №{number} (Wildberries): не найдены слои — {missing_layers}, '
-                      f'нет ссылок экспорта — {max(0, missing_exports)}.')
+    for task in tasks:
+        print(f"🔹 Обработка Figma {task['figma_key']}")
 
-            if task['video_url_wb']:
-                image_urls.append(task['video_url_wb'])
-        except (requests.RequestException, ValueError, KeyError, TypeError, AttributeError):
-            failed += len(targets)
-            print(f'❌ Задача №{number}: не удалось получить изображения из Figma.')
-            continue
+        # --- Figma cache
+        if task['figma_key'] not in figma_cache:
+            figma_cache[task['figma_key']] = get_figma_nodes(task['figma_key'])
 
-        for label, product_id, upload in targets:
-            try:
-                if not product_id:
-                    raise ApiError('В задаче отсутствует идентификатор товара.')
-                upload(product_id, image_urls)
-            except ApiError as error:
-                failed += 1
-                print(f'❌ Задача №{number} ({label}): {error}')
-            else:
-                accepted += 1
+        node_mapping = figma_cache[task['figma_key']]
 
-    print(f'Загрузка медиа: принято API — {accepted}, не подтверждено — {failed}.')
-    if accepted:
-        print('Появление файлов на карточках проверяется отдельно.')
+        # Преобразуем layer_names в node_ids
+        node_ids = [node_mapping[name] for name in task['layer_names'] if name in node_mapping]
+
+        image_urls = get_figma_image_urls(
+            figma_key=task['figma_key'],
+            node_ids=node_ids
+        )
+
+        # Добавляем видео ссылку в конец списка
+        if task['video_url_wb']:
+            image_urls.append(task['video_url_wb'])
+
+        if task['ozon'] and task['product_id_ozon']:
+            result = upload_images_ozon(task['product_id_ozon'], image_urls)
+            if result:
+                print(f'✅ OZON обновлён для product_id={task["product_id_ozon"]}')
+
+        if task['wb'] and task['nm_id_wb']:
+            result = upload_images_wb(task['nm_id_wb'], image_urls)
+            if result:
+                print(f'✅ WB обновлён для nmId={task["nm_id_wb"]}')
