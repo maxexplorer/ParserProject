@@ -1,14 +1,14 @@
 # update_price.py
 
-import os
-import glob
 import time
 
 import pandas as pd
-import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
+from excel_io import DATA_WORKBOOK, find_workbook, save_workbook
+
+from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS
+from api_requests import ApiError, read_json, send_request, wb_goods, wb_json
 
 
 def load_article_info_from_excel(sheet_name: str) -> dict:
@@ -17,13 +17,12 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
     Артикул в 1 столбце, new_price в 6 столбце.
     Возвращает словарь {offer_id: delta}
     """
-    folder = 'data'
-    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
-    if not excel_files:
+    source = find_workbook()
+    if source is None:
         print('❗ В папке data/ не найдено .xlsx файлов.')
         return {}
 
-    df = pd.read_excel(excel_files[0], sheet_name=sheet_name, skiprows=2)
+    df = pd.read_excel(source, sheet_name=sheet_name, skiprows=2)
     df.columns = df.columns.str.strip()
 
     article_info = {}
@@ -54,6 +53,8 @@ def get_current_prices_ozon() -> dict:
     """
     result = {}
     cursor = ''
+    seen = set()
+    received = 0
     limit = 100
 
     while True:
@@ -67,36 +68,32 @@ def get_current_prices_ozon() -> dict:
             'limit': limit
         }
 
-        try:
-            time.sleep(1)
-            response = requests.post(
-                API_URLS_OZON['product_info_prices'],
-                headers=OZON_HEADERS,
-                json=data,
-                timeout=15
-            )
-            response.raise_for_status()
-        except Exception as ex:
-            print(f'❌ Ошибка получения цен Ozon: {ex}')
-            break
+        time.sleep(1)
+        label = 'Ozon (цены)'
+        response = send_request(
+            'POST', API_URLS_OZON['product_info_prices'], label=label, headers=OZON_HEADERS,
+            json=data, timeout=15,
+        )
+        data = read_json(response, label)
+        items = data['items']
+        if not isinstance(items, list):
+            raise ApiError(f'{label}: некорректный список товаров.')
+        received += len(items)
+        total = data.get('total_items', data.get('total'))
+        cursor = data.get('cursor', data.get('last_id', ''))
+        if total is not None and total > received and (not cursor or not items):
+            raise ApiError(f'{label}: пагинация завершилась до получения всех товаров.')
 
-        try:
-            data = response.json()
-        except ValueError:
-            print(f'❌ Ошибка при декодировании JSON.')
-            break
-
-        items = data.get('items', [])
         for item in items:
             offer_id = item.get('offer_id')
-            price_info = item.get('price', {})
-            price = price_info.get('price', 0)
             if offer_id:
-                result[offer_id] = float(price)
+                result[offer_id] = float(item['price']['price'])
 
-        cursor = data.get('last_id')
-        if not cursor:
+        if not cursor or not items:
             break
+        if cursor in seen:
+            raise ApiError('Ozon (цены): повторный курсор.')
+        seen.add(cursor)
 
     return result
 
@@ -104,50 +101,12 @@ def get_current_prices_ozon() -> dict:
 def get_current_prices_wb() -> tuple[dict, dict]:
     vendor_code_to_price = {}
     vendor_code_to_nm_id = {}
-    limit = 1000
-    offset = 0
-
-    while True:
-        params = {
-            'order': 'nmId',
-            'direction': 'asc',
-            'limit': limit,
-            'offset': offset
-        }
-
-        try:
-            time.sleep(1)
-            response = requests.get(
-                API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
-                params=params,
-                timeout=15
-            )
-            response.raise_for_status()
-        except Exception as ex:
-            print(f'❌ Ошибка получения цен WB: {ex}')
-            break
-
-        try:
-            data = response.json()
-        except ValueError:
-            print(f'❌ Ошибка при декодировании JSON.')
-            break
-
-        goods = data.get('data', {}).get('listGoods', [])
-        if not goods:
-            break
-
-        for item in goods:
-            nm_id = item.get('nmID')
-            vendor_code = item.get('vendorCode')
-            sizes = item.get('sizes', [])
-            if sizes and vendor_code:
-                price = sizes[0].get('price', 0)
-                vendor_code_to_price[vendor_code] = float(price)
-                vendor_code_to_nm_id[vendor_code] = nm_id
-
-        offset += limit
+    for item in wb_goods({'order': 'nmId', 'direction': 'asc'}):
+        vendor_code = item['vendorCode']
+        sizes = item['sizes']
+        if sizes and vendor_code:
+            vendor_code_to_price[vendor_code] = float(sizes[0]['price'])
+            vendor_code_to_nm_id[vendor_code] = item['nmID']
 
     return vendor_code_to_price, vendor_code_to_nm_id
 
@@ -184,15 +143,14 @@ def update_prices_ozon(article_info: dict) -> dict:
         })
 
     if prices['prices']:
-        try:
-            response = requests.post(
-                API_URLS_OZON['import_price'],
-                headers=OZON_HEADERS,
-                json=prices,
-                timeout=20
-            )
-        except Exception as ex:
-            print(f'❌ Ошибка при обновлении цен Ozon: {ex}')
+        label = 'Ozon (обновление цен)'
+        response = send_request(
+            'POST', API_URLS_OZON['import_price'], label=label, headers=OZON_HEADERS, json=prices,
+        )
+        items = read_json(response, label)['result']
+        if (not isinstance(items, list) or len(items) != len(prices['prices'])
+                or any(item.get('updated') is not True or item.get('errors') for item in items)):
+            raise ApiError(f'{label}: API не подтвердил обновление всех цен.')
 
     return current_prices
 
@@ -224,16 +182,10 @@ def update_prices_wb(article_info: dict) -> dict:
         })
 
     if data['data']:
-        try:
-            response = requests.post(
-                API_URLS_WB['upload_task'],
-                headers=WB_HEADERS,
-                json=data,
-                timeout=20
-            )
-            response.raise_for_status()
-        except Exception as ex:
-            print(f'❌ Ошибка при обновлении цен WB: {ex}')
+        result = wb_json('POST', API_URLS_WB['upload_task'], 'prices',
+                         json=data, statuses=(200, 208), retry=False)
+        if result.get('error') or not isinstance(result.get('data'), dict):
+            raise ApiError('Wildberries: API не подтвердил приём задачи обновления цен.')
 
     return vendor_code_to_price
 
@@ -243,13 +195,12 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
     Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
     сохраняя изменения в data/data.xlsx.
     """
-    folder = 'data'
-    excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
-    if not excel_files:
+    source = find_workbook()
+    if source is None:
         print('❗ В папке data/ не найдено .xlsx файлов.')
         return
 
-    wb = openpyxl.load_workbook(excel_files[0])
+    wb = openpyxl.load_workbook(source)
     if marketplace not in wb.sheetnames:
         print(f'❗ В книге нет листа "{marketplace}"')
         return
@@ -263,11 +214,7 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
         offer_id = str(cell_article).strip()
         price_value = current_prices.get(offer_id)
         if price_value is not None:
-            row[5].value = price_value
+            ws.cell(row=row[1].row, column=6, value=price_value)
 
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-    output_path = os.path.join(folder, 'data.xlsx')
-    wb.save(output_path)
-    print(f'✅ Текущие цены успешно записаны в {output_path}')
+    save_workbook(wb)
+    print(f'✅ Текущие цены успешно записаны в {DATA_WORKBOOK}')

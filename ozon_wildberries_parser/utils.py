@@ -2,7 +2,7 @@
 
 import requests
 
-from configs.config import WB_TOKEN
+from configs.config import WB_HEADERS
 
 # Словарь сервисов WB и их ping URL
 WB_PING_URLS = {
@@ -50,8 +50,8 @@ def check_wb_api_connection(service: str = "common", headers: dict = None, timeo
         else:
             print(f"❌ Ошибка подключения к WB {service} API: статус {response.status_code}")
             return False
-    except requests.RequestException as e:
-        print(f"❌ Ошибка подключения к WB {service} API: {e}")
+    except requests.RequestException:
+        print(f"❌ Ошибка подключения к WB {service} API")
         return False
 
 
@@ -82,9 +82,9 @@ def make_wb_headers(token: str, use_bearer: bool = False) -> dict:
 if __name__ == "__main__":
     # Проверка токенов для разных сервисов
     services = {
-        "marketplace": {"headers": {"Authorization": WB_TOKEN}},
-        "analytics": {"headers": {"Authorization": WB_TOKEN}},
-        "prices": {"headers": {"Authorization": WB_TOKEN}},
+        "marketplace": {"headers": WB_HEADERS},
+        "analytics": {"headers": WB_HEADERS},
+        "prices": {"headers": WB_HEADERS},
     }
 
     for service_name, params in services.items():

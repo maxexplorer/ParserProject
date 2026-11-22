@@ -4,7 +4,7 @@ import time
 import requests
 
 from configs.config import API_URLS_OZON, OZON_HEADERS
-from configs.config import API_URLS_WB, WB_HEADERS
+from api_requests import wb_goods
 
 
 def get_all_products_ozon() -> dict[int, str]:
@@ -71,40 +71,9 @@ def get_all_products_wb() -> dict[int, str]:
     }
     """
     result: dict[int, str] = {}
-    limit = 1000
-    offset = 0
-
-    while True:
-        params = {
-            "limit": limit,
-            "offset": offset
-        }
-
-        try:
-            time.sleep(1)  # защита от лимитов
-            response = requests.get(
-                API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
-                params=params,
-                timeout=15
-            )
-            response.raise_for_status()
-        except Exception as e:
-            print(f"❌ Ошибка WB API: {e}")
-            break
-
-        data = response.json()
-        goods = data.get("data", {}).get("listGoods", [])
-        if not goods:
-            break
-
-        for item in goods:
-            nm_id = item.get("nmID")
-            vendor_code = item.get("vendorCode")
-            if nm_id and vendor_code:
-                result[nm_id] = vendor_code
-
-        offset += limit
+    for item in wb_goods():
+        if item['vendorCode']:
+            result[item['nmID']] = item['vendorCode']
 
     return result
 

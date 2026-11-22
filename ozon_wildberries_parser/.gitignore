@@ -1,0 +1,5 @@
+/configs/.api-secrets.dpapi
+/configs/.api-secrets-*.tmp
+/configs/__pycache__/
+/__pycache__/
+/tests/__pycache__/

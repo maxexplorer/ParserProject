@@ -24,7 +24,8 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-workbook = openpyxl.load_workbook('data/data.xlsx')
+from api_requests import ApiError
+from excel_io import save_workbook
 
 def refresh_wb_session(
         session: Session,
@@ -219,33 +220,20 @@ def get_products_ids_wb(session: Session, headers: dict, pages: int, text: str) 
                     timeout=60
                 )
 
-            if response is None:
-                print('get_products_ids_wb: empty response')
-                continue
-
-            if response.status_code != 200:
-                print(f'get_products_ids_wb: status_code {response.status_code}')
-                continue
-
-        except Exception as ex:
-            print(f'get_products_ids_wb: {ex}')
-            continue
-
-        data = response.json()
-
-        try:
-            for item in data['products']:
-                product_id = item.get('id')
-                products_ids_list.append(str(product_id))
-        except Exception as ex:
-            print(f'products_ids: {ex}')
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data['products'], list):
+                raise ValueError
+            products_ids_list.extend(str(item['id']) for item in data['products'])
+        except (requests.RequestException, ValueError, KeyError, TypeError, AttributeError):
+            raise ApiError('Wildberries: ошибка получения результатов поиска.') from None
 
     print(f'Получено: {len(products_ids_list)} ids')
 
     return products_ids_list
 
 
-def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
+def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3, *, persist: bool = True):
     """
     Основной парсер Ozon: записывает позиции, цены, количество и склад
     """
@@ -401,15 +389,14 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
                           f'storage - {storage}')
 
     except Exception as ex:
-        print(ex)
-    finally:
-        if not os.path.exists('data'):
-            os.makedirs('data')
+        raise RuntimeError('Не удалось завершить сбор данных Ozon.') from ex
 
-        workbook.save('data/data.xlsx')
+    if persist:
+        os.makedirs('data', exist_ok=True)
+        save_workbook(workbook, 'data/data.xlsx')
 
 
-def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
+def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3, *, persist: bool = True):
     """
     Основной парсер Wildberries: записывает позиции, цены, количество и склад
     """
@@ -474,13 +461,12 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
                         refresh_wb_session(session=session, headers=headers)
                         response = session.get('https://www.wildberries.ru/__internal/u-card/cards/v4/detail', params=params, headers=headers)
 
-                    if response.status_code != 200:
-                        print(f'{product_url}: {response.status_code}')
-                except Exception as ex:
-                    print(f'{product_url}: ex')
-                    continue
-
-                data = response.json()
+                    response.raise_for_status()
+                    data = response.json()
+                    if not isinstance(data['products'], list):
+                        raise ValueError
+                except (requests.RequestException, ValueError, KeyError, TypeError):
+                    raise ApiError('Wildberries: ошибка получения карточки товара.') from None
 
                 try:
                     quantity = data['products'][0]['sizes'][0]['stocks'][0]['qty']
@@ -518,7 +504,6 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
     session.close()
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
-
-    workbook.save('data/data.xlsx')
+    if persist:
+        os.makedirs('data', exist_ok=True)
+        save_workbook(workbook, 'data/data.xlsx')

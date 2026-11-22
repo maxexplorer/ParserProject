@@ -2,11 +2,16 @@
 
 from datetime import datetime
 
+from openpyxl import load_workbook
+
+from api_keys import check_ozon_key_expiry, update_api_key
+from api_requests import ApiError
+from excel_io import save_workbook
+
 from parser import (
     init_undetected_chromedriver,
     ozon_parser,
-    wildberries_parser,
-    workbook
+    wildberries_parser
 )
 
 from update_price import (
@@ -40,6 +45,7 @@ from upload_images import process_image_uploads
 
 
 def main():
+    check_ozon_key_expiry()
     while True:
         print(
             '\nВыберите действие:\n'
@@ -59,6 +65,8 @@ def main():
             '14 - Обновить остатки FBS Ozon\n'
             '15 - Обновить остатки FBS Wildberries\n'
             '16 - Загрузить изображения OZON и Wildberries\n'
+            '17 - Обновить API-ключ Ozon\n'
+            '18 - Обновить API-ключ Wildberries\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -71,6 +79,7 @@ def main():
                     break
 
                 case '1':
+                    workbook = load_workbook('data/data.xlsx')
                     pages = int(input('Введите количество страниц Ozon: '))
                     driver = init_undetected_chromedriver()
                     try:
@@ -81,23 +90,25 @@ def main():
                         driver.quit()
 
                 case '2':
+                    workbook = load_workbook('data/data.xlsx')
                     pages = int(input('Введите количество страниц Wildberries: '))
                     print('Сбор данных Wildberries...')
                     wildberries_parser(workbook=workbook, pages=pages)
                     print('✅ Сбор данных Wildberries завершен.')
 
                 case '3':
+                    workbook = load_workbook('data/data.xlsx')
                     pages_ozon = int(input('Введите количество страниц Ozon: '))
                     pages_wb = int(input('Введите количество страниц Wildberries: '))
                     driver = init_undetected_chromedriver()
                     try:
                         print('Сбор данных Ozon...')
-                        ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon)
-                        print('✅ Сбор данных Ozon завершен.')
+                        ozon_parser(driver=driver, workbook=workbook, pages=pages_ozon, persist=False)
                     finally:
                         driver.quit()
                     print('Сбор данных Wildberries...')
-                    wildberries_parser(workbook=workbook, pages=pages_wb)
+                    wildberries_parser(workbook=workbook, pages=pages_wb, persist=False)
+                    save_workbook(workbook, 'data/data.xlsx')
                     print('✅ Сбор данных Wildberries завершен.')
 
                 case '4':
@@ -118,12 +129,12 @@ def main():
                     print('Обновление цен Ozon...')
                     article_info_ozon = load_article_info_from_excel(sheet_name='ОЗОН')
                     current_prices_ozon = update_prices_ozon(article_info=article_info_ozon)
-                    write_price_to_excel(current_prices=current_prices_ozon, marketplace='ОЗОН')
-                    print('✅ Цены Ozon обновлены и сохранены.')
 
                     print('Обновление цен Wildberries...')
                     article_info_wb = load_article_info_from_excel(sheet_name='ВБ')
                     current_prices_wb = update_prices_wb(article_info=article_info_wb)
+                    write_price_to_excel(current_prices=current_prices_ozon, marketplace='ОЗОН')
+                    print('✅ Цены Ozon обновлены и сохранены.')
                     write_price_to_excel(current_prices=current_prices_wb, marketplace='ВБ')
                     print('✅ Цены Wildberries обновлены и сохранены.')
 
@@ -229,12 +240,21 @@ def main():
                     process_image_uploads()
                     print('✅ Загрузка изображений завершена.')
 
+                case '17':
+                    update_api_key('Ozon')
+
+                case '18':
+                    update_api_key('Wildberries')
+
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')
 
+        except ApiError as ex:
+            print(f'❌ {ex}')
+        except PermissionError:
+            print('❌ Нет доступа к файлу Excel. Закройте книгу в Excel и повторите операцию.')
         except Exception as ex:
             print(f'❌ Ошибка: {ex}')
-            input("Нажмите Enter, чтобы закрыть программу...")
 
         execution_time = datetime.now() - start_time
         print(f'⏱️ Время выполнения: {execution_time}')
