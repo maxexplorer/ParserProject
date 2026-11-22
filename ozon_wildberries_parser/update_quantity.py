@@ -93,11 +93,11 @@ def get_wb_fbs_warehouses() -> list[int]:
     return warehouse_ids
 
 
-def get_size_ids() -> dict[str, list[int]]:
-    """Возвращает соответствие vendorCode и sizeID из полного каталога."""
+def get_size_ids(*, stop_on_short_page: bool = False) -> dict[str, list[int]]:
+    """Возвращает соответствие vendorCode и sizeID из полученных страниц каталога."""
     vendor_to_sizes = {}
     try:
-        for item in wb_goods():
+        for item in wb_goods(stop_on_short_page=stop_on_short_page):
             vendor = item['vendorCode']
             sizes = item['sizes']
             if not isinstance(vendor, str) or not isinstance(sizes, list):
@@ -142,7 +142,7 @@ def _read_wb_stock_batch(data, size_ids: list[int], warehouse_number: int, batch
     return amounts
 
 
-def get_fbs_quantity_wb(offer_ids: list[str]) -> dict[str, int]:
+def get_fbs_quantity_wb(offer_ids: list[str], *, stop_on_short_page: bool = False) -> dict[str, int]:
     """Суммирует остатки каждого артикула по размерам и складам FBS."""
     if not offer_ids:
         return {}
@@ -151,7 +151,7 @@ def get_fbs_quantity_wb(offer_ids: list[str]) -> dict[str, int]:
     if not warehouses:
         raise ApiError('Wildberries: склады FBS не найдены.')
 
-    vendor_to_sizes = get_size_ids()
+    vendor_to_sizes = get_size_ids(stop_on_short_page=stop_on_short_page)
     result = dict.fromkeys(offer_ids, 0)
     vendor_map = {}
     missing = sum(not vendor_to_sizes.get(vendor) for vendor in result)

@@ -157,8 +157,11 @@ def wb_json(method, url, category, *, headers=WB_HEADERS, statuses=(200,), retry
     raise ApiError(f'{label}: HTTP 429, повторите не раньше чем через {math.ceil(delay)} сек.')
 
 
-def wb_goods(params=None):
-    """Yield verified pages from the Prices and Discounts catalog."""
+def wb_goods(params=None, *, stop_on_short_page: bool = False):
+    """Yield validated catalog items, normally until WB returns an empty page.
+
+    The legacy short-page option can leave the catalog incomplete.
+    """
     limit = 1000
     offset = 0
     seen = set()
@@ -180,6 +183,6 @@ def wb_goods(params=None):
             raise ApiError('Wildberries (товары): некорректная или повторная страница.') from None
         seen.update(ids)
         yield from goods
-        if not goods:
+        if not goods or (stop_on_short_page and len(goods) < limit):
             return
         offset += limit

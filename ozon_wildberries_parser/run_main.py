@@ -232,7 +232,7 @@ def main():
                 case '15':
                     print('Обновление остатков FBS Wildberries...')
                     offer_ids = load_offer_id_from_excel(sheet_name='ВБ')
-                    fbs_data = get_fbs_quantity_wb(offer_ids)
+                    fbs_data = get_fbs_quantity_wb(offer_ids, stop_on_short_page=True)
                     write_fbs_quantity_to_excel(fbs_data, marketplace='ВБ')
                     print('✅ Остатки FBS обновлены и записаны.')
 
