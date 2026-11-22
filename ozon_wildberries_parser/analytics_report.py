@@ -3,31 +3,24 @@
 from datetime import datetime, timedelta
 
 import pandas as pd
-import openpyxl
 
-from excel_io import DATA_WORKBOOK, find_workbook, save_workbook
+from excel_io import DATA_WORKBOOK, find_workbook, open_workbook_sheet, save_workbook
 
 from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB
 from api_requests import ApiError, read_json, send_request, wb_json
 
 
-def load_sku_article_from_excel(sheet_name: str) -> dict:
-    """
-    Загружает артикулы и new_price из Excel, начиная с 3 строки (skiprows=2).
-    Артикул в 1 столбце, new_price в 6 столбце.
-    Возвращает словарь {offer_id: delta}
-    """
+def load_sku_article_from_excel(sheet_name: str, *, path=DATA_WORKBOOK) -> dict:
+    """Загружает сопоставление SKU из столбца A и артикула из столбца B."""
 
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return {}
-
+    source = find_workbook(path)
     df = pd.read_excel(source, sheet_name=sheet_name, skiprows=2)
     df.columns = df.columns.str.strip()
 
     article_info = {}
     for _, row in df.iterrows():
+        if pd.isna(row.iloc[1]):
+            continue
         article = str(row.iloc[1]).strip()
         if not article:
             continue
@@ -41,10 +34,7 @@ def load_sku_article_from_excel(sheet_name: str) -> dict:
         else:
             sku = ''
 
-        if pd.isna(article) or article == '' or pd.isna(sku) or sku == '':
-            continue
-
-        if sku and article:
+        if sku:
             article_info[sku] = article
 
     return article_info
@@ -87,6 +77,7 @@ def get_ozon_orders_report(
     }
 
     orders = {}
+    unmapped_skus = set()
     previous_page = None
     while True:
         label = 'Ozon (аналитика)'
@@ -101,6 +92,9 @@ def get_ozon_orders_report(
                 product_id = str(item['dimensions'][0]['id'])
                 ordered_units = int(item['metrics'][0])
                 offer_id = product_to_offer.get(product_id)
+                if not offer_id:
+                    unmapped_skus.add(product_id)
+                    continue
                 orders[offer_id] = orders.get(offer_id, 0) + ordered_units
         except (KeyError, IndexError, TypeError, ValueError):
             raise ApiError(f'{label}: некорректная или повторная страница.') from None
@@ -110,6 +104,8 @@ def get_ozon_orders_report(
         previous_page = page
         data['offset'] += data['limit']
 
+    if unmapped_skus:
+        print(f'Ozon: пропущено SKU без артикула в Excel — {len(unmapped_skus)}.')
     return orders
 
 
@@ -186,7 +182,9 @@ def write_analytics_to_excel(
         column_month=12,
         column_week=13,
         column_custom=14,
-        period='month'
+        period='month',
+        *,
+        path=DATA_WORKBOOK,
 ) -> None:
     """
     Записывает данные аналитики (кол-во заказов) в Excel в указанный столбец по period.
@@ -194,17 +192,7 @@ def write_analytics_to_excel(
     analytics_data: {offer_id: orders_count}
     period: 'month', 'week' или 'custom' для определения в какую колонку писать
     """
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return
-
-    wb = openpyxl.load_workbook(source)
-    if marketplace not in wb.sheetnames:
-        print(f'❗ В книге нет листа "{marketplace}"')
-        return
-
-    ws = wb[marketplace]
+    wb, ws = open_workbook_sheet(marketplace, path)
 
     if period == 'month':
         target_column = column_month
@@ -213,8 +201,7 @@ def write_analytics_to_excel(
     elif period == 'custom':
         target_column = column_custom
     else:
-        print(f'❌ Неверное значение period: {period}. Должно быть "month", "week" или "custom".')
-        return
+        raise ValueError('Неизвестный период отчёта.')
 
     for row in ws.iter_rows(min_row=4):
         cell_article = row[1].value
@@ -225,5 +212,5 @@ def write_analytics_to_excel(
             orders_count = analytics_data[offer_id]
             ws.cell(row=row[1].row, column=target_column, value=orders_count)
 
-    save_workbook(wb)
-    print(f'✅ Данные аналитики успешно записаны в {DATA_WORKBOOK}')
+    save_workbook(wb, path)
+    print(f'✅ Данные аналитики успешно записаны в {path}')

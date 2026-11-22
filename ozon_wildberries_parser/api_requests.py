@@ -88,6 +88,7 @@ _TOKEN_TYPES = {
 _INTERVALS = {
     'analytics': (20, 1800),
     'prices': (0.6, 900),
+    'media': (0.6, 1800),
     'warehouses': (0.2, 0.2),
     'stocks': (0.2, 0.2),
     'ping': (10, 10),

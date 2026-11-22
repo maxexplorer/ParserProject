@@ -1,9 +1,11 @@
 # update_price.py
 
+import math
 import time
+from collections import Counter
 
 import pandas as pd
-import openpyxl
+from openpyxl import load_workbook
 
 from excel_io import DATA_WORKBOOK, find_workbook, save_workbook
 
@@ -11,38 +13,31 @@ from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS
 from api_requests import ApiError, read_json, send_request, wb_goods, wb_json
 
 
-def load_article_info_from_excel(sheet_name: str) -> dict:
-    """
-    Загружает артикулы и new_price из Excel, начиная с 3 строки (skiprows=2).
-    Артикул в 1 столбце, new_price в 6 столбце.
-    Возвращает словарь {offer_id: delta}
-    """
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return {}
-
+def load_article_info_from_excel(sheet_name: str, *, path=DATA_WORKBOOK) -> dict:
+    """Читает артикул из столбца B и изменение цены из столбца G."""
+    source = find_workbook(path)
     df = pd.read_excel(source, sheet_name=sheet_name, skiprows=2)
     df.columns = df.columns.str.strip()
 
     article_info = {}
+    invalid_rows = 0
     for _, row in df.iterrows():
-        article = str(row.iloc[1]).strip()
-        if not article:
+        new_price = row.iloc[6]
+        if pd.isna(new_price) or (isinstance(new_price, str) and not new_price.strip()):
             continue
 
-        new_price = row.iloc[6]  # 6 столбец
-
-        if pd.isna(new_price) or new_price == '' or new_price == ' ':
-            continue
-
+        article = row.iloc[1]
         try:
             delta = float(new_price)
-            article_info[article] = delta
-        except Exception as ex:
-            print(f'Ошибка преобразования для {article}: {ex}')
+            if pd.isna(article) or not str(article).strip() or not math.isfinite(delta):
+                raise ValueError
+        except (ValueError, TypeError, OverflowError):
+            invalid_rows += 1
             continue
+        article_info[str(article).strip()] = delta
 
+    if invalid_rows:
+        print(f'Excel ({sheet_name}): пропущено некорректных строк с изменением цены — {invalid_rows}.')
     return article_info
 
 
@@ -102,11 +97,19 @@ def get_current_prices_wb() -> tuple[dict, dict]:
     vendor_code_to_price = {}
     vendor_code_to_nm_id = {}
     for item in wb_goods({'order': 'nmId', 'direction': 'asc'}):
-        vendor_code = item['vendorCode']
-        sizes = item['sizes']
-        if sizes and vendor_code:
-            vendor_code_to_price[vendor_code] = float(sizes[0]['price'])
-            vendor_code_to_nm_id[vendor_code] = item['nmID']
+        try:
+            vendor_code = item['vendorCode']
+            sizes = item['sizes']
+            if not isinstance(vendor_code, str) or not isinstance(sizes, list):
+                raise ValueError
+            if sizes and vendor_code:
+                price = float(sizes[0]['price'])
+                if not math.isfinite(price):
+                    raise ValueError
+                vendor_code_to_price[vendor_code] = price
+                vendor_code_to_nm_id[vendor_code] = item['nmID']
+        except (KeyError, TypeError, ValueError, OverflowError):
+            raise ApiError('Wildberries (цены): некорректная цена или карточка в ответе API.') from None
 
     return vendor_code_to_price, vendor_code_to_nm_id
 
@@ -156,24 +159,29 @@ def update_prices_ozon(article_info: dict) -> dict:
 
 
 def update_prices_wb(article_info: dict) -> dict:
-    """
-    Обновляет цены на Ozon по API и возвращает текущие цены для записи в Excel.
-    """
+    """Отправляет изменения цен WB и возвращает текущие цены для Excel."""
     vendor_code_to_price, vendor_code_to_nmID = get_current_prices_wb()
     data = {'data': []}
+    skipped = Counter()
 
     for vendor_code, delta in article_info.items():
         current_price = vendor_code_to_price.get(vendor_code)
         nm_id = vendor_code_to_nmID.get(vendor_code)
 
         if current_price is None:
-            print(f'❗ Не найдена текущая цена для WB vendorCode: {vendor_code}')
+            skipped['нет текущей цены'] += 1
             continue
         if nm_id is None:
-            print(f'❗ Не найден nmID для WB vendorCode: {vendor_code}')
+            skipped['нет nmID'] += 1
             continue
 
-        new_price = current_price + delta
+        try:
+            new_price = current_price + delta
+            if not math.isfinite(new_price) or new_price < 1:
+                raise ValueError
+        except (ValueError, TypeError, OverflowError):
+            skipped['некорректная итоговая цена'] += 1
+            continue
 
         data['data'].append({
             'nmID': int(nm_id),
@@ -184,37 +192,38 @@ def update_prices_wb(article_info: dict) -> dict:
     if data['data']:
         result = wb_json('POST', API_URLS_WB['upload_task'], 'prices',
                          json=data, statuses=(200, 208), retry=False)
-        if result.get('error') or not isinstance(result.get('data'), dict):
+        task = result.get('data') if isinstance(result, dict) else None
+        if not isinstance(task, dict) or result.get('error') is not False or type(task.get('id')) is not int:
             raise ApiError('Wildberries: API не подтвердил приём задачи обновления цен.')
 
+    print(f'Wildberries (цены): принято к обработке — {len(data["data"])}, пропущено — {sum(skipped.values())}.')
+    for reason, count in skipped.items():
+        print(f'  {reason} — {count}.')
     return vendor_code_to_price
 
 
-def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
-    """
-    Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
-    сохраняя изменения в data/data.xlsx.
-    """
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return
+def write_price_to_excel(current_prices: dict, marketplace='ОЗОН', *, path=DATA_WORKBOOK) -> None:
+    """Записывает текущие цены в столбец F указанной книги."""
+    write_price_sheets_to_excel({marketplace: current_prices}, path=path)
 
-    wb = openpyxl.load_workbook(source)
-    if marketplace not in wb.sheetnames:
-        print(f'❗ В книге нет листа "{marketplace}"')
-        return
 
-    ws = wb[marketplace]
-
-    for row in ws.iter_rows(min_row=4):
-        cell_article = row[1].value
-        if not cell_article:
-            continue
-        offer_id = str(cell_article).strip()
-        price_value = current_prices.get(offer_id)
-        if price_value is not None:
-            ws.cell(row=row[1].row, column=6, value=price_value)
-
-    save_workbook(wb)
-    print(f'✅ Текущие цены успешно записаны в {DATA_WORKBOOK}')
+def write_price_sheets_to_excel(prices_by_sheet: dict, *, path=DATA_WORKBOOK) -> None:
+    """Сохраняет текущие цены на всех указанных листах одной заменой файла."""
+    wb = load_workbook(find_workbook(path))
+    try:
+        for marketplace, current_prices in prices_by_sheet.items():
+            if marketplace not in wb.sheetnames:
+                raise ValueError(f'В книге «{path}» нет листа «{marketplace}».')
+            ws = wb[marketplace]
+            for row in ws.iter_rows(min_row=4):
+                cell_article = row[1].value
+                if not cell_article:
+                    continue
+                offer_id = str(cell_article).strip()
+                price_value = current_prices.get(offer_id)
+                if price_value is not None:
+                    ws.cell(row=row[1].row, column=6, value=price_value)
+        save_workbook(wb, path)
+    finally:
+        wb.close()
+    print(f'✅ Текущие цены успешно записаны в {path}')

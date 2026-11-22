@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 
 from api_keys import check_ozon_key_expiry, update_api_key
 from api_requests import ApiError
-from excel_io import save_workbook
+from excel_io import find_workbook, save_workbook
 
 from parser import (
     init_undetected_chromedriver,
@@ -19,6 +19,7 @@ from update_price import (
     update_prices_ozon,
     update_prices_wb,
     write_price_to_excel,
+    write_price_sheets_to_excel,
 
 )
 
@@ -79,7 +80,7 @@ def main():
                     break
 
                 case '1':
-                    workbook = load_workbook('data/data.xlsx')
+                    workbook = load_workbook(find_workbook())
                     pages = int(input('Введите количество страниц Ozon: '))
                     driver = init_undetected_chromedriver()
                     try:
@@ -90,14 +91,14 @@ def main():
                         driver.quit()
 
                 case '2':
-                    workbook = load_workbook('data/data.xlsx')
+                    workbook = load_workbook(find_workbook())
                     pages = int(input('Введите количество страниц Wildberries: '))
                     print('Сбор данных Wildberries...')
                     wildberries_parser(workbook=workbook, pages=pages)
                     print('✅ Сбор данных Wildberries завершен.')
 
                 case '3':
-                    workbook = load_workbook('data/data.xlsx')
+                    workbook = load_workbook(find_workbook())
                     pages_ozon = int(input('Введите количество страниц Ozon: '))
                     pages_wb = int(input('Введите количество страниц Wildberries: '))
                     driver = init_undetected_chromedriver()
@@ -123,20 +124,17 @@ def main():
                     article_info = load_article_info_from_excel(sheet_name='ВБ')
                     current_prices = update_prices_wb(article_info=article_info)
                     write_price_to_excel(current_prices=current_prices, marketplace='ВБ')
-                    print('✅ Цены Wildberries обновлены и сохранены.')
 
                 case '6':
                     print('Обновление цен Ozon...')
                     article_info_ozon = load_article_info_from_excel(sheet_name='ОЗОН')
+                    article_info_wb = load_article_info_from_excel(sheet_name='ВБ')
                     current_prices_ozon = update_prices_ozon(article_info=article_info_ozon)
 
                     print('Обновление цен Wildberries...')
-                    article_info_wb = load_article_info_from_excel(sheet_name='ВБ')
                     current_prices_wb = update_prices_wb(article_info=article_info_wb)
-                    write_price_to_excel(current_prices=current_prices_ozon, marketplace='ОЗОН')
+                    write_price_sheets_to_excel({'ОЗОН': current_prices_ozon, 'ВБ': current_prices_wb})
                     print('✅ Цены Ozon обновлены и сохранены.')
-                    write_price_to_excel(current_prices=current_prices_wb, marketplace='ВБ')
-                    print('✅ Цены Wildberries обновлены и сохранены.')
 
                 case '7':
                     print('Получение отчета Ozon за месяц...')
@@ -154,12 +152,14 @@ def main():
 
                 case '9':
                     print('Получение отчета Wildberries за месяц...')
+                    find_workbook()
                     wb_orders = get_wb_orders_report(period='month')
                     write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='month')
                     print('✅ Отчет Wildberries за месяц собран и записан.')
 
                 case '10':
                     print('Получение отчета Wildberries за неделю...')
+                    find_workbook()
                     wb_orders = get_wb_orders_report(period='week')
                     write_analytics_to_excel(analytics_data=wb_orders, marketplace='ВБ', period='week')
                     print('✅ Отчет Wildberries за неделю собран и записан.')
@@ -192,6 +192,7 @@ def main():
 
                 case '12':
                     print('Получение отчета Wildberries за указанный период...')
+                    find_workbook()
                     date_start = input('Введите дату начала периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
                     date_end = input('Введите дату окончания периода (в формате DD.MM.YYYY) и нажмите Enter: ').strip()
                     try:
@@ -238,7 +239,6 @@ def main():
                 case '16':
                     print('Загрузка изображений...')
                     process_image_uploads()
-                    print('✅ Загрузка изображений завершена.')
 
                 case '17':
                     update_api_key('Ozon')

@@ -1,25 +1,19 @@
 # update_volume.py
 
 import pandas as pd
-import openpyxl
 
-from excel_io import find_workbook, save_workbook
+from excel_io import DATA_WORKBOOK, find_workbook, open_workbook_sheet, save_workbook
 
 from configs.config import API_URLS_OZON, OZON_HEADERS
 from api_requests import ApiError, read_json, send_request
 
 
-def load_offer_id_from_excel(sheet_name: str) -> list[str]:
+def load_offer_id_from_excel(sheet_name: str, *, path=DATA_WORKBOOK) -> list[str]:
     """
     Загружает offer_id из Excel (2-й столбец), начиная с 3 строки (skiprows=2).
     Возвращает список offer_id.
     """
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return []
-
-    # читаем Excel
+    source = find_workbook(path)
     df = pd.read_excel(source, sheet_name=sheet_name, skiprows=2, dtype=str)
     df.columns = df.columns.str.strip()
 
@@ -73,22 +67,12 @@ def get_volume_ozon(offer_ids: list[str]) -> dict:
     return result
 
 
-def write_volume_to_excel(volume_data: dict, marketplace='ОЗОН') -> None:
+def write_volume_to_excel(volume_data: dict, marketplace='ОЗОН', *, path=DATA_WORKBOOK) -> None:
     """
     Записывает объем (м³) в 15-й столбец Excel.
     Старт записи — с 4-й строки (как и цены).
     """
-    source = find_workbook()
-    if source is None:
-        print('❗ В папке data/ не найдено .xlsx файлов.')
-        return
-
-    wb = openpyxl.load_workbook(source)
-    if marketplace not in wb.sheetnames:
-        print(f'❗ Лист {marketplace} не найден.')
-        return
-
-    ws = wb[marketplace]
+    wb, ws = open_workbook_sheet(marketplace, path)
 
     for row in ws.iter_rows(min_row=4):
         offer_id = str(row[1].value).strip()
@@ -99,5 +83,5 @@ def write_volume_to_excel(volume_data: dict, marketplace='ОЗОН') -> None:
         if volume_value is not None:
             ws.cell(row=row[1].row, column=15, value=round(volume_value, 2))
 
-    save_workbook(wb)
+    save_workbook(wb, path)
     print("✅ Объемы успешно записаны в Excel (15-й столбец)")
