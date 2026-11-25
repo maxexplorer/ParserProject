@@ -7,8 +7,8 @@ import time
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS
-from utils import chunk_list
+from configs.config import API_URLS_OZON, API_URLS_WB
+from utils import chunk_list, request_api
 
 
 def get_fbs_quantity_ozon(offer_ids: list[str]) -> dict:
@@ -37,13 +37,12 @@ def get_fbs_quantity_ozon(offer_ids: list[str]) -> dict:
         }
 
         try:
-            response = requests.post(
+            response = request_api(
+                'ozon', requests.post,
                 API_URLS_OZON['product_info_stocks'],
-                headers=OZON_HEADERS,
                 json=payload,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as e:
             print(f'❌ Ошибка API: {e}')
             break
@@ -78,12 +77,11 @@ def get_wb_fbs_warehouses() -> list[dict]:
     """
 
     try:
-        response = requests.get(
+        response = request_api(
+            'wb', requests.get,
             API_URLS_WB['warehouses'],
-            headers=WB_HEADERS,
             timeout=15
         )
-        response.raise_for_status()
     except Exception as ex:
         print(f'❌ Ошибка получения списка складов WB: {ex}')
         return []
@@ -126,13 +124,12 @@ def get_size_ids() -> dict[str, list[int]]:
 
         try:
             time.sleep(1)
-            response = requests.get(
+            response = request_api(
+                'wb', requests.get,
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
                 params=params,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as ex:
             print(f'❌ Ошибка получения товаров WB: {ex}')
             break
@@ -193,13 +190,12 @@ def get_fbs_quantity_wb(offer_ids: list[str]) -> dict[str, int]:
             payload = {'chrtIds': chunk}
 
             try:
-                response = requests.post(
+                response = request_api(
+                    'wb', requests.post,
                     API_URLS_WB['stocks'].format(warehouseId=warehouse_id),
-                    headers=WB_HEADERS,
                     json=payload,
                     timeout=15
                 )
-                response.raise_for_status()
             except Exception as ex:
                 print(f'❌ WB stocks error (warehouse={warehouse_id}): {ex}')
                 continue

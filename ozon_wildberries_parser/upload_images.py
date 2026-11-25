@@ -8,9 +8,9 @@ import re
 import requests
 import pandas as pd
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
-from configs.config import FIGMA_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB
 from figma_utils import get_figma_nodes
+from utils import check_token, request_api
 
 def gdrive_direct_link(url: str) -> str | None:
     """
@@ -88,8 +88,7 @@ def get_figma_image_urls(figma_key: str, node_ids: list) -> list:
         'scale': 2
     }
     time.sleep(3)  # пауза для лимитов Figma
-    response = requests.get(url, headers=FIGMA_HEADERS, params=params)
-    response.raise_for_status()
+    response = request_api('figma', requests.get, url, params=params, timeout=15)
     data = response.json()
     images = data.get('images', {})
     return [img_url for img_url in images.values() if img_url]
@@ -101,13 +100,12 @@ def upload_images_ozon(product_id: int, image_urls: list) -> dict | None:
             'product_id': product_id,
             'images': image_urls,
         }
-        response = requests.post(
+        response = request_api(
+            'ozon', requests.post,
             API_URLS_OZON['product_pictures_import'],
-            headers=OZON_HEADERS,
             json=payload,
             timeout=15
         )
-        response.raise_for_status()
         return response.json()
     except Exception as e:
         print(f"❌ Ошибка загрузки на OZON для product_id={product_id}: {e}")
@@ -120,27 +118,37 @@ def upload_images_wb(nm_id: int, image_urls: list) -> dict | None:
             'nmId': nm_id,
             'data': image_urls
         }
-        response = requests.post(
+        response = request_api(
+            'wb', requests.post,
             API_URLS_WB['content_media'],
-            headers=WB_HEADERS,
             json=payload,
             timeout=15
         )
-        response.raise_for_status()
         return response.json()
     except Exception as e:
         print(f"❌ Ошибка загрузки на WB для nmId={nm_id}: {e}")
         return None
 
 
-def process_image_uploads():
+def process_image_uploads() -> bool:
     """
     Основная функция обработки всех задач.
     """
     tasks = load_image_tasks_from_excel()
+    if not tasks:
+        return True
+    ozon_ready = any(task['ozon'] and task['product_id_ozon'] for task in tasks) and check_token('ozon')
+    wb_ready = any(task['wb'] and task['nm_id_wb'] for task in tasks) and check_token('wb')
+    if not (ozon_ready or wb_ready) or not check_token('figma'):
+        return False
+
     figma_cache = {}  # кеш слоев по ключу
 
     for task in tasks:
+        upload_ozon = ozon_ready and task['ozon'] and task['product_id_ozon']
+        upload_wb = wb_ready and task['wb'] and task['nm_id_wb']
+        if not (upload_ozon or upload_wb):
+            continue
         print(f"🔹 Обработка Figma {task['figma_key']}")
 
         # --- Figma cache
@@ -161,12 +169,14 @@ def process_image_uploads():
         if task['video_url_wb']:
             image_urls.append(task['video_url_wb'])
 
-        if task['ozon'] and task['product_id_ozon']:
+        if upload_ozon:
             result = upload_images_ozon(task['product_id_ozon'], image_urls)
             if result:
                 print(f'✅ OZON обновлён для product_id={task["product_id_ozon"]}')
 
-        if task['wb'] and task['nm_id_wb']:
+        if upload_wb:
             result = upload_images_wb(task['nm_id_wb'], image_urls)
             if result:
                 print(f'✅ WB обновлён для nmId={task["nm_id_wb"]}')
+
+    return True

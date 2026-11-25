@@ -3,8 +3,8 @@
 import time
 import requests
 
-from configs.config import API_URLS_OZON, OZON_HEADERS
-from configs.config import API_URLS_WB, WB_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB
+from utils import request_api
 
 
 def get_all_products_ozon() -> dict[int, str]:
@@ -32,13 +32,12 @@ def get_all_products_ozon() -> dict[int, str]:
 
         try:
             time.sleep(1)  # небольшая пауза для API
-            response = requests.post(
+            response = request_api(
+                'ozon', requests.post,
                 API_URLS_OZON['product_list'],
-                headers=OZON_HEADERS,
                 json=payload,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as e:
             print(f"❌ Ошибка API при получении товаров OZON: {e}")
             break
@@ -82,13 +81,12 @@ def get_all_products_wb() -> dict[int, str]:
 
         try:
             time.sleep(1)  # защита от лимитов
-            response = requests.get(
+            response = request_api(
+                'wb', requests.get,
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
                 params=params,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as e:
             print(f"❌ Ошибка WB API: {e}")
             break

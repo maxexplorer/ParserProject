@@ -8,7 +8,8 @@ import pandas as pd
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, API_URLS_WB, OZON_HEADERS, WB_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB
+from utils import request_api
 
 
 def load_article_info_from_excel(sheet_name: str) -> dict:
@@ -69,13 +70,12 @@ def get_current_prices_ozon() -> dict:
 
         try:
             time.sleep(1)
-            response = requests.post(
+            response = request_api(
+                'ozon', requests.post,
                 API_URLS_OZON['product_info_prices'],
-                headers=OZON_HEADERS,
                 json=data,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as ex:
             print(f'❌ Ошибка получения цен Ozon: {ex}')
             break
@@ -117,13 +117,12 @@ def get_current_prices_wb() -> tuple[dict, dict]:
 
         try:
             time.sleep(1)
-            response = requests.get(
+            response = request_api(
+                'wb', requests.get,
                 API_URLS_WB['list_goods_filter'],
-                headers=WB_HEADERS,
                 params=params,
                 timeout=15
             )
-            response.raise_for_status()
         except Exception as ex:
             print(f'❌ Ошибка получения цен WB: {ex}')
             break
@@ -185,9 +184,9 @@ def update_prices_ozon(article_info: dict) -> dict:
 
     if prices['prices']:
         try:
-            response = requests.post(
+            request_api(
+                'ozon', requests.post,
                 API_URLS_OZON['import_price'],
-                headers=OZON_HEADERS,
                 json=prices,
                 timeout=20
             )
@@ -225,13 +224,12 @@ def update_prices_wb(article_info: dict) -> dict:
 
     if data['data']:
         try:
-            response = requests.post(
+            request_api(
+                'wb', requests.post,
                 API_URLS_WB['upload_task'],
-                headers=WB_HEADERS,
                 json=data,
                 timeout=20
             )
-            response.raise_for_status()
         except Exception as ex:
             print(f'❌ Ошибка при обновлении цен WB: {ex}')
 

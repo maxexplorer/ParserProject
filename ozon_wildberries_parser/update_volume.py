@@ -7,7 +7,8 @@ import pandas as pd
 import requests
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS
+from configs.config import API_URLS_OZON
+from utils import request_api
 
 
 def load_offer_id_from_excel(sheet_name: str) -> list[str]:
@@ -53,13 +54,12 @@ def get_volume_ozon(offer_ids: list[str]) -> dict:
     }
 
     try:
-        response = requests.post(
+        response = request_api(
+            'ozon', requests.post,
             API_URLS_OZON['product_info_attributes'],
-            headers=OZON_HEADERS,
             json=data,
             timeout=20
         )
-        response.raise_for_status()
     except Exception as ex:
         print(f"❌ Ошибка API Ozon при получении габаритов: {ex}")
         return result

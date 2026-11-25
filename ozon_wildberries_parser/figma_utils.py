@@ -1,7 +1,7 @@
 # figma_utils.py
 
 import requests
-from configs.config import FIGMA_HEADERS
+from utils import request_api
 
 
 def extract_node_ids(node: dict, result: dict | None = None) -> dict:
@@ -30,8 +30,7 @@ def get_figma_nodes(file_key: str) -> dict:
         dict: {layer_name: node_id}
     """
     url = f"https://api.figma.com/v1/files/{file_key}"
-    response = requests.get(url, headers=FIGMA_HEADERS, timeout=15)
-    response.raise_for_status()
+    response = request_api('figma', requests.get, url, timeout=15)
 
     data = response.json()
 

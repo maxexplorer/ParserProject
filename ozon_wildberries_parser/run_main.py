@@ -2,12 +2,7 @@
 
 from datetime import datetime
 
-from parser import (
-    init_undetected_chromedriver,
-    ozon_parser,
-    wildberries_parser,
-    workbook
-)
+from configs.token_manager import check_ozon_token_expiration, update_token
 
 from update_price import (
     load_article_info_from_excel,
@@ -37,9 +32,11 @@ from update_quantity import (
 )
 
 from upload_images import process_image_uploads
+from utils import check_token
 
 
 def main():
+    check_ozon_token_expiration()
     while True:
         print(
             '\nВыберите действие:\n'
@@ -59,12 +56,22 @@ def main():
             '14 - Обновить остатки FBS Ozon\n'
             '15 - Обновить остатки FBS Wildberries\n'
             '16 - Загрузить изображения OZON и Wildberries\n'
+            '17 - Добавить или обновить API-токен Ozon\n'
+            '18 - Добавить или обновить API-токен Wildberries\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
         start_time = datetime.now()
 
+        if value in {'4', '7', '8', '11', '13', '14'} and not check_token('ozon'):
+            continue
+        if value in {'5', '9', '10', '12', '15'} and not check_token('wb'):
+            continue
+
         try:
+            if value in {'1', '2', '3'}:
+                from parser import init_undetected_chromedriver, ozon_parser, wildberries_parser, workbook
+
             match value:
                 case '0':
                     print('Выход из программы.')
@@ -115,17 +122,19 @@ def main():
                     print('✅ Цены Wildberries обновлены и сохранены.')
 
                 case '6':
-                    print('Обновление цен Ozon...')
-                    article_info_ozon = load_article_info_from_excel(sheet_name='ОЗОН')
-                    current_prices_ozon = update_prices_ozon(article_info=article_info_ozon)
-                    write_price_to_excel(current_prices=current_prices_ozon, marketplace='ОЗОН')
-                    print('✅ Цены Ozon обновлены и сохранены.')
+                    if check_token('ozon'):
+                        print('Обновление цен Ozon...')
+                        article_info_ozon = load_article_info_from_excel(sheet_name='ОЗОН')
+                        current_prices_ozon = update_prices_ozon(article_info=article_info_ozon)
+                        write_price_to_excel(current_prices=current_prices_ozon, marketplace='ОЗОН')
+                        print('✅ Цены Ozon обновлены и сохранены.')
 
-                    print('Обновление цен Wildberries...')
-                    article_info_wb = load_article_info_from_excel(sheet_name='ВБ')
-                    current_prices_wb = update_prices_wb(article_info=article_info_wb)
-                    write_price_to_excel(current_prices=current_prices_wb, marketplace='ВБ')
-                    print('✅ Цены Wildberries обновлены и сохранены.')
+                    if check_token('wb'):
+                        print('Обновление цен Wildberries...')
+                        article_info_wb = load_article_info_from_excel(sheet_name='ВБ')
+                        current_prices_wb = update_prices_wb(article_info=article_info_wb)
+                        write_price_to_excel(current_prices=current_prices_wb, marketplace='ВБ')
+                        print('✅ Цены Wildberries обновлены и сохранены.')
 
                 case '7':
                     print('Получение отчета Ozon за месяц...')
@@ -226,8 +235,14 @@ def main():
 
                 case '16':
                     print('Загрузка изображений...')
-                    process_image_uploads()
-                    print('✅ Загрузка изображений завершена.')
+                    if process_image_uploads():
+                        print('✅ Загрузка изображений завершена.')
+
+                case '17':
+                    update_token('ozon')
+
+                case '18':
+                    update_token('wb')
 
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')

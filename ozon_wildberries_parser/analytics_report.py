@@ -9,7 +9,8 @@ import requests
 import pandas as pd
 import openpyxl
 
-from configs.config import API_URLS_OZON, OZON_HEADERS, API_URLS_WB, WB_HEADERS
+from configs.config import API_URLS_OZON, API_URLS_WB
+from utils import request_api
 
 
 def load_sku_article_from_excel(sheet_name: str) -> dict:
@@ -91,13 +92,12 @@ def get_ozon_orders_report(
     orders = {}
     while True:
         try:
-            response = requests.post(
+            response = request_api(
+                'ozon', requests.post,
                 API_URLS_OZON['analytics_data'],
-                headers=OZON_HEADERS,
                 json=data,
                 timeout=20
             )
-            response.raise_for_status()
             data_dict = response.json()
 
             for item in data_dict['result']['data']:
@@ -160,13 +160,12 @@ def get_wb_orders_report(period: str, custom_date_from: str = None, custom_date_
 
         try:
             time.sleep(1)
-            response = requests.post(
+            response = request_api(
+                'wb', requests.post,
                 API_URLS_WB['products'],
-                headers=WB_HEADERS,
                 json=payload,
                 timeout=20
             )
-            response.raise_for_status()
             data = response.json()
         except Exception as ex:
             print(f'❌ Ошибка получения данных WB: {ex}')

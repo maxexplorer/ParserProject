@@ -2,11 +2,68 @@
 
 import requests
 
-from configs.config import WB_TOKEN
+from configs.config import API_CREDENTIALS, API_URLS_WB
+
+
+OZON_INVALID_TOKEN = (
+    'API-токен Ozon недействителен или срок его действия истек.\n'
+    'Для обновления токена выберите пункт 17.'
+)
+WB_INVALID_TOKEN = (
+    'Ошибка авторизации Wildberries.\n'
+    'API-токен отсутствует, недействителен или срок его действия истек.\n'
+    'Для обновления токена выберите пункт 18.'
+)
+MISSING_TOKEN_MESSAGES = {
+    'ozon': 'API-токен Ozon отсутствует. Для добавления выберите пункт 17.',
+    'wb': WB_INVALID_TOKEN,
+    'figma': 'API-токен Figma отсутствует. Запустите python -m configs.token_manager из папки проекта.',
+}
+API_NAMES = {'ozon': 'Ozon', 'wb': 'Wildberries', 'figma': 'Figma'}
+AUTH_ERRORS = {
+    ('ozon', 401): OZON_INVALID_TOKEN,
+    ('ozon', 403): (
+        'Ozon API отклонил доступ (HTTP 403). Проверьте токен и его права.\n'
+        'Для обновления токена выберите пункт 17.'
+    ),
+    ('wb', 401): WB_INVALID_TOKEN,
+    ('wb', 403): 'Доступ к Wildberries API запрещён (HTTP 403). Проверьте категорию и права токена.',
+}
+
+
+class ApiRequestError(requests.RequestException):
+    """Ошибка API с сообщением без содержимого запроса или ответа."""
+
+
+def check_token(service: str) -> bool:
+    _, header, headers = API_CREDENTIALS[service]
+    if headers.get(header, '').strip():
+        return True
+    print(MISSING_TOKEN_MESSAGES[service])
+    return False
+
+
+def request_api(service: str, send, url: str, *, headers: dict = None, **kwargs):
+    _, token_header, configured_headers = API_CREDENTIALS[service]
+    if headers is None:
+        headers = configured_headers
+    if not headers.get(token_header, '').strip():
+        raise ApiRequestError(MISSING_TOKEN_MESSAGES[service])
+
+    name = API_NAMES[service]
+    try:
+        response = send(url, headers=headers, allow_redirects=False, **kwargs)
+    except requests.RequestException:
+        raise ApiRequestError(f'{name} API недоступен: не удалось выполнить запрос.') from None
+
+    status = response.status_code
+    if not 200 <= status < 300:
+        raise ApiRequestError(AUTH_ERRORS.get((service, status), f'{name} API: HTTP {status}.'))
+    return response
 
 # Словарь сервисов WB и их ping URL
 WB_PING_URLS = {
-    "common": "https://common-api.wildberries.ru/ping",
+    "common": API_URLS_WB['ping'],
     "marketplace": "https://marketplace-api.wildberries.ru/ping",
     "analytics": "https://seller-analytics-api.wildberries.ru/ping",
     "prices": "https://discounts-prices-api.wildberries.ru/ping",
@@ -34,25 +91,18 @@ def check_wb_api_connection(service: str = "common", headers: dict = None, timeo
         print(f"❌ Сервис '{service}' не найден в списке WB_PING_URLS")
         return False
 
-    if headers is None:
-        headers = {}
-
     try:
-        response = requests.get(url, headers=headers, timeout=timeout)
-        if response.status_code == 200:
+        response = request_api('wb', requests.get, url, headers=headers, timeout=timeout)
+        if response.json().get('Status') == 'OK':
             print(f"✅ Подключение к WB {service} API успешно")
-            status = response.json()["Status"]
-            print(f'Status: {status}')
+            print('Status: OK')
             return True
-        elif response.status_code == 401:
-            print(f"❌ Неверный токен для сервиса '{service}'")
-            return False
-        else:
-            print(f"❌ Ошибка подключения к WB {service} API: статус {response.status_code}")
-            return False
-    except requests.RequestException as e:
+        print(f"❌ WB {service} API вернул неожиданный статус")
+    except ApiRequestError as e:
         print(f"❌ Ошибка подключения к WB {service} API: {e}")
-        return False
+    except (ValueError, AttributeError):
+        print(f"❌ WB {service} API вернул некорректный ответ")
+    return False
 
 
 def chunk_list(data: list, chunk_size: int):
@@ -80,12 +130,5 @@ def make_wb_headers(token: str, use_bearer: bool = False) -> dict:
 
 
 if __name__ == "__main__":
-    # Проверка токенов для разных сервисов
-    services = {
-        "marketplace": {"headers": {"Authorization": WB_TOKEN}},
-        "analytics": {"headers": {"Authorization": WB_TOKEN}},
-        "prices": {"headers": {"Authorization": WB_TOKEN}},
-    }
-
-    for service_name, params in services.items():
-        check_wb_api_connection(service=service_name, headers=params["headers"])
+    for service_name in ("marketplace", "analytics", "prices"):
+        check_wb_api_connection(service=service_name)
