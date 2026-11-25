@@ -1,4 +1,4 @@
-from configs.secret_store import SecretStoreError, load_secrets
+from .secret_store import SecretStoreError, load_secrets
 
 API_URLS_OZON = {
     'roles': 'https://api-seller.ozon.ru/v1/roles',

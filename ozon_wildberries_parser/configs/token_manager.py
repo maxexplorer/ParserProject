@@ -7,8 +7,8 @@ from math import ceil
 import requests
 
 from configs import config
-from configs.secret_store import SecretStoreError, load_secrets, save_secrets
 from utils import API_NAMES, OZON_INVALID_TOKEN, ApiRequestError, check_token, request_api
+from .secret_store import SecretStoreError, load_secrets, save_secrets
 
 
 def _get_ozon_expiration(headers: dict) -> datetime | None:
