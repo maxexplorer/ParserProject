@@ -1,5 +1,6 @@
 # main.py
 
+import sys
 from datetime import datetime
 
 from configs.token_manager import check_ozon_token_expiration, update_token
@@ -58,6 +59,7 @@ def main():
             '16 - Загрузить изображения OZON и Wildberries\n'
             '17 - Добавить или обновить API-токен Ozon\n'
             '18 - Добавить или обновить API-токен Wildberries\n'
+            '19 - Добавить или обновить API-токен Figma\n'
             '0 - Выход\n'
         )
         value = input('Введите значение: ').strip()
@@ -244,6 +246,9 @@ def main():
                 case '18':
                     update_token('wb')
 
+                case '19':
+                    update_token('figma')
+
                 case _:
                     print('❌ Неверный выбор. Попробуйте снова.')
 
@@ -256,4 +261,6 @@ def main():
 
 
 if __name__ == '__main__':
+    if getattr(sys, 'frozen', False) and sys.stdout is not None and not sys.stdout.isatty():
+        sys.stdout.reconfigure(errors='replace')
     main()

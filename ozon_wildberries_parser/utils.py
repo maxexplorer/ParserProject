@@ -2,6 +2,7 @@
 
 import requests
 
+from configs import config
 from configs.config import API_CREDENTIALS, API_URLS_WB
 
 
@@ -11,13 +12,13 @@ OZON_INVALID_TOKEN = (
 )
 WB_INVALID_TOKEN = (
     'Ошибка авторизации Wildberries.\n'
-    'API-токен отсутствует, недействителен или срок его действия истек.\n'
+    'API-токен Wildberries недействителен или срок его действия истек.\n'
     'Для обновления токена выберите пункт 18.'
 )
 MISSING_TOKEN_MESSAGES = {
     'ozon': 'API-токен Ozon отсутствует. Для добавления выберите пункт 17.',
-    'wb': WB_INVALID_TOKEN,
-    'figma': 'API-токен Figma отсутствует. Запустите python -m configs.token_manager из папки проекта.',
+    'wb': 'API-токен Wildberries отсутствует. Для добавления выберите пункт 18.',
+    'figma': 'API-токен Figma отсутствует. Для добавления выберите пункт 19.',
 }
 API_NAMES = {'ozon': 'Ozon', 'wb': 'Wildberries', 'figma': 'Figma'}
 AUTH_ERRORS = {
@@ -28,6 +29,8 @@ AUTH_ERRORS = {
     ),
     ('wb', 401): WB_INVALID_TOKEN,
     ('wb', 403): 'Доступ к Wildberries API запрещён (HTTP 403). Проверьте категорию и права токена.',
+    ('figma', 401): 'API-токен Figma недействителен. Для обновления выберите пункт 19.',
+    ('figma', 403): 'Доступ к Figma API запрещён (HTTP 403). Проверьте токен и права доступа.',
 }
 
 
@@ -39,7 +42,7 @@ def check_token(service: str) -> bool:
     _, header, headers = API_CREDENTIALS[service]
     if headers.get(header, '').strip():
         return True
-    print(MISSING_TOKEN_MESSAGES[service])
+    print(config.SECRET_STORE_ERROR or MISSING_TOKEN_MESSAGES[service])
     return False
 
 
@@ -48,7 +51,7 @@ def request_api(service: str, send, url: str, *, headers: dict = None, **kwargs)
     if headers is None:
         headers = configured_headers
     if not headers.get(token_header, '').strip():
-        raise ApiRequestError(MISSING_TOKEN_MESSAGES[service])
+        raise ApiRequestError(config.SECRET_STORE_ERROR or MISSING_TOKEN_MESSAGES[service])
 
     name = API_NAMES[service]
     try:

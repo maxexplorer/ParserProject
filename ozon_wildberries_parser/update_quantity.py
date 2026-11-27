@@ -7,6 +7,7 @@ import time
 import requests
 import openpyxl
 
+from app_paths import DATA_DIR
 from configs.config import API_URLS_OZON, API_URLS_WB
 from utils import chunk_list, request_api
 
@@ -218,7 +219,7 @@ def write_fbs_quantity_to_excel(fbs_data: dict, marketplace='ОЗОН') -> None:
     Старт записи — с 4-й строки.
     """
 
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')

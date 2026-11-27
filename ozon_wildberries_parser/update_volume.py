@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 import openpyxl
 
+from app_paths import DATA_DIR
 from configs.config import API_URLS_OZON
 from utils import request_api
 
@@ -16,7 +17,7 @@ def load_offer_id_from_excel(sheet_name: str) -> list[str]:
     Загружает offer_id из Excel (2-й столбец), начиная с 3 строки (skiprows=2).
     Возвращает список offer_id.
     """
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')
@@ -91,7 +92,7 @@ def write_volume_to_excel(volume_data: dict, marketplace='ОЗОН') -> None:
     Записывает объем (м³) в 15-й столбец Excel.
     Старт записи — с 4-й строки (как и цены).
     """
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')

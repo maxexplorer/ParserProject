@@ -8,6 +8,7 @@ import re
 import requests
 import pandas as pd
 
+from app_paths import FIGMA_DATA_DIR
 from configs.config import API_URLS_OZON, API_URLS_WB
 from figma_utils import get_figma_nodes
 from utils import check_token, request_api
@@ -29,7 +30,7 @@ def load_image_tasks_from_excel() -> list:
     """
     Загружает задачи для обновления изображений из Excel-файлов.
     """
-    folder = 'figma_data'
+    folder = FIGMA_DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ Нет Excel файлов')

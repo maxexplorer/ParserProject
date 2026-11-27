@@ -1,6 +1,5 @@
 # parser.py
 
-import os
 import re
 import time
 import json
@@ -24,7 +23,10 @@ from bs4 import BeautifulSoup
 
 import openpyxl
 
-workbook = openpyxl.load_workbook('data/data.xlsx')
+from app_paths import DATA_DIR
+
+WORKBOOK_PATH = DATA_DIR / 'data.xlsx'
+workbook = openpyxl.load_workbook(WORKBOOK_PATH)
 
 def refresh_wb_session(
         session: Session,
@@ -403,10 +405,9 @@ def ozon_parser(driver: Chrome, workbook: openpyxl.Workbook, pages: int = 3):
     except Exception as ex:
         print(ex)
     finally:
-        if not os.path.exists('data'):
-            os.makedirs('data')
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-        workbook.save('data/data.xlsx')
+        workbook.save(WORKBOOK_PATH)
 
 
 def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
@@ -518,7 +519,6 @@ def wildberries_parser(workbook: openpyxl.Workbook, pages: int = 3):
 
     session.close()
 
-    if not os.path.exists('data'):
-        os.makedirs('data')
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    workbook.save('data/data.xlsx')
+    workbook.save(WORKBOOK_PATH)

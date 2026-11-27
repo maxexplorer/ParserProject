@@ -9,6 +9,7 @@ import requests
 import pandas as pd
 import openpyxl
 
+from app_paths import DATA_DIR
 from configs.config import API_URLS_OZON, API_URLS_WB
 from utils import request_api
 
@@ -20,7 +21,7 @@ def load_sku_article_from_excel(sheet_name: str) -> dict:
     Возвращает словарь {offer_id: delta}
     """
 
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')
@@ -207,7 +208,7 @@ def write_analytics_to_excel(
     analytics_data: {offer_id: orders_count}
     period: 'month', 'week' или 'custom' для определения в какую колонку писать
     """
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')

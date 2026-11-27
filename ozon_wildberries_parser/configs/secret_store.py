@@ -5,8 +5,10 @@ from ctypes import wintypes
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from app_paths import APP_DIR
 
-SECRET_PATH = Path(__file__).with_name('.api-secrets.dpapi')
+
+SECRET_PATH = APP_DIR / 'configs' / '.api-secrets.dpapi'
 CRYPTPROTECT_UI_FORBIDDEN = 0x01
 
 
@@ -87,6 +89,7 @@ def save_secrets(updates: dict[str, str]) -> dict[str, str]:
     lock_path = SECRET_PATH.with_suffix('.dpapi.lock')
     temp_path = None
     try:
+        SECRET_PATH.parent.mkdir(parents=True, exist_ok=True)
         with lock_path.open('a+b') as lock:
             lock.seek(0)
             msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)

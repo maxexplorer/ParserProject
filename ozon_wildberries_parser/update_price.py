@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 import openpyxl
 
+from app_paths import DATA_DIR
 from configs.config import API_URLS_OZON, API_URLS_WB
 from utils import request_api
 
@@ -18,7 +19,7 @@ def load_article_info_from_excel(sheet_name: str) -> dict:
     Артикул в 1 столбце, new_price в 6 столбце.
     Возвращает словарь {offer_id: delta}
     """
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')
@@ -241,7 +242,7 @@ def write_price_to_excel(current_prices: dict, marketplace='ОЗОН') -> None:
     Обновляет цены в 5-м столбце (индекс 4) Excel для указанного листа marketplace,
     сохраняя изменения в data/data.xlsx.
     """
-    folder = 'data'
+    folder = DATA_DIR
     excel_files = glob.glob(os.path.join(folder, '*.xlsx'))
     if not excel_files:
         print('❗ В папке data/ не найдено .xlsx файлов.')
